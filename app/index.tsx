@@ -1,6 +1,9 @@
-import { Text, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
+import { useRouter } from "expo-router";
 
 export default function Index() {
+  const router = useRouter();
+
   return (
     <View
       style={{
@@ -9,7 +12,11 @@ export default function Index() {
         alignItems: "center",
       }}
     >
-      <Text>Edit app/index.tsx to edit this screen.</Text>
+      <TouchableOpacity onPress={() => router.navigate("/(tabs)")}>
+        <Text>Go to tabs</Text>
+      </TouchableOpacity>
+
     </View>
   );
 }
+
