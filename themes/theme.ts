@@ -4,7 +4,7 @@
 export const Colors = {
     text: '#fff',
     lightText: '#A8A8A8',
-    background: '#A1A1A1',
+    background: '#1A1A1A',
     cardColor: '#000',
     bgDark: '#000',
     button: '#4D4D4D',
@@ -14,6 +14,6 @@ export const Colors = {
     darkGreen: '#3F8531',
     yellow: '#FCFFC9',
     bgGame: '#D64D6B',
-    bgGameDark: '#951326ff',
+    bgGameDark: '#aa1a2fff',
 
 };

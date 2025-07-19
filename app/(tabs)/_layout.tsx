@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
 import { Tabs } from 'expo-router'
 import { FontAwesome5 } from '@expo/vector-icons'
-
+import { Colors } from '../../themes/theme'; // Adjust the import path as necessary
 /**
  * This is the layout for the tabs in the app.
  * It can be used to define common styles or components that should be present across all tab screens.
@@ -14,21 +14,18 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: 'white',
         tabBarInactiveTintColor: 'gray',
-
         tabBarStyle: {
-          backgroundColor: 'black',
-          paddingTop: 20,
-          borderRadius: 65,
+          backgroundColor: Colors.bgDark,
+          position: 'absolute',
+          paddingTop: 17,
+          borderRadius: 55,
+          margin: 15,
+          paddingHorizontal: 10,
           borderTopWidth: 0,
-          elevation: 0,
-          shadowOpacity: 0,
-        },
-        tabBarItemStyle: {
-          borderRadius: 65,
-          backgroundColor: 'yellow',
-          margin: 5,
-          padding: 10,
-        },
+          elevation: 2,
+          shadowOpacity: 0.2,
+
+        }
       }}
     >
       <Tabs.Screen
@@ -52,7 +49,7 @@ export default function TabsLayout() {
           tabBarShowLabel: false,
           tabBarIcon: ({ focused }) => (
             <FontAwesome5
-              name="image"
+              name="book"
               size={24}
               color={focused ? 'white' : 'gray'}
             />
@@ -64,8 +61,20 @@ export default function TabsLayout() {
         options={{
           title: 'Game',
           tabBarShowLabel: false,
+
           tabBarIcon: ({ focused }) => (
-            <Text style={{ color: focused ? 'white' : 'gray', fontSize: 14 }}>Fight</Text>
+            <Text style={
+              {
+                color: focused ? 'white' : 'gray',
+                fontSize: 24,
+                fontWeight: 'bold',
+                width: '200%',
+                height: 34,
+                textAlign: 'center',
+
+                transform: [{ rotateZ: '5deg' }],
+              }
+            }>Fight</Text>
           ),
         }}
       />
