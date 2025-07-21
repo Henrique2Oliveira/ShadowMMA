@@ -5,13 +5,15 @@ import { Colors, Typography } from '../../themes/theme';
 
 const { width, height } = Dimensions.get('window');
 
+// Total duration in milliseconds (5 minutes)
+const TOTAL_DURATION = 5 * 60 * 1000; // 5 minutes
 
 const moves = [
   { move: 'JAB', pauseTime: 500, direction: 'left', tiltValue: 0.1 },      // 20 degrees
   { move: 'CROSS', pauseTime: 500, direction: 'right', tiltValue: 0.1 },   // 30 degrees
   { move: 'LEFT HOOK', pauseTime: 1000, direction: 'left', tiltValue: 0.4 }, // 40 degrees
   { move: 'Right UPPERCUT', pauseTime: 1000, direction: 'up', tiltValue: 0.5 }, // 25 degrees
-  { move: 'SLIP', pauseTime: 2000, direction: 'up', tiltValue: 0.7 },    // 15 degrees
+  { move: 'SLIP', pauseTime: 1500, direction: 'up', tiltValue: 0.7 },    // 15 degrees
   { move: 'RIGHT HOOK', pauseTime: 1000, direction: 'right', tiltValue: 0.4 }, // 40 degrees
   { move: 'JAB', pauseTime: 500, direction: 'left', tiltValue: 0.1 },      // 20 degrees
   { move: 'CROSS', pauseTime: 500, direction: 'right', tiltValue: 0.1 },   // 30 degrees
@@ -19,29 +21,47 @@ const moves = [
 
 
 export default function Game() {
+
+  const TOTAL_DURATION = 1 * 60 * 1000; // 5 minutes
+
   const [currentMove, setCurrentMove] = React.useState(moves[0]);
   const [isPaused, setIsPaused] = React.useState(false);
+  const [timeLeft, setTimeLeft] = React.useState(TOTAL_DURATION);
   const tiltX = React.useRef(new Animated.Value(0)).current;
   const tiltY = React.useRef(new Animated.Value(0)).current;
   const scale = React.useRef(new Animated.Value(1)).current;
-  const timerProgress = React.useRef(new Animated.Value(0)).current;
 
   // Total duration in milliseconds (5 minutes)
-  const TOTAL_DURATION = 1 * 60 * 1000; // 5 minutes
+
+  const formatTime = (ms: number) => {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
 
   React.useEffect(() => {
-    if (isPaused) {
-      // Pause the timer animation
-      timerProgress.stopAnimation();
-    } else {
-      // Resume or start the timer animation
-      Animated.timing(timerProgress, {
-        toValue: 1,
-        duration: TOTAL_DURATION,
-        useNativeDriver: false, // Need to use false for layout animations (width)
-      }).start();
+    let interval: ReturnType<typeof setInterval>;
+
+    if (!isPaused) {
+      // Update time display
+      const startTime = Date.now();
+      const initialTimeLeft = timeLeft;
+
+      interval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const newTimeLeft = Math.max(initialTimeLeft - elapsed, 0);
+        setTimeLeft(newTimeLeft);
+
+        if (newTimeLeft === 0) {
+          clearInterval(interval);
+        }
+      }, 1000);
     }
-  }, [isPaused]);
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isPaused, timeLeft]);
 
   const animate3DMove = (move: typeof moves[0]) => {
     // Stop any running animations
@@ -103,17 +123,7 @@ export default function Game() {
   return (
     <View style={styles.container}>
       <View style={styles.timerContainer}>
-        <Animated.View
-          style={[
-            styles.timerBar,
-            {
-              width: timerProgress.interpolate({
-                inputRange: [0, 1],
-                outputRange: [width, 0] // Shrink from full width to 0
-              })
-            }
-          ]}
-        />
+        <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
       </View>
       <Animated.View style={[
         styles.card,
@@ -165,20 +175,14 @@ const styles = StyleSheet.create({
   },
   timerContainer: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 8, // Make the bar thicker
-    backgroundColor: 'rgba(255, 255, 255, 0.1)', // Subtle white background
-    overflow: 'hidden',
-    zIndex: 10,
+    top: 20,
+    width: '100%',
+    alignItems: 'center',
   },
-  timerBar: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    height: '100%',
-    backgroundColor: '#fff',
+  timerText: {
+    fontFamily: Typography.fontFamily,
+    color: '#fff',
+    fontSize: 32,
   },
   pauseButton: {
     position: 'absolute',

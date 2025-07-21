@@ -60,6 +60,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => (
             <FontAwesome5
               name="book"
+              marginLeft={-15}
               size={32}
               color={focused ? 'white' : '#e6e6e6ff'}
             />
@@ -101,6 +102,7 @@ export default function TabsLayout() {
             <FontAwesome5
               name="shopping-cart"
               size={32}
+              marginRight={-15}
               color={focused ? 'white' : '#e6e6e6ff'}
             />
           ),
