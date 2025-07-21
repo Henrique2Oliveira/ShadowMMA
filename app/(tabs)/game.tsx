@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Animated, Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Colors } from '../../themes/theme';
+import { Colors, Typography } from '../../themes/theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -24,16 +24,32 @@ export default function Game() {
   const tiltX = React.useRef(new Animated.Value(0)).current;
   const tiltY = React.useRef(new Animated.Value(0)).current;
   const scale = React.useRef(new Animated.Value(1)).current;
+  const timerProgress = React.useRef(new Animated.Value(0)).current;
+
+  // Total duration in milliseconds (5 minutes)
+  const TOTAL_DURATION = 1 * 60 * 1000; // 5 minutes
+
+  React.useEffect(() => {
+    // Reset and start timer animation when component mounts or when unpaused
+    if (!isPaused) {
+      timerProgress.setValue(0);
+      Animated.timing(timerProgress, {
+        toValue: 1,
+        duration: TOTAL_DURATION,
+        useNativeDriver: false, // Need to use false for layout animations (width)
+      }).start();
+    }
+  }, [isPaused]);
 
   const animate3DMove = (move: typeof moves[0]) => {
     // Stop any running animations
     tiltX.stopAnimation();
     tiltY.stopAnimation();
-    
+
     // Handle vertical movements
     Animated.timing(tiltX, {
       toValue: move.direction === 'up' ? -move.tiltValue :
-              move.direction === 'down' ? move.tiltValue : 0,
+        move.direction === 'down' ? move.tiltValue : 0,
       duration: 500,
       useNativeDriver: true
     }).start();
@@ -41,7 +57,7 @@ export default function Game() {
     // Handle horizontal movements
     Animated.timing(tiltY, {
       toValue: move.direction === 'left' ? -move.tiltValue :
-              move.direction === 'right' ? move.tiltValue : 0,
+        move.direction === 'right' ? move.tiltValue : 0,
       duration: 500,
       useNativeDriver: true
     }).start();
@@ -50,13 +66,17 @@ export default function Game() {
     Animated.sequence([
       Animated.timing(scale, {
         toValue: 1.2,
-        duration: 20,
-        delay: 25,
+        duration: 100,
         useNativeDriver: true
       }),
       Animated.timing(scale, {
-        toValue: 1,
-        duration: 150,
+        toValue: 0.9,
+        duration: 200,
+        useNativeDriver: true
+      }),
+      Animated.timing(scale, {
+        toValue: 1.0,
+        duration: 400,
         useNativeDriver: true
       })
     ]).start();
@@ -79,8 +99,20 @@ export default function Game() {
   };
 
   return (
-
     <View style={styles.container}>
+      <View style={styles.timerContainer}>
+        <Animated.View
+          style={[
+            styles.timerBar,
+            {
+              width: timerProgress.interpolate({
+                inputRange: [0, 1],
+                outputRange: [width, 0] // Shrink from full width to 0
+              })
+            }
+          ]}
+        />
+      </View>
       <Animated.View style={[
         styles.card,
         {
@@ -105,13 +137,13 @@ export default function Game() {
       ]}>
         <Text style={styles.text}>{currentMove.move}</Text>
       </Animated.View>
-      <TouchableOpacity 
-        style={styles.pauseButton} 
+      <TouchableOpacity
+        style={styles.pauseButton}
         onPress={handlePress}
       >
-        <Ionicons 
-          name={isPaused ? "play" : "pause"} 
-          size={30} 
+        <Ionicons
+          name={isPaused ? "play" : "pause"}
+          size={30}
           color={Colors.bgGameDark}
         />
       </TouchableOpacity>
@@ -128,6 +160,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.bgGameDark,
     position: 'relative',
+  },
+  timerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 8, // Make the bar thicker
+    backgroundColor: 'rgba(255, 255, 255, 0.1)', // Subtle white background
+    overflow: 'hidden',
+    zIndex: 10,
+  },
+  timerBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    height: '100%',
+    backgroundColor: '#fff',
   },
   pauseButton: {
     position: 'absolute',
@@ -152,20 +201,14 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontWeight: 'bold',
     fontSize: 50,
+    textAlign: 'center'
   },
   card: {
     justifyContent: 'center',
     alignItems: 'center',
+    fontFamily: Typography.fontFamily,
 
     backgroundColor: Colors.cardColor,
-    // shadowColor: '#000',
-    // shadowOffset: {
-    //   width: 2,
-    //   height: 2,
-    // },
-    // shadowOpacity: 0.55,
-    // shadowRadius: 3.84,
-    // elevation: 5,
     paddingHorizontal: 60,
     paddingVertical: 40,
     maxWidth: '80%',

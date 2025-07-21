@@ -1,8 +1,8 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
-import { Tabs } from 'expo-router'
-import { FontAwesome5 } from '@expo/vector-icons'
-import { Colors } from '../../themes/theme'; // Adjust the import path as necessary
+import { FontAwesome5 } from '@expo/vector-icons';
+import { Tabs } from 'expo-router';
+import React from 'react';
+import { Text } from 'react-native';
+import { Colors, Typography } from '../../themes/theme'; // Adjust the import path as necessary
 /**
  * This is the layout for the tabs in the app.
  * It can be used to define common styles or components that should be present across all tab screens.
@@ -18,7 +18,7 @@ export default function TabsLayout() {
           backgroundColor: Colors.bgDark,
           position: 'absolute',
           bottom: 0,
-          borderRadius: 55,
+          borderRadius: 35,
           marginHorizontal: 10,
           paddingHorizontal: 10,
           borderTopWidth: 0,
@@ -68,13 +68,14 @@ export default function TabsLayout() {
         name="game"
         options={{
           title: 'Game',
-          tabBarShowLabel: false, 
-          
+          tabBarShowLabel: false,
+
 
           tabBarIcon: ({ focused }) => (
             <Text style={
               {
                 color: focused ? 'white' : 'gray',
+                fontFamily: Typography.fontFamily,
                 fontSize: 22,
                 fontWeight: 'bold',
                 width: '200%',

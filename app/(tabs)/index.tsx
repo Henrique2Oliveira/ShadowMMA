@@ -1,7 +1,6 @@
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, ScrollView } from 'react-native';
 import React from 'react';
-import { Colors } from '../../themes/theme'; // Adjust the import path as necessary
-import { FontAwesome5 } from '@expo/vector-icons';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Colors, Typography } from '../../themes/theme'; // Adjust the import path as necessary
 
 export default function Index() {
   const buttons = [
@@ -18,8 +17,8 @@ export default function Index() {
 
       {/* Header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20, paddingVertical: 10, backgroundColor: Colors.background }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' ,justifyContent: 'center'}}>
-          <View style={{ width: "90%", height: 10, borderRadius: 10, backgroundColor: Colors.grayLevelBar, overflow: 'hidden'}}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: "90%", height: 10, borderRadius: 10, backgroundColor: Colors.grayLevelBar, overflow: 'hidden' }}>
             <View style={{ width: 100, height: 10, borderRadius: 10, backgroundColor: "white" }} />
           </View>
         </View>
@@ -60,6 +59,7 @@ export default function Index() {
 
 const styles = StyleSheet.create({
   container: {
+
     flex: 1,
     paddingHorizontal: 15,
     justifyContent: 'center',
@@ -93,6 +93,7 @@ const styles = StyleSheet.create({
   },
   text: {
     color: Colors.text,
+    fontFamily: Typography.fontFamily,
     fontSize: 20,
   },
 });

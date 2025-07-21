@@ -33,6 +33,12 @@
           "resizeMode": "contain",
           "backgroundColor": "#1A1A1A"
         }
+      ],
+      [
+        "expo-font",
+        {
+          "fonts": ["./assets/fonts/CalSans-Regular.ttf"]
+        }
       ]
     ],
     "experiments": {

@@ -1,5 +1,6 @@
-// const tintColorLight = '#0a7ea4';
-// const tintColorDark = '#fff';
+export const Typography = {
+    fontFamily: 'CalSans',
+};
 
 export const Colors = {
     text: '#fff',
