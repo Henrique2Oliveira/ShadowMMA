@@ -2,7 +2,7 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Text } from 'react-native';
-import { Colors, Typography } from '../../themes/theme'; // Adjust the import path as necessary
+import { Colors } from '../../themes/theme'; // Adjust the import path as necessary
 /**
  * This is the layout for the tabs in the app.
  * It can be used to define common styles or components that should be present across all tab screens.
@@ -31,6 +31,8 @@ export default function TabsLayout() {
           alignItems: 'center',
           justifyContent: 'center',
           height: 80,
+          marginHorizontal: 10,
+          width: 36,
         },
 
       }}
@@ -43,8 +45,8 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => (
             <FontAwesome5
               name="home"
-              size={24}
-              color={focused ? 'white' : 'gray'}
+              size={32}
+              color={focused ? 'white' : '#e6e6e6ff'}
               alt="Home Icon"
             />
           ),
@@ -58,8 +60,8 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => (
             <FontAwesome5
               name="book"
-              size={24}
-              color={focused ? 'white' : 'gray'}
+              size={32}
+              color={focused ? 'white' : '#e6e6e6ff'}
             />
           ),
         }}
@@ -70,22 +72,21 @@ export default function TabsLayout() {
           title: 'Game',
           tabBarShowLabel: false,
 
-
           tabBarIcon: ({ focused }) => (
             <Text style={
               {
-                color: focused ? 'white' : 'gray',
-                fontFamily: Typography.fontFamily,
-                fontSize: 22,
+                color: "#000000",
+                fontSize: 24,
                 fontWeight: 'bold',
-                width: '200%',
-                height: 34,
+                width: '220%',
+                height: 40,
+                lineHeight: 35,
                 textAlign: 'center',
-                backgroundColor: Colors.button,
+                backgroundColor: focused ? 'white' : '#e6e6e6ff',
                 borderRadius: 10,
                 paddingVertical: 2,
                 paddingHorizontal: 5,
-                transform: [{ rotateZ: '5deg' }],
+                transform: [{ rotateZ: '0deg' }],
               }
             }>Fight</Text>
           ),
@@ -99,8 +100,8 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => (
             <FontAwesome5
               name="shopping-cart"
-              size={24}
-              color={focused ? 'white' : 'gray'}
+              size={32}
+              color={focused ? 'white' : '#e6e6e6ff'}
             />
           ),
         }}
@@ -113,8 +114,8 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => (
             <FontAwesome5
               name="user"
-              size={24}
-              color={focused ? 'white' : 'gray'}
+              size={32}
+              color={focused ? 'white' : '#e6e6e6ff'}
             />
           ),
         }}

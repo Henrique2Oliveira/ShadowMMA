@@ -1,3 +1,4 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Typography } from '../../themes/theme'; // Adjust the import path as necessary
@@ -18,9 +19,19 @@ export default function Index() {
       {/* Header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20, paddingVertical: 10, backgroundColor: Colors.background }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-          <View style={{ width: "90%", height: 10, borderRadius: 10, backgroundColor: Colors.grayLevelBar, overflow: 'hidden' }}>
-            <View style={{ width: 100, height: 10, borderRadius: 10, backgroundColor: "white" }} />
+          <MaterialCommunityIcons name="star" size={34} color="white" style={{ marginRight: 10 }} />
+
+          <View style={{ width: "56%", height: 25, borderRadius: 4, backgroundColor: Colors.grayLevelBar, overflow: 'hidden', borderWidth: 3, borderColor: "white", shadowColor: Colors.darkGreen, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 3.84, elevation: 5 }}>
+            <View style={{ width: 100, height: 25, borderRadius: 0, backgroundColor: "white" }} />
           </View>
+          <Text style={{
+            color: Colors.text,
+            fontSize: 18,
+            fontFamily: Typography.fontFamily,
+            marginLeft: 10,
+          }}>
+            LEVEL 1
+          </Text>
         </View>
       </View>
 

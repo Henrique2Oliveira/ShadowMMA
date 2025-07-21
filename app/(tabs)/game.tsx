@@ -30,9 +30,11 @@ export default function Game() {
   const TOTAL_DURATION = 1 * 60 * 1000; // 5 minutes
 
   React.useEffect(() => {
-    // Reset and start timer animation when component mounts or when unpaused
-    if (!isPaused) {
-      timerProgress.setValue(0);
+    if (isPaused) {
+      // Pause the timer animation
+      timerProgress.stopAnimation();
+    } else {
+      // Resume or start the timer animation
       Animated.timing(timerProgress, {
         toValue: 1,
         duration: TOTAL_DURATION,
@@ -135,7 +137,7 @@ export default function Game() {
           ]
         }
       ]}>
-        <Text style={styles.text}>{currentMove.move}</Text>
+        <Text style={styles.text} numberOfLines={2} adjustsFontSizeToFit>{currentMove.move}</Text>
       </Animated.View>
       <TouchableOpacity
         style={styles.pauseButton}
@@ -200,22 +202,24 @@ const styles = StyleSheet.create({
   text: {
     color: Colors.text,
     fontWeight: 'bold',
-    fontSize: 50,
-    textAlign: 'center'
+    fontSize: 40,
+    textAlign: 'center',
+    width: '100%',
+    lineHeight: 48,
+    fontFamily: Typography.fontFamily,
+    flexShrink: 1,
+    flexWrap: 'wrap'
   },
   card: {
     justifyContent: 'center',
     alignItems: 'center',
-    fontFamily: Typography.fontFamily,
-
     backgroundColor: Colors.cardColor,
-    paddingHorizontal: 60,
-    paddingVertical: 40,
-    maxWidth: '80%',
-    minWidth: '35%',
-    maxHeight: '50%',
-    minHeight: '35%',
-    borderRadius: 25
+    width: 280,  // Fixed width
+    height: 220, // Fixed height
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    borderRadius: 25,
+    overflow: 'hidden' // Ensures content doesn't overflow
   },
 })
 
