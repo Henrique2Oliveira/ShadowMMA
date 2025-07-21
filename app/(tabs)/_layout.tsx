@@ -17,15 +17,22 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: Colors.bgDark,
           position: 'absolute',
-          paddingTop: 17,
+          bottom: 0,
           borderRadius: 55,
-          margin: 15,
+          marginHorizontal: 10,
           paddingHorizontal: 10,
           borderTopWidth: 0,
           elevation: 2,
           shadowOpacity: 0.2,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        tabBarIconStyle: {
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: 80,
+        },
 
-        }
       }}
     >
       <Tabs.Screen
@@ -38,6 +45,7 @@ export default function TabsLayout() {
               name="home"
               size={24}
               color={focused ? 'white' : 'gray'}
+              alt="Home Icon"
             />
           ),
         }}
@@ -60,18 +68,22 @@ export default function TabsLayout() {
         name="game"
         options={{
           title: 'Game',
-          tabBarShowLabel: false,
+          tabBarShowLabel: false, 
+          
 
           tabBarIcon: ({ focused }) => (
             <Text style={
               {
                 color: focused ? 'white' : 'gray',
-                fontSize: 24,
+                fontSize: 22,
                 fontWeight: 'bold',
                 width: '200%',
                 height: 34,
                 textAlign: 'center',
-
+                backgroundColor: Colors.button,
+                borderRadius: 10,
+                paddingVertical: 2,
+                paddingHorizontal: 5,
                 transform: [{ rotateZ: '5deg' }],
               }
             }>Fight</Text>
@@ -109,4 +121,5 @@ export default function TabsLayout() {
     </Tabs>
   )
 }
+
 
