@@ -29,10 +29,12 @@ export default function Game() {
   const [currentMove, setCurrentMove] = React.useState(moves[0]);
   const [isPaused, setIsPaused] = React.useState(false);
   const [timeLeft, setTimeLeft] = React.useState(TOTAL_DURATION);
+  const [speedMultiplier, setSpeedMultiplier] = React.useState(1);
 
   const tiltX = React.useRef(new Animated.Value(0)).current;
   const tiltY = React.useRef(new Animated.Value(0)).current;
   const scale = React.useRef(new Animated.Value(1)).current;
+  const sideButtonsOpacity = React.useRef(new Animated.Value(0)).current;
 
   // Total duration in milliseconds (5 minutes)
 
@@ -107,6 +109,15 @@ export default function Game() {
     ]).start();
   };
 
+  const handleSpeedChange = () => {
+    // Cycle through speeds: 1x -> 1.5x -> 2x -> 3x -> back to 1x
+    setSpeedMultiplier(current => {
+      const speeds = [1, 1.5, 2, 2.5];
+      const currentIndex = speeds.indexOf(current);
+      return speeds[(currentIndex + 1) % speeds.length];
+    });
+  };
+
   React.useEffect(() => {
     const timer = setInterval(() => {
       if (!isPaused) {
@@ -115,12 +126,19 @@ export default function Game() {
         setCurrentMove(nextMove);
         animate3DMove(nextMove);
       }
-    }, currentMove.pauseTime);
+    }, currentMove.pauseTime / speedMultiplier);
     return () => clearInterval(timer);
-  }, [currentMove, isPaused]);
+  }, [currentMove, isPaused, speedMultiplier]);
 
   const handlePress = () => {
     setIsPaused(!isPaused);
+    
+    // Animate the side buttons opacity
+    Animated.timing(sideButtonsOpacity, {
+      toValue: !isPaused ? 1 : 0,
+      duration: 300,
+      useNativeDriver: true
+    }).start();
   };
 
   return (
@@ -167,17 +185,19 @@ export default function Game() {
 
       {/* Control Buttons Container */}
       <View style={styles.buttonsContainer}>
-        {/* Home Button */}
-        <TouchableOpacity
-          style={styles.sideButton}
-          onPress={() => router.push("/(tabs)/index")}
-        >
-          <Ionicons
-            name="home"
-            size={30}
-            color={Colors.bgDark}
-          />
-        </TouchableOpacity>
+        <Animated.View style={{ opacity: sideButtonsOpacity }}>
+          {/* Home Button */}
+          <TouchableOpacity
+            style={styles.sideButton}
+            onPress={() => router.push("/(tabs)/index")}
+          >
+            <Ionicons
+              name="home"
+              size={30}
+              color={Colors.bgDark}
+            />
+          </TouchableOpacity>
+        </Animated.View>
 
         {/* Pause/Play Button */}
         <TouchableOpacity
@@ -191,12 +211,15 @@ export default function Game() {
           />
         </TouchableOpacity>
 
-        {/* Speed Button */}
-        <TouchableOpacity
-          style={styles.sideButton}
-        >
-          <Text style={styles.speedText}>x2</Text>
-        </TouchableOpacity>
+        <Animated.View style={{ opacity: sideButtonsOpacity }}>
+          {/* Speed Button */}
+          <TouchableOpacity
+            style={styles.sideButton}
+            onPress={handleSpeedChange}
+          >
+            <Text style={styles.speedText}>x{speedMultiplier}</Text>
+          </TouchableOpacity>
+        </Animated.View>
       </View>
 
     </LinearGradient>
@@ -271,7 +294,7 @@ const styles = StyleSheet.create({
   },
   buttonsContainer: {
     position: 'absolute',
-    bottom: 40,
+    bottom: 30,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -281,6 +304,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#efefefff',
     width: 60,
     height: 60,
+    marginHorizontal: 20,
     borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
