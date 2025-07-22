@@ -35,6 +35,7 @@ export default function Game() {
   const tiltY = React.useRef(new Animated.Value(0)).current;
   const scale = React.useRef(new Animated.Value(1)).current;
   const sideButtonsOpacity = React.useRef(new Animated.Value(0)).current;
+  const moveProgress = React.useRef(new Animated.Value(0)).current;
 
   // Total duration in milliseconds (5 minutes)
 
@@ -119,6 +120,17 @@ export default function Game() {
   };
 
   React.useEffect(() => {
+    if (!isPaused) {
+      moveProgress.setValue(0);
+      Animated.timing(moveProgress, {
+        toValue: 1,
+        duration: currentMove.pauseTime / speedMultiplier,
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [currentMove, isPaused, speedMultiplier]);
+
+  React.useEffect(() => {
     const timer = setInterval(() => {
       if (!isPaused) {
         const currentIndex = moves.indexOf(currentMove);
@@ -150,6 +162,7 @@ export default function Game() {
     >
       <View style={styles.timerContainer}>
         <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
+
       </View>
       <Animated.View style={[
         styles.card,
@@ -180,6 +193,19 @@ export default function Game() {
           end={{ x: 0, y: 1 }}
         >
           <Text style={styles.text} numberOfLines={2} adjustsFontSizeToFit>{currentMove.move}</Text>
+         <View style={styles.progressBarContainer}>
+          <Animated.View 
+            style={[
+              styles.progressBar,
+              {
+                width: moveProgress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: ['0%', '100%']
+                })
+              }
+            ]} 
+          />
+        </View>
         </LinearGradient>
       </Animated.View>
 
@@ -234,6 +260,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
+  },
+  progressBarContainer: {
+    width: '80%',
+    height: 8,
+    backgroundColor: '#000000ff',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginTop: 10,
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#ffffffff',
+    borderRadius: 4,
   },
   timerContainer: {
     position: 'absolute',

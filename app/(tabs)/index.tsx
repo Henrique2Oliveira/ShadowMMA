@@ -16,6 +16,9 @@ export default function Index() {
     { title: 'Leg Work', onPress: () => { } },
     { title: 'Defense Work', onPress: () => { } },
     { title: 'Unlock Your Next Move', onPress: () => { } },
+    { title: 'Custom Fights', onPress: () => { } },
+    { title: 'Combos', onPress: () => { } },
+
 
   ];
 
@@ -60,11 +63,11 @@ export default function Index() {
 
         <View style={styles.row}>
           <TouchableOpacity style={[styles.button, { zIndex: 5 }]} onPress={buttons[1].onPress}>
-            <MaterialCommunityIcons name="timer-outline" size={50} color={Colors.background} style={styles.buttonIcon} />
+            <MaterialCommunityIcons name="timer-outline" size={60} color={Colors.background} style={styles.buttonIcon} />
             <Text style={[styles.textButton, { fontSize: 42 }]}>{buttons[1].title}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button} onPress={buttons[2].onPress}>
-            <MaterialCommunityIcons name="timer-sand" size={50} color={Colors.background} style={styles.buttonIcon} />
+            <MaterialCommunityIcons name="timer-sand" size={60} color={Colors.background} style={styles.buttonIcon} />
             <Text style={[styles.textButton, { fontSize: 42 }]}>{buttons[2].title}</Text>
           </TouchableOpacity>
         </View>
@@ -89,11 +92,11 @@ export default function Index() {
         <TouchableOpacity style={[styles.buttonWide]} onPress={buttons[5].onPress}>
           <Text style={styles.textButton}>{buttons[5].title}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.buttonWide]} onPress={buttons[0].onPress}>
-          <Text style={styles.textButton}>{buttons[0].title}</Text>
+        <TouchableOpacity style={[styles.buttonWide]} onPress={buttons[6].onPress}>
+          <Text style={styles.textButton}>{buttons[6].title}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.buttonWide]} onPress={buttons[0].onPress}>
-          <Text style={styles.textButton}>{buttons[0].title}</Text>
+        <TouchableOpacity style={[styles.buttonWide]} onPress={buttons[7].onPress}>
+          <Text style={styles.textButton}>{buttons[7].title}</Text>
         </TouchableOpacity>
       </View>
     </ScrollView >
