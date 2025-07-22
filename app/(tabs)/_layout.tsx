@@ -12,25 +12,25 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+
         tabBarActiveTintColor: 'white',
         tabBarInactiveTintColor: 'gray',
         tabBarStyle: {
           backgroundColor: Colors.bgDark,
           position: 'absolute',
           bottom: 0,
+
           borderRadius: 35,
           marginHorizontal: 10,
           paddingHorizontal: 10,
           borderTopWidth: 0,
           elevation: 2,
           shadowOpacity: 0.2,
-          alignItems: 'center',
-          justifyContent: 'center',
+          height: 80,
         },
         tabBarIconStyle: {
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: 80,
+          height: 50,
+          marginVertical: 10,
           marginHorizontal: 10,
           width: 36,
         },

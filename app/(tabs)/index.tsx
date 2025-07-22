@@ -1,4 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Typography } from '../../themes/theme'; // Adjust the import path as necessary
@@ -37,22 +38,22 @@ export default function Index() {
 
       {/* Content */}
       <View style={styles.container}>
-
-        <TouchableOpacity style={[styles.buttonWide, { backgroundColor: Colors.darkGreen }]} onPress={buttons[0].onPress}>
-          <Image source={require('../../assets/images/jab-icon.png')} style={styles.imageButton} />
-          <Text style={styles.text}>{buttons[0].title.split(' ').map((word, index) => (
-            <Text key={index} style={[index === 1 ? { fontSize: 64 } : null]}>
-              {word}
-              {'\n'}
-            </Text>
-          ))}</Text>
-        </TouchableOpacity>
-
+        <LinearGradient colors={['#3EB516', '#3F8630']} style={styles.linearGradientButton}>
+          <TouchableOpacity onPress={buttons[0].onPress}>
+            <Image source={require('../../assets/images/jab-icon.png')} style={styles.imageButton} />
+            <Text style={styles.textButton}>{buttons[0].title.split(' ').map((word, index) => (
+              <Text key={index} style={[index === 1 ? { fontSize: 64 } : null]}>
+                {word}
+                {'\n'}
+              </Text>
+            ))}</Text>
+          </TouchableOpacity>
+        </LinearGradient>
         <View style={styles.row}>
 
           {buttons.slice(1, 3).map((button, index) => (
             <TouchableOpacity key={index} style={styles.button} onPress={button.onPress}>
-              <Text style={styles.text}>{button.title}</Text>
+              <Text style={styles.textButton}>{button.title}</Text>
             </TouchableOpacity>
           ))}
 
@@ -60,21 +61,21 @@ export default function Index() {
         <View style={styles.row}>
           {buttons.slice(3, 5).map((button, index) => (
             <TouchableOpacity key={index} style={styles.button} onPress={button.onPress}>
-              <Text style={styles.text}>{button.title}</Text>
+              <Text style={styles.textButton}>{button.title}</Text>
             </TouchableOpacity>
           ))}
         </View>
         <TouchableOpacity style={[styles.buttonWide]} onPress={buttons[0].onPress}>
-          <Text style={styles.text}>{buttons[0].title}</Text>
+          <Text style={styles.textButton}>{buttons[0].title}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.buttonWide]} onPress={buttons[0].onPress}>
-          <Text style={styles.text}>{buttons[0].title}</Text>
+          <Text style={styles.textButton}>{buttons[0].title}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.buttonWide]} onPress={buttons[0].onPress}>
-          <Text style={styles.text}>{buttons[0].title}</Text>
+          <Text style={styles.textButton}>{buttons[0].title}</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+    </ScrollView >
   );
 }
 
@@ -110,7 +111,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 20,
     paddingHorizontal: 20,
-
     aspectRatio: 1, // Makes the buttons square
   },
   text: {
@@ -120,17 +120,33 @@ const styles = StyleSheet.create({
     textShadowColor: "#000",
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 2,
-
+  },
+  textButton: {
+    color: Colors.text,
+    fontFamily: Typography.fontFamily,
+    fontSize: 32,
+    textShadowColor: "#000",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 2,
   },
   imageButton: {
     position: 'absolute',
     justifyContent: 'center',
     alignItems: 'center',
-    bottom: 0,
-    right: 10,
-    width: 140,
+    bottom: -10,
+    right: -10,
+    width: 120,
     height: 120,
+  },
+  linearGradientButton: {
+    width: '100%',
+    height: 170,
+    backgroundColor: 'transparent',
+    borderRadius: 10,
     marginBottom: 10,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    marginVertical: 10,
   },
 });
 
