@@ -1,16 +1,22 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Typography } from '../../themes/theme'; // Adjust the import path as necessary
 
+/**
+ * This is the main index screen for the app.
+ * It serves as a landing page with various buttons for navigation.
+ */
 export default function Index() {
   const buttons = [
-    { title: 'Free Fight', onPress: () => { } },
-    { title: '5 Minute', onPress: () => { } },
-    { title: '15 Minute', onPress: () => { } },
+    { title: 'FREE FIGHT', onPress: () => { } },
+    { title: '5 Min', onPress: () => { } },
+    { title: '15 Min', onPress: () => { } },
     { title: 'Leg Work', onPress: () => { } },
     { title: 'Defense Work', onPress: () => { } },
+    { title: 'Unlock Your Next Move', onPress: () => { } },
+
   ];
 
   return (
@@ -41,32 +47,47 @@ export default function Index() {
         <LinearGradient colors={['#3EB516', '#3F8630']} style={styles.linearGradientButton}>
           <TouchableOpacity onPress={buttons[0].onPress}>
             <Image source={require('../../assets/images/jab-icon.png')} style={styles.imageButton} />
-            <Text style={styles.textButton}>{buttons[0].title.split(' ').map((word, index) => (
-              <Text key={index} style={[index === 1 ? { fontSize: 64 } : null]}>
-                {word}
-                {'\n'}
-              </Text>
-            ))}</Text>
+            <Text style={[styles.textButton, { textAlign: 'left', fontSize: 44, lineHeight: 55 }]}>
+              {buttons[0].title.split(' ').map((word, index) => (
+                <Text key={index} style={[index === 1 ? { fontSize: 64 } : null]}>
+                  {word}
+                  {'\n'}
+                </Text>
+              ))}</Text>
           </TouchableOpacity>
         </LinearGradient>
-        <View style={styles.row}>
 
-          {buttons.slice(1, 3).map((button, index) => (
-            <TouchableOpacity key={index} style={styles.button} onPress={button.onPress}>
-              <Text style={styles.textButton}>{button.title}</Text>
-            </TouchableOpacity>
-          ))}
 
-        </View>
         <View style={styles.row}>
-          {buttons.slice(3, 5).map((button, index) => (
-            <TouchableOpacity key={index} style={styles.button} onPress={button.onPress}>
-              <Text style={styles.textButton}>{button.title}</Text>
-            </TouchableOpacity>
-          ))}
+          <TouchableOpacity style={[styles.button, { zIndex: 5 }]} onPress={buttons[1].onPress}>
+            <MaterialCommunityIcons name="timer-outline" size={50} color={Colors.background} style={styles.buttonIcon} />
+            <Text style={[styles.textButton, { fontSize: 42 }]}>{buttons[1].title}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={buttons[2].onPress}>
+            <MaterialCommunityIcons name="timer-sand" size={50} color={Colors.background} style={styles.buttonIcon} />
+            <Text style={[styles.textButton, { fontSize: 42 }]}>{buttons[2].title}</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={[styles.buttonWide]} onPress={buttons[0].onPress}>
-          <Text style={styles.textButton}>{buttons[0].title}</Text>
+
+        <View style={styles.row}>
+          <TouchableOpacity style={styles.button} onPress={buttons[3].onPress}>
+            <View style={{ position: 'absolute', top: -60, transform: [{ rotate: '45deg' }], }}>
+              <Ionicons name="footsteps" size={80} color={Colors.background} style={styles.buttonIcon} />
+              <Ionicons name="footsteps" size={80} color={Colors.background} style={styles.buttonIcon} />
+            </View>
+            <View style={{ position: 'absolute', bottom: 15, left: 0, right: 0 }}>
+              <Text style={[styles.textButton]}>{buttons[3].title}</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={buttons[4].onPress}>
+            <MaterialCommunityIcons name="shield" size={50} color={Colors.background} style={styles.buttonIcon} />
+            <Text style={[styles.textButton, { fontSize: 32 }]}>{buttons[4].title}</Text>
+          </TouchableOpacity>
+        </View>
+
+
+        <TouchableOpacity style={[styles.buttonWide]} onPress={buttons[5].onPress}>
+          <Text style={styles.textButton}>{buttons[5].title}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.buttonWide]} onPress={buttons[0].onPress}>
           <Text style={styles.textButton}>{buttons[0].title}</Text>
@@ -112,6 +133,12 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     paddingHorizontal: 20,
     aspectRatio: 1, // Makes the buttons square
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonIcon: {
+    marginBottom: 10,
+    opacity: 0.9,
   },
   text: {
     color: Colors.text,
@@ -123,6 +150,7 @@ const styles = StyleSheet.create({
   },
   textButton: {
     color: Colors.text,
+    textAlign: 'center',
     fontFamily: Typography.fontFamily,
     fontSize: 32,
     textShadowColor: "#000",

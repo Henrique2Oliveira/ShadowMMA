@@ -1,4 +1,4 @@
-import { FontAwesome5 } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Text } from 'react-native';
@@ -43,9 +43,9 @@ export default function TabsLayout() {
           title: 'Home',
           tabBarShowLabel: false,
           tabBarIcon: ({ focused }) => (
-            <FontAwesome5
+            <MaterialIcons
               name="home"
-              size={32}
+              size={38}
               color={focused ? 'white' : '#e6e6e6ff'}
               alt="Home Icon"
             />
@@ -58,7 +58,7 @@ export default function TabsLayout() {
           title: 'Gallery',
           tabBarShowLabel: false,
           tabBarIcon: ({ focused }) => (
-            <FontAwesome5
+            <MaterialIcons
               name="book"
               marginLeft={-15}
               size={32}
@@ -100,7 +100,7 @@ export default function TabsLayout() {
           title: 'Shop',
           tabBarShowLabel: false,
           tabBarIcon: ({ focused }) => (
-            <FontAwesome5
+            <MaterialIcons
               name="shopping-cart"
               size={32}
               marginRight={-15}
@@ -115,9 +115,9 @@ export default function TabsLayout() {
           title: 'Profile',
           tabBarShowLabel: false,
           tabBarIcon: ({ focused }) => (
-            <FontAwesome5
-              name="user"
-              size={32}
+            <MaterialIcons
+              name="account-circle"
+              size={38}
               color={focused ? 'white' : '#e6e6e6ff'}
             />
           ),

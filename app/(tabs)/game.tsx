@@ -174,7 +174,7 @@ export default function Game() {
         }
       ]}>
         <LinearGradient
-          colors={['#171717ff', '#1a1a1aff']}
+          colors={['#171717ff', '#1a1a1aff',]}
           style={styles.gradientBackground}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
@@ -189,11 +189,11 @@ export default function Game() {
           {/* Home Button */}
           <TouchableOpacity
             style={styles.sideButton}
-            onPress={() => router.push("/(tabs)/index")}
+            onPress={() => router.push("/(tabs)")}
           >
             <Ionicons
-              name="home"
-              size={30}
+              name="return-up-back"
+              size={42}
               color={Colors.bgDark}
             />
           </TouchableOpacity>
@@ -302,10 +302,10 @@ const styles = StyleSheet.create({
   },
   sideButton: {
     backgroundColor: '#efefefff',
-    width: 60,
-    height: 60,
-    marginHorizontal: 20,
-    borderRadius: 30,
+    width: 80,
+    height: 50,
+    marginHorizontal: 30,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   speedText: {
-    fontSize: 24,
+    fontSize: 28,
     fontFamily: Typography.fontFamily,
     color: Colors.bgDark,
     fontWeight: 'bold',
