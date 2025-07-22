@@ -123,7 +123,12 @@ export default function Game() {
   };
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={[Colors.bgGameDark, 'rgba(230, 87, 87, 1)', Colors.bgGameDark]}
+      style={styles.container}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+    >
       <View style={styles.timerContainer}>
         <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
       </View>
@@ -168,7 +173,7 @@ export default function Game() {
           color={Colors.bgGameDark}
         />
       </TouchableOpacity>
-    </View>
+    </LinearGradient>
 
   )
 }
@@ -179,7 +184,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.bgGameDark,
     position: 'relative',
   },
   timerContainer: {
