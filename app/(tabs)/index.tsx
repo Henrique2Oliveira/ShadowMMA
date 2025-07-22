@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Typography } from '../../themes/theme'; // Adjust the import path as necessary
 
 export default function Index() {
@@ -17,12 +17,12 @@ export default function Index() {
       contentContainerStyle={{ flexGrow: 1 }}>
 
       {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20, paddingVertical: 10, backgroundColor: Colors.background }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', paddingHorizontal: 10, backgroundColor: Colors.background, paddingTop: 20 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
           <MaterialCommunityIcons name="star" size={34} color="white" style={{ marginRight: 10 }} />
 
-          <View style={{ width: "56%", height: 25, borderRadius: 4, backgroundColor: Colors.grayLevelBar, overflow: 'hidden', borderWidth: 3, borderColor: "white", shadowColor: Colors.darkGreen, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 3.84, elevation: 5 }}>
-            <View style={{ width: 100, height: 25, borderRadius: 0, backgroundColor: "white" }} />
+          <View style={{ width: "60%", height: 25, borderRadius: 8, backgroundColor: Colors.grayLevelBar, overflow: 'hidden', borderWidth: 3, borderColor: "white", shadowColor: Colors.darkGreen, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 3.84, elevation: 5 }}>
+            <View style={{ width: "25%", height: 25, borderRadius: 0, backgroundColor: "white" }} />
           </View>
           <Text style={{
             color: Colors.text,
@@ -30,22 +30,32 @@ export default function Index() {
             fontFamily: Typography.fontFamily,
             marginLeft: 10,
           }}>
-            LEVEL 1
+            LEVEL 99
           </Text>
         </View>
       </View>
 
       {/* Content */}
       <View style={styles.container}>
+
         <TouchableOpacity style={[styles.buttonWide, { backgroundColor: Colors.darkGreen }]} onPress={buttons[0].onPress}>
-          <Text style={styles.text}>{buttons[0].title}</Text>
+          <Image source={require('../../assets/images/jab-icon.png')} style={styles.imageButton} />
+          <Text style={styles.text}>{buttons[0].title.split(' ').map((word, index) => (
+            <Text key={index} style={[index === 1 ? { fontSize: 64 } : null]}>
+              {word}
+              {'\n'}
+            </Text>
+          ))}</Text>
         </TouchableOpacity>
+
         <View style={styles.row}>
+
           {buttons.slice(1, 3).map((button, index) => (
             <TouchableOpacity key={index} style={styles.button} onPress={button.onPress}>
               <Text style={styles.text}>{button.title}</Text>
             </TouchableOpacity>
           ))}
+
         </View>
         <View style={styles.row}>
           {buttons.slice(3, 5).map((button, index) => (
@@ -70,9 +80,9 @@ export default function Index() {
 
 const styles = StyleSheet.create({
   container: {
-
     flex: 1,
-    paddingHorizontal: 15,
+    paddingHorizontal: 25,
+    paddingTop: 20,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Colors.background,
@@ -82,6 +92,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     marginVertical: 10,
+    gap: 20,
   },
   buttonWide: {
     width: '100%',
@@ -99,13 +110,27 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 20,
     paddingHorizontal: 20,
-    marginHorizontal: 10,
+
     aspectRatio: 1, // Makes the buttons square
   },
   text: {
     color: Colors.text,
     fontFamily: Typography.fontFamily,
-    fontSize: 20,
+    fontSize: 32,
+    textShadowColor: "#000",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 2,
+
+  },
+  imageButton: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+    bottom: 0,
+    right: 10,
+    width: 140,
+    height: 120,
+    marginBottom: 10,
   },
 });
 
