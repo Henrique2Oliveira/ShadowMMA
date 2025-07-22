@@ -72,6 +72,7 @@ export default function TabsLayout() {
         options={{
           title: 'Game',
           tabBarShowLabel: false,
+          tabBarStyle: { display: 'none' },
 
           tabBarIcon: ({ focused }) => (
             <Text style={

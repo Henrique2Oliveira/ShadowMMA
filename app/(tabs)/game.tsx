@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import React from 'react';
 import { Animated, Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Typography } from '../../themes/theme';
@@ -163,16 +164,41 @@ export default function Game() {
           <Text style={styles.text} numberOfLines={2} adjustsFontSizeToFit>{currentMove.move}</Text>
         </LinearGradient>
       </Animated.View>
-      <TouchableOpacity
-        style={styles.pauseButton}
-        onPress={handlePress}
-      >
-        <Ionicons
-          name={isPaused ? "play" : "pause"}
-          size={30}
-          color={Colors.bgGameDark}
-        />
-      </TouchableOpacity>
+
+      {/* Control Buttons Container */}
+      <View style={styles.buttonsContainer}>
+        {/* Home Button */}
+        <TouchableOpacity
+          style={styles.sideButton}
+          onPress={() => router.push("/(tabs)/index")}
+        >
+          <Ionicons
+            name="home"
+            size={30}
+            color={Colors.bgDark}
+          />
+        </TouchableOpacity>
+
+        {/* Pause/Play Button */}
+        <TouchableOpacity
+          style={styles.pauseButton}
+          onPress={handlePress}
+        >
+          <Ionicons
+            name={isPaused ? "play" : "pause"}
+            size={40}
+            color={Colors.bgDark}
+          />
+        </TouchableOpacity>
+
+        {/* Speed Button */}
+        <TouchableOpacity
+          style={styles.sideButton}
+        >
+          <Text style={styles.speedText}>x2</Text>
+        </TouchableOpacity>
+      </View>
+
     </LinearGradient>
 
   )
@@ -199,12 +225,12 @@ const styles = StyleSheet.create({
   },
   pauseButton: {
     position: 'absolute',
-    bottom: 120, // Position above tab bar
+    bottom: 40, // Position above tab bar
     alignSelf: 'center',
-    backgroundColor: '#fff',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    backgroundColor: '#efefefff',
+    width: 80,
+    height: 80,
+    borderRadius: 50,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,
@@ -242,8 +268,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 20,
-
-
+  },
+  buttonsContainer: {
+    position: 'absolute',
+    bottom: 40,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 50,
+  },
+  sideButton: {
+    backgroundColor: '#efefefff',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  speedText: {
+    fontSize: 24,
+    fontFamily: Typography.fontFamily,
+    color: Colors.bgDark,
+    fontWeight: 'bold',
   },
 })
 
