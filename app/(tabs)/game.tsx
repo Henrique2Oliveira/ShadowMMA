@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { Animated, Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Typography } from '../../themes/theme';
@@ -27,7 +28,7 @@ export default function Game() {
   const [currentMove, setCurrentMove] = React.useState(moves[0]);
   const [isPaused, setIsPaused] = React.useState(false);
   const [timeLeft, setTimeLeft] = React.useState(TOTAL_DURATION);
-  
+
   const tiltX = React.useRef(new Animated.Value(0)).current;
   const tiltY = React.useRef(new Animated.Value(0)).current;
   const scale = React.useRef(new Animated.Value(1)).current;
@@ -148,7 +149,14 @@ export default function Game() {
           ]
         }
       ]}>
-        <Text style={styles.text} numberOfLines={2} adjustsFontSizeToFit>{currentMove.move}</Text>
+        <LinearGradient
+          colors={['#171717ff', '#1a1a1aff']}
+          style={styles.gradientBackground}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+        >
+          <Text style={styles.text} numberOfLines={2} adjustsFontSizeToFit>{currentMove.move}</Text>
+        </LinearGradient>
       </Animated.View>
       <TouchableOpacity
         style={styles.pauseButton}
@@ -218,13 +226,20 @@ const styles = StyleSheet.create({
   card: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.cardColor,
     width: 280,  // Fixed width
     height: 220, // Fixed height
+    borderRadius: 25,
+    overflow: 'hidden', // Ensures content doesn't overflow
+  },
+  gradientBackground: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 20,
-    borderRadius: 25,
-    overflow: 'hidden' // Ensures content doesn't overflow
+
+
   },
 })
 
