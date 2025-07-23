@@ -7,36 +7,18 @@ import { Colors, Typography } from '../../themes/theme';
 
 const moves = [
   // Basic 1-2 Combination
-  { move: 'JAB', pauseTime: 500, direction: 'left', tiltValue: 0.2 },
-  { move: 'CROSS', pauseTime: 500, direction: 'right', tiltValue: 0.2 },
-  { move: 'PAUSE', pauseTime: 2000, direction: 'none', tiltValue: 0 },
-
-  // Hook Combination
-  { move: 'LEFT HOOK', pauseTime: 1000, direction: 'left', tiltValue: 0.4 },
-  { move: 'RIGHT HOOK', pauseTime: 1000, direction: 'right', tiltValue: 0.4 },
-  { move: 'PAUSE', pauseTime: 1500, direction: 'none', tiltValue: 0 },
-
-  // Defense to Offense
-  { move: 'SLIP', pauseTime: 1500, direction: 'down', tiltValue: 0.7 },
+  { move: 'JAB', pauseTime: 400, direction: 'left', tiltValue: 0.5 },
+  { move: 'CROSS', pauseTime: 400, direction: 'right', tiltValue: 0.5 },
+  { move: 'JAB', pauseTime: 400, direction: 'left', tiltValue: 0.2 },
+  { move: 'CROSS', pauseTime: 400, direction: 'right', tiltValue: 0.2 },
+  { move: 'LEFT HOOK', pauseTime: 700, direction: 'left', tiltValue: 0.4 },
   { move: 'RIGHT UPPERCUT', pauseTime: 1000, direction: 'up', tiltValue: 0.5 },
-  { move: 'LEFT HOOK', pauseTime: 1000, direction: 'left', tiltValue: 0.4 },
-  { move: 'PAUSE', pauseTime: 2000, direction: 'none', tiltValue: 0 },
+  { move: 'JAB', pauseTime: 400, direction: 'left', tiltValue: 0.2 },
+  { move: 'RIGHT HOOK', pauseTime: 700, direction: 'right', tiltValue: 0.4 },
+  { move: 'SLIP', pauseTime: 1000, direction: 'down', tiltValue: 0.3 },
 
-  // Quick Combination
-  { move: 'JAB', pauseTime: 500, direction: 'left', tiltValue: 0.1 },
-  { move: 'JAB', pauseTime: 500, direction: 'left', tiltValue: 0.1 },
-  { move: 'CROSS', pauseTime: 500, direction: 'right', tiltValue: 0.1 },
-  { move: 'PAUSE', pauseTime: 1500, direction: 'none', tiltValue: 0 },
+  { move: 'PAUSE', pauseTime: 4000, direction: 'none', tiltValue: 0 },
 
-  // Power Combination
-  { move: 'CROSS', pauseTime: 500, direction: 'right', tiltValue: 0.1 },
-  { move: 'LEFT HOOK', pauseTime: 1000, direction: 'left', tiltValue: 0.4 },
-  { move: 'RIGHT UPPERCUT', pauseTime: 1000, direction: 'up', tiltValue: 0.5 },
-
-  // Finishing Combination
-  { move: 'JAB', pauseTime: 500, direction: 'left', tiltValue: 0.1 },
-  { move: 'CROSS', pauseTime: 500, direction: 'right', tiltValue: 0.1 },
-  { move: 'LEFT HOOK', pauseTime: 1000, direction: 'left', tiltValue: 0.4 },
 ];
 
 
@@ -85,7 +67,7 @@ export default function Game() {
           }).start();
           // Handle horizontal movements
           Animated.timing(tiltY, {
-            toValue:  0,
+            toValue: 0,
             duration: 200,
             useNativeDriver: true
           }).start();

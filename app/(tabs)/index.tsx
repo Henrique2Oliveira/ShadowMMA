@@ -10,12 +10,31 @@ import { Colors, Typography } from '../../themes/theme'; // Adjust the import pa
  */
 export default function Index() {
   const [isModalVisible, setIsModalVisible] = React.useState(false);
+  const [roundDuration, setRoundDuration] = React.useState('3');
+  const [numRounds, setNumRounds] = React.useState('3');
+  const [restTime, setRestTime] = React.useState('1');
+  const [moveTypes, setMoveTypes] = React.useState(['punches']);
+  const [moveSpeed, setMoveSpeed] = React.useState('medium');
+  const [intensity, setIntensity] = React.useState('medium');
+  
+  const toggleMoveType = (type: string) => {
+    setMoveTypes(current => 
+      current.includes(type) 
+        ? current.filter(t => t !== type)
+        : [...current, type]
+    );
+  };
+  
+  const handleStartFight = () => {
+    // TODO: Implement fight start logic
+    setIsModalVisible(false);
+  };
 
   const buttons = [
     { title: 'FREE FIGHT', onPress: () => setIsModalVisible(true) },
     { title: '5 Min', onPress: () => setIsModalVisible(true) },
     { title: '15 Min', onPress: () => setIsModalVisible(true) },
-    { title: 'Leg Work', onPress: () => setIsModalVisible(true) },
+    { title: 'Footwork', onPress: () => setIsModalVisible(true) },
     { title: 'Defense Work', onPress: () => setIsModalVisible(true) },
     { title: 'Unlock Your Next Move', onPress: () => setIsModalVisible(true) },
     { title: 'Custom Fights', onPress: () => setIsModalVisible(true) },
@@ -121,10 +140,167 @@ export default function Index() {
             >
               <MaterialCommunityIcons name="close" size={24} color="white" />
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>Free Fight Mode</Text>
-            <Text style={styles.modalText}>
-              Welcome to Free Fight Mode! Here you can practice your moves without any time constraints.
-            </Text>
+            <Text style={styles.modalTitle}>Fight Mode</Text>
+            
+            <View style={styles.optionsContainer}>
+              <View style={styles.optionRow}>
+                <Text style={styles.optionLabel}>Round Duration:</Text>
+                <View style={styles.optionPicker}>
+                  <TouchableOpacity 
+                    style={[styles.optionButton, roundDuration === '2' && styles.optionButtonActive]}
+                    onPress={() => setRoundDuration('2')}
+                  >
+                    <Text style={styles.optionButtonText}>2 min</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.optionButton, roundDuration === '3' && styles.optionButtonActive]}
+                    onPress={() => setRoundDuration('3')}
+                  >
+                    <Text style={styles.optionButtonText}>3 min</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.optionButton, roundDuration === '5' && styles.optionButtonActive]}
+                    onPress={() => setRoundDuration('5')}
+                  >
+                    <Text style={styles.optionButtonText}>5 min</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.optionRow}>
+                <Text style={styles.optionLabel}>Rounds:</Text>
+                <View style={styles.optionPicker}>
+                  <TouchableOpacity 
+                    style={[styles.optionButton, numRounds === '3' && styles.optionButtonActive]}
+                    onPress={() => setNumRounds('3')}
+                  >
+                    <Text style={styles.optionButtonText}>3</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.optionButton, numRounds === '5' && styles.optionButtonActive]}
+                    onPress={() => setNumRounds('5')}
+                  >
+                    <Text style={styles.optionButtonText}>5</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.optionButton, numRounds === '7' && styles.optionButtonActive]}
+                    onPress={() => setNumRounds('7')}
+                  >
+                    <Text style={styles.optionButtonText}>7</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.optionRow}>
+                <Text style={styles.optionLabel}>Rest Time:</Text>
+                <View style={styles.optionPicker}>
+                  <TouchableOpacity 
+                    style={[styles.optionButton, restTime === '0.5' && styles.optionButtonActive]}
+                    onPress={() => setRestTime('0.5')}
+                  >
+                    <Text style={styles.optionButtonText}>30s</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.optionButton, restTime === '1' && styles.optionButtonActive]}
+                    onPress={() => setRestTime('1')}
+                  >
+                    <Text style={styles.optionButtonText}>1m</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.optionButton, restTime === '2' && styles.optionButtonActive]}
+                    onPress={() => setRestTime('2')}
+                  >
+                    <Text style={styles.optionButtonText}>2m</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.optionRow}>
+                <Text style={styles.optionLabel}>Move Types:</Text>
+                <View style={styles.moveTypesContainer}>
+                  <TouchableOpacity 
+                    style={[styles.moveTypeButton, moveTypes.includes('punches') && styles.moveTypeActive]}
+                    onPress={() => toggleMoveType('punches')}
+                  >
+                    <MaterialCommunityIcons name="hand-front-right" size={24} color="white" />
+                    <Text style={styles.moveTypeText}>Punches</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.moveTypeButton, moveTypes.includes('kicks') && styles.moveTypeActive]}
+                    onPress={() => toggleMoveType('kicks')}
+                  >
+                    <MaterialCommunityIcons name="karate" size={24} color="white" />
+                    <Text style={styles.moveTypeText}>Kicks</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.moveTypeButton, moveTypes.includes('elbows') && styles.moveTypeActive]}
+                    onPress={() => toggleMoveType('elbows')}
+                  >
+                    <MaterialCommunityIcons name="arm-flex" size={24} color="white" />
+                    <Text style={styles.moveTypeText}>Elbows</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.moveTypeButton, moveTypes.includes('knees') && styles.moveTypeActive]}
+                    onPress={() => toggleMoveType('knees')}
+                  >
+                    <MaterialCommunityIcons name="human-handsdown" size={24} color="white" />
+                    <Text style={styles.moveTypeText}>Knees</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.optionRow}>
+                <Text style={styles.optionLabel}>Move Speed:</Text>
+                <View style={styles.optionPicker}>
+                  <TouchableOpacity 
+                    style={[styles.optionButton, moveSpeed === 'slow' && styles.optionButtonActive]}
+                    onPress={() => setMoveSpeed('slow')}
+                  >
+                    <Text style={styles.optionButtonText}>Slow</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.optionButton, moveSpeed === 'medium' && styles.optionButtonActive]}
+                    onPress={() => setMoveSpeed('medium')}
+                  >
+                    <Text style={styles.optionButtonText}>Med</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.optionButton, moveSpeed === 'fast' && styles.optionButtonActive]}
+                    onPress={() => setMoveSpeed('fast')}
+                  >
+                    <Text style={styles.optionButtonText}>Fast</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.optionRow}>
+                <Text style={styles.optionLabel}>Intensity:</Text>
+                <View style={styles.optionPicker}>
+                  <TouchableOpacity 
+                    style={[styles.optionButton, intensity === 'light' && styles.optionButtonActive]}
+                    onPress={() => setIntensity('light')}
+                  >
+                    <Text style={styles.optionButtonText}>Light</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.optionButton, intensity === 'medium' && styles.optionButtonActive]}
+                    onPress={() => setIntensity('medium')}
+                  >
+                    <Text style={styles.optionButtonText}>Med</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.optionButton, intensity === 'hard' && styles.optionButtonActive]}
+                    onPress={() => setIntensity('hard')}
+                  >
+                    <Text style={styles.optionButtonText}>Hard</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <TouchableOpacity style={styles.startButton} onPress={handleStartFight}>
+                <Text style={styles.startButtonText}>Start Fight</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -142,6 +318,84 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.background,
     paddingBottom: 180, // Add padding to the bottom to avoid content being cut off
+  },
+  moveTypesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    flex: 2,
+    justifyContent: 'center',
+    width: '100%',
+  },
+  moveTypeButton: {
+    backgroundColor: '#444444',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderRadius: 8,
+    alignItems: 'center',
+    minWidth: '28%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  moveTypeActive: {
+    backgroundColor: "#4c8752ff",
+  },
+  moveTypeText: {
+    color: 'white',
+    textAlign: 'center',
+    fontSize: 14,
+    fontFamily: Typography.fontFamily,
+  },
+  optionsContainer: {
+    width: '100%',
+    marginTop: 20,
+  },
+  optionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  optionLabel: {
+    color: 'white',
+    fontSize: 18,
+    fontFamily: Typography.fontFamily,
+    flex: 1,
+  },
+  optionPicker: {
+    flexDirection: 'row',
+    gap: 10,
+    flex: 2,
+  },
+  optionButton: {
+    backgroundColor: '#444444',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flex: 1,
+    alignItems: 'center',
+  },
+  optionButtonActive: {
+    backgroundColor: "#4c8752ff",
+  },
+  optionButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontFamily: Typography.fontFamily,
+  },
+  startButton: {
+    backgroundColor: Colors.darkGreen,
+    paddingVertical: 15,
+    borderRadius: 10,
+    marginTop: 20,
+  },
+  startButtonText: {
+    color: 'white',
+    fontSize: 20,
+    fontFamily: Typography.fontFamily,
+    textAlign: 'center',
+    fontWeight: 'bold',
   },
   modalOverlay: {
     flex: 1,
