@@ -7,32 +7,32 @@ import { Colors, Typography } from '../../themes/theme';
 
 const moves = [
   // Basic 1-2 Combination
-  { move: 'JAB', pauseTime: 500, direction: 'left', tiltValue: 0.1 },
-  { move: 'CROSS', pauseTime: 500, direction: 'right', tiltValue: 0.1 },
+  { move: 'JAB', pauseTime: 500, direction: 'left', tiltValue: 0.2 },
+  { move: 'CROSS', pauseTime: 500, direction: 'right', tiltValue: 0.2 },
   { move: 'PAUSE', pauseTime: 2000, direction: 'none', tiltValue: 0 },
-  
+
   // Hook Combination
   { move: 'LEFT HOOK', pauseTime: 1000, direction: 'left', tiltValue: 0.4 },
   { move: 'RIGHT HOOK', pauseTime: 1000, direction: 'right', tiltValue: 0.4 },
   { move: 'PAUSE', pauseTime: 1500, direction: 'none', tiltValue: 0 },
-  
+
   // Defense to Offense
   { move: 'SLIP', pauseTime: 1500, direction: 'down', tiltValue: 0.7 },
   { move: 'RIGHT UPPERCUT', pauseTime: 1000, direction: 'up', tiltValue: 0.5 },
   { move: 'LEFT HOOK', pauseTime: 1000, direction: 'left', tiltValue: 0.4 },
   { move: 'PAUSE', pauseTime: 2000, direction: 'none', tiltValue: 0 },
-  
+
   // Quick Combination
   { move: 'JAB', pauseTime: 500, direction: 'left', tiltValue: 0.1 },
   { move: 'JAB', pauseTime: 500, direction: 'left', tiltValue: 0.1 },
   { move: 'CROSS', pauseTime: 500, direction: 'right', tiltValue: 0.1 },
   { move: 'PAUSE', pauseTime: 1500, direction: 'none', tiltValue: 0 },
-  
+
   // Power Combination
   { move: 'CROSS', pauseTime: 500, direction: 'right', tiltValue: 0.1 },
   { move: 'LEFT HOOK', pauseTime: 1000, direction: 'left', tiltValue: 0.4 },
   { move: 'RIGHT UPPERCUT', pauseTime: 1000, direction: 'up', tiltValue: 0.5 },
-  
+
   // Finishing Combination
   { move: 'JAB', pauseTime: 500, direction: 'left', tiltValue: 0.1 },
   { move: 'CROSS', pauseTime: 500, direction: 'right', tiltValue: 0.1 },
@@ -55,8 +55,6 @@ export default function Game() {
   const sideButtonsOpacity = React.useRef(new Animated.Value(0)).current;
   const moveProgress = React.useRef(new Animated.Value(0)).current;
 
-  // Total duration in milliseconds (5 minutes)
-
   const formatTime = (ms: number) => {
     const minutes = Math.floor(ms / 60000);
     const seconds = Math.floor((ms % 60000) / 1000);
@@ -78,6 +76,24 @@ export default function Game() {
 
         if (newTimeLeft === 0) {
           clearInterval(interval);
+          setIsPaused(true);
+          // Show fight over message with animation
+          Animated.timing(tiltX, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: true
+          }).start();
+          // Handle horizontal movements
+          Animated.timing(tiltY, {
+            toValue:  0,
+            duration: 200,
+            useNativeDriver: true
+          }).start();
+          Animated.timing(scale, {
+            toValue: 1.1,
+            duration: 800,
+            useNativeDriver: true
+          }).start();
         }
       }, 1000);
     }
@@ -162,7 +178,7 @@ export default function Game() {
 
   const handlePress = () => {
     setIsPaused(!isPaused);
-    
+
     // Animate the side buttons opacity
     Animated.timing(sideButtonsOpacity, {
       toValue: !isPaused ? 1 : 0,
@@ -210,22 +226,55 @@ export default function Game() {
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
         >
-          <Text style={styles.text} numberOfLines={2} adjustsFontSizeToFit>{currentMove.move}</Text>
-         <View style={styles.progressBarContainer}>
-          <Animated.View 
-            style={[
-              styles.progressBar,
-              {
-                width: moveProgress.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: ['0%', '100%']
-                })
-              }
-            ]} 
-          />
-        </View>
+          <Text style={styles.text} numberOfLines={2} adjustsFontSizeToFit>
+            {timeLeft === 0 ? "FIGHT OVER!" : currentMove.move}
+          </Text>
+          <View style={styles.progressBarContainer}>
+            <Animated.View
+              style={[
+                styles.progressBar,
+                {
+                  width: moveProgress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0%', '100%']
+                  })
+                }
+              ]}
+            />
+          </View>
         </LinearGradient>
       </Animated.View>
+
+      {/* Game Over Buttons */}
+      {timeLeft === 0 && (
+        <View style={styles.gameOverButtonsContainer}>
+          <TouchableOpacity
+            style={styles.gameOverButton}
+            onPress={() => router.push("/(tabs)")}
+          >
+            <Ionicons
+              name="home"
+              size={38}
+              color={Colors.bgDark}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.gameOverButton}
+            onPress={() => {
+              setTimeLeft(TOTAL_DURATION);
+              setIsPaused(false);
+              setCurrentMove(moves[0]);
+            }}
+          >
+            <Ionicons
+              name="refresh"
+              size={42}
+              color={Colors.bgDark}
+            />
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Control Buttons Container */}
       <View style={styles.buttonsContainer}>
@@ -236,24 +285,26 @@ export default function Game() {
             onPress={() => router.push("/(tabs)")}
           >
             <Ionicons
-              name="return-up-back"
-              size={42}
+              name="home"
+              size={30}
               color={Colors.bgDark}
             />
           </TouchableOpacity>
         </Animated.View>
 
-        {/* Pause/Play Button */}
-        <TouchableOpacity
-          style={styles.pauseButton}
-          onPress={handlePress}
-        >
-          <Ionicons
-            name={isPaused ? "play" : "pause"}
-            size={40}
-            color={Colors.bgDark}
-          />
-        </TouchableOpacity>
+        {/* Pause/Play Button - Hidden when fight is over */}
+        {timeLeft > 0 && (
+          <TouchableOpacity
+            style={styles.pauseButton}
+            onPress={handlePress}
+          >
+            <Ionicons
+              name={isPaused ? "play" : "pause"}
+              size={40}
+              color={Colors.bgDark}
+            />
+          </TouchableOpacity>
+        )}
 
         <Animated.View style={{ opacity: sideButtonsOpacity }}>
           {/* Speed Button */}
@@ -278,6 +329,30 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
+  },
+  gameOverButtonsContainer: {
+    position: 'absolute',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 50,
+    bottom: 140, // Position above tab bar
+  },
+  gameOverButton: {
+    backgroundColor: '#ffffffff',
+    width: 90,
+    height: 70,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   progressBarContainer: {
     width: '80%',
