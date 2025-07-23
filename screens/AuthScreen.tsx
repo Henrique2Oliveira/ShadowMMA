@@ -20,6 +20,7 @@ export default function AuthScreen() {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.welcomeText}>Welcome to</Text>
       <Text style={styles.title}>SHADOW MMA</Text>
       <View style={styles.form}>
         <TextInput
@@ -76,6 +77,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 40,
   },
+  welcomeText: {
+    fontFamily: Typography.fontFamily,
+    color: "#fff",
+    fontSize: 24,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
   form: {
     width: '90%',
     minWidth: 300,
@@ -93,6 +101,10 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderRadius: 8,
     elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    
   },
   buttonText: {
     fontFamily: Typography.fontFamily,

@@ -1,5 +1,5 @@
-import AuthScreen from '@/components/AuthScreen';
 import { useAuth } from '@/contexts/AuthContext';
+import AuthScreen from '@/screens/AuthScreen';
 import { Colors, Typography } from "@/themes/theme";
 import { useFonts } from 'expo-font';
 import { useRouter } from "expo-router";

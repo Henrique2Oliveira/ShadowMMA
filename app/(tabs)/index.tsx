@@ -48,8 +48,8 @@ export default function Index() {
       contentContainerStyle={{ flexGrow: 1 }}>
 
       {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', paddingHorizontal: 10, backgroundColor: Colors.background, paddingTop: 20 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', paddingHorizontal: 10, backgroundColor: Colors.background, paddingTop: 20 }}>
+        <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
           <MaterialCommunityIcons name="star" size={34} color="white" style={{ marginRight: 10 }} />
 
           <View style={{ width: "60%", height: 25, borderRadius: 8, backgroundColor: Colors.grayLevelBar, overflow: 'hidden', borderWidth: 3, borderColor: "white", shadowColor: Colors.darkGreen, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 3.84, elevation: 5 }}>
@@ -95,7 +95,7 @@ export default function Index() {
 
         <View style={styles.row}>
           <TouchableOpacity style={styles.button} onPress={buttons[3].onPress}>
-            <View style={{ position: 'absolute', top: -60, transform: [{ rotate: '45deg' }], }}>
+            <View style={{ position: 'absolute', top: -40, transform: [{ rotate: '45deg' }], }}>
               <Ionicons name="footsteps" size={80} color={Colors.background} style={styles.buttonIcon} />
               <Ionicons name="footsteps" size={80} color={Colors.background} style={styles.buttonIcon} />
             </View>
@@ -421,6 +421,9 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   row: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 600,
     flexDirection: 'row',
     justifyContent: 'center',
     marginVertical: 10,
@@ -428,6 +431,7 @@ const styles = StyleSheet.create({
   },
   buttonWide: {
     width: '100%',
+    maxWidth: 600,
     height: 170,
     backgroundColor: Colors.button,
     borderRadius: 10,
@@ -478,6 +482,7 @@ const styles = StyleSheet.create({
   },
   linearGradientButton: {
     width: '100%',
+    maxWidth: 600,
     height: 170,
     backgroundColor: 'transparent',
     borderRadius: 10,

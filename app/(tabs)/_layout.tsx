@@ -45,7 +45,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => (
             <MaterialIcons
               name="home"
-              size={38}
+              size={42}
               color={focused ? 'white' : '#e6e6e6ff'}
               alt="Home Icon"
             />
@@ -60,8 +60,8 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => (
             <MaterialIcons
               name="book"
-              marginLeft={-15}
-              size={32}
+              marginLeft={-20}
+              size={42}
               color={focused ? 'white' : '#e6e6e6ff'}
             />
           ),
@@ -85,10 +85,10 @@ export default function TabsLayout() {
                 lineHeight: 35,
                 textAlign: 'center',
                 backgroundColor: focused ? 'white' : '#e6e6e6ff',
-                borderRadius: 10,
+                borderRadius: 5,
                 paddingVertical: 2,
                 paddingHorizontal: 5,
-                transform: [{ rotateZ: '0deg' }],
+                transform: [{ rotateZ: '-5deg' }],
               }
             }>Fight</Text>
           ),
@@ -102,8 +102,8 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => (
             <MaterialIcons
               name="shopping-cart"
-              size={32}
-              marginRight={-15}
+              size={40}
+              marginRight={-20}
               color={focused ? 'white' : '#e6e6e6ff'}
             />
           ),
@@ -117,7 +117,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => (
             <MaterialIcons
               name="account-circle"
-              size={38}
+              size={40}
               color={focused ? 'white' : '#e6e6e6ff'}
             />
           ),
