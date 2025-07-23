@@ -16,15 +16,15 @@ export default function Index() {
   const [moveTypes, setMoveTypes] = React.useState(['punches']);
   const [moveSpeed, setMoveSpeed] = React.useState('medium');
   const [intensity, setIntensity] = React.useState('medium');
-  
+
   const toggleMoveType = (type: string) => {
-    setMoveTypes(current => 
-      current.includes(type) 
+    setMoveTypes(current =>
+      current.includes(type)
         ? current.filter(t => t !== type)
         : [...current, type]
     );
   };
-  
+
   const handleStartFight = () => {
     // TODO: Implement fight start logic
     setIsModalVisible(false);
@@ -141,24 +141,24 @@ export default function Index() {
               <MaterialCommunityIcons name="close" size={24} color="white" />
             </TouchableOpacity>
             <Text style={styles.modalTitle}>Fight Mode</Text>
-            
+
             <View style={styles.optionsContainer}>
               <View style={styles.optionRow}>
                 <Text style={styles.optionLabel}>Round Duration:</Text>
                 <View style={styles.optionPicker}>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.optionButton, roundDuration === '2' && styles.optionButtonActive]}
                     onPress={() => setRoundDuration('2')}
                   >
                     <Text style={styles.optionButtonText}>2 min</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.optionButton, roundDuration === '3' && styles.optionButtonActive]}
                     onPress={() => setRoundDuration('3')}
                   >
                     <Text style={styles.optionButtonText}>3 min</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.optionButton, roundDuration === '5' && styles.optionButtonActive]}
                     onPress={() => setRoundDuration('5')}
                   >
@@ -170,19 +170,19 @@ export default function Index() {
               <View style={styles.optionRow}>
                 <Text style={styles.optionLabel}>Rounds:</Text>
                 <View style={styles.optionPicker}>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.optionButton, numRounds === '3' && styles.optionButtonActive]}
                     onPress={() => setNumRounds('3')}
                   >
                     <Text style={styles.optionButtonText}>3</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.optionButton, numRounds === '5' && styles.optionButtonActive]}
                     onPress={() => setNumRounds('5')}
                   >
                     <Text style={styles.optionButtonText}>5</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.optionButton, numRounds === '7' && styles.optionButtonActive]}
                     onPress={() => setNumRounds('7')}
                   >
@@ -194,19 +194,19 @@ export default function Index() {
               <View style={styles.optionRow}>
                 <Text style={styles.optionLabel}>Rest Time:</Text>
                 <View style={styles.optionPicker}>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.optionButton, restTime === '0.5' && styles.optionButtonActive]}
                     onPress={() => setRestTime('0.5')}
                   >
                     <Text style={styles.optionButtonText}>30s</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.optionButton, restTime === '1' && styles.optionButtonActive]}
                     onPress={() => setRestTime('1')}
                   >
                     <Text style={styles.optionButtonText}>1m</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.optionButton, restTime === '2' && styles.optionButtonActive]}
                     onPress={() => setRestTime('2')}
                   >
@@ -218,33 +218,47 @@ export default function Index() {
               <View style={styles.optionRow}>
                 <Text style={styles.optionLabel}>Move Types:</Text>
                 <View style={styles.moveTypesContainer}>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.moveTypeButton, moveTypes.includes('punches') && styles.moveTypeActive]}
                     onPress={() => toggleMoveType('punches')}
                   >
                     <MaterialCommunityIcons name="hand-front-right" size={24} color="white" />
                     <Text style={styles.moveTypeText}>Punches</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.moveTypeButton, moveTypes.includes('kicks') && styles.moveTypeActive]}
                     onPress={() => toggleMoveType('kicks')}
                   >
                     <MaterialCommunityIcons name="karate" size={24} color="white" />
                     <Text style={styles.moveTypeText}>Kicks</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.moveTypeButton, moveTypes.includes('elbows') && styles.moveTypeActive]}
                     onPress={() => toggleMoveType('elbows')}
                   >
                     <MaterialCommunityIcons name="arm-flex" size={24} color="white" />
                     <Text style={styles.moveTypeText}>Elbows</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.moveTypeButton, moveTypes.includes('knees') && styles.moveTypeActive]}
                     onPress={() => toggleMoveType('knees')}
                   >
                     <MaterialCommunityIcons name="human-handsdown" size={24} color="white" />
                     <Text style={styles.moveTypeText}>Knees</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.moveTypeButton, moveTypes.includes('defense') && styles.moveTypeActive]}
+                    onPress={() => toggleMoveType('defense')}
+                  >
+                    <MaterialCommunityIcons name="shield" size={24} color="white" />
+                    <Text style={styles.moveTypeText}>Defense</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.moveTypeButton, moveTypes.includes('footwork') && styles.moveTypeActive]}
+                    onPress={() => toggleMoveType('footwork')}
+                  >
+                    <Ionicons name="footsteps" size={24} color="white" />
+                    <Text style={styles.moveTypeText}>Footwork</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -252,47 +266,23 @@ export default function Index() {
               <View style={styles.optionRow}>
                 <Text style={styles.optionLabel}>Move Speed:</Text>
                 <View style={styles.optionPicker}>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.optionButton, moveSpeed === 'slow' && styles.optionButtonActive]}
                     onPress={() => setMoveSpeed('slow')}
                   >
-                    <Text style={styles.optionButtonText}>Slow</Text>
+                    <Text style={styles.optionButtonText}>1x</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.optionButton, moveSpeed === 'medium' && styles.optionButtonActive]}
                     onPress={() => setMoveSpeed('medium')}
                   >
-                    <Text style={styles.optionButtonText}>Med</Text>
+                    <Text style={styles.optionButtonText}>2x</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.optionButton, moveSpeed === 'fast' && styles.optionButtonActive]}
                     onPress={() => setMoveSpeed('fast')}
                   >
-                    <Text style={styles.optionButtonText}>Fast</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              <View style={styles.optionRow}>
-                <Text style={styles.optionLabel}>Intensity:</Text>
-                <View style={styles.optionPicker}>
-                  <TouchableOpacity 
-                    style={[styles.optionButton, intensity === 'light' && styles.optionButtonActive]}
-                    onPress={() => setIntensity('light')}
-                  >
-                    <Text style={styles.optionButtonText}>Light</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.optionButton, intensity === 'medium' && styles.optionButtonActive]}
-                    onPress={() => setIntensity('medium')}
-                  >
-                    <Text style={styles.optionButtonText}>Med</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.optionButton, intensity === 'hard' && styles.optionButtonActive]}
-                    onPress={() => setIntensity('hard')}
-                  >
-                    <Text style={styles.optionButtonText}>Hard</Text>
+                    <Text style={styles.optionButtonText}>3x</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -365,13 +355,13 @@ const styles = StyleSheet.create({
   },
   optionPicker: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
     flex: 2,
   },
   optionButton: {
     backgroundColor: '#444444',
     paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
     borderRadius: 8,
     flex: 1,
     alignItems: 'center',

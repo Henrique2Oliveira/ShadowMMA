@@ -1,5 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Colors, Typography } from '@/themes/theme';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -45,6 +46,17 @@ export default function AuthScreen() {
             {isLogin ? 'Need an account? Register' : 'Have an account? Login'}
           </Text>
         </TouchableOpacity>
+
+        <View style={styles.dividerContainer}>
+          <View style={styles.divider} />
+          <Text style={styles.dividerText}>or login with</Text>
+          <View style={styles.divider} />
+        </View>
+
+        <TouchableOpacity style={styles.socialButton} onPress={() => console.log('Google login')}>
+          <MaterialCommunityIcons name="google" size={24} color="#fff" />
+          <Text style={styles.socialButtonText}>Google</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -65,7 +77,8 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   form: {
-    width: '80%',
+    width: '90%',
+    minWidth: 300,
   },
   input: {
     backgroundColor: '#fff',
@@ -91,5 +104,37 @@ const styles = StyleSheet.create({
     color: '#fff',
     textAlign: 'center',
     marginTop: 20,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 30,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#fff',
+    opacity: 0.3,
+  },
+  dividerText: {
+    color: '#fff',
+    paddingHorizontal: 10,
+    opacity: 0.8,
+    fontFamily: Typography.fontFamily,
+  },
+  socialButton: {
+    backgroundColor: '#DB4437',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    gap: 10,
+  },
+  socialButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontFamily: Typography.fontFamily,
   },
 });
