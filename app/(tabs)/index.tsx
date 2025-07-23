@@ -1,7 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Typography } from '../../themes/theme'; // Adjust the import path as necessary
 
 /**
@@ -9,15 +9,17 @@ import { Colors, Typography } from '../../themes/theme'; // Adjust the import pa
  * It serves as a landing page with various buttons for navigation.
  */
 export default function Index() {
+  const [isModalVisible, setIsModalVisible] = React.useState(false);
+
   const buttons = [
-    { title: 'FREE FIGHT', onPress: () => { } },
-    { title: '5 Min', onPress: () => { } },
-    { title: '15 Min', onPress: () => { } },
-    { title: 'Leg Work', onPress: () => { } },
-    { title: 'Defense Work', onPress: () => { } },
-    { title: 'Unlock Your Next Move', onPress: () => { } },
-    { title: 'Custom Fights', onPress: () => { } },
-    { title: 'Combos', onPress: () => { } },
+    { title: 'FREE FIGHT', onPress: () => setIsModalVisible(true) },
+    { title: '5 Min', onPress: () => setIsModalVisible(true) },
+    { title: '15 Min', onPress: () => setIsModalVisible(true) },
+    { title: 'Leg Work', onPress: () => setIsModalVisible(true) },
+    { title: 'Defense Work', onPress: () => setIsModalVisible(true) },
+    { title: 'Unlock Your Next Move', onPress: () => setIsModalVisible(true) },
+    { title: 'Custom Fights', onPress: () => setIsModalVisible(true) },
+    { title: 'Combos', onPress: () => setIsModalVisible(true) },
 
 
   ];
@@ -99,7 +101,35 @@ export default function Index() {
           <Text style={styles.textButton}>{buttons[7].title}</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView >
+
+      {/* Bottom Sheet Modal options of the fight*/}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setIsModalVisible(false)}
+        >
+          <View style={styles.bottomSheet}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setIsModalVisible(false)}
+            >
+              <MaterialCommunityIcons name="close" size={24} color="white" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Free Fight Mode</Text>
+            <Text style={styles.modalText}>
+              Welcome to Free Fight Mode! Here you can practice your moves without any time constraints.
+            </Text>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </ScrollView>
+
   );
 }
 
@@ -112,6 +142,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.background,
     paddingBottom: 180, // Add padding to the bottom to avoid content being cut off
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  bottomSheet: {
+    backgroundColor: '#333333',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    minHeight: 300,
+  },
+  closeButton: {
+    position: 'absolute',
+    right: 20,
+    top: 20,
+    zIndex: 1,
+  },
+  modalTitle: {
+    color: 'white',
+    fontSize: 24,
+    fontFamily: Typography.fontFamily,
+    marginTop: 20,
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  modalText: {
+    color: 'white',
+    fontSize: 16,
+    fontFamily: Typography.fontFamily,
+    textAlign: 'center',
+    lineHeight: 24,
   },
   row: {
     flexDirection: 'row',

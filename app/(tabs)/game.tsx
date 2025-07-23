@@ -2,23 +2,41 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React from 'react';
-import { Animated, Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Typography } from '../../themes/theme';
 
-const { width, height } = Dimensions.get('window');
-
-// Total duration in milliseconds (5 minutes)
-const TOTAL_DURATION = 5 * 60 * 1000; // 5 minutes
-
 const moves = [
-  { move: 'JAB', pauseTime: 500, direction: 'left', tiltValue: 0.1 },      // 20 degrees
-  { move: 'CROSS', pauseTime: 500, direction: 'right', tiltValue: 0.1 },   // 30 degrees
-  { move: 'LEFT HOOK', pauseTime: 1000, direction: 'left', tiltValue: 0.4 }, // 40 degrees
-  { move: 'Right UPPERCUT', pauseTime: 1000, direction: 'up', tiltValue: 0.5 }, // 25 degrees
-  { move: 'SLIP', pauseTime: 1500, direction: 'down', tiltValue: 0.7 },    // 15 degrees
-  { move: 'RIGHT HOOK', pauseTime: 1000, direction: 'right', tiltValue: 0.4 }, // 40 degrees
-  { move: 'JAB', pauseTime: 500, direction: 'left', tiltValue: 0.1 },      // 20 degrees
-  { move: 'CROSS', pauseTime: 500, direction: 'right', tiltValue: 0.1 },   // 30 degrees
+  // Basic 1-2 Combination
+  { move: 'JAB', pauseTime: 500, direction: 'left', tiltValue: 0.1 },
+  { move: 'CROSS', pauseTime: 500, direction: 'right', tiltValue: 0.1 },
+  { move: 'PAUSE', pauseTime: 2000, direction: 'none', tiltValue: 0 },
+  
+  // Hook Combination
+  { move: 'LEFT HOOK', pauseTime: 1000, direction: 'left', tiltValue: 0.4 },
+  { move: 'RIGHT HOOK', pauseTime: 1000, direction: 'right', tiltValue: 0.4 },
+  { move: 'PAUSE', pauseTime: 1500, direction: 'none', tiltValue: 0 },
+  
+  // Defense to Offense
+  { move: 'SLIP', pauseTime: 1500, direction: 'down', tiltValue: 0.7 },
+  { move: 'RIGHT UPPERCUT', pauseTime: 1000, direction: 'up', tiltValue: 0.5 },
+  { move: 'LEFT HOOK', pauseTime: 1000, direction: 'left', tiltValue: 0.4 },
+  { move: 'PAUSE', pauseTime: 2000, direction: 'none', tiltValue: 0 },
+  
+  // Quick Combination
+  { move: 'JAB', pauseTime: 500, direction: 'left', tiltValue: 0.1 },
+  { move: 'JAB', pauseTime: 500, direction: 'left', tiltValue: 0.1 },
+  { move: 'CROSS', pauseTime: 500, direction: 'right', tiltValue: 0.1 },
+  { move: 'PAUSE', pauseTime: 1500, direction: 'none', tiltValue: 0 },
+  
+  // Power Combination
+  { move: 'CROSS', pauseTime: 500, direction: 'right', tiltValue: 0.1 },
+  { move: 'LEFT HOOK', pauseTime: 1000, direction: 'left', tiltValue: 0.4 },
+  { move: 'RIGHT UPPERCUT', pauseTime: 1000, direction: 'up', tiltValue: 0.5 },
+  
+  // Finishing Combination
+  { move: 'JAB', pauseTime: 500, direction: 'left', tiltValue: 0.1 },
+  { move: 'CROSS', pauseTime: 500, direction: 'right', tiltValue: 0.1 },
+  { move: 'LEFT HOOK', pauseTime: 1000, direction: 'left', tiltValue: 0.4 },
 ];
 
 
