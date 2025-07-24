@@ -7,17 +7,20 @@ import { Colors, Typography } from '../../themes/theme';
 
 const moves = [
   // Basic 1-2 Combination
-  { move: 'JAB', pauseTime: 400, direction: 'left', tiltValue: 0.5 },
-  { move: 'CROSS', pauseTime: 400, direction: 'right', tiltValue: 0.5 },
   { move: 'JAB', pauseTime: 400, direction: 'left', tiltValue: 0.2 },
   { move: 'CROSS', pauseTime: 400, direction: 'right', tiltValue: 0.2 },
-  { move: 'LEFT HOOK', pauseTime: 700, direction: 'left', tiltValue: 0.4 },
-  { move: 'RIGHT UPPERCUT', pauseTime: 1000, direction: 'up', tiltValue: 0.5 },
   { move: 'JAB', pauseTime: 400, direction: 'left', tiltValue: 0.2 },
-  { move: 'RIGHT HOOK', pauseTime: 700, direction: 'right', tiltValue: 0.4 },
+  { move: 'CROSS', pauseTime: 400, direction: 'right', tiltValue: 0.2 },
+  { move: 'LEFT\nHOOK', pauseTime: 700, direction: 'left', tiltValue: 0.4 },
+  { move: 'RIGHT\nUPPERCUT', pauseTime: 1000, direction: 'up', tiltValue: 0.5 },
+  { move: 'JAB', pauseTime: 400, direction: 'left', tiltValue: 0.2 },
+  { move: 'RIGHT\nHOOK', pauseTime: 700, direction: 'right', tiltValue: 0.4 },
   { move: 'SLIP', pauseTime: 1000, direction: 'down', tiltValue: 0.3 },
-
-  { move: 'PAUSE', pauseTime: 4000, direction: 'none', tiltValue: 0 },
+  { move: 'LEFT\nHOOK', pauseTime: 700, direction: 'left', tiltValue: 0.4 },
+  { move: 'RIGHT\nUPPERCUT', pauseTime: 1000, direction: 'up', tiltValue: 0.5 },
+  { move: 'JAB', pauseTime: 400, direction: 'left', tiltValue: 0.2 },
+  { move: 'RIGHT\nHOOK', pauseTime: 700, direction: 'right', tiltValue: 0.4 },
+  { move: 'SLIP', pauseTime: 1000, direction: 'down', tiltValue: 0.3 },
 
 ];
 
@@ -89,39 +92,50 @@ export default function Game() {
     // Stop any running animations
     tiltX.stopAnimation();
     tiltY.stopAnimation();
+    scale.stopAnimation();
 
-    // Handle vertical movements
-    Animated.timing(tiltX, {
+    // Handle vertical movements with spring
+    Animated.spring(tiltX, {
       toValue: move.direction === 'up' ? -move.tiltValue :
         move.direction === 'down' ? move.tiltValue : 0,
-      duration: 500,
-      useNativeDriver: true
+      useNativeDriver: true,
+      damping: 14,
+      stiffness: 100,
+      mass: 2
     }).start();
 
-    // Handle horizontal movements
-    Animated.timing(tiltY, {
+    // Handle horizontal movements with spring
+    Animated.spring(tiltY, {
       toValue: move.direction === 'left' ? -move.tiltValue :
         move.direction === 'right' ? move.tiltValue : 0,
-      duration: 500,
-      useNativeDriver: true
+      useNativeDriver: true,
+      damping: 14,
+      stiffness: 100,
+      mass: 2
     }).start();
 
-    // Add pulse animation
+    // Add springy pulse animation
     Animated.sequence([
-      Animated.timing(scale, {
+      Animated.spring(scale, {
         toValue: 1.2,
-        duration: 100,
-        useNativeDriver: true
+        useNativeDriver: true,
+        damping: 4,
+        stiffness: 140,
+        mass: 1
       }),
-      Animated.timing(scale, {
-        toValue: 0.9,
-        duration: 200,
-        useNativeDriver: true
+      Animated.spring(scale, {
+        toValue: 0.8,
+        useNativeDriver: true,
+        damping: 4,
+        stiffness: 140,
+        mass: 1
       }),
-      Animated.timing(scale, {
+      Animated.spring(scale, {
         toValue: 1.0,
-        duration: 400,
-        useNativeDriver: true
+        useNativeDriver: true,
+        damping: 4,
+        stiffness: 100,
+        mass: 1
       })
     ]).start();
   };
@@ -129,7 +143,7 @@ export default function Game() {
   const handleSpeedChange = () => {
     // Cycle through speeds: 1x -> 1.5x -> 2x -> 3x -> back to 1x
     setSpeedMultiplier(current => {
-      const speeds = [1, 1.5, 2, 2.5];
+      const speeds = [0.7, 1, 1.5, 2];
       const currentIndex = speeds.indexOf(current);
       return speeds[(currentIndex + 1) % speeds.length];
     });
@@ -209,7 +223,7 @@ export default function Game() {
           end={{ x: 0, y: 1 }}
         >
           <Text style={styles.text} numberOfLines={2} adjustsFontSizeToFit>
-            {timeLeft === 0 ? "FIGHT OVER!" : currentMove.move}
+            {timeLeft === 0 ? "FIGHT OVER!🎉" : currentMove.move}
           </Text>
           <View style={styles.progressBarContainer}>
             <Animated.View
@@ -322,9 +336,9 @@ const styles = StyleSheet.create({
   },
   gameOverButton: {
     backgroundColor: '#ffffffff',
-    width: 90,
-    height: 70,
-    borderRadius: 10,
+    width: 80,
+    height: 80,
+    borderRadius: 50,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,

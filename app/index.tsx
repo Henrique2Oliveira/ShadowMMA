@@ -11,6 +11,7 @@ import { StyleSheet, View } from "react-native";
 SplashScreen.preventAutoHideAsync();
 
 export default function Index() {
+
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   
