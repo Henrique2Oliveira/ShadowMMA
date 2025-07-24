@@ -7,27 +7,29 @@ import { Colors, Typography } from '../../themes/theme';
 
 const moves = [
   // Basic 1-2 Combination
-  { move: 'JAB', pauseTime: 400, direction: 'left', tiltValue: 0.2 },
-  { move: 'CROSS', pauseTime: 400, direction: 'right', tiltValue: 0.2 },
-  { move: 'JAB', pauseTime: 400, direction: 'left', tiltValue: 0.2 },
-  { move: 'CROSS', pauseTime: 400, direction: 'right', tiltValue: 0.2 },
-  { move: 'LEFT\nHOOK', pauseTime: 700, direction: 'left', tiltValue: 0.4 },
-  { move: 'RIGHT\nUPPERCUT', pauseTime: 1000, direction: 'up', tiltValue: 0.5 },
-  { move: 'JAB', pauseTime: 400, direction: 'left', tiltValue: 0.2 },
-  { move: 'RIGHT\nHOOK', pauseTime: 700, direction: 'right', tiltValue: 0.4 },
-  { move: 'SLIP', pauseTime: 1000, direction: 'down', tiltValue: 0.3 },
-  { move: 'LEFT\nHOOK', pauseTime: 700, direction: 'left', tiltValue: 0.4 },
-  { move: 'RIGHT\nUPPERCUT', pauseTime: 1000, direction: 'up', tiltValue: 0.5 },
-  { move: 'JAB', pauseTime: 400, direction: 'left', tiltValue: 0.2 },
-  { move: 'RIGHT\nHOOK', pauseTime: 700, direction: 'right', tiltValue: 0.4 },
-  { move: 'SLIP', pauseTime: 1000, direction: 'down', tiltValue: 0.3 },
+  { move: 'Pause', pauseTime: 10000, direction: 'up', tiltValue: 3.7 }, // Pause move for 10 seconds
 
+
+  { move: 'JAB', pauseTime: 1000, direction: 'left', tiltValue: 0.2 },
+  { move: 'CROSS', pauseTime: 400, direction: 'right', tiltValue: 0.2 },
+  { move: 'JAB', pauseTime: 400, direction: 'left', tiltValue: 0.2 },
+  { move: 'CROSS', pauseTime: 400, direction: 'right', tiltValue: 0.2 },
+  { move: 'LEFT\nHOOK', pauseTime: 700, direction: 'left', tiltValue: 0.4 },
+  { move: 'RIGHT\nUPPERCUT', pauseTime: 1000, direction: 'up', tiltValue: 0.5 },
+  { move: 'JAB', pauseTime: 400, direction: 'left', tiltValue: 0.2 },
+  { move: 'RIGHT\nHOOK', pauseTime: 700, direction: 'right', tiltValue: 0.4 },
+  { move: 'SLIP', pauseTime: 1000, direction: 'down', tiltValue: 0.3 },
+  { move: 'LEFT\nHOOK', pauseTime: 700, direction: 'left', tiltValue: 0.4 },
+  { move: 'RIGHT\nUPPERCUT', pauseTime: 1000, direction: 'up', tiltValue: 0.5 },
+  { move: 'JAB', pauseTime: 400, direction: 'left', tiltValue: 0.2 },
+  { move: 'RIGHT\nHOOK', pauseTime: 700, direction: 'right', tiltValue: 0.4 },
+  { move: 'SLIP', pauseTime: 1000, direction: 'down', tiltValue: 0.3 },
 ];
 
 
 export default function Game() {
 
-  const TOTAL_DURATION = 1 * 60 * 1000; // 5 minutes
+  const TOTAL_DURATION = 2 * 60 * 1000; // 5 minutes
 
   const [currentMove, setCurrentMove] = React.useState(moves[0]);
   const [isPaused, setIsPaused] = React.useState(false);
@@ -76,7 +78,7 @@ export default function Game() {
           }).start();
           Animated.timing(scale, {
             toValue: 1.1,
-            duration: 800,
+            duration: 2000,
             useNativeDriver: true
           }).start();
         }
@@ -119,21 +121,21 @@ export default function Game() {
       Animated.spring(scale, {
         toValue: 1.2,
         useNativeDriver: true,
-        damping: 4,
+        damping: 8,
+        stiffness: 100,
+        mass: 1
+      }),
+      Animated.spring(scale, {
+        toValue: 0.85,
+        useNativeDriver: true,
+        damping: 8,
         stiffness: 140,
         mass: 1
       }),
       Animated.spring(scale, {
-        toValue: 0.8,
+        toValue: 1,
         useNativeDriver: true,
-        damping: 4,
-        stiffness: 140,
-        mass: 1
-      }),
-      Animated.spring(scale, {
-        toValue: 1.0,
-        useNativeDriver: true,
-        damping: 4,
+        damping: 8,
         stiffness: 100,
         mass: 1
       })
@@ -192,8 +194,8 @@ export default function Game() {
     >
       <View style={styles.timerContainer}>
         <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
-
       </View>
+
       <Animated.View style={[
         styles.card,
         {

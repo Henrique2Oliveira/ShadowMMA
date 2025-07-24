@@ -1,6 +1,8 @@
+
+
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import React, { useState } from 'react';
-import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { FlatList, ListRenderItem, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Typography } from '../../themes/theme';
 
 type MoveIconName = 'hand-front-right' | 'karate' | 'arm-flex' | 'human-handsdown';
@@ -151,30 +153,42 @@ export default function Gallery() {
     setIsModalVisible(true);
   };
 
+  const renderMove: ListRenderItem<Move> = useCallback(({ item: move }) => {
+    return (
+      <TouchableOpacity
+        style={styles.moveCard}
+        onPress={() => handleMovePress(move)}
+      >
+        <MaterialCommunityIcons
+          name={move.icon}
+          size={32}
+          color="white"
+          style={styles.moveIcon}
+        />
+        <View style={styles.moveInfo}>
+          <Text style={styles.moveName}>{move.name}</Text>
+          <Text style={styles.moveCategory}>{move.category}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  }, []);
+
+  const keyExtractor = useCallback((item: Move) => item.id.toString(), []);
+
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <Text style={styles.title}>Move Gallery</Text>
 
-      <View style={styles.movesContainer}>
-        {moves.map((move) => (
-          <TouchableOpacity
-            key={move.id}
-            style={styles.moveCard}
-            onPress={() => handleMovePress(move)}
-          >
-            <MaterialCommunityIcons
-              name={move.icon}
-              size={32}
-              color="white"
-              style={styles.moveIcon}
-            />
-            <View style={styles.moveInfo}>
-              <Text style={styles.moveName}>{move.name}</Text>
-              <Text style={styles.moveCategory}>{move.category}</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <FlatList
+        data={moves}
+        renderItem={renderMove}
+        keyExtractor={keyExtractor}
+        contentContainerStyle={styles.movesContainer}
+        showsVerticalScrollIndicator={false}
+        initialNumToRender={8}
+        maxToRenderPerBatch={5}
+        windowSize={5}
+      />
 
       <Modal
         animationType="slide"
@@ -213,7 +227,7 @@ export default function Gallery() {
           </View>
         </TouchableOpacity>
       </Modal>
-    </ScrollView>
+    </View>
   )
 }
 

@@ -1,8 +1,8 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Text } from 'react-native';
-import { Colors } from '../../themes/theme'; // Adjust the import path as necessary
+import { Text, View } from 'react-native';
+import { Colors, Typography } from '../../themes/theme'; // Adjust the import path as necessary
 /**
  * This is the layout for the tabs in the app.
  * It can be used to define common styles or components that should be present across all tab screens.
@@ -75,22 +75,24 @@ export default function TabsLayout() {
           tabBarStyle: { display: 'none' },
 
           tabBarIcon: ({ focused }) => (
-            <Text style={
-              {
+            <View style={{
+              width: '220%',
+              height: 40,
+              backgroundColor: focused ? 'white' : '#e6e6e6ff',
+              borderRadius: 5,
+              paddingVertical: 2,
+              paddingHorizontal: 5,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+              <Text style={{
                 color: "#000000",
-                fontSize: 24,
-                fontWeight: 'bold',
-                width: '220%',
-                height: 40,
-                lineHeight: 35,
-                textAlign: 'center',
-                backgroundColor: focused ? 'white' : '#e6e6e6ff',
-                borderRadius: 5,
-                paddingVertical: 2,
-                paddingHorizontal: 5,
+                fontSize: 28,
+                lineHeight: 34,
+                fontFamily: Typography.fontFamily,
                 transform: [{ rotateZ: '-5deg' }],
-              }
-            }>Fight</Text>
+              }}>Fight</Text>
+            </View>
           ),
         }}
       />
