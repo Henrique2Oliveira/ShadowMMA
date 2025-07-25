@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { initializeApp } from 'firebase/app';
 import {
   createUserWithEmailAndPassword,
@@ -60,6 +61,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await signOut(auth);
+      // Navigate to the root/login page
+      router.replace('/');
     } catch (error) {
       console.error('Logout error:', error);
     }

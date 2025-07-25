@@ -1,49 +1,84 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons'
-import React from 'react'
-import { StyleSheet, Text, View } from 'react-native'
-import { Colors, Typography } from '../../themes/theme'
+import { useAuth } from '@/contexts/AuthContext';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Colors, Typography } from '../../themes/theme';
 
 export default function Profile() {
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.avatarContainer}>
-          <MaterialCommunityIcons name="account-circle" size={100} color={Colors.text} />
+    <ScrollView>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.avatarContainer}>
+            <MaterialCommunityIcons name="account-circle" size={100} color={Colors.text} />
+          </View>
+          <Text style={styles.name}>John Doe</Text>
+          <Text style={styles.subtitle}>MMA Enthusiast</Text>
         </View>
-        <Text style={styles.name}>John Doe</Text>
-        <Text style={styles.subtitle}>MMA Enthusiast</Text>
-      </View>
 
-      <View style={styles.statsContainer}>
-        <View style={styles.statBox}>
-          <Text style={styles.statNumber}>24</Text>
-          <Text style={styles.statLabel}>Workouts</Text>
+        <View style={styles.statsContainer}>
+          <View style={styles.statBox}>
+            <Text style={styles.statNumber}>24</Text>
+            <Text style={styles.statLabel}>Workouts</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={styles.statNumber}>12</Text>
+            <Text style={styles.statLabel}>Hours</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={styles.statNumber}>8</Text>
+            <Text style={styles.statLabel}>Techniques</Text>
+          </View>
         </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statNumber}>12</Text>
-          <Text style={styles.statLabel}>Hours</Text>
-        </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statNumber}>8</Text>
-          <Text style={styles.statLabel}>Techniques</Text>
-        </View>
-      </View>
 
-      <View style={styles.infoContainer}>
-        <View style={styles.infoRow}>
-          <MaterialCommunityIcons name="medal" size={24} color={Colors.text} />
-          <Text style={styles.infoText}>Beginner Level</Text>
+        <View style={styles.infoContainer}>
+          <View style={styles.infoRow}>
+            <MaterialCommunityIcons name="medal" size={24} color={Colors.text} />
+            <Text style={styles.infoText}>Beginner Level</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <MaterialCommunityIcons name="fire" size={24} color={Colors.text} />
+            <Text style={styles.infoText}>3 Day Streak</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <MaterialCommunityIcons name="target" size={24} color={Colors.text} />
+            <Text style={styles.infoText}>Next Goal: 30 Workouts</Text>
+          </View>
         </View>
-        <View style={styles.infoRow}>
-          <MaterialCommunityIcons name="fire" size={24} color={Colors.text} />
-          <Text style={styles.infoText}>3 Day Streak</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <MaterialCommunityIcons name="target" size={24} color={Colors.text} />
-          <Text style={styles.infoText}>Next Goal: 30 Workouts</Text>
+
+        <View style={styles.buttonList}>
+          <TouchableOpacity style={styles.button} onPress={() => { }}>
+            <MaterialCommunityIcons name="cog" size={24} color={Colors.text} />
+            <Text style={styles.buttonText}>Settings</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.button} onPress={() => { }}>
+            <MaterialCommunityIcons name="star" size={24} color={Colors.text} />
+            <Text style={styles.buttonText}>Upgrade Plan</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.button} onPress={() => { }}>
+            <MaterialCommunityIcons name="file-document" size={24} color={Colors.text} />
+            <Text style={styles.buttonText}>Privacy Policy & Terms</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.button} onPress={handleLogout}>
+            <MaterialCommunityIcons name="logout" size={24} color={Colors.text} />
+            <Text style={styles.buttonText}>Logout</Text>
+          </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </ScrollView>
   )
 }
 
@@ -52,6 +87,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
     padding: 20,
+    paddingBottom:240,
+  },
+  buttonList: {
+    marginTop: 30,
+  },
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.button,
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  buttonText: {
+    color: Colors.text,
+    marginLeft: 15,
+    fontSize: 16,
+    fontFamily: Typography.fontFamily,
   },
   header: {
     alignItems: 'center',

@@ -9,7 +9,7 @@ import { getReactNativePersistence, initializeAuth } from 'firebase/auth';
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 export const firebaseConfig = {
-  apiKey: "AIzaSyC1v2V5v-qUjkAebd0QrO3aOW9bhoC4mqE",
+  apiKey: "AIzaSyC1v2V5v-qUjkAebd0QrO3aOW9bhoC4mqE", //is safe to expose to github
   authDomain: "shadow-mma.firebaseapp.com",
   projectId: "shadow-mma",
   storageBucket: "shadow-mma.firebasestorage.app",
