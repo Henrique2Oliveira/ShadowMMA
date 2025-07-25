@@ -1,43 +1,79 @@
-import React, { createContext, useContext, useState } from 'react';
+import { initializeApp } from 'firebase/app';
+import {
+  createUserWithEmailAndPassword,
+  getAuth,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  User
+} from 'firebase/auth';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { firebaseConfig } from '../FirebaseConfig.js';
 
 type AuthContextType = {
   isAuthenticated: boolean;
+  user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
   register: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  loading: boolean;
 };
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setLoading(false);
+    });
+
+    return unsubscribe;
+  }, []);
 
   const login = async (email: string, password: string) => {
-    // TODO: Implement actual authentication logic here
-    // This is just a mock implementation
-    if (email && password) {
-      setIsAuthenticated(true);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       return true;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
     }
-    return false;
   };
 
   const register = async (email: string, password: string) => {
-    // TODO: Implement actual registration logic here
-    // This is just a mock implementation
-    if (email && password) {
-      setIsAuthenticated(true);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       return true;
+    } catch (error) {
+      console.error('Registration error:', error);
+      return false;
     }
-    return false;
   };
 
-  const logout = () => {
-    setIsAuthenticated(false);
+  const logout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, register, logout }}>
+    <AuthContext.Provider value={{ 
+      isAuthenticated: !!user, 
+      user, 
+      login, 
+      register, 
+      logout,
+      loading 
+    }}>
       {children}
     </AuthContext.Provider>
   );

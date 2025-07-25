@@ -16,7 +16,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#1A1A1A"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.belsonsan.ShadowMMA"
     },
     "web": {
       "bundler": "metro",
@@ -37,7 +38,9 @@
       [
         "expo-font",
         {
-          "fonts": ["./assets/fonts/CalSans-Regular.ttf"]
+          "fonts": [
+            "./assets/fonts/CalSans-Regular.ttf"
+          ]
         }
       ]
     ],
