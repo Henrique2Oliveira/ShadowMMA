@@ -35,6 +35,7 @@ export default function Game() {
   const [isPaused, setIsPaused] = React.useState(false);
   const [timeLeft, setTimeLeft] = React.useState(TOTAL_DURATION);
   const [speedMultiplier, setSpeedMultiplier] = React.useState(1);
+  const [animationsEnabled, setAnimationsEnabled] = React.useState(true);
 
   const tiltX = React.useRef(new Animated.Value(0)).current;
   const tiltY = React.useRef(new Animated.Value(0)).current;
@@ -199,7 +200,7 @@ export default function Game() {
       <Animated.View style={[
         styles.card,
         {
-          transform: [
+          transform: animationsEnabled ? [
             {
               rotateX: tiltX.interpolate({
                 inputRange: [-0.4, 0, 0.4],
@@ -215,7 +216,7 @@ export default function Game() {
             {
               scale: scale
             }
-          ]
+          ] : []
         }
       ]}>
         <LinearGradient
@@ -311,6 +312,18 @@ export default function Game() {
             onPress={handleSpeedChange}
           >
             <Text style={styles.speedText}>x{speedMultiplier}</Text>
+          </TouchableOpacity>
+
+          {/* Animation Toggle Button */}
+          <TouchableOpacity
+            style={[styles.sideButton, !animationsEnabled && styles.disabledButton]}
+            onPress={() => setAnimationsEnabled(!animationsEnabled)}
+          >
+            <Ionicons
+              name={animationsEnabled ? "cube" : "cube-outline"}
+              size={30}
+              color={Colors.bgDark}
+            />
           </TouchableOpacity>
         </Animated.View>
       </View>
@@ -434,6 +447,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#efefefff',
     width: 80,
     height: 50,
+    marginVertical: 10,
     marginHorizontal: 30,
     borderRadius: 10,
     justifyContent: 'center',
@@ -452,6 +466,10 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily,
     color: Colors.bgDark,
     fontWeight: 'bold',
+  },
+  disabledButton: {
+    backgroundColor: '#d4d4d4',
+    opacity: 0.8,
   },
 })
 
