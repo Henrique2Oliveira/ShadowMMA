@@ -16,5 +16,6 @@ export const Colors = {
     yellow: '#FCFFC9',
     bgGame: '#D64D6B',
     bgGameDark: '#c9213aff',
-
+    primary: '#D64D6B',
+    gray: '#575757'
 };

@@ -1,14 +1,13 @@
+import { Colors, Typography } from '@/themes/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React from 'react';
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Colors, Typography } from '../../themes/theme';
 
 const moves = [
   // Basic 1-2 Combination
   { move: 'Pause', pauseTime: 10000, direction: 'up', tiltValue: 3.7 }, // Pause move for 10 seconds
-
 
   { move: 'JAB', pauseTime: 1000, direction: 'left', tiltValue: 0.2 },
   { move: 'CROSS', pauseTime: 400, direction: 'right', tiltValue: 0.2 },
@@ -26,9 +25,7 @@ const moves = [
   { move: 'SLIP', pauseTime: 1000, direction: 'down', tiltValue: 0.3 },
 ];
 
-
 export default function Game() {
-
   const TOTAL_DURATION = 2 * 60 * 1000; // 5 minutes
 
   const [currentMove, setCurrentMove] = React.useState(moves[0]);
@@ -249,7 +246,7 @@ export default function Game() {
         <View style={styles.gameOverButtonsContainer}>
           <TouchableOpacity
             style={styles.gameOverButton}
-            onPress={() => router.push("/(tabs)")}
+            onPress={() => router.push("/")}
           >
             <Ionicons
               name="home"
@@ -281,7 +278,7 @@ export default function Game() {
           {/* Home Button */}
           <TouchableOpacity
             style={styles.sideButton}
-            onPress={() => router.push("/(tabs)")}
+            onPress={() => router.push("/")}
           >
             <Ionicons
               name="home"
@@ -329,10 +326,8 @@ export default function Game() {
       </View>
 
     </LinearGradient>
-
-  )
+  );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -347,7 +342,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 50,
-    bottom: 140, // Position above tab bar
+    bottom: 140,
   },
   gameOverButton: {
     backgroundColor: '#ffffffff',
@@ -391,7 +386,7 @@ const styles = StyleSheet.create({
   },
   pauseButton: {
     position: 'absolute',
-    bottom: 40, // Position above tab bar
+    bottom: 40,
     alignSelf: 'center',
     backgroundColor: '#efefefff',
     width: 80,
@@ -422,10 +417,10 @@ const styles = StyleSheet.create({
   card: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 280,  // Fixed width
-    height: 220, // Fixed height
+    width: 280,
+    height: 220,
     borderRadius: 25,
-    overflow: 'hidden', // Ensures content doesn't overflow
+    overflow: 'hidden',
   },
   gradientBackground: {
     width: '100%',
@@ -471,7 +466,4 @@ const styles = StyleSheet.create({
     backgroundColor: '#d4d4d4',
     opacity: 0.8,
   },
-})
-
-
-
+});

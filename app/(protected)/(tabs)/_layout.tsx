@@ -1,12 +1,9 @@
+import { Colors, Typography } from '@/themes/theme';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Text, View } from 'react-native';
-import { Colors, Typography } from '../../themes/theme'; // Adjust the import path as necessary
-/**
- * This is the layout for the tabs in the app.
- * It can be used to define common styles or components that should be present across all tab screens.
- */
+
 export default function TabsLayout() {
   return (
     <Tabs
@@ -119,7 +116,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => (
             <MaterialIcons
               name="account-circle"
-              size={40}
+              size={38}
               color={focused ? 'white' : '#e6e6e6ff'}
             />
           ),
@@ -128,5 +125,3 @@ export default function TabsLayout() {
     </Tabs>
   )
 }
-
-

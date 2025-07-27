@@ -1,13 +1,9 @@
+import { Colors, Typography } from '@/themes/theme';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Colors, Typography } from '../../themes/theme'; // Adjust the import path as necessary
 
-/**
- * This is the main index screen for the app.
- * It serves as a landing page with various buttons for navigation.
- */
 export default function Index() {
   const [isModalVisible, setIsModalVisible] = React.useState(false);
   const [roundDuration, setRoundDuration] = React.useState('3');
@@ -15,7 +11,6 @@ export default function Index() {
   const [restTime, setRestTime] = React.useState('1');
   const [moveTypes, setMoveTypes] = React.useState(['punches']);
   const [moveSpeed, setMoveSpeed] = React.useState('medium');
-  const [intensity, setIntensity] = React.useState('medium');
 
   const toggleMoveType = (type: string) => {
     setMoveTypes(current =>
@@ -39,8 +34,6 @@ export default function Index() {
     { title: 'Unlock Your Next Move', onPress: () => setIsModalVisible(true) },
     { title: 'Custom Fights', onPress: () => setIsModalVisible(true) },
     { title: 'Combos', onPress: () => setIsModalVisible(true) },
-
-
   ];
 
   return (
@@ -68,19 +61,19 @@ export default function Index() {
 
       {/* Content */}
       <View style={styles.container}>
-        <LinearGradient colors={['#3EB516', '#3F8630']} style={styles.linearGradientButton}>
+        <LinearGradient colors={[Colors.green, Colors.darkGreen]} style={styles.linearGradientButton}>
           <TouchableOpacity onPress={buttons[0].onPress}>
-            <Image source={require('../../assets/images/jab-icon.png')} style={styles.imageButton} />
+            <Image source={require('../../../assets/images/jab-icon.png')} style={styles.imageButton} />
             <Text style={[styles.textButton, { textAlign: 'left', fontSize: 44, lineHeight: 55 }]}>
               {buttons[0].title.split(' ').map((word, index) => (
                 <Text key={index} style={[index === 1 ? { fontSize: 64 } : null]}>
                   {word}
                   {'\n'}
                 </Text>
-              ))}</Text>
+              ))}
+            </Text>
           </TouchableOpacity>
         </LinearGradient>
-
 
         <View style={styles.row}>
           <TouchableOpacity style={[styles.button, { zIndex: 5 }]} onPress={buttons[1].onPress}>
@@ -109,7 +102,6 @@ export default function Index() {
           </TouchableOpacity>
         </View>
 
-
         <TouchableOpacity style={[styles.buttonWide]} onPress={buttons[5].onPress}>
           <Text style={styles.textButton}>{buttons[5].title}</Text>
         </TouchableOpacity>
@@ -121,7 +113,7 @@ export default function Index() {
         </TouchableOpacity>
       </View>
 
-      {/* Bottom Sheet Modal options of the fight*/}
+      {/* Bottom Sheet Modal */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -295,7 +287,6 @@ export default function Index() {
         </TouchableOpacity>
       </Modal>
     </ScrollView>
-
   );
 }
 
@@ -307,7 +298,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Colors.background,
-    paddingBottom: 180, // Add padding to the bottom to avoid content being cut off
+    paddingBottom: 180,
   },
   moveTypesContainer: {
     flexDirection: 'row',
@@ -446,7 +437,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 20,
     paddingHorizontal: 20,
-    aspectRatio: 1, // Makes the buttons square
+    aspectRatio: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -492,4 +483,3 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
 });
-

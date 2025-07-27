@@ -10,10 +10,10 @@ export default function NotFoundScreen() {
       <View
         style={styles.container}
       >
-          <Text style={styles.buttonText}>Error 404 </Text>
+        <Text style={styles.buttonText}>Error 404 </Text>
 
-        <Link href="/" style={styles.button}>
-          <Text style={styles.buttonText}>Go to home screen!</Text>
+        <Link href="/login" style={styles.button}>
+          <Text style={styles.buttonText}>Go to home screen.</Text>
         </Link>
 
       </View>

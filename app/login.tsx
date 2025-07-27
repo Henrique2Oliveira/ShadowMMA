@@ -2,19 +2,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import AuthScreen from '@/screens/AuthScreen';
 import { Colors, Typography } from "@/themes/theme";
 import { useFonts } from 'expo-font';
-import { useRouter } from "expo-router";
+import { Redirect } from "expo-router";
 import * as SplashScreen from 'expo-splash-screen';
-import { useCallback, useEffect } from "react";
-import { StyleSheet, View } from "react-native";
+import { useCallback } from "react";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
 export default function Index() {
 
-  const router = useRouter();
-  const { isAuthenticated } = useAuth();
-  
+  const { isAuthenticated, loading } = useAuth();
+
   const [fontsLoaded] = useFonts({
     'CalSans': require('../assets/fonts/CalSans-Regular.ttf'),
   });
@@ -25,14 +24,21 @@ export default function Index() {
     }
   }, [fontsLoaded]);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.replace('/(tabs)');
-    }
-  }, [isAuthenticated]);
+  if (!fontsLoaded) return null;
 
-  if (!fontsLoaded) {
-    return null;
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color={Colors.text} />
+        <View>
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Redirect href="/(protected)/(tabs)" />;
   }
 
   return (
@@ -48,6 +54,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Colors.background,
+  },
+  loadingText: {
+    fontFamily: Typography.fontFamily,
+    color: Colors.text,
+    fontSize: 24,
+    marginTop: 20,
+    textAlign: 'center',
   },
   title: {
     fontFamily: Typography.fontFamily,

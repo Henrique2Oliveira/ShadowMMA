@@ -1,8 +1,8 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Colors, Typography } from '../../themes/theme';
 
 export default function Profile() {
   const { logout } = useAuth();
@@ -79,7 +79,7 @@ export default function Profile() {
         </View>
       </View>
     </ScrollView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
     padding: 20,
-    paddingBottom:240,
+    paddingBottom: 240,
   },
   buttonList: {
     marginTop: 30,

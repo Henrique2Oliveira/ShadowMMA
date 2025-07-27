@@ -1,9 +1,7 @@
-
-
+import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useCallback, useState } from 'react';
 import { FlatList, ListRenderItem, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Colors, Typography } from '../../themes/theme';
 
 type MoveIconName = 'hand-front-right' | 'karate' | 'arm-flex' | 'human-handsdown';
 
@@ -228,7 +226,7 @@ export default function Gallery() {
         </TouchableOpacity>
       </Modal>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({

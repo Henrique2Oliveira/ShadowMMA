@@ -8,13 +8,26 @@ export default function AuthScreen() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { login, register } = useAuth();
 
   const handleSubmit = async () => {
-    if (isLogin) {
-      await login(email, password);
-    } else {
-      await register(email, password);
+    setError('');
+    setIsSubmitting(true);
+
+    try {
+      const result = isLogin 
+        ? await login(email, password)
+        : await register(email, password);
+
+      if (!result.success && result.error) {
+        setError(result.error.message);
+      }
+    } catch (e) {
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -39,10 +52,27 @@ export default function AuthScreen() {
           onChangeText={setPassword}
           secureTextEntry
         />
-        <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-          <Text style={styles.buttonText}>{isLogin ? 'Login' : 'Register'}</Text>
+        {error ? (
+          <Text style={styles.errorText}>{error}</Text>
+        ) : null}
+        
+        <TouchableOpacity 
+          style={[styles.button, isSubmitting && styles.buttonDisabled]} 
+          onPress={handleSubmit}
+          disabled={isSubmitting}
+        >
+          <Text style={styles.buttonText}>
+            {isSubmitting ? 'Please wait...' : (isLogin ? 'Login' : 'Register')}
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setIsLogin(!isLogin)}>
+
+        <TouchableOpacity 
+          onPress={() => {
+            setIsLogin(!isLogin);
+            setError('');
+          }}
+          disabled={isSubmitting}
+        >
           <Text style={styles.switchText}>
             {isLogin ? 'Need an account? Register' : 'Have an account? Login'}
           </Text>
@@ -69,6 +99,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Colors.background,
+  },
+  errorText: {
+    color: '#ff6b6b',
+    fontFamily: Typography.fontFamily,
+    fontSize: 14,
+    marginBottom: 15,
+    textAlign: 'center',
   },
   title: {
     fontFamily: Typography.fontFamily,
@@ -104,7 +141,11 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
-    
+  },
+  buttonDisabled: {
+    backgroundColor: Colors.button + '80', // Add 50% opacity
+    elevation: 0,
+    shadowOpacity: 0,
   },
   buttonText: {
     fontFamily: Typography.fontFamily,
