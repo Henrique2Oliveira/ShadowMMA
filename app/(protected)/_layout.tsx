@@ -1,27 +1,11 @@
 import { AuthContext } from '@/contexts/AuthContext';
-import { Colors } from '@/themes/theme';
-import { Redirect, Stack, usePathname } from 'expo-router';
+import { Redirect, Stack } from 'expo-router';
 import { useContext } from 'react';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ProtectedLayout() {
 
-  const pathname = usePathname();
-
-  const getBackgroundColor = () => {
-    switch (pathname) {
-      case '/(protected)/(tabs)/game':
-        return Colors.bgGameDark;
-      case '/(protected)/(tabs)/shop':
-        return Colors.background;
-      case '/(protected)/(tabs)/gallery':
-        return Colors.background;
-      case '/(protected)/(tabs)/profile':
-        return Colors.background;
-      default:
-        return Colors.background;
-    }
-  };
+ 
   const auth = useContext(AuthContext);
 
   // Show nothing while checking authentication
@@ -36,7 +20,7 @@ export default function ProtectedLayout() {
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1, backgroundColor: getBackgroundColor() }}>
+      <SafeAreaView style={{ flex: 1}}>
         <Stack screenOptions={{ headerShown: false }} />
       </SafeAreaView>
     </SafeAreaProvider>

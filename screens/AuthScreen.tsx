@@ -2,7 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function AuthScreen() {
   const [isLogin, setIsLogin] = useState(true);
@@ -33,8 +33,9 @@ export default function AuthScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.welcomeText}>Welcome to</Text>
-      <Text style={styles.title}>SHADOW MMA</Text>
+      <Image
+        source={require('@/assets/images/img2.png')}
+        style={{ width: 200, height: 200, marginBottom: 30 }} />
       <View style={styles.form}>
         <TextInput
           style={styles.input}
@@ -98,7 +99,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: 'black',
   },
   errorText: {
     color: '#ff6b6b',
