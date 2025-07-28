@@ -12,7 +12,7 @@ export default function NotFoundScreen() {
       >
         <Text style={styles.buttonText}>Error 404 </Text>
 
-        <Link href="/login" style={styles.button}>
+        <Link href="/" style={styles.button}>
           <Text style={styles.buttonText}>Go to home screen.</Text>
         </Link>
 

@@ -38,7 +38,7 @@ export default function Index() {
   }
 
   if (isAuthenticated) {
-    return <Redirect href="/(protected)/(tabs)" />;
+    return <Redirect href="/" />;
   }
 
   return (
