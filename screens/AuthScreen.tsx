@@ -17,12 +17,12 @@ export default function AuthScreen() {
     setIsSubmitting(true);
 
     try {
-      const result = isLogin 
+      const result = isLogin
         ? await login(email, password)
         : await register(email, password);
 
       if (!result.success && result.error) {
-        setError(result.error.message);
+        setError(result.error.code);
       }
     } catch (e) {
       setError('An unexpected error occurred. Please try again.');
@@ -53,11 +53,11 @@ export default function AuthScreen() {
           secureTextEntry
         />
         {error ? (
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.errorText}>Problem {error}</Text>
         ) : null}
-        
-        <TouchableOpacity 
-          style={[styles.button, isSubmitting && styles.buttonDisabled]} 
+
+        <TouchableOpacity
+          style={[styles.button, isSubmitting && styles.buttonDisabled]}
           onPress={handleSubmit}
           disabled={isSubmitting}
         >
@@ -66,7 +66,7 @@ export default function AuthScreen() {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => {
             setIsLogin(!isLogin);
             setError('');
@@ -74,7 +74,7 @@ export default function AuthScreen() {
           disabled={isSubmitting}
         >
           <Text style={styles.switchText}>
-            {isLogin ? 'Need an account? Register' : 'Have an account? Login'}
+            {isLogin ? 'New fighter? Create an account' : 'Have an account? Login'}
           </Text>
         </TouchableOpacity>
 
