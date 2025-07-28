@@ -37,7 +37,7 @@ export default function ProtectedLayout() {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1, backgroundColor: getBackgroundColor() }}>
-        <Stack screenOptions={{ headerShown: false }} />;
+        <Stack screenOptions={{ headerShown: false }} />
       </SafeAreaView>
     </SafeAreaProvider>
 
