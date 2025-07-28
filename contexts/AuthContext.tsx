@@ -33,7 +33,6 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const isAuthenticated = user !== null;
 
   useEffect(() => {
     let mounted = true;
@@ -171,8 +170,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await signOut(auth);
-      // The navigation will happen automatically through the auth state change
-      // and the protected layout redirect
     } catch (error) {
       console.error('Logout error:', error);
     }

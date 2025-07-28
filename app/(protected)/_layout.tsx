@@ -31,7 +31,7 @@ export default function ProtectedLayout() {
 
   // If not authenticated, redirect to login
   if (!auth?.isAuthenticated) {
-    return <Redirect href="/" />;
+    return <Redirect href="/login" />;
   }
 
   return (

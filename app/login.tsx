@@ -2,33 +2,25 @@ import { useAuth } from '@/contexts/AuthContext';
 import AuthScreen from '@/screens/AuthScreen';
 import { Colors, Typography } from "@/themes/theme";
 import { useFonts } from 'expo-font';
-import { Redirect } from "expo-router";
-import * as SplashScreen from 'expo-splash-screen';
-import { useCallback } from "react";
+import { Redirect } from 'expo-router';
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
-// Keep the splash screen visible while we fetch resources
-SplashScreen.preventAutoHideAsync();
-
 export default function Index() {
-
   const { isAuthenticated, loading } = useAuth();
 
   const [fontsLoaded] = useFonts({
     'CalSans': require('../assets/fonts/CalSans-Regular.ttf'),
   });
 
-  const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded) {
-      await SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
 
-  if (!fontsLoaded) return null;
+  if (!fontsLoaded) {
+    return null; // Return null while fonts are still loading
+  }
 
   if (loading) {
     return (
       <View style={styles.container}>
+        <Text style={styles.title}>Shadow MMA</Text>
         <ActivityIndicator size="large" color={Colors.text} />
         <View>
           <Text style={styles.loadingText}>Loading...</Text>
@@ -38,11 +30,11 @@ export default function Index() {
   }
 
   if (isAuthenticated) {
-    return <Redirect href="/" />;
+    return <Redirect href="/(protected)/(tabs)" />;
   }
 
   return (
-    <View style={styles.container} onLayout={onLayoutRootView}>
+    <View style={styles.container} >
       <AuthScreen />
     </View>
   );
