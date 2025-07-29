@@ -8,13 +8,27 @@ import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 export default function Index() {
   const { isAuthenticated, loading } = useAuth();
 
-  const [fontsLoaded] = useFonts({
-    'CalSans': require('../assets/fonts/CalSans-Regular.ttf'),
+  const [fontsLoaded, fontError] = useFonts({
+    'CalSans': require('@/assets/fonts/CalSans-Regular.ttf'),
+    'SpaceMono': require('@/assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-
   if (!fontsLoaded) {
-    return null; // Return null while fonts are still loading
+    return (
+      <View style={styles.container}>
+        <Text style={[styles.title, { fontFamily: undefined }]}>Shadow MMA</Text>
+        <ActivityIndicator size="large" color={Colors.text} />
+        {fontError ? (
+          <Text style={[styles.loadingText, { fontFamily: undefined, color: '#ff4444' }]}>
+            Error loading fonts: {fontError.message}
+          </Text>
+        ) : (
+          <Text style={[styles.loadingText, { fontFamily: undefined }]}>
+            Loading ...
+          </Text>
+        )}
+      </View>
+    );
   }
 
   if (loading) {

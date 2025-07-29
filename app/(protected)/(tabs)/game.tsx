@@ -142,7 +142,6 @@ export default function Game() {
 
   const handleSpeedChange = () => {
     if (!isPaused) return;
-    // Cycle through speeds: 1x -> 1.5x -> 2x -> 3x -> back to 1x
     setSpeedMultiplier(current => {
       const speeds = [0.7, 1, 1.5, 2];
       const currentIndex = speeds.indexOf(current);

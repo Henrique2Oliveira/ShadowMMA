@@ -10,6 +10,7 @@ export default function AuthScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login, register } = useAuth();
 
   const handleSubmit = async () => {
@@ -37,22 +38,38 @@ export default function AuthScreen() {
         source={require('@/assets/images/img2.png')}
         style={{ width: 200, height: 200, marginBottom: 30 }} />
       <View style={styles.form}>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#666"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor="#666"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+        <View style={styles.inputContainer}>
+          <MaterialCommunityIcons name="email-outline" size={24} color="#666" style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            placeholderTextColor="#666"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+          />
+        </View>
+        <View style={styles.inputContainer}>
+          <MaterialCommunityIcons name="lock-outline" size={24} color="#666" style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            placeholderTextColor="#666"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+          />
+          <TouchableOpacity
+            style={styles.eyeButton}
+            onPress={() => setShowPassword(!showPassword)}
+          >
+            <MaterialCommunityIcons
+              name={showPassword ? "eye-off" : "eye"}
+              size={24}
+              color="#666"
+            />
+          </TouchableOpacity>
+        </View>
         {error ? (
           <Text style={styles.errorText}>Problem {error}</Text>
         ) : null}
@@ -101,6 +118,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'black',
   },
+  passwordContainer: {
+    marginBottom: 15,
+  },
+  passwordInput: {
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 8,
+    fontSize: 16,
+    paddingRight: 50,
+  },
+  eyeButton: {
+    padding: 10,
+    position: 'absolute',
+    right: 5,
+    top: '50%',
+    transform: [{ translateY: -22 }],
+  },
   errorText: {
     color: '#ff6b6b',
     fontFamily: Typography.fontFamily,
@@ -126,19 +160,31 @@ const styles = StyleSheet.create({
     width: '90%',
     minWidth: 300,
   },
-  input: {
-    backgroundColor: '#fff',
-    padding: 15,
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
     borderRadius: 8,
     marginBottom: 15,
+    position: 'relative',
+  },
+  inputIcon: {
+    paddingLeft: 15,
+  },
+  input: {
+    flex: 1,
+    color: '#fff',
+    padding: 15,
+    paddingLeft: 10,
     fontSize: 16,
   },
   button: {
-    backgroundColor: Colors.button,
+    backgroundColor:"#db2020ff",
     paddingHorizontal: 30,
     paddingVertical: 15,
+    paddingBottom: 18,
     borderRadius: 8,
-    elevation: 3,
+    elevation: 11,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -155,9 +201,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   switchText: {
+    fontFamily: Typography.fontFamily,
     color: '#fff',
     textAlign: 'center',
-    marginTop: 20,
+    marginTop: 15,
   },
   dividerContainer: {
     flexDirection: 'row',
