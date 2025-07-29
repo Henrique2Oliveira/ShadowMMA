@@ -5,7 +5,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ProtectedLayout() {
 
- 
+
   const auth = useContext(AuthContext);
 
   // Show nothing while checking authentication
@@ -20,7 +20,7 @@ export default function ProtectedLayout() {
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1}}>
+      <SafeAreaView style={{ flex: 1 }}>
         <Stack screenOptions={{ headerShown: false }} />
       </SafeAreaView>
     </SafeAreaProvider>

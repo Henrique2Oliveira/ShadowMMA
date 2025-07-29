@@ -141,6 +141,7 @@ export default function Game() {
   };
 
   const handleSpeedChange = () => {
+    if (!isPaused) return;
     // Cycle through speeds: 1x -> 1.5x -> 2x -> 3x -> back to 1x
     setSpeedMultiplier(current => {
       const speeds = [0.7, 1, 1.5, 2];
@@ -277,8 +278,8 @@ export default function Game() {
         <Animated.View style={{ opacity: sideButtonsOpacity }}>
           {/* Home Button */}
           <TouchableOpacity
-            style={styles.sideButton}
-            onPress={() => router.push("/")}
+            style={[styles.sideButton, !isPaused && styles.disabledButton]}
+            onPress={() => isPaused && router.push("/")}
           >
             <Ionicons
               name="home"
@@ -305,7 +306,7 @@ export default function Game() {
         <Animated.View style={{ opacity: sideButtonsOpacity }}>
           {/* Speed Button */}
           <TouchableOpacity
-            style={styles.sideButton}
+            style={[styles.sideButton, !isPaused && styles.disabledButton]}
             onPress={handleSpeedChange}
           >
             <Text style={styles.speedText}>x{speedMultiplier}</Text>
@@ -313,8 +314,8 @@ export default function Game() {
 
           {/* Animation Toggle Button */}
           <TouchableOpacity
-            style={[styles.sideButton, !animationsEnabled && styles.disabledButton]}
-            onPress={() => setAnimationsEnabled(!animationsEnabled)}
+            style={[styles.sideButton, (!animationsEnabled || !isPaused) && styles.disabledButton]}
+            onPress={() => isPaused && setAnimationsEnabled(!animationsEnabled)}
           >
             <Ionicons
               name={animationsEnabled ? "cube" : "cube-outline"}
