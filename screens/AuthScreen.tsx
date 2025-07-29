@@ -39,22 +39,22 @@ export default function AuthScreen() {
         style={{ width: 200, height: 200, marginBottom: 30 }} />
       <View style={styles.form}>
         <View style={styles.inputContainer}>
-          <MaterialCommunityIcons name="email-outline" size={24} color="#666" style={styles.inputIcon} />
+          <MaterialCommunityIcons name="email-outline" size={24} color={Colors.lightgray} style={styles.inputIcon} />
           <TextInput
             style={styles.input}
             placeholder="Email"
-            placeholderTextColor="#666"
+            placeholderTextColor={Colors.lightgray}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
           />
         </View>
         <View style={styles.inputContainer}>
-          <MaterialCommunityIcons name="lock-outline" size={24} color="#666" style={styles.inputIcon} />
+          <MaterialCommunityIcons name="lock-outline" size={24} color={Colors.lightgray} style={styles.inputIcon} />
           <TextInput
             style={styles.input}
             placeholder="Password"
-            placeholderTextColor="#666"
+            placeholderTextColor={Colors.lightgray}
             value={password}
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
@@ -66,7 +66,7 @@ export default function AuthScreen() {
             <MaterialCommunityIcons
               name={showPassword ? "eye-off" : "eye"}
               size={24}
-              color="#666"
+              color={Colors.lightgray}
             />
           </TouchableOpacity>
         </View>
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   button: {
-    backgroundColor:"#db2020ff",
+    backgroundColor: "#db2020ff",
     paddingHorizontal: 30,
     paddingVertical: 15,
     paddingBottom: 18,
