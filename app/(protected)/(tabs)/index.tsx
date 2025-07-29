@@ -79,11 +79,11 @@ export default function Index() {
         <View style={styles.row}>
           <TouchableOpacity style={[styles.button, { zIndex: 5 }]} onPress={buttons[1].onPress}>
             <MaterialCommunityIcons name="timer-outline" size={60} color={Colors.background} style={styles.buttonIcon} />
-            <Text style={[styles.textButton, { fontSize: 42 }]}>{buttons[1].title}</Text>
+            <Text style={[styles.textButton, { fontSize: 36 }]}>{buttons[1].title}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button} onPress={buttons[2].onPress}>
             <MaterialCommunityIcons name="timer-sand" size={60} color={Colors.background} style={styles.buttonIcon} />
-            <Text style={[styles.textButton, { fontSize: 42 }]}>{buttons[2].title}</Text>
+            <Text style={[styles.textButton, { fontSize: 36 }]}>{buttons[2].title}</Text>
           </TouchableOpacity>
         </View>
 
@@ -168,10 +168,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.button,
     borderRadius: 10,
-    padding: 20,
+    padding: 5,
     aspectRatio: 1,
     justifyContent: 'center',
     alignItems: 'center',
+
   },
   buttonIcon: {
     marginBottom: 10,
