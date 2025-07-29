@@ -65,7 +65,7 @@ export default function Index() {
             textShadowOffset: { width: 1, height: 1 },
             textShadowRadius: 3,
           }}>
-            LEVEL 99
+            LEVEL 0
           </Text>
         </View>
       </View>

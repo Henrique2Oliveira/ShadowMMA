@@ -44,6 +44,8 @@ export const Colors = {
     
     // Game specific
     timeGameBar: palette.red.medium,
+    redDots: palette.red.light,
+    redDotsDark: palette.red.dark,
     grayLevelBar: palette.gray.level,
     green: palette.green.light,
     darkGreen: palette.green.dark,

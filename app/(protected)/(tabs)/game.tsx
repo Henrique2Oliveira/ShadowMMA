@@ -26,7 +26,7 @@ const moves = [
 ];
 
 export default function Game() {
-  const TOTAL_DURATION = 2 * 60 * 1000; // 5 minutes
+  const TOTAL_DURATION = 1 * 60 * 1000; // 5 minutes
 
   const [currentMove, setCurrentMove] = React.useState(moves[0]);
   const [isPaused, setIsPaused] = React.useState(false);

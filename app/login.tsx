@@ -1,12 +1,40 @@
+import PaywallScreen from '@/components/PaywallScreen';
 import { useAuth } from '@/contexts/AuthContext';
 import AuthScreen from '@/screens/AuthScreen';
 import { Colors, Typography } from "@/themes/theme";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFonts } from 'expo-font';
 import { Redirect } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-
 export default function Index() {
   const { isAuthenticated, loading } = useAuth();
+  const [showPaywall, setShowPaywall] = useState(true);
+  const [checkingFirstVisit, setCheckingFirstVisit] = useState(true);
+
+  useEffect(() => {
+    checkFirstVisit();
+  }, []);
+
+  const checkFirstVisit = async () => {
+    try {
+      const hasVisited = await AsyncStorage.getItem('hasVisitedBefore');
+      if (hasVisited === null) {
+        setShowPaywall(true);
+        await AsyncStorage.setItem('hasVisitedBefore', 'true');
+      } else {
+        setShowPaywall(false);
+      }
+    } catch (error) {
+      console.error('Error checking first visit:', error);
+    } finally {
+      setCheckingFirstVisit(false);
+    }
+  };
+
+  const handlePaywallSkip = () => {
+    setShowPaywall(false);
+  };
 
   const [fontsLoaded, fontError] = useFonts({
     'CalSans': require('@/assets/fonts/CalSans-Regular.ttf'),
@@ -47,8 +75,24 @@ export default function Index() {
     return <Redirect href="/(protected)/(tabs)" />;
   }
 
+  if (checkingFirstVisit) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color={Colors.text} />
+      </View>
+    );
+  }
+
+  if (showPaywall) {
+    return (
+      <View style={styles.container}>
+        <PaywallScreen onSkip={handlePaywallSkip} />
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container} >
+    <View style={styles.container}>
       <AuthScreen />
     </View>
   );
