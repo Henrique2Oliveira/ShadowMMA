@@ -43,17 +43,27 @@ export default function Index() {
 
       {/* Header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', paddingHorizontal: 10, backgroundColor: Colors.background, paddingTop: 20 }}>
-        <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-          <MaterialCommunityIcons name="star" size={34} color="white" style={{ marginRight: 10 }} />
+        <View style={{ maxWidth: '90%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+          <MaterialCommunityIcons name="star" size={34} color="#ffc108" style={{ marginRight: 10, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 5 }} />
 
-          <View style={{ width: "60%", height: 25, borderRadius: 8, backgroundColor: Colors.grayLevelBar, overflow: 'hidden', borderWidth: 3, borderColor: "white", shadowColor: Colors.darkGreen, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 3.84, elevation: 5 }}>
-            <View style={{ width: "25%", height: 25, borderRadius: 0, backgroundColor: "white" }} />
+          <View style={{ width: "60%", height: 28, borderRadius: 8, backgroundColor: "#7b590aff", overflow: 'hidden', shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 4.65, elevation: 8 }}>
+            <LinearGradient
+              colors={['#ffd700', '#ffa000']}
+              start={{ x: 0, y: 1 }}
+              end={{ x: 1, y: 0 }}
+              style={{ width: "60%", height: '100%', borderRadius: 4 }}>
+
+            </LinearGradient>
           </View>
           <Text style={{
             color: Colors.text,
-            fontSize: 18,
+            fontSize: 20,
+            fontWeight: 'bold',
             fontFamily: Typography.fontFamily,
-            marginLeft: 10,
+            marginLeft: 12,
+            textShadowColor: "#000",
+            textShadowOffset: { width: 1, height: 1 },
+            textShadowRadius: 3,
           }}>
             LEVEL 99
           </Text>
@@ -89,7 +99,7 @@ export default function Index() {
 
         <View style={styles.row}>
           <TouchableOpacity style={styles.button} onPress={buttons[3].onPress}>
-            <View style={{ position: 'absolute', top: -40, transform: [{ rotate: '45deg' }], }}>
+            <View style={{ position: 'absolute', top: -40, transform: [{ rotate: '40deg' }], }}>
               <Ionicons name="footsteps" size={80} color={Colors.background} style={styles.buttonIcon} />
               <Ionicons name="footsteps" size={80} color={Colors.background} style={styles.buttonIcon} />
             </View>
@@ -199,6 +209,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     justifyContent: 'center',
     alignItems: 'center',
+    opacity: 0.75,
     bottom: -10,
     right: -10,
     width: 120,
