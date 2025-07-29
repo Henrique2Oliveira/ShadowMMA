@@ -2,16 +2,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function AuthScreen() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { login, register } = useAuth();
+  const { login, register, resetPassword } = useAuth();
 
   const handleSubmit = async () => {
     setError('');
@@ -84,6 +84,30 @@ export default function AuthScreen() {
           </Text>
         </TouchableOpacity>
 
+        {isLogin && (
+          <TouchableOpacity
+            onPress={async () => {
+              if (!email) {
+                setError('Please enter your email address first');
+                return;
+              }
+              try {
+                const result = await resetPassword(email);
+                if (result.success) {
+                  Alert.alert('Password reset email sent! Check your inbox.');
+                  setError('Password reset email sent! Check your inbox.');
+                } else if (result.error) {
+                  setError(result.error.message);
+                }
+              } catch (e) {
+                setError('Failed to send reset email. Please try again.');
+              }
+            }}
+          >
+            <Text style={styles.forgotPasswordText}>Forgot your password?</Text>
+          </TouchableOpacity>
+        )}
+
         <TouchableOpacity
           onPress={() => {
             setIsLogin(!isLogin);
@@ -92,7 +116,7 @@ export default function AuthScreen() {
           disabled={isSubmitting}
         >
           <Text style={styles.switchText}>
-            {isLogin ? 'New fighter? Create an account' : 'Have an account? Login'}
+            {isLogin ? 'Create an account?' : 'Have an account? Login'}
           </Text>
         </TouchableOpacity>
 
@@ -138,7 +162,7 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#ff6b6b',
     fontFamily: Typography.fontFamily,
-    fontSize: 14,
+    fontSize: 12,
     marginBottom: 15,
     textAlign: 'center',
   },
@@ -237,5 +261,13 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontFamily: Typography.fontFamily,
+  },
+  forgotPasswordText: {
+    fontFamily: Typography.fontFamily,
+    color: Colors.lightgray,
+    textAlign: 'center',
+    marginTop: 10,
+    marginBottom: 5,
+    fontSize: 14,
   },
 });

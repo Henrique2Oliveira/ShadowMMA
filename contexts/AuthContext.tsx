@@ -4,6 +4,7 @@ import {
   createUserWithEmailAndPassword,
   getAuth,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
   User
@@ -21,6 +22,7 @@ type AuthContextType = {
   user: User | null;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: AuthError }>;
   register: (email: string, password: string) => Promise<{ success: boolean; error?: AuthError }>;
+  resetPassword: (email: string) => Promise<{ success: boolean; error?: AuthError }>;
   logout: () => Promise<void>;
   loading: boolean;
 };
@@ -175,12 +177,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    try {
+      if (!email) {
+        return { 
+          success: false, 
+          error: { code: 'auth/missing-email', message: 'Email is required.' }
+        };
+      }
+
+      if (!email.includes('@') || !email.includes('.')) {
+        return {
+          success: false,
+          error: { code: 'auth/invalid-email', message: 'Please enter a valid email address.' }
+        };
+      }
+
+      await sendPasswordResetEmail(auth, email);
+      return { success: true };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: {
+          code: error.code || 'auth/unknown',
+          message: error.message || 'An unknown error occurred.'
+        }
+      };
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       isAuthenticated: !!user,
       user,
       login,
       register,
+      resetPassword,
       logout,
       loading
     }}>
