@@ -10,10 +10,14 @@ import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'rea
 export default function Index() {
   const { user } = useAuth();
   const { userData, refreshUserData } = useUserData();
+
   const [isModalVisible, setIsModalVisible] = React.useState(false);
+
   const [roundDuration, setRoundDuration] = React.useState('1');
   const [numRounds, setNumRounds] = React.useState('1');
   const [restTime, setRestTime] = React.useState('1');
+  const [moveSpeed, setMoveSpeed] = React.useState('1');
+  const [difficulty, setDifficulty] = React.useState('beginner');
 
   useEffect(() => {
     if (user) {
@@ -21,8 +25,6 @@ export default function Index() {
     }
   }, [user]);
   
-  const [moveSpeed, setMoveSpeed] = React.useState('medium');
-  const [difficulty, setDifficulty] = React.useState('beginner');
 
 
   const handleStartFight = () => {

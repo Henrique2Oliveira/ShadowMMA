@@ -20,15 +20,9 @@ interface FightModeModalProps {
   onStartFight: () => void;
 }
 
-interface MoveTypeIcon {
-  type: 'material' | 'ionicons';
-  name: string;
-}
-
 interface FightOption {
   value: string;
   label: string;
-  icon?: MoveTypeIcon;
 }
 
 const FIGHT_OPTIONS: {
