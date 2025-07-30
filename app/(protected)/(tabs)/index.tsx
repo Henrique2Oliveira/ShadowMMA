@@ -19,28 +19,104 @@ export default function Index() {
   const [moveSpeed, setMoveSpeed] = React.useState('1');
   const [difficulty, setDifficulty] = React.useState('beginner');
 
+  // Expose the show modal function globally
+  React.useEffect(() => {
+    globalThis.showFightModal = () => setModalConfig({
+      roundDuration: '3',
+      numRounds: '3',
+      restTime: '1',
+      moveSpeed: '1',
+      difficulty: 'beginner'
+    });
+    return () => {
+      globalThis.showFightModal = undefined;
+    };
+  }, []);
+
   useEffect(() => {
     if (user) {
       refreshUserData(user.uid);
     }
   }, [user]);
-  
 
-
-  const handleStartFight = () => {
-    // TODO: Implement fight start logic
-    setIsModalVisible(false);
+  const setModalConfig = (config: {
+    roundDuration?: string;
+    numRounds?: string;
+    restTime?: string;
+    moveSpeed?: string;
+    difficulty?: string;
+  }) => {
+    setRoundDuration(config.roundDuration || roundDuration);
+    setNumRounds(config.numRounds || numRounds);
+    setRestTime(config.restTime || restTime);
+    setMoveSpeed(config.moveSpeed || moveSpeed);
+    setDifficulty(config.difficulty || difficulty);
+    setIsModalVisible(true);
   };
 
   const buttons = [
-    { title: 'FREE FIGHT', onPress: () => setIsModalVisible(true) },
-    { title: '5 Min', onPress: () => setIsModalVisible(true) },
-    { title: '15 Min', onPress: () => setIsModalVisible(true) },
-    { title: 'Footwork', onPress: () => setIsModalVisible(true) },
-    { title: 'Defense Work', onPress: () => setIsModalVisible(true) },
-    { title: 'Unlock Your Next Move', onPress: () => setIsModalVisible(true) },
-    { title: 'Custom Fights', onPress: () => setIsModalVisible(true) },
-    { title: 'Combos', onPress: () => setIsModalVisible(true) },
+    {
+      title: 'FREE FIGHT',
+      onPress: () => setModalConfig({
+        roundDuration: '3',
+        numRounds: '3',
+        restTime: '1',
+        moveSpeed: '1',
+        difficulty: 'beginner'
+      })
+    },
+    {
+      title: '5 Min',
+      onPress: () => setModalConfig({
+        roundDuration: '5',
+        numRounds: '1',
+        restTime: '1',
+        moveSpeed: '1.5',
+        difficulty: 'beginner'
+      })
+    },
+    {
+      title: '15 Min',
+      onPress: () => setModalConfig({
+        roundDuration: '5',
+        numRounds: '3',
+        restTime: '1',
+        moveSpeed: '2',
+        difficulty: 'intermediate'
+      })
+    },
+    {
+      title: 'Footwork',
+      onPress: () => setModalConfig({
+        roundDuration: '3',
+        numRounds: '3',
+        restTime: '1',
+        moveSpeed: '2.5',
+        difficulty: 'intermediate'
+      })
+    },
+    {
+      title: 'Defense Work',
+      onPress: () => setModalConfig({
+        roundDuration: '3',
+        numRounds: '5',
+        restTime: '0.5',
+        moveSpeed: '2',
+        difficulty: 'advanced'
+      })
+    },
+    {
+      title: 'Unlock Your Next Move',
+      onPress: () => setModalConfig({})
+    },
+    {
+      title: 'Custom Fights',
+      onPress: () => setModalConfig({}) // Uses default values
+    },
+    {
+      title: 'Combos',
+      onPress: () => setModalConfig({})
+    },
   ];
 
   return (
@@ -52,15 +128,15 @@ export default function Index() {
         <View style={{ maxWidth: '90%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
           <MaterialCommunityIcons name="star" size={34} color="#ffc108" style={{ marginRight: 10, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 5 }} />
 
-          <View style={{ width: "60%", height: 28, borderRadius: 8, backgroundColor: "#7b590aff", overflow: 'hidden',  shadowOpacity: 0.3, shadowRadius: 4.65, elevation: 8 }}>
+          <View style={{ width: "60%", height: 28, borderRadius: 8, backgroundColor: "#7b590aff", overflow: 'hidden', shadowOpacity: 0.3, shadowRadius: 4.65, elevation: 8 }}>
             <LinearGradient
               colors={['#ffd700', '#ffa000']}
               start={{ x: 0, y: 1 }}
               end={{ x: 1, y: 0 }}
-              style={{ 
-                width: `${userData?.xp || 0}%`, 
-                height: '100%', 
-                borderRadius: 4 
+              style={{
+                width: `${userData?.xp || 0}%`,
+                height: '100%',
+                borderRadius: 4
               }}>
             </LinearGradient>
           </View>
@@ -146,7 +222,7 @@ export default function Index() {
         setMoveSpeed={setMoveSpeed}
         difficulty={difficulty}
         setDifficulty={setDifficulty}
-        onStartFight={handleStartFight}
+        onStartFight={() => setIsModalVisible(false)}
       />
     </ScrollView>
   );

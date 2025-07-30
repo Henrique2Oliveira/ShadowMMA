@@ -1,10 +1,20 @@
 import { Colors, Typography } from '@/themes/theme';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import React from 'react';
-import { Text, View } from 'react-native';
+import { Text, TouchableOpacity } from 'react-native';
 
 export default function TabsLayout() {
+  const router = useRouter();
+
+  const handleFightPress = () => {
+    router.push('/(protected)/(tabs)');
+    // Using a timeout to ensure navigation completes before showing modal
+    setTimeout(() => {
+      globalThis.showFightModal?.();
+    }, 100);
+  };
+
   return (
     <Tabs
       screenOptions={{
@@ -70,18 +80,19 @@ export default function TabsLayout() {
           title: 'Game',
           tabBarShowLabel: false,
           tabBarStyle: { display: 'none' },
-
           tabBarIcon: ({ focused }) => (
-            <View style={{
-              width: '220%',
-              height: 40,
-              backgroundColor: focused ? 'white' : '#e6e6e6ff',
-              borderRadius: 5,
-              paddingVertical: 2,
-              paddingHorizontal: 5,
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}>
+            <TouchableOpacity
+              onPress={handleFightPress}
+              style={{
+                width: '220%',
+                height: 40,
+                backgroundColor: focused ? 'white' : '#e6e6e6ff',
+                borderRadius: 5,
+                paddingVertical: 2,
+                paddingHorizontal: 5,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
               <Text style={{
                 color: "#000000",
                 fontSize: 28,
@@ -89,7 +100,7 @@ export default function TabsLayout() {
                 fontFamily: Typography.fontFamily,
                 transform: [{ rotateZ: '-5deg' }],
               }}>Fight</Text>
-            </View>
+            </TouchableOpacity>
           ),
         }}
       />

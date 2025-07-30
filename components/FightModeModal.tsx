@@ -1,6 +1,7 @@
 import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
+import { router } from 'expo-router';
 import React from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -83,13 +84,18 @@ export function FightModeModal({
   setDifficulty,
   onStartFight,
 }: FightModeModalProps) {
+  const handleStartFight = () => {
+    onStartFight();
+    router.push('/(protected)/(tabs)/game');
+  };
+
   // Get color based on difficulty
   const getDifficultyColor = (difficultyValue: string) => {
     switch (difficultyValue) {
       case 'beginner':
         return '#4CAF50'; // Light green
       case 'intermediate':
-        return '#FFC107'; // Amber
+        return '#d7a40bff'; // Amber
       case 'advanced':
         return '#F44336'; // Red
       default:
@@ -262,7 +268,7 @@ export function FightModeModal({
               </View>
             </View>
 
-            <TouchableOpacity style={styles.startButton} onPress={onStartFight}>
+            <TouchableOpacity style={styles.startButton} onPress={handleStartFight}>
               <Text style={styles.startButtonText}>Start Fight</Text>
             </TouchableOpacity>
           </View>

@@ -188,6 +188,68 @@ export const combinationSets = {
         { move: 'SPRAWL', pauseTime: 1000, direction: 'up', tiltValue: 0.5 },
       ]
     }
+  ],
+
+  defense: [
+    // Defensive Combinations
+    {
+      name: "Shell Defense",
+      moves: [
+        { move: 'BLOCK', pauseTime: 600, direction: 'up', tiltValue: 0.3 },
+        { move: 'BLOCK', pauseTime: 600, direction: 'up', tiltValue: 0.3 },
+        { move: 'COUNTER\nJAB', pauseTime: 800, direction: 'left', tiltValue: 0.2 },
+        { move: 'COUNTER\nCROSS', pauseTime: 800, direction: 'right', tiltValue: 0.3 },
+      ]
+    },
+    {
+      name: "Head Movement",
+      moves: [
+        { move: 'SLIP', pauseTime: 600, direction: 'left', tiltValue: 0.3 },
+        { move: 'SLIP', pauseTime: 600, direction: 'right', tiltValue: 0.3 },
+        { move: 'DUCK', pauseTime: 800, direction: 'down', tiltValue: 0.4 },
+        { move: 'LEFT\nHOOK', pauseTime: 800, direction: 'left', tiltValue: 0.4 },
+      ]
+    },
+    {
+      name: "Parry Counter",
+      moves: [
+        { move: 'PARRY', pauseTime: 500, direction: 'right', tiltValue: 0.2 },
+        { move: 'CROSS', pauseTime: 600, direction: 'right', tiltValue: 0.3 },
+        { move: 'PARRY', pauseTime: 500, direction: 'left', tiltValue: 0.2 },
+        { move: 'LEFT\nHOOK', pauseTime: 800, direction: 'left', tiltValue: 0.4 },
+      ]
+    }
+  ],
+
+  footwork: [
+    // Footwork Combinations
+    {
+      name: "In and Out",
+      moves: [
+        { move: 'STEP\nBACK', pauseTime: 800, direction: 'down', tiltValue: 0.3 },
+        { move: 'STEP\nIN', pauseTime: 600, direction: 'up', tiltValue: 0.3 },
+        { move: 'JAB', pauseTime: 400, direction: 'left', tiltValue: 0.2 },
+        { move: 'CROSS', pauseTime: 600, direction: 'right', tiltValue: 0.3 },
+      ]
+    },
+    {
+      name: "Lateral Movement",
+      moves: [
+        { move: 'SIDE\nSTEP', pauseTime: 600, direction: 'left', tiltValue: 0.3 },
+        { move: 'JAB', pauseTime: 400, direction: 'left', tiltValue: 0.2 },
+        { move: 'SIDE\nSTEP', pauseTime: 600, direction: 'right', tiltValue: 0.3 },
+        { move: 'CROSS', pauseTime: 600, direction: 'right', tiltValue: 0.3 },
+      ]
+    },
+    {
+      name: "Pivot Attack",
+      moves: [
+        { move: 'PIVOT', pauseTime: 800, direction: 'left', tiltValue: 0.4 },
+        { move: 'LEFT\nHOOK', pauseTime: 600, direction: 'left', tiltValue: 0.4 },
+        { move: 'PIVOT', pauseTime: 800, direction: 'right', tiltValue: 0.4 },
+        { move: 'RIGHT\nHOOK', pauseTime: 600, direction: 'right', tiltValue: 0.4 },
+      ]
+    }
   ]
 };
 
