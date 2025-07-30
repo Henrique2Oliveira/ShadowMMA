@@ -16,7 +16,7 @@ const subscriptionPlans: SubscriptionPlan[] = [
     title: 'Free',
     price: '$0',
     period: 'forever',
-    features: ['Basic training programs', 'Essential techniques', 'Progress tracking', 'Community access']
+    features: ['Basic training programs', '3 Fights a day','Essential techniques', 'Progress tracking', 'Community access']
   },
   {
     title: 'Premium',
@@ -26,10 +26,10 @@ const subscriptionPlans: SubscriptionPlan[] = [
     popular: true
   },
   {
-    title: 'Lifetime',
-    price: '$39.99',
-    period: 'one-time',
-    features: ['Lifetime Premium access', 'Early access to new features', 'VIP support', 'Exclusive content']
+    title: 'Anual Premium',
+    price: '$69.99',
+    period: 'year',
+    features: ['All premium features', 'Early access to new features', 'VIP support', 'Exclusive content']
   }
 ];
 
@@ -94,7 +94,7 @@ export default function PaywallScreen({ onSkip }: Props) {
       </ScrollView>
 
       <Pressable onPress={onSkip} style={styles.skipButton}>
-        <Text style={styles.skipText}>Continue with Free Trial</Text>
+        <Text style={styles.skipText}>Continue with Free Plan</Text>
       </Pressable>
     </View>
   );

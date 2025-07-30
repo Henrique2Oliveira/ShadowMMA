@@ -10,7 +10,7 @@ export default function RootLayout() {
   const getBackgroundColor = () => {
     switch (pathname) {
       case '/login':
-        return "#000000";
+        return "#020402"; // special Dark background for login to match image
       case '/(protected)/(tabs)/game':
         return Colors.bgGameDark;
       case '/(protected)/(tabs)/shop':
