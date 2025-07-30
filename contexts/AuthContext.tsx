@@ -1,5 +1,4 @@
 import { getApps, initializeApp } from 'firebase/app';
-
 import {
   createUserWithEmailAndPassword,
   getAuth,
@@ -9,8 +8,9 @@ import {
   signOut,
   User
 } from 'firebase/auth';
+import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { firebaseConfig } from '../FirebaseConfig.js';
+import { db, firebaseConfig } from '../FirebaseConfig.js';
 
 type AuthError = {
   code: string;
@@ -119,6 +119,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       attempts.delete(email); // Clear attempts on successful login
+      
+      // Update last login timestamp
+      const userDocRef = doc(db, 'users', userCredential.user.uid);
+      await setDoc(userDocRef, {
+        lastLoginAt: serverTimestamp()
+      }, { merge: true });
+      
       return { success: true };
     } catch (error: any) {
       recordAttempt(email);
@@ -157,6 +164,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Create user document in Firestore with default values
+      const userDocRef = doc(db, 'users', userCredential.user.uid);
+      await setDoc(userDocRef, {
+        email: email,
+        level: 0,
+        plan: 'free',
+        hours: 0,
+        moves: 4,
+        combos: 0,
+        fightsLeft: 3,
+        createdAt: serverTimestamp(),
+        lastLoginAt: serverTimestamp()
+      });
+      
       return { success: true };
     } catch (error: any) {
       return {
