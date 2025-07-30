@@ -8,6 +8,7 @@ export default function AuthScreen() {
   const [isLogin, setIsLogin] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -20,7 +21,7 @@ export default function AuthScreen() {
     try {
       const result = isLogin
         ? await login(email, password)
-        : await register(email, password);
+        : await register(email, password, name);
 
       if (!result.success && result.error) {
         setError(result.error.code);
@@ -38,6 +39,20 @@ export default function AuthScreen() {
         source={require('@/assets/images/img2.png')}
         style={{ width: 200, height: 200, marginBottom: 30 }} />
       <View style={styles.form}>
+        {!isLogin && (
+          <View style={styles.inputContainer}>
+            <MaterialCommunityIcons name="account-outline" size={24} color={Colors.lightgray} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Full Name"
+              placeholderTextColor={Colors.lightgray}
+              value={name}
+              onChangeText={(text) => setName(text.slice(0, 50))}
+              autoCapitalize="words"
+              maxLength={50}
+            />
+          </View>
+        )}
         <View style={styles.inputContainer}>
           <MaterialCommunityIcons name="email-outline" size={24} color={Colors.lightgray} style={styles.inputIcon} />
           <TextInput

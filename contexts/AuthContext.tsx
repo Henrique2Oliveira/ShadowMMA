@@ -21,7 +21,7 @@ type AuthContextType = {
   isAuthenticated: boolean;
   user: User | null;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: AuthError }>;
-  register: (email: string, password: string) => Promise<{ success: boolean; error?: AuthError }>;
+  register: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: AuthError }>;
   resetPassword: (email: string) => Promise<{ success: boolean; error?: AuthError }>;
   logout: () => Promise<void>;
   loading: boolean;
@@ -139,13 +139,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const register = async (email: string, password: string) => {
+  const register = async (email: string, password: string, name?: string) => {
     try {
       // Input validation
       if (!email || !password) {
         return { 
           success: false, 
           error: { code: 'auth/missing-fields', message: 'Email and password are required.' }
+        };
+      }
+      
+      if (!name) {
+        return {
+          success: false,
+          error: { code: 'auth/missing-name', message: 'Name is required.' }
+        };
+      }
+
+      if (name.trim().length < 2) {
+        return {
+          success: false,
+          error: { code: 'auth/name-too-short', message: 'Name must be at least 2 characters long.' }
+        };
+      }
+
+      if (name.trim().length > 50) {
+        return {
+          success: false,
+          error: { code: 'auth/name-too-long', message: 'Name must not exceed 50 characters.' }
         };
       }
 
@@ -169,12 +190,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userDocRef = doc(db, 'users', userCredential.user.uid);
       await setDoc(userDocRef, {
         email: email,
-        level: 0,
+        name: name,
+        level: 1,
+        xp: 10, 
         plan: 'free',
-        hours: 0,
+        hours: 0, // hours of training
         moves: 4,
         combos: 0,
-        fightsLeft: 3,
+        fightsLeft: 3, // Default fights left for a day for free users
         createdAt: serverTimestamp(),
         lastLoginAt: serverTimestamp()
       });

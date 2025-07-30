@@ -6,7 +6,7 @@ import React from 'react';
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const moves = [
-  // Basic 1-2 Combination
+  // Basic 1-2 Combination test
   { move: 'Pause', pauseTime: 10000, direction: 'up', tiltValue: 3.7 }, // Pause move for 10 seconds
 
   { move: 'JAB', pauseTime: 1000, direction: 'left', tiltValue: 0.2 },

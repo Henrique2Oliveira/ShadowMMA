@@ -1,11 +1,39 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { db } from '@/FirebaseConfig';
 import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import React from 'react';
+import { doc, onSnapshot } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+type UserData = {
+  name: string;
+  level: number;
+  hours: number;
+  moves: number;
+  combos: number;
+  plan: string;
+  xp: number;
+};
+
 export default function Profile() {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const userDocRef = doc(db, 'users', user.uid);
+    const unsubscribe = onSnapshot(userDocRef, (doc) => {
+      if (doc.exists()) {
+        setUserData(doc.data() as UserData);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -22,37 +50,37 @@ export default function Profile() {
           <View style={styles.avatarContainer}>
             <MaterialCommunityIcons name="account-circle" size={100} color={Colors.text} />
           </View>
-          <Text style={styles.name}>John Doe</Text>
-          <Text style={styles.subtitle}>MMA Enthusiast</Text>
+          <Text style={styles.name}>{userData?.name || 'Loading...'}</Text>
+          <Text style={styles.subtitle}>{userData?.plan === 'free' ? 'Free Member' : 'Premium Member'}</Text>
         </View>
 
         <View style={styles.statsContainer}>
           <View style={styles.statBox}>
-            <Text style={styles.statNumber}>24</Text>
-            <Text style={styles.statLabel}>Workouts</Text>
+            <Text style={styles.statNumber}>{userData?.moves || "-"}</Text>
+            <Text style={styles.statLabel}>Moves</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={styles.statNumber}>12</Text>
+            <Text style={styles.statNumber}>{userData?.hours || "-"}</Text>
             <Text style={styles.statLabel}>Hours</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={styles.statNumber}>8</Text>
-            <Text style={styles.statLabel}>Techniques</Text>
+            <Text style={styles.statNumber}>{userData?.combos || "-"}</Text>
+            <Text style={styles.statLabel}>Combos</Text>
           </View>
         </View>
 
         <View style={styles.infoContainer}>
           <View style={styles.infoRow}>
             <MaterialCommunityIcons name="medal" size={24} color={Colors.text} />
-            <Text style={styles.infoText}>Beginner Level</Text>
+            <Text style={styles.infoText}>Level {userData?.level || 1}</Text>
           </View>
           <View style={styles.infoRow}>
             <MaterialCommunityIcons name="fire" size={24} color={Colors.text} />
-            <Text style={styles.infoText}>3 Day Streak</Text>
+            <Text style={styles.infoText}>XP: {userData?.xp || 0}</Text>
           </View>
           <View style={styles.infoRow}>
             <MaterialCommunityIcons name="target" size={24} color={Colors.text} />
-            <Text style={styles.infoText}>Next Goal: 30 Workouts</Text>
+            <Text style={styles.infoText}>Next Level: {((userData?.level || 1) + 1)}</Text>
           </View>
         </View>
 

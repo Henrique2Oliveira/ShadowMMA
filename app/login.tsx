@@ -7,6 +7,7 @@ import { useFonts } from 'expo-font';
 import { Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+
 export default function Index() {
   const { isAuthenticated, loading } = useAuth();
   const [showPaywall, setShowPaywall] = useState(true);

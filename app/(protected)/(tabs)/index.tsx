@@ -46,12 +46,12 @@ export default function Index() {
         <View style={{ maxWidth: '90%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
           <MaterialCommunityIcons name="star" size={34} color="#ffc108" style={{ marginRight: 10, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 5 }} />
 
-          <View style={{ width: "60%", height: 28, borderRadius: 8, backgroundColor: "#7b590aff", overflow: 'hidden', shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 4.65, elevation: 8 }}>
+          <View style={{ width: "60%", height: 28, borderRadius: 8, backgroundColor: "#7b590aff", overflow: 'hidden',  shadowOpacity: 0.3, shadowRadius: 4.65, elevation: 8 }}>
             <LinearGradient
               colors={['#ffd700', '#ffa000']}
               start={{ x: 0, y: 1 }}
               end={{ x: 1, y: 0 }}
-              style={{ width: "60%", height: '100%', borderRadius: 4 }}>
+              style={{ width: "0%", height: '100%', borderRadius: 4 }}>
 
             </LinearGradient>
           </View>
@@ -65,7 +65,7 @@ export default function Index() {
             textShadowOffset: { width: 1, height: 1 },
             textShadowRadius: 3,
           }}>
-            LEVEL 0
+            LEVEL 1
           </Text>
         </View>
       </View>
