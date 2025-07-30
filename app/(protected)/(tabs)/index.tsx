@@ -1,25 +1,29 @@
 import { FightModeModal } from '@/components/FightModeModal';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function Index() {
+  const { user } = useAuth();
+  const { userData, refreshUserData } = useUserData();
   const [isModalVisible, setIsModalVisible] = React.useState(false);
-  const [roundDuration, setRoundDuration] = React.useState('3');
-  const [numRounds, setNumRounds] = React.useState('3');
+  const [roundDuration, setRoundDuration] = React.useState('1');
+  const [numRounds, setNumRounds] = React.useState('1');
   const [restTime, setRestTime] = React.useState('1');
-  const [moveTypes, setMoveTypes] = React.useState(['punches']);
-  const [moveSpeed, setMoveSpeed] = React.useState('medium');
 
-  const toggleMoveType = (type: string) => {
-    setMoveTypes(current =>
-      current.includes(type)
-        ? current.filter(t => t !== type)
-        : [...current, type]
-    );
-  };
+  useEffect(() => {
+    if (user) {
+      refreshUserData(user.uid);
+    }
+  }, [user]);
+  
+  const [moveSpeed, setMoveSpeed] = React.useState('medium');
+  const [difficulty, setDifficulty] = React.useState('beginner');
+
 
   const handleStartFight = () => {
     // TODO: Implement fight start logic
@@ -51,8 +55,11 @@ export default function Index() {
               colors={['#ffd700', '#ffa000']}
               start={{ x: 0, y: 1 }}
               end={{ x: 1, y: 0 }}
-              style={{ width: "0%", height: '100%', borderRadius: 4 }}>
-
+              style={{ 
+                width: `${userData?.xp || 0}%`, 
+                height: '100%', 
+                borderRadius: 4 
+              }}>
             </LinearGradient>
           </View>
           <Text style={{
@@ -65,7 +72,7 @@ export default function Index() {
             textShadowOffset: { width: 1, height: 1 },
             textShadowRadius: 3,
           }}>
-            LEVEL 1
+            LEVEL {userData?.level || 1}
           </Text>
         </View>
       </View>
@@ -133,10 +140,10 @@ export default function Index() {
         setNumRounds={setNumRounds}
         restTime={restTime}
         setRestTime={setRestTime}
-        moveTypes={moveTypes}
-        toggleMoveType={toggleMoveType}
         moveSpeed={moveSpeed}
         setMoveSpeed={setMoveSpeed}
+        difficulty={difficulty}
+        setDifficulty={setDifficulty}
         onStartFight={handleStartFight}
       />
     </ScrollView>

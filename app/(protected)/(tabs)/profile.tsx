@@ -1,8 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext';
-import { db } from '@/FirebaseConfig';
+import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { doc, onSnapshot } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -18,21 +17,13 @@ type UserData = {
 
 export default function Profile() {
   const { logout, user } = useAuth();
-  const [userData, setUserData] = useState<UserData | null>(null);
+  const { userData, refreshUserData } = useUserData();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
-
-    const userDocRef = doc(db, 'users', user.uid);
-    const unsubscribe = onSnapshot(userDocRef, (doc) => {
-      if (doc.exists()) {
-        setUserData(doc.data() as UserData);
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    if (user) {
+      refreshUserData(user.uid);
+    }
   }, [user]);
 
   const handleLogout = async () => {
@@ -200,3 +191,7 @@ const styles = StyleSheet.create({
     marginLeft: 15,
   },
 });
+function refreshUserData(uid: string) {
+  throw new Error('Function not implemented.');
+}
+

@@ -11,6 +11,7 @@ import {
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { db, firebaseConfig } from '../FirebaseConfig.js';
+import { UserDataProvider } from './UserDataContext';
 
 type AuthError = {
   code: string;
@@ -261,7 +262,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout,
       loading
     }}>
-      {children}
+      <UserDataProvider>
+        {children}
+      </UserDataProvider>
     </AuthContext.Provider>
   );
 }
