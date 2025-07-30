@@ -16,28 +16,30 @@ const subscriptionPlans: SubscriptionPlan[] = [
     title: 'Free',
     price: '$0',
     period: 'forever',
-    features: ['Basic training programs', '3 Fights a day','Essential techniques', 'Progress tracking', 'Community access']
+    features: ['3 Fights a day', 'Basic training programs', 'Essential techniques', 'Progress tracking', 'Community access']
   },
   {
     title: 'Premium',
     price: '$9.99',
     period: 'month',
-    features: ['All free features', 'Advanced techniques', 'Personalized training plans', 'Priority support'],
+    features: ['Unlimited Fights', 'All free features', 'Advanced techniques', 'Personalized training plans', 'Priority support'],
     popular: true
   },
   {
     title: 'Anual Premium',
     price: '$69.99',
     period: 'year',
-    features: ['All premium features', 'Early access to new features', 'VIP support', 'Exclusive content']
+    features: ['Unlimited Fights', 'All premium features', 'Early access to new features', 'VIP support', 'Exclusive content']
   }
 ];
 
+// Update the type Props to include a new callback for plan selection
 type Props = {
   onSkip: () => void;
+  onSelectPlan?: (plan: SubscriptionPlan) => void;
 };
 
-export default function PaywallScreen({ onSkip }: Props) {
+export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
   const [showQuiz, setShowQuiz] = useState(true);
   const [quizData, setQuizData] = useState<QuizData | null>(null);
 
@@ -50,18 +52,26 @@ export default function PaywallScreen({ onSkip }: Props) {
     return <QuizScreen onComplete={handleQuizComplete} />;
   }
 
+  const handlePlanSelection = (plan: SubscriptionPlan) => {
+    if (plan.title === 'Free') {
+      onSkip();
+    } else {
+      onSelectPlan?.(plan);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Choose Your Plan</Text>
       <Text style={styles.subtitle}>Personalized for {quizData?.gender}, {quizData?.age}</Text>
-      
-      <ScrollView 
-        horizontal 
+
+      <ScrollView
+        horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.cardsContainer}
       >
         {subscriptionPlans.map((plan, index) => (
-          <View 
+          <View
             key={plan.title}
             style={[
               styles.card,
@@ -83,11 +93,13 @@ export default function PaywallScreen({ onSkip }: Props) {
                 <Text key={idx} style={styles.feature}>• {feature}</Text>
               ))}
             </View>
-            <Pressable 
+            <Pressable
               style={[styles.button, plan.popular && styles.popularButton]}
-              onPress={() => {/* Handle subscription */}}
+              onPress={() => handlePlanSelection(plan)}
             >
-              <Text style={styles.buttonText}>Choose Plan</Text>
+              <Text style={styles.buttonText}>
+                {plan.title === 'Free' ? 'Start Free' : 'Choose Plan'}
+              </Text>
             </Pressable>
           </View>
         ))}

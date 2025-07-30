@@ -30,7 +30,7 @@ export default function QuizScreen({ onComplete }: Props) {
     },
     {
       question: 'What\'s your gender?',
-      options: ['Male', 'Female', 'Other', 'Prefer not to say'],
+      options: ['Male', 'Female', 'Other'],
       key: 'gender' as keyof QuizData,
     },
     {
