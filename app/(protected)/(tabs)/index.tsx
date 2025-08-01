@@ -18,6 +18,7 @@ export default function Index() {
   const [restTime, setRestTime] = React.useState('1');
   const [moveSpeed, setMoveSpeed] = React.useState('1');
   const [difficulty, setDifficulty] = React.useState('beginner');
+  const [category, setCategory] = React.useState('basic');
 
   // Expose the show modal function globally
   React.useEffect(() => {
@@ -26,7 +27,8 @@ export default function Index() {
       numRounds: '3',
       restTime: '1',
       moveSpeed: '1',
-      difficulty: 'beginner'
+      difficulty: 'beginner',
+      category: 'basic'
     });
     return () => {
       globalThis.showFightModal = undefined;
@@ -45,12 +47,14 @@ export default function Index() {
     restTime?: string;
     moveSpeed?: string;
     difficulty?: string;
+    category?: string;
   }) => {
     setRoundDuration(config.roundDuration || roundDuration);
     setNumRounds(config.numRounds || numRounds);
     setRestTime(config.restTime || restTime);
     setMoveSpeed(config.moveSpeed || moveSpeed);
     setDifficulty(config.difficulty || difficulty);
+    setCategory(config.category || category);
     setIsModalVisible(true);
   };
 
@@ -62,7 +66,8 @@ export default function Index() {
         numRounds: '3',
         restTime: '1',
         moveSpeed: '1',
-        difficulty: 'beginner'
+        difficulty: 'beginner',
+        category: 'basic'
       })
     },
     {
@@ -72,7 +77,8 @@ export default function Index() {
         numRounds: '1',
         restTime: '1',
         moveSpeed: '1.5',
-        difficulty: 'beginner'
+        difficulty: 'beginner',
+        category: 'basic'
       })
     },
     {
@@ -82,7 +88,8 @@ export default function Index() {
         numRounds: '3',
         restTime: '1',
         moveSpeed: '2',
-        difficulty: 'intermediate'
+        difficulty: 'intermediate',
+        category: 'basic'
       })
     },
     {
@@ -92,7 +99,8 @@ export default function Index() {
         numRounds: '3',
         restTime: '1',
         moveSpeed: '2.5',
-        difficulty: 'intermediate'
+        difficulty: 'intermediate',
+        category: 'footwork'
       })
     },
     {
@@ -102,7 +110,8 @@ export default function Index() {
         numRounds: '5',
         restTime: '0.5',
         moveSpeed: '2',
-        difficulty: 'advanced'
+        difficulty: 'advanced',
+        category: 'defense'
       })
     },
     {
@@ -222,6 +231,7 @@ export default function Index() {
         setMoveSpeed={setMoveSpeed}
         difficulty={difficulty}
         setDifficulty={setDifficulty}
+        category={category}
         onStartFight={() => setIsModalVisible(false)}
       />
     </ScrollView>

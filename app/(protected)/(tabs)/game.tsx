@@ -9,14 +9,12 @@ import React from 'react';
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function Game() {
+
   const TOTAL_DURATION = 1 * 60 * 1000; // 5 minutes
 
 
 
-
   const [currentMove, setCurrentMove] = React.useState(moves[0]);
-
-
 
 
 

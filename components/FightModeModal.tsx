@@ -18,6 +18,7 @@ interface FightModeModalProps {
   setMoveSpeed: (speed: string) => void;
   difficulty: string;
   setDifficulty: (difficulty: string) => void;
+  category: string;
   onStartFight: () => void;
 }
 
@@ -82,6 +83,7 @@ export function FightModeModal({
   setMoveSpeed,
   difficulty,
   setDifficulty,
+  category,
   onStartFight,
 }: FightModeModalProps) {
   const handleStartFight = () => {
