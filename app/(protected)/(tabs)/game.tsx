@@ -4,24 +4,63 @@ import { moves } from '@/utils/moves';
 import { formatTime } from '@/utils/time';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function Game() {
+  const params = useLocalSearchParams<{
+    roundDuration: string;
+    numRounds: string;
+    restTime: string;
+    moveSpeed: string;
+    difficulty: string;
+    category: string;
+  }>();
 
-  const TOTAL_DURATION = 1 * 60 * 1000; // 5 minutes
+  // Convert minutes to milliseconds and store round duration and rest time
+  const roundDurationMs = Math.floor(parseFloat(params.roundDuration || '1') * 60 * 1000);
+  const restTimeMs = Math.floor(parseFloat(params.restTime || '1') * 60 * 1000);
+  const totalRounds = parseInt(params.numRounds || '1');
 
-
+  // State for tracking game progress
+  const [gameState, setGameState] = React.useState({
+    currentRound: 1,
+    isRestPeriod: false,
+    timeLeft: roundDurationMs,
+    isPaused: true,
+    isGameOver: false
+  });
 
   const [currentMove, setCurrentMove] = React.useState(moves[0]);
-
-
-
-  const [isPaused, setIsPaused] = React.useState(false);
-  const [timeLeft, setTimeLeft] = React.useState(TOTAL_DURATION);
-  const [speedMultiplier, setSpeedMultiplier] = React.useState(1);
+  const [speedMultiplier, setSpeedMultiplier] = React.useState(parseFloat(params.moveSpeed || '1'));
   const [animationsEnabled, setAnimationsEnabled] = React.useState(true);
+
+  // Reset game state when component mounts or when params change
+  React.useEffect(() => {
+    setGameState({
+      currentRound: 1,
+      isRestPeriod: false,
+      timeLeft: roundDurationMs,
+      isPaused: true,
+      isGameOver: false
+    });
+    setCurrentMove(moves[0]);
+    setSpeedMultiplier(parseFloat(params.moveSpeed || '1'));
+    setAnimationsEnabled(true);
+    //reset tilt and scale animations when new game starts
+    Animated.timing(tiltX, {
+      toValue: 0,
+      duration: 100,
+      useNativeDriver: true
+    }).start();
+    Animated.timing(tiltY, {
+      toValue: 0,
+      duration: 100,
+      useNativeDriver: true
+    }).start();
+
+  }, [params.roundDuration, params.numRounds, params.restTime, params.moveSpeed, roundDurationMs]);
 
   const tiltX = React.useRef(new Animated.Value(0)).current;
   const tiltY = React.useRef(new Animated.Value(0)).current;
@@ -32,36 +71,87 @@ export default function Game() {
   React.useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
 
-    if (!isPaused) {
-      // Update time display
+    if (!gameState.isPaused && !gameState.isGameOver) {
       const startTime = Date.now();
-      const initialTimeLeft = timeLeft;
+      const initialTimeLeft = gameState.timeLeft;
 
       interval = setInterval(() => {
         const elapsed = Date.now() - startTime;
         const newTimeLeft = Math.max(initialTimeLeft - elapsed, 0);
-        setTimeLeft(newTimeLeft);
-        //center and scale the animation when time runs out to 0
+
         if (newTimeLeft === 0) {
           clearInterval(interval);
-          setIsPaused(true);
-          // Show fight over message with animation
-          Animated.timing(tiltX, {
-            toValue: 0,
-            duration: 200,
-            useNativeDriver: true
-          }).start();
-          // Handle horizontal movements
-          Animated.timing(tiltY, {
-            toValue: 0,
-            duration: 200,
-            useNativeDriver: true
-          }).start();
-          Animated.timing(scale, {
-            toValue: 1.1,
-            duration: 2000,
-            useNativeDriver: true
-          }).start();
+
+          // Handle period transitions
+          if (gameState.isRestPeriod) {
+            // End of rest period - start next round
+
+            setGameState(prev => ({
+              ...prev,
+              isRestPeriod: false,
+              timeLeft: roundDurationMs,
+            }));
+            setCurrentMove(moves[0]);
+          } else if (gameState.currentRound < totalRounds) {
+            // End of round - start rest period
+            setGameState(prev => ({
+              ...prev,
+              isRestPeriod: true,
+              isPaused: false,
+              currentRound: prev.currentRound + 1,
+              timeLeft: restTimeMs,
+            }));
+            setCurrentMove({
+              // move: `Rest Period\nRound ${gameState.currentRound} Complete!`,
+              move: "Pause",
+              pauseTime: restTimeMs,
+              direction: 'up',
+              tiltValue: 1
+            });
+            Animated.timing(tiltX, {
+              toValue: 0,
+              duration: 200,
+              useNativeDriver: true
+            }).start();
+            Animated.timing(tiltY, {
+              toValue: 0,
+              duration: 200,
+              useNativeDriver: true
+            }).start();
+            Animated.timing(scale, {
+              toValue: 1.1,
+              duration: 1000,
+              useNativeDriver: true
+            }).start();
+          } else {
+            // End of final round - game over
+            setGameState(prev => ({
+              ...prev,
+              isPaused: true,
+              isGameOver: true
+            }));
+            // Show fight over animation
+            Animated.timing(tiltX, {
+              toValue: 0,
+              duration: 200,
+              useNativeDriver: true
+            }).start();
+            Animated.timing(tiltY, {
+              toValue: 0,
+              duration: 200,
+              useNativeDriver: true
+            }).start();
+            Animated.timing(scale, {
+              toValue: 1.1,
+              duration: 2000,
+              useNativeDriver: true
+            }).start();
+          }
+        } else {
+          setGameState(prev => ({
+            ...prev,
+            timeLeft: newTimeLeft
+          }));
         }
       }, 1000);
     }
@@ -69,12 +159,13 @@ export default function Game() {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isPaused, timeLeft]);
+  }, [gameState.isPaused, gameState.isGameOver, gameState.isRestPeriod, gameState.currentRound,
+    totalRounds, roundDurationMs, restTimeMs]);
 
   const handleSpeedChange = () => {
-    if (!isPaused) return;
+    if (!gameState.isPaused) return;
     setSpeedMultiplier(current => {
-      const speeds = [0.7, 1, 1.5, 2];
+      const speeds = [1, 1.5, 2, 2.5, 3];  // Matches the values from FightModeModal
       const currentIndex = speeds.indexOf(current);
       return speeds[(currentIndex + 1) % speeds.length];
     });
@@ -86,20 +177,20 @@ export default function Game() {
 
   React.useEffect(() => {
     let animation: Animated.CompositeAnimation | null = null;
-    if (!isPaused) {
+    if (!gameState.isPaused) {
       animation = updateMoveProg();
     }
     return () => animation?.stop();
-  }, [isPaused, updateMoveProg]);
+  }, [gameState.isPaused, updateMoveProg]);
 
   const updateMove = React.useCallback(() => {
-    if (!isPaused) {
+    if (!gameState.isPaused && !gameState.isRestPeriod) {
       const currentIndex = moves.indexOf(currentMove);
       const nextMove = moves[(currentIndex + 1) % moves.length];
       setCurrentMove(nextMove);
       animate3DMove(nextMove, tiltX, tiltY, scale);
     }
-  }, [currentMove, isPaused, tiltX, tiltY, scale]);
+  }, [currentMove, gameState.isPaused, gameState.isRestPeriod, tiltX, tiltY, scale]);
 
   React.useEffect(() => {
     const timer = setInterval(updateMove, currentMove.pauseTime / speedMultiplier);
@@ -107,11 +198,14 @@ export default function Game() {
   }, [currentMove.pauseTime, speedMultiplier, updateMove]);
 
   const handlePress = () => {
-    setIsPaused(!isPaused);
+    setGameState(prev => ({
+      ...prev,
+      isPaused: !prev.isPaused
+    }));
 
     // Animate the side buttons opacity
     Animated.timing(sideButtonsOpacity, {
-      toValue: !isPaused ? 1 : 0,
+      toValue: gameState.isPaused ? 0 : 1,
       duration: 300,
       useNativeDriver: true
     }).start();
@@ -125,7 +219,12 @@ export default function Game() {
       end={{ x: 0, y: 1 }}
     >
       <View style={styles.timerContainer}>
-        <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
+        <Text style={styles.roundText}>Round {gameState.currentRound}/{totalRounds}</Text>
+
+        {!gameState.isRestPeriod && <Text style={styles.timerText}>
+          {formatTime(gameState.timeLeft)}
+        </Text>}
+
       </View>
 
       <Animated.View style={[
@@ -157,26 +256,35 @@ export default function Game() {
           end={{ x: 0, y: 1 }}
         >
           <Text style={styles.text} numberOfLines={2} adjustsFontSizeToFit>
-            {timeLeft === 0 ? "FIGHT OVER!🎉" : currentMove.move}
+            {gameState.isGameOver ? "FIGHT OVER!🎉" : currentMove.move}
           </Text>
-          <View style={styles.progressBarContainer}>
-            <Animated.View
-              style={[
-                styles.progressBar,
-                {
-                  width: moveProgress.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: ['0%', '100%']
-                  })
-                }
-              ]}
-            />
-          </View>
+
+          {gameState.isRestPeriod && (
+            <Text style={styles.restTimeText}>
+              {formatTime(gameState.timeLeft)}
+            </Text>
+          )}
+
+          {!gameState.isPaused && !gameState.isGameOver && !gameState.isRestPeriod && (
+            <View style={styles.progressBarContainer}>
+              <Animated.View
+                style={[
+                  styles.progressBar,
+                  {
+                    width: moveProgress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0%', '100%']
+                    })
+                  }
+                ]}
+              />
+            </View>
+          )}
         </LinearGradient>
       </Animated.View>
 
       {/* Game Over Buttons */}
-      {timeLeft === 0 && (
+      {gameState.isGameOver && (
         <View style={styles.gameOverButtonsContainer}>
           <TouchableOpacity
             style={styles.gameOverButton}
@@ -192,9 +300,15 @@ export default function Game() {
           <TouchableOpacity
             style={styles.gameOverButton}
             onPress={() => {
-              setTimeLeft(TOTAL_DURATION);
-              setIsPaused(false);
+              setGameState({
+                currentRound: 1,
+                isRestPeriod: false,
+                timeLeft: roundDurationMs,
+                isPaused: false,
+                isGameOver: false
+              });
               setCurrentMove(moves[0]);
+              setAnimationsEnabled(true);
             }}
           >
             <Ionicons
@@ -211,8 +325,8 @@ export default function Game() {
         <Animated.View style={{ opacity: sideButtonsOpacity }}>
           {/* Home Button */}
           <TouchableOpacity
-            style={[styles.sideButton, !isPaused && styles.disabledButton]}
-            onPress={() => isPaused && router.push("/")}
+            style={[styles.sideButton, !gameState.isPaused && styles.disabledButton]}
+            onPress={() => gameState.isPaused && router.push("/")}
           >
             <Ionicons
               name="home"
@@ -223,13 +337,13 @@ export default function Game() {
         </Animated.View>
 
         {/* Pause/Play Button - Hidden when fight is over */}
-        {timeLeft > 0 && (
+        {!gameState.isGameOver && (
           <TouchableOpacity
             style={styles.pauseButton}
             onPress={handlePress}
           >
             <Ionicons
-              name={isPaused ? "play" : "pause"}
+              name={gameState.isPaused ? "play" : "pause"}
               size={40}
               color={Colors.bgDark}
             />
@@ -239,7 +353,7 @@ export default function Game() {
         <Animated.View style={{ opacity: sideButtonsOpacity }}>
           {/* Speed Button */}
           <TouchableOpacity
-            style={[styles.sideButton, !isPaused && styles.disabledButton]}
+            style={[styles.sideButton, !gameState.isPaused && styles.disabledButton]}
             onPress={handleSpeedChange}
           >
             <Text style={styles.speedText}>x{speedMultiplier}</Text>
@@ -247,8 +361,8 @@ export default function Game() {
 
           {/* Animation Toggle Button */}
           <TouchableOpacity
-            style={[styles.sideButton, (!animationsEnabled || !isPaused) && styles.disabledButton]}
-            onPress={() => isPaused && setAnimationsEnabled(!animationsEnabled)}
+            style={[styles.sideButton, (!animationsEnabled || !gameState.isPaused) && styles.disabledButton]}
+            onPress={() => gameState.isPaused && setAnimationsEnabled(!animationsEnabled)}
           >
             <Ionicons
               name={animationsEnabled ? "cube" : "cube-outline"}
@@ -269,6 +383,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
+  },
+  roundText: {
+    fontFamily: Typography.fontFamily,
+    color: '#fff',
+    fontSize: 24,
+    marginBottom: 5,
+  },
+  restText: {
+    fontFamily: Typography.fontFamily,
+    color: '#ffd700',
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginTop: 5,
+  },
+  restTimeText: {
+    fontFamily: Typography.fontFamily,
+    color: '#ffffff',
+    fontSize: 32,
+    marginTop: 10,
   },
   gameOverButtonsContainer: {
     position: 'absolute',

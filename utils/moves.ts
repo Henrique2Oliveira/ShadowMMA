@@ -2,7 +2,7 @@ import { Move } from './animations';
 
 export const moves: Move[] = [
   // Basic 1-2 Combination test
-  { move: 'Pause', pauseTime: 10000, direction: 'up', tiltValue: 3.7 }, // Pause move for 10 seconds
+  // { move: 'Pause', pauseTime: 10000, direction: 'up', tiltValue: 3.7 }, // Pause move for 10 seconds
 
   { move: 'JAB', pauseTime: 1000, direction: 'left', tiltValue: 0.2 },
   { move: 'CROSS', pauseTime: 400, direction: 'right', tiltValue: 0.2 },

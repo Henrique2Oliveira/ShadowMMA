@@ -27,7 +27,7 @@ interface FightOption {
   label: string;
 }
 
-const FIGHT_OPTIONS: {
+export const FIGHT_OPTIONS: {
   roundDurations: FightOption[];
   numberOfRounds: FightOption[];
   restTimes: FightOption[];
@@ -88,7 +88,17 @@ export function FightModeModal({
 }: FightModeModalProps) {
   const handleStartFight = () => {
     onStartFight();
-    router.push('/(protected)/(tabs)/game');
+    router.push({
+      pathname: '/(protected)/(tabs)/game',
+      params: {
+        roundDuration,
+        numRounds,
+        restTime,
+        moveSpeed,
+        difficulty,
+        category
+      }
+    });
   };
 
   // Get color based on difficulty

@@ -60,7 +60,7 @@ export default function Index() {
 
   const buttons = [
     {
-      title: 'FREE FIGHT',
+      title: 'Random FIGHT',
       onPress: () => setModalConfig({
         roundDuration: '3',
         numRounds: '3',
