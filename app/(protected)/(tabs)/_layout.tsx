@@ -1,11 +1,16 @@
 import { Colors, Typography } from '@/themes/theme';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useFonts } from 'expo-font';
 import { Tabs, useRouter } from 'expo-router';
 import React from 'react';
 import { Text, TouchableOpacity } from 'react-native';
 
 export default function TabsLayout() {
   const router = useRouter();
+
+  const [fontsLoaded, fontError] = useFonts({
+    'CalSans': require('@/assets/fonts/CalSans-Regular.ttf'),
+  });
 
   const handleFightPress = () => {
     router.push('/(protected)/(tabs)');

@@ -22,7 +22,7 @@ export default function Index() {
   // Expose the show modal function globally
   React.useEffect(() => {
     globalThis.showFightModal = () => setModalConfig({
-      roundDuration: '3',
+      roundDuration: '2',
       numRounds: '3',
       restTime: '1',
       moveSpeed: '1',

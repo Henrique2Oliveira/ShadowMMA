@@ -39,7 +39,6 @@ export default function Index() {
 
   const [fontsLoaded, fontError] = useFonts({
     'CalSans': require('@/assets/fonts/CalSans-Regular.ttf'),
-    'SpaceMono': require('@/assets/fonts/SpaceMono-Regular.ttf'),
   });
 
   if (!fontsLoaded) {
