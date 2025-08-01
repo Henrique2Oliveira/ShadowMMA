@@ -1,29 +1,12 @@
 import { Colors, Typography } from '@/themes/theme';
+import { animate3DMove, startMoveProgress } from '@/utils/animations';
+import { moves } from '@/utils/moves';
+import { formatTime } from '@/utils/time';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React from 'react';
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
-const moves = [
-  // Basic 1-2 Combination test
-  { move: 'Pause', pauseTime: 10000, direction: 'up', tiltValue: 3.7 }, // Pause move for 10 seconds
-
-  { move: 'JAB', pauseTime: 1000, direction: 'left', tiltValue: 0.2 },
-  { move: 'CROSS', pauseTime: 400, direction: 'right', tiltValue: 0.2 },
-  { move: 'JAB', pauseTime: 400, direction: 'left', tiltValue: 0.2 },
-  { move: 'CROSS', pauseTime: 400, direction: 'right', tiltValue: 0.2 },
-  { move: 'LEFT\nHOOK', pauseTime: 700, direction: 'left', tiltValue: 0.4 },
-  { move: 'RIGHT\nUPPERCUT', pauseTime: 1000, direction: 'up', tiltValue: 0.5 },
-  { move: 'JAB', pauseTime: 400, direction: 'left', tiltValue: 0.2 },
-  { move: 'RIGHT\nHOOK', pauseTime: 700, direction: 'right', tiltValue: 0.4 },
-  { move: 'SLIP', pauseTime: 1000, direction: 'down', tiltValue: 0.3 },
-  { move: 'LEFT\nHOOK', pauseTime: 700, direction: 'left', tiltValue: 0.4 },
-  { move: 'RIGHT\nUPPERCUT', pauseTime: 1000, direction: 'up', tiltValue: 0.5 },
-  { move: 'JAB', pauseTime: 400, direction: 'left', tiltValue: 0.2 },
-  { move: 'RIGHT\nHOOK', pauseTime: 700, direction: 'right', tiltValue: 0.4 },
-  { move: 'SLIP', pauseTime: 1000, direction: 'down', tiltValue: 0.3 },
-];
 
 export default function Game() {
   const TOTAL_DURATION = 1 * 60 * 1000; // 5 minutes
@@ -40,12 +23,6 @@ export default function Game() {
   const sideButtonsOpacity = React.useRef(new Animated.Value(0)).current;
   const moveProgress = React.useRef(new Animated.Value(0)).current;
 
-  const formatTime = (ms: number) => {
-    const minutes = Math.floor(ms / 60000);
-    const seconds = Math.floor((ms % 60000) / 1000);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
-
   React.useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
 
@@ -58,7 +35,7 @@ export default function Game() {
         const elapsed = Date.now() - startTime;
         const newTimeLeft = Math.max(initialTimeLeft - elapsed, 0);
         setTimeLeft(newTimeLeft);
-
+        //center and scale the animation when time runs out to 0
         if (newTimeLeft === 0) {
           clearInterval(interval);
           setIsPaused(true);
@@ -88,58 +65,6 @@ export default function Game() {
     };
   }, [isPaused, timeLeft]);
 
-  const animate3DMove = (move: typeof moves[0]) => {
-    // Stop any running animations
-    tiltX.stopAnimation();
-    tiltY.stopAnimation();
-    scale.stopAnimation();
-
-    // Handle vertical movements with spring
-    Animated.spring(tiltX, {
-      toValue: move.direction === 'up' ? -move.tiltValue :
-        move.direction === 'down' ? move.tiltValue : 0,
-      useNativeDriver: true,
-      damping: 14,
-      stiffness: 100,
-      mass: 2
-    }).start();
-
-    // Handle horizontal movements with spring
-    Animated.spring(tiltY, {
-      toValue: move.direction === 'left' ? -move.tiltValue :
-        move.direction === 'right' ? move.tiltValue : 0,
-      useNativeDriver: true,
-      damping: 14,
-      stiffness: 100,
-      mass: 2
-    }).start();
-
-    // Add springy pulse animation
-    Animated.sequence([
-      Animated.spring(scale, {
-        toValue: 1.2,
-        useNativeDriver: true,
-        damping: 8,
-        stiffness: 100,
-        mass: 1
-      }),
-      Animated.spring(scale, {
-        toValue: 0.85,
-        useNativeDriver: true,
-        damping: 8,
-        stiffness: 140,
-        mass: 1
-      }),
-      Animated.spring(scale, {
-        toValue: 1,
-        useNativeDriver: true,
-        damping: 8,
-        stiffness: 100,
-        mass: 1
-      })
-    ]).start();
-  };
-
   const handleSpeedChange = () => {
     if (!isPaused) return;
     setSpeedMultiplier(current => {
@@ -149,28 +74,31 @@ export default function Game() {
     });
   };
 
-  React.useEffect(() => {
-    if (!isPaused) {
-      moveProgress.setValue(0);
-      Animated.timing(moveProgress, {
-        toValue: 1,
-        duration: currentMove.pauseTime / speedMultiplier,
-        useNativeDriver: false,
-      }).start();
-    }
-  }, [currentMove, isPaused, speedMultiplier]);
+  const updateMoveProg = React.useCallback(() => {
+    return startMoveProgress(moveProgress, currentMove.pauseTime, speedMultiplier);
+  }, [currentMove.pauseTime, speedMultiplier, moveProgress]);
 
   React.useEffect(() => {
-    const timer = setInterval(() => {
-      if (!isPaused) {
-        const currentIndex = moves.indexOf(currentMove);
-        const nextMove = moves[(currentIndex + 1) % moves.length];
-        setCurrentMove(nextMove);
-        animate3DMove(nextMove);
-      }
-    }, currentMove.pauseTime / speedMultiplier);
+    let animation: Animated.CompositeAnimation | null = null;
+    if (!isPaused) {
+      animation = updateMoveProg();
+    }
+    return () => animation?.stop();
+  }, [isPaused, updateMoveProg]);
+
+  const updateMove = React.useCallback(() => {
+    if (!isPaused) {
+      const currentIndex = moves.indexOf(currentMove);
+      const nextMove = moves[(currentIndex + 1) % moves.length];
+      setCurrentMove(nextMove);
+      animate3DMove(nextMove, tiltX, tiltY, scale);
+    }
+  }, [currentMove, isPaused, tiltX, tiltY, scale]);
+
+  React.useEffect(() => {
+    const timer = setInterval(updateMove, currentMove.pauseTime / speedMultiplier);
     return () => clearInterval(timer);
-  }, [currentMove, isPaused, speedMultiplier]);
+  }, [currentMove.pauseTime, speedMultiplier, updateMove]);
 
   const handlePress = () => {
     setIsPaused(!isPaused);
