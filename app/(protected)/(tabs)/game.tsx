@@ -109,8 +109,8 @@ export default function Game() {
               tiltValue: 1
             });
             Animated.timing(tiltX, {
-              toValue: 0,
-              duration: 200,
+              toValue: 3.65,
+              duration: 800,
               useNativeDriver: true
             }).start();
             Animated.timing(tiltY, {
@@ -120,7 +120,7 @@ export default function Game() {
             }).start();
             Animated.timing(scale, {
               toValue: 1.1,
-              duration: 1000,
+              duration: 1500,
               useNativeDriver: true
             }).start();
           } else {
@@ -132,8 +132,8 @@ export default function Game() {
             }));
             // Show fight over animation
             Animated.timing(tiltX, {
-              toValue: 0,
-              duration: 200,
+              toValue: 3.65,
+              duration: 800,
               useNativeDriver: true
             }).start();
             Animated.timing(tiltY, {
@@ -143,7 +143,7 @@ export default function Game() {
             }).start();
             Animated.timing(scale, {
               toValue: 1.1,
-              duration: 2000,
+              duration: 1500,
               useNativeDriver: true
             }).start();
           }
@@ -284,6 +284,8 @@ export default function Game() {
       </Animated.View>
 
       {/* Game Over Buttons */}
+      
+      {/* Show Level Up % and new unlocked things etc when game over add animations */}
       {gameState.isGameOver && (
         <View style={styles.gameOverButtonsContainer}>
           <TouchableOpacity
@@ -297,7 +299,7 @@ export default function Game() {
             />
           </TouchableOpacity>
 
-          <TouchableOpacity
+          <TouchableOpacity  //only when player see a ads or is premium user (add icon for premium or ads first)
             style={styles.gameOverButton}
             onPress={() => {
               setGameState({
