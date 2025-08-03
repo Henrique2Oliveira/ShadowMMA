@@ -25,7 +25,7 @@ export default function Game() {
 
   // State for tracking game progress
   const [gameState, setGameState] = React.useState({
-    currentRound: 1,
+    currentRound: 0,
     isRestPeriod: false,
     timeLeft: roundDurationMs,
     isPaused: true,
@@ -39,7 +39,7 @@ export default function Game() {
   // Reset game state when component mounts or when params change
   React.useEffect(() => {
     setGameState({
-      currentRound: 1,
+      currentRound: 0,
       isRestPeriod: false,
       timeLeft: roundDurationMs,
       isPaused: true,
@@ -92,7 +92,7 @@ export default function Game() {
               timeLeft: roundDurationMs,
             }));
             setCurrentMove(moves[0]);
-          } else if (gameState.currentRound < totalRounds) {
+          } else if (gameState.currentRound <= totalRounds) {
             // End of round - start rest period
             setGameState(prev => ({
               ...prev,
