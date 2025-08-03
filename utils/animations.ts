@@ -75,7 +75,7 @@ export const animate3DMove = (
       Animated.spring(scale, {
         toValue: scaleDown,
         useNativeDriver: true,
-        damping: 8,
+        damping: 12,
         stiffness: 140,
         mass: 1
       }),

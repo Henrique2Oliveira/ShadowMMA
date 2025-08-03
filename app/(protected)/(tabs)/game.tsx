@@ -33,6 +33,9 @@ export default function Game() {
   });
 
   const [currentMove, setCurrentMove] = React.useState(moves[0]);
+
+
+  
   const [speedMultiplier, setSpeedMultiplier] = React.useState(parseFloat(params.moveSpeed || '1'));
   const [animationsEnabled, setAnimationsEnabled] = React.useState(true);
 
@@ -49,16 +52,23 @@ export default function Game() {
     setSpeedMultiplier(parseFloat(params.moveSpeed || '1'));
     setAnimationsEnabled(true);
     //reset tilt and scale animations when new game starts
-    Animated.timing(tiltX, {
-      toValue: 0,
-      duration: 100,
-      useNativeDriver: true
-    }).start();
-    Animated.timing(tiltY, {
-      toValue: 0,
-      duration: 100,
-      useNativeDriver: true
-    }).start();
+    Animated.parallel([
+      Animated.timing(tiltX, {
+        toValue: 0,
+        duration: 100,
+        useNativeDriver: true
+      }),
+      Animated.timing(tiltY, {
+        toValue: 0,
+        duration: 100,
+        useNativeDriver: true
+      }),
+      Animated.timing(scale, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true
+      })
+    ]).start();
 
   }, [params.roundDuration, params.numRounds, params.restTime, params.moveSpeed, roundDurationMs]);
 
