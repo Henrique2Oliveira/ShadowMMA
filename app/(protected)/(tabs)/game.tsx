@@ -1,12 +1,13 @@
+import { db } from '@/FirebaseConfig';
 import { Colors, Typography } from '@/themes/theme';
 import { animate3DMove, startMoveProgress } from '@/utils/animations';
-import { moves } from '@/utils/moves';
 import { formatTime } from '@/utils/time';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
+import { doc, getDoc } from 'firebase/firestore';
 import React from 'react';
-import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function Game() {
   const params = useLocalSearchParams<{
@@ -32,10 +33,62 @@ export default function Game() {
     isGameOver: false
   });
 
-  const [currentMove, setCurrentMove] = React.useState(moves[0]);
+  interface Move {
+    move: string;
+    pauseTime: number;
+    direction: "left" | "right" | "up" | "down" | "pulse";
+    tiltValue: number;
+  }
+
+  const [moves, setMoves] = React.useState<Move[]>([]);
+  const [currentMove, setCurrentMove] = React.useState<Move | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  // Fetch moves from Firestore based on difficulty
+  React.useEffect(() => {
+    const fetchMoves = async () => {
+      setIsLoading(true);
+      try {
+        const docRef = doc(db, "combos", params.category || "basic");
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const difficulty = params.difficulty?.toLowerCase() || 'beginner';
+          
+          // Get moves from the selected difficulty level
+          if (data.levels[difficulty]) {
+            const allMoves = data.levels[difficulty].reduce((acc: Move[], combo: any) => {
+              return [...acc, ...combo.moves];
+            }, []);
+            setMoves(allMoves);
+            if (allMoves.length > 0) {
+              setCurrentMove(allMoves[0]);
+            }
+          } else {
+            console.log(`No moves found for difficulty: ${difficulty}`);
+            // Fallback to beginner if selected difficulty doesn't exist
+            const beginnerMoves = data.levels.beginner.reduce((acc: Move[], combo: any) => {
+              return [...acc, ...combo.moves];
+            }, []);
+            setMoves(beginnerMoves);
+            setCurrentMove(beginnerMoves[0]);
+          }
+        } else {
+          console.log("No such document!");
+        }
+      } catch (error) {
+        console.error("Error fetching moves:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMoves();
+  }, []); 
 
 
-  
+
   const [speedMultiplier, setSpeedMultiplier] = React.useState(parseFloat(params.moveSpeed || '1'));
   const [animationsEnabled, setAnimationsEnabled] = React.useState(true);
 
@@ -102,7 +155,7 @@ export default function Game() {
               timeLeft: roundDurationMs,
             }));
             setCurrentMove(moves[0]);
-          } else if (gameState.currentRound <= totalRounds) {
+          } else if (gameState.currentRound+1 <= totalRounds) {
             // End of round - start rest period
             setGameState(prev => ({
               ...prev,
@@ -163,7 +216,7 @@ export default function Game() {
             timeLeft: newTimeLeft
           }));
         }
-      }, 1000);
+      }, 100);
     }
 
     return () => {
@@ -182,8 +235,11 @@ export default function Game() {
   };
 
   const updateMoveProg = React.useCallback(() => {
-    return startMoveProgress(moveProgress, currentMove.pauseTime, speedMultiplier);
-  }, [currentMove.pauseTime, speedMultiplier, moveProgress]);
+    if (currentMove) {
+      return startMoveProgress(moveProgress, currentMove.pauseTime, speedMultiplier);
+    }
+    return null;
+  }, [currentMove, speedMultiplier, moveProgress]);
 
   React.useEffect(() => {
     let animation: Animated.CompositeAnimation | null = null;
@@ -191,21 +247,23 @@ export default function Game() {
       animation = updateMoveProg();
     }
     return () => animation?.stop();
-  }, [gameState.isPaused, updateMoveProg]);
+  }, [gameState.isPaused, updateMoveProg,]);
 
   const updateMove = React.useCallback(() => {
-    if (!gameState.isPaused && !gameState.isRestPeriod) {
+    if (!gameState.isPaused && !gameState.isRestPeriod && currentMove && moves.length > 0) {
       const currentIndex = moves.indexOf(currentMove);
       const nextMove = moves[(currentIndex + 1) % moves.length];
       setCurrentMove(nextMove);
       animate3DMove(nextMove, tiltX, tiltY, scale);
     }
-  }, [currentMove, gameState.isPaused, gameState.isRestPeriod, tiltX, tiltY, scale]);
+  }, [currentMove, moves, gameState.isPaused, gameState.isRestPeriod, tiltX, tiltY, scale]);
 
   React.useEffect(() => {
-    const timer = setInterval(updateMove, currentMove.pauseTime / speedMultiplier);
-    return () => clearInterval(timer);
-  }, [currentMove.pauseTime, speedMultiplier, updateMove]);
+    if (currentMove) {
+      const timer = setInterval(updateMove, currentMove.pauseTime / speedMultiplier);
+      return () => clearInterval(timer);
+    }
+  }, [currentMove, speedMultiplier, updateMove]);
 
   const handlePress = () => {
     setGameState(prev => ({
@@ -220,6 +278,15 @@ export default function Game() {
       useNativeDriver: true
     }).start();
   };
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor: Colors.bgGameDark }]}>
+        <ActivityIndicator size="large" color={Colors.text} />
+        <Text style={[styles.loadingText]}>Loading Fight...</Text>
+      </View>
+    );
+  }
 
   return (
     <LinearGradient
@@ -266,7 +333,7 @@ export default function Game() {
           end={{ x: 0, y: 1 }}
         >
           <Text style={styles.text} numberOfLines={2} adjustsFontSizeToFit>
-            {gameState.isGameOver ? "FIGHT OVER!🎉" : currentMove.move}
+            {gameState.isGameOver ? "FIGHT OVER!🎉" : currentMove?.move || ""}
           </Text>
 
           {gameState.isRestPeriod && (
@@ -395,6 +462,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
+  },
+  loadingText: {
+    color: Colors.text,
+    fontSize: 24,
+    fontFamily: Typography.fontFamily,
+    marginTop: 20,
+    textAlign: 'center',
   },
   roundText: {
     fontFamily: Typography.fontFamily,

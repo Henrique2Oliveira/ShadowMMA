@@ -8,17 +8,17 @@ export const combinationSets = [{
         "comboId": 0,
         "name": "1-2 (Jab Cross)",
         "moves": [
-          { "move": "JAB", "pauseTime": 800, "direction": "left", "tiltValue": 0.2 },
-          { "move": "CROSS", "pauseTime": 800, "direction": "right", "tiltValue": 0.2 }
+          { "move": "JAB", "pauseTime": 800, "direction": "left", "tiltValue": 0.3 },
+          { "move": "CROSS", "pauseTime": 800, "direction": "right", "tiltValue": 0.3 }
         ]
       },
       {
         "comboId": 1,
         "name": "1-2-3",
         "moves": [
-          { "move": "JAB", "pauseTime": 700, "direction": "left", "tiltValue": 0.2 },
-          { "move": "CROSS", "pauseTime": 700, "direction": "right", "tiltValue": 0.2 },
-          { "move": "LEFT\nHOOK", "pauseTime": 1000, "direction": "left", "tiltValue": 0.4 }
+          { "move": "JAB", "pauseTime": 700, "direction": "left", "tiltValue": 0.3 },
+          { "move": "CROSS", "pauseTime": 700, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT\nHOOK", "pauseTime": 1000, "direction": "left", "tiltValue": 0.5 }
         ]
       },
       {
@@ -86,7 +86,7 @@ export const combinationSets = [{
         "comboId": 0,
         "name": "Slip and Jab",
         "moves": [
-          { "move": "SLIP", "pauseTime": 800, "direction": "left", "tiltValue": 0.3 },
+          { "move": "SLIP", "pauseTime": 800, "direction": "pulse", "tiltValue": 0.5 },
           { "move": "JAB", "pauseTime": 800, "direction": "left", "tiltValue": 0.2 }
         ]
       },
@@ -94,7 +94,7 @@ export const combinationSets = [{
         "comboId": 1,
         "name": "Block and Cross",
         "moves": [
-          { "move": "BLOCK", "pauseTime": 800, "direction": "up", "tiltValue": 0.3 },
+          { "move": "BLOCK", "pauseTime": 800, "direction": "pulse", "tiltValue": 0.5 },
           { "move": "CROSS", "pauseTime": 800, "direction": "right", "tiltValue": 0.3 }
         ]
       }
@@ -104,9 +104,9 @@ export const combinationSets = [{
         "comboId": 0,
         "name": "Slip, Hook, Roll",
         "moves": [
-          { "move": "SLIP", "pauseTime": 600, "direction": "right", "tiltValue": 0.3 },
+          { "move": "SLIP", "pauseTime": 600, "direction": "pulse", "tiltValue": 0.6 },
           { "move": "LEFT\nHOOK", "pauseTime": 800, "direction": "left", "tiltValue": 0.4 },
-          { "move": "ROLL", "pauseTime": 1000, "direction": "down", "tiltValue": 0.4 }
+          { "move": "ROLL", "pauseTime": 1000, "direction": "pulse", "tiltValue": 0.6 }
         ]
       }
     ],
@@ -115,8 +115,8 @@ export const combinationSets = [{
         "comboId": 0,
         "name": "Roll, Block, Uppercut",
         "moves": [
-          { "move": "ROLL", "pauseTime": 1000, "direction": "down", "tiltValue": 0.5 },
-          { "move": "BLOCK", "pauseTime": 800, "direction": "up", "tiltValue": 0.3 },
+          { "move": "ROLL", "pauseTime": 1000, "direction": "pulse", "tiltValue": 0.5 },
+          { "move": "BLOCK", "pauseTime": 800, "direction": "pulse", "tiltValue": 0.3 },
           { "move": "RIGHT\nUPPERCUT", "pauseTime": 800, "direction": "up", "tiltValue": 0.5 }
         ]
       }
@@ -169,19 +169,3 @@ export const combinationSets = [{
   }
 }
 ];
-// Helper function to get a random combination from a specific set
-export const getRandomCombo = (setName) => {
-  const set = combinationSets[setName];
-  if (!set) return null;
-  return set[Math.floor(Math.random() * set.length)];
-};
-
-// Helper function to get all combinations from a specific set
-export const getCombos = (setName) => {
-  return combinationSets[setName] || [];
-};
-
-// Get all available set names
-export const getAvailableSets = () => {
-  return Object.keys(combinationSets);
-};

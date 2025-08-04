@@ -2,13 +2,15 @@
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 import { initializeApp } from "firebase/app";
 import { getReactNativePersistence, initializeAuth } from 'firebase/auth';
-import { getFirestore } from "firebase/firestore";
+import { doc, getFirestore, setDoc } from "firebase/firestore";
+import { combinationSets } from './constants/data'; // Adjust the import path as necessary
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+
 export const firebaseConfig = {
   apiKey: "AIzaSyC1v2V5v-qUjkAebd0QrO3aOW9bhoC4mqE", //is safe to expose to github
   authDomain: "shadow-mma.firebaseapp.com",
@@ -21,11 +23,32 @@ export const firebaseConfig = {
 
 // Initialize Firebase
 export const app = initializeApp(firebaseConfig);
-
 // const analytics = getAnalytics(app);
-
 export const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(ReactNativeAsyncStorage),
 });
-
 export const db = getFirestore(app);
+
+
+
+
+const uploadData = async () => {
+  try {
+    for (const category of combinationSets) {
+      const categoryId = category.id.toString();
+      const categoryRef = doc(db, "combos", categoryId); // Collection: "combos", doc ID = categoryId
+
+      await setDoc(categoryRef, {
+        category: category.category,
+        levels: category.levels
+      });
+
+      console.log(`Uploaded category: ${category.category}`);
+    }
+
+    console.log("✅ All combos uploaded successfully");
+  } catch (error) {
+    console.error("❌ Error uploading combos:", error);
+  }
+};
+// uploadData();

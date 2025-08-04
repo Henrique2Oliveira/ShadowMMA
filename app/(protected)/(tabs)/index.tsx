@@ -67,7 +67,7 @@ export default function Index() {
         restTime: '1',
         moveSpeed: '1',
         difficulty: 'beginner',
-        category: 'basic'
+        category: '0'
       })
     },
     {
@@ -76,9 +76,9 @@ export default function Index() {
         roundDuration: '5',
         numRounds: '1',
         restTime: '1',
-        moveSpeed: '1.5',
+        moveSpeed: '1',
         difficulty: 'beginner',
-        category: 'basic'
+        category: '0'
       })
     },
     {
@@ -87,9 +87,9 @@ export default function Index() {
         roundDuration: '5',
         numRounds: '3',
         restTime: '1',
-        moveSpeed: '2',
+        moveSpeed: '1',
         difficulty: 'intermediate',
-        category: 'basic'
+        category: '0'
       })
     },
     {
@@ -98,9 +98,9 @@ export default function Index() {
         roundDuration: '3',
         numRounds: '3',
         restTime: '1',
-        moveSpeed: '2.5',
+        moveSpeed: '1',
         difficulty: 'intermediate',
-        category: 'footwork'
+        category: '2'
       })
     },
     {
@@ -109,9 +109,9 @@ export default function Index() {
         roundDuration: '3',
         numRounds: '5',
         restTime: '0.5',
-        moveSpeed: '2',
-        difficulty: 'advanced',
-        category: 'defense'
+        moveSpeed: '1',
+        difficulty: 'intermediate',
+        category: '1'
       })
     },
     {
