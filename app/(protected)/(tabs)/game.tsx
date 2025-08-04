@@ -21,6 +21,8 @@ export default function Game() {
     require('@/assets/audio/sfx/swoosh3.mp3'),
   ];
 
+  const [bellSound, setBellSound] = React.useState<Audio.Sound | null>(null);
+
   React.useEffect(() => {
     const loadSounds = async () => {
       try {
@@ -28,6 +30,12 @@ export default function Game() {
           soundFiles.map(file => Audio.Sound.createAsync(file))
         );
         setSounds(loadedSounds.map(({ sound }) => sound));
+
+        // Load bell sound
+        const { sound: bell } = await Audio.Sound.createAsync(
+          require('@/assets/audio/bell-sound.mp3')
+        );
+        setBellSound(bell);
       } catch (error) {
         console.error('Error loading sounds:', error);
       }
@@ -39,6 +47,7 @@ export default function Game() {
       sounds.forEach(sound => {
         if (sound) sound.unloadAsync();
       });
+      bellSound?.unloadAsync();
     };
   }, []);
 
@@ -53,7 +62,7 @@ export default function Game() {
           ...prev,
           isPaused: true
         }));
-        
+
         // Stop all sounds
         sounds.forEach(sound => {
           if (sound) sound.stopAsync();
@@ -74,7 +83,7 @@ export default function Game() {
         ...prev,
         isPaused: true
       }));
-      
+
       // Stop all sounds
       sounds.forEach(sound => {
         if (sound) sound.stopAsync();
@@ -233,8 +242,28 @@ export default function Game() {
               timeLeft: roundDurationMs,
             }));
             setCurrentMove(moves[0]);
+
+            // Play bell sound if not muted
+            if (!isMuted && bellSound) {
+              bellSound.stopAsync().then(() => {
+                bellSound.playFromPositionAsync(0);
+              }).catch((error) => {
+                console.error('Error playing bell sound:', error);
+              });
+            }
+
           } else if (gameState.currentRound + 1 <= totalRounds) {
             // End of round - start rest period
+
+            // Play bell sound if not muted
+            if (!isMuted && bellSound) {
+              bellSound.stopAsync().then(() => {
+                bellSound.playFromPositionAsync(0);
+              }).catch((error) => {
+                console.error('Error playing bell sound:', error);
+              });
+            }
+
             setGameState(prev => ({
               ...prev,
               isRestPeriod: true,
@@ -270,6 +299,16 @@ export default function Game() {
               isPaused: true,
               isGameOver: true
             }));
+
+            // Play bell sound if not muted
+            if (!isMuted && bellSound) {
+              bellSound.stopAsync().then(() => {
+                bellSound.playFromPositionAsync(0);
+              }).catch((error) => {
+                console.error('Error playing bell sound:', error);
+              });
+            }
+
             // Show fight over animation
             Animated.timing(tiltX, {
               toValue: 3.65,
@@ -359,6 +398,7 @@ export default function Game() {
       ...prev,
       isPaused: !prev.isPaused
     }));
+
 
     // Animate the side buttons opacity
     Animated.timing(sideButtonsOpacity, {
