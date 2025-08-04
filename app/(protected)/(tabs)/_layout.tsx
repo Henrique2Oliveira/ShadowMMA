@@ -1,5 +1,5 @@
 import { Colors, Typography } from '@/themes/theme';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Entypo, MaterialIcons } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
 import { Tabs, useRouter } from 'expo-router';
 import React from 'react';
@@ -71,7 +71,7 @@ export default function TabsLayout() {
           tabBarShowLabel: false,
           tabBarIcon: ({ focused }) => (
             <MaterialIcons
-              name="book"
+              name="school"
               marginLeft={-20}
               size={42}
               color={focused ? 'white' : '#e6e6e6ff'}
@@ -110,13 +110,13 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="shop"
+        name="combos"
         options={{
-          title: 'Shop',
+          title: 'Combos',
           tabBarShowLabel: false,
           tabBarIcon: ({ focused }) => (
-            <MaterialIcons
-              name="shopping-cart"
+            <Entypo
+              name="list"
               size={40}
               marginRight={-20}
               color={focused ? 'white' : '#e6e6e6ff'}

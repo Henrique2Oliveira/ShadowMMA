@@ -2,10 +2,10 @@ import { Colors } from '@/themes/theme';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-export default function Shop() {
+export default function Combos() {
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Shop</Text>
+      <Text style={styles.text}>Combos</Text>
     </View>
   );
 }

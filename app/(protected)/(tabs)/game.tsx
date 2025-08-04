@@ -101,7 +101,13 @@ export default function Game() {
       isPaused: true,
       isGameOver: false
     });
-    setCurrentMove(moves[0]);
+    setCurrentMove({
+      move: "Ready?",
+      pauseTime: 1000,
+      direction: "up",
+      tiltValue: 3.75
+    });
+    
     setSpeedMultiplier(parseFloat(params.moveSpeed || '1'));
     setAnimationsEnabled(true);
     //reset tilt and scale animations when new game starts
@@ -155,7 +161,7 @@ export default function Game() {
               timeLeft: roundDurationMs,
             }));
             setCurrentMove(moves[0]);
-          } else if (gameState.currentRound+1 <= totalRounds) {
+          } else if (gameState.currentRound + 1 <= totalRounds) {
             // End of round - start rest period
             setGameState(prev => ({
               ...prev,
@@ -164,18 +170,17 @@ export default function Game() {
               currentRound: prev.currentRound + 1,
               timeLeft: restTimeMs,
             }));
-            setCurrentMove({
-              // move: `Rest Period\nRound ${gameState.currentRound} Complete!`,
-              move: "Pause",
-              pauseTime: restTimeMs,
-              direction: 'up',
-              tiltValue: 1
-            });
             Animated.timing(tiltX, {
               toValue: 3.65,
               duration: 800,
               useNativeDriver: true
             }).start();
+            setCurrentMove({
+              move: `Rest Time`,
+              pauseTime: restTimeMs,
+              direction: 'up',
+              tiltValue: 1
+            });
             Animated.timing(tiltY, {
               toValue: 0,
               duration: 200,
