@@ -3,13 +3,85 @@ import { Colors, Typography } from '@/themes/theme';
 import { animate3DMove, startMoveProgress } from '@/utils/animations';
 import { formatTime } from '@/utils/time';
 import { Ionicons } from '@expo/vector-icons';
+import { useIsFocused } from '@react-navigation/core';
+import { Audio } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { doc, getDoc } from 'firebase/firestore';
 import React from 'react';
-import { ActivityIndicator, Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Animated, AppState, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function Game() {
+  // Load sound effects
+  const [sounds, setSounds] = React.useState<Audio.Sound[]>([]);
+  const [isMuted, setIsMuted] = React.useState(false);
+  const soundFiles = [
+    require('@/assets/audio/sfx/swoosh1.mp3'),
+    require('@/assets/audio/sfx/swoosh2.mp3'),
+    require('@/assets/audio/sfx/swoosh3.mp3'),
+  ];
+
+  React.useEffect(() => {
+    const loadSounds = async () => {
+      try {
+        const loadedSounds = await Promise.all(
+          soundFiles.map(file => Audio.Sound.createAsync(file))
+        );
+        setSounds(loadedSounds.map(({ sound }) => sound));
+      } catch (error) {
+        console.error('Error loading sounds:', error);
+      }
+    };
+
+    loadSounds();
+
+    return () => {
+      sounds.forEach(sound => {
+        if (sound) sound.unloadAsync();
+      });
+    };
+  }, []);
+
+  // Add focus detection
+  const isFocused = useIsFocused();
+
+  // Handle app state and focus changes
+  React.useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'background' || nextAppState === 'inactive') {
+        setGameState(prev => ({
+          ...prev,
+          isPaused: true
+        }));
+        
+        // Stop all sounds
+        sounds.forEach(sound => {
+          if (sound) sound.stopAsync();
+        });
+      }
+    });
+
+    // Clean up the subscription
+    return () => {
+      subscription.remove();
+    };
+  }, [sounds]);
+
+  // Handle tab focus changes
+  React.useEffect(() => {
+    if (!isFocused) {
+      setGameState(prev => ({
+        ...prev,
+        isPaused: true
+      }));
+      
+      // Stop all sounds
+      sounds.forEach(sound => {
+        if (sound) sound.stopAsync();
+      });
+    }
+  }, [isFocused, sounds]);
+
   const params = useLocalSearchParams<{
     roundDuration: string;
     numRounds: string;
@@ -51,11 +123,11 @@ export default function Game() {
       try {
         const docRef = doc(db, "combos", params.category || "basic");
         const docSnap = await getDoc(docRef);
-        
+
         if (docSnap.exists()) {
           const data = docSnap.data();
           const difficulty = params.difficulty?.toLowerCase() || 'beginner';
-          
+
           // Get moves from the selected difficulty level
           if (data.levels[difficulty]) {
             const allMoves = data.levels[difficulty].reduce((acc: Move[], combo: any) => {
@@ -85,7 +157,7 @@ export default function Game() {
     };
 
     fetchMoves();
-  }, []); 
+  }, []);
 
 
 
@@ -107,7 +179,7 @@ export default function Game() {
       direction: "up",
       tiltValue: 3.75
     });
-    
+
     setSpeedMultiplier(parseFloat(params.moveSpeed || '1'));
     setAnimationsEnabled(true);
     //reset tilt and scale animations when new game starts
@@ -260,8 +332,20 @@ export default function Game() {
       const nextMove = moves[(currentIndex + 1) % moves.length];
       setCurrentMove(nextMove);
       animate3DMove(nextMove, tiltX, tiltY, scale);
+
+      // Play a random sound effect if not muted
+      if (sounds.length > 0 && !isMuted) {
+        const randomSound = sounds[Math.floor(Math.random() * sounds.length)];
+        if (randomSound) {
+          randomSound.stopAsync().then(() => {
+            randomSound.playFromPositionAsync(0);
+          }).catch((error: Error) => {
+            console.error('Error playing sound:', error);
+          });
+        }
+      }
     }
-  }, [currentMove, moves, gameState.isPaused, gameState.isRestPeriod, tiltX, tiltY, scale]);
+  }, [currentMove, moves, gameState.isPaused, gameState.isRestPeriod, tiltX, tiltY, scale, sounds, isMuted]);
 
   React.useEffect(() => {
     if (currentMove) {
@@ -366,7 +450,7 @@ export default function Game() {
       </Animated.View>
 
       {/* Game Over Buttons */}
-      
+
       {/* Show Level Up % and new unlocked things etc when game over add animations */}
       {gameState.isGameOver && (
         <View style={styles.gameOverButtonsContainer}>
@@ -418,7 +502,19 @@ export default function Game() {
               color={Colors.bgDark}
             />
           </TouchableOpacity>
+          {/* Sound Toggle Button */}
+          <TouchableOpacity
+            style={[styles.sideButton, !gameState.isPaused && styles.disabledButton]}
+            onPress={() => gameState.isPaused && setIsMuted(!isMuted)}
+          >
+            <Ionicons
+              name={isMuted ? "volume-mute" : "volume-high"}
+              size={30}
+              color={Colors.bgDark}
+            />
+          </TouchableOpacity>
         </Animated.View>
+
 
         {/* Pause/Play Button - Hidden when fight is over */}
         {!gameState.isGameOver && (
@@ -454,6 +550,7 @@ export default function Game() {
               color={Colors.bgDark}
             />
           </TouchableOpacity>
+
         </Animated.View>
       </View>
 

@@ -54,7 +54,7 @@ export default function Index() {
     setRestTime(config.restTime || restTime);
     setMoveSpeed(config.moveSpeed || moveSpeed);
     setDifficulty(config.difficulty || difficulty);
-    setCategory(config.category || category);
+    setCategory(config.category || "0");
     setIsModalVisible(true);
   };
 
