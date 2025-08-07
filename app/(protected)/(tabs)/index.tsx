@@ -4,6 +4,7 @@ import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import React, { useEffect } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -18,7 +19,7 @@ export default function Index() {
   const [restTime, setRestTime] = React.useState('1');
   const [moveSpeed, setMoveSpeed] = React.useState('1');
   const [difficulty, setDifficulty] = React.useState('beginner');
-  const [category, setCategory] = React.useState('basic');
+  const [category, setCategory] = React.useState('0');
 
   // Expose the show modal function globally
   React.useEffect(() => {
@@ -28,7 +29,7 @@ export default function Index() {
       restTime: '1',
       moveSpeed: '1',
       difficulty: 'beginner',
-      category: 'basic'
+      category: '0'
     });
     return () => {
       globalThis.showFightModal = undefined;
@@ -54,7 +55,7 @@ export default function Index() {
     setRestTime(config.restTime || restTime);
     setMoveSpeed(config.moveSpeed || moveSpeed);
     setDifficulty(config.difficulty || difficulty);
-    setCategory(config.category || "0");
+    setCategory(config.category || category);
     setIsModalVisible(true);
   };
 
@@ -67,7 +68,7 @@ export default function Index() {
         restTime: '1',
         moveSpeed: '1',
         difficulty: 'beginner',
-        category: '0'
+        category: Math.floor(Math.random() * 6).toString()
       })
     },
     {
@@ -115,16 +116,16 @@ export default function Index() {
       })
     },
     {
+      title: 'Combos',
+      onPress: () => router.push('/combos')
+    },
+    {
       title: 'Unlock Your Next Move',
       onPress: () => setModalConfig({})
     },
     {
       title: 'Custom Fights',
       onPress: () => setModalConfig({}) // Uses default values
-    },
-    {
-      title: 'Combos',
-      onPress: () => setModalConfig({})
     },
   ];
 
@@ -207,14 +208,40 @@ export default function Index() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={[styles.buttonWide]} onPress={buttons[5].onPress}>
-          <Text style={styles.textButton}>{buttons[5].title}</Text>
+        <TouchableOpacity
+          style={[
+            styles.buttonWide,
+            { backgroundColor: Colors.darkGreen, borderColor: Colors.green }
+          ]}
+          onPress={buttons[5].onPress}>
+          <View style={styles.buttonWideContent}>
+            <MaterialCommunityIcons name="boxing-glove" size={70} color={Colors.background} style={[styles.buttonIcon, { marginBottom: 0, marginRight: 20 }]} />
+            <Text style={[styles.textButton, { flex: 1, fontSize: 46 }]}>{buttons[5].title}</Text>
+          </View>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.buttonWide]} onPress={buttons[6].onPress}>
-          <Text style={styles.textButton}>{buttons[6].title}</Text>
+        <TouchableOpacity
+          style={[
+            styles.buttonWide,
+            { backgroundColor: Colors.darkGreen, borderColor: Colors.green },
+            { opacity: 0.4 }
+          ]}
+          onPress={buttons[6].onPress}
+          disabled={true}>
+          <View style={styles.buttonWideContent}>
+            <MaterialCommunityIcons name="lock" size={60} color={Colors.background} style={[styles.buttonIcon, { marginBottom: 0, marginRight: 20 }]} />
+            <Text style={[styles.textButton, { flex: 1 }]}>{buttons[6].title}</Text>
+          </View>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.buttonWide]} onPress={buttons[7].onPress}>
-          <Text style={styles.textButton}>{buttons[7].title}</Text>
+        <TouchableOpacity
+          style={[
+            styles.buttonWide,
+            { backgroundColor: Colors.darkGreen, borderColor: Colors.green }
+          ]}
+          onPress={buttons[7].onPress}>
+          <View style={styles.buttonWideContent}>
+            <MaterialCommunityIcons name="cog" size={60} color={Colors.background} style={[styles.buttonIcon, { marginBottom: 0, marginRight: 20 }]} />
+            <Text style={[styles.textButton, { flex: 1 }]}>{buttons[7].title}</Text>
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -247,6 +274,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.background,
     paddingBottom: 180,
+  },
+  buttonWideContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    height: '100%',
+    paddingHorizontal: 20,
   },
 
   row: {

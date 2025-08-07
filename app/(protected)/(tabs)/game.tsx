@@ -128,17 +128,21 @@ export default function Game() {
   // Fetch moves from Firestore based on difficulty
   React.useEffect(() => {
     const fetchMoves = async () => {
+      console.log("Fetching moves...");
       setIsLoading(true);
       try {
         const docRef = doc(db, "combos", params.category || "basic");
+        console.log("Fetching moves from:", docRef.path);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
+          console.log("Document data:", docSnap.data());
           const data = docSnap.data();
           const difficulty = params.difficulty?.toLowerCase() || 'beginner';
 
           // Get moves from the selected difficulty level
           if (data.levels[difficulty]) {
+            console.log(`Fetching moves for difficulty: ${difficulty}`);
             const allMoves = data.levels[difficulty].reduce((acc: Move[], combo: any) => {
               return [...acc, ...combo.moves];
             }, []);
