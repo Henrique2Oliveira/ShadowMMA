@@ -69,7 +69,7 @@ export default function Index() {
         restTime: '1',
         moveSpeed: '1',
         difficulty: 'beginner',
-        category: Math.floor(Math.random() * 6).toString() // 0-5 for the 6 categories in the database
+        category: Math.floor(Math.random() * 2).toString() // 0-5 for the 6 categories in the database
       })
     },
     {

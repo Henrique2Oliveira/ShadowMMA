@@ -8,36 +8,54 @@ export const combinationSets = [{
         "comboId": 0,
         "name": "1-2 (Jab Cross)",
         "moves": [
-          { "move": "JAB", "pauseTime": 800, "direction": "left", "tiltValue": 0.3 },
-          { "move": "CROSS", "pauseTime": 800, "direction": "right", "tiltValue": 0.3 }
+          { "move": "JAB", "pauseTime": 1100, "direction": "left", "tiltValue": 0.3 },
+          { "move": "CROSS", "pauseTime": 1100, "direction": "right", "tiltValue": 0.3 }
+        ]
+      },
+      {
+        "comboId": 5,
+        "name": "Cross Jab (2-1)",
+        "moves": [
+          { "move": "CROSS", "pauseTime": 1100, "direction": "right", "tiltValue": 0.3 },
+          { "move": "JAB", "pauseTime": 900, "direction": "left", "tiltValue": 0.4 }
         ]
       },
       {
         "comboId": 1,
         "name": "1-2-3",
         "moves": [
-          { "move": "JAB", "pauseTime": 700, "direction": "left", "tiltValue": 0.3 },
-          { "move": "CROSS", "pauseTime": 700, "direction": "right", "tiltValue": 0.3 },
-          { "move": "LEFT\nHOOK", "pauseTime": 1000, "direction": "left", "tiltValue": 0.5 }
+          { "move": "JAB", "pauseTime": 1000, "direction": "left", "tiltValue": 0.3 },
+          { "move": "CROSS", "pauseTime": 1000, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT\nHOOK", "pauseTime": 1300, "direction": "left", "tiltValue": 0.5 }
         ]
       },
       {
         "comboId": 2,
         "name": "Double Jab Cross",
         "moves": [
-          { "move": "JAB", "pauseTime": 400, "direction": "left", "tiltValue": 0.2 },
-          { "move": "JAB", "pauseTime": 400, "direction": "left", "tiltValue": 0.2 },
-          { "move": "CROSS", "pauseTime": 800, "direction": "right", "tiltValue": 0.3 }
+          { "move": "JAB", "pauseTime": 700, "direction": "left", "tiltValue": 0.2 },
+          { "move": "JAB", "pauseTime": 700, "direction": "left", "tiltValue": 0.2 },
+          { "move": "CROSS", "pauseTime": 1100, "direction": "right", "tiltValue": 0.3 }
         ]
       },
       {
         "comboId": 3,
         "name": "1-2-3-2",
         "moves": [
-          { "move": "JAB", "pauseTime": 600, "direction": "left", "tiltValue": 0.2 },
-          { "move": "CROSS", "pauseTime": 600, "direction": "right", "tiltValue": 0.3 },
-          { "move": "LEFT\nHOOK", "pauseTime": 800, "direction": "left", "tiltValue": 0.4 },
-          { "move": "CROSS", "pauseTime": 800, "direction": "right", "tiltValue": 0.3 }
+          { "move": "JAB", "pauseTime": 900, "direction": "left", "tiltValue": 0.2 },
+          { "move": "CROSS", "pauseTime": 900, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT\nHOOK", "pauseTime": 1100, "direction": "left", "tiltValue": 0.4 },
+          { "move": "CROSS", "pauseTime": 1100, "direction": "right", "tiltValue": 0.3 }
+        ]
+      }
+      ,
+      {
+        "comboId": 4,
+        "name": "Jab Cross Uppercut",
+        "moves": [
+          { "move": "JAB", "pauseTime": 700, "direction": "left", "tiltValue": 0.2 },
+          { "move": "CROSS", "pauseTime": 700, "direction": "right", "tiltValue": 0.2 },
+          { "move": "RIGHT\nUPPERCUT", "pauseTime": 900, "direction": "up", "tiltValue": 0.6 }
         ]
       }
     ],
@@ -52,6 +70,68 @@ export const combinationSets = [{
         ]
       },
       {
+        "comboId": 7,
+        "name": "Low Kick Combo",
+        "moves": [
+          { "move": "JAB", "pauseTime": 300, "direction": "left", "tiltValue": 0.2 },
+          { "move": "CROSS", "pauseTime": 300, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT\nHOOK", "pauseTime": 400, "direction": "left", "tiltValue": 0.4 },
+          { "move": "RIGHT\nLOW KICK", "pauseTime": 700, "direction": "left", "tiltValue": 0.2 },
+          { "move": "LEFT\nLOW KICK", "pauseTime": 700, "direction": "right", "tiltValue": 0.2 }
+        ]
+      },
+      {
+        "comboId": 8,
+        "name": "Push Kick Setup",
+        "moves": [
+          { "move": "JAB", "pauseTime": 300, "direction": "left", "tiltValue": 0.2 },
+          { "move": "RIGHT\nPUSH KICK", "pauseTime": 600, "direction": "up", "tiltValue": 0.3 },
+          { "move": "LEFT\nHOOK", "pauseTime": 400, "direction": "left", "tiltValue": 0.4 },
+          { "move": "CROSS", "pauseTime": 400, "direction": "right", "tiltValue": 0.3 }
+        ]
+      },
+      {
+        "comboId": 5,
+        "name": "Boxer's Special",
+        "moves": [
+          { "move": "JAB", "pauseTime": 600, "direction": "left", "tiltValue": 0.2 },
+          { "move": "CROSS", "pauseTime": 600, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT\nHOOK", "pauseTime": 700, "direction": "left", "tiltValue": 0.4 },
+          { "move": "RIGHT\nHOOK", "pauseTime": 700, "direction": "right", "tiltValue": 0.4 },
+          { "move": "LEFT\nUPPERCUT", "pauseTime": 800, "direction": "up", "tiltValue": 0.5 }
+        ]
+      },
+      {
+        "comboId": 6,
+        "name": "Muay Thai Flow",
+        "moves": [
+          { "move": "JAB", "pauseTime": 600, "direction": "left", "tiltValue": 0.2 },
+          { "move": "CROSS", "pauseTime": 600, "direction": "right", "tiltValue": 0.3 },
+          { "move": "RIGHT\nELBOW", "pauseTime": 700, "direction": "right", "tiltValue": 0.5 },
+          { "move": "LEFT\nKNEE", "pauseTime": 900, "direction": "up", "tiltValue": 0.6 },
+          { "move": "RIGHT\nHOOK", "pauseTime": 700, "direction": "right", "tiltValue": 0.4 }
+        ]
+      },
+      {
+        "comboId": 4,
+        "name": "Knee Strike Combo",
+        "moves": [
+          { "move": "JAB", "pauseTime": 500, "direction": "left", "tiltValue": 0.3 },
+          { "move": "CROSS", "pauseTime": 500, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT\nKNEE", "pauseTime": 800, "direction": "up", "tiltValue": 0.6 }
+        ]
+      },
+      {
+        "comboId": 3,
+        "name": "Triple Jab Power",
+        "moves": [
+          { "move": "JAB", "pauseTime": 300, "direction": "left", "tiltValue": 0.2 },
+          { "move": "JAB", "pauseTime": 300, "direction": "left", "tiltValue": 0.2 },
+          { "move": "JAB", "pauseTime": 300, "direction": "left", "tiltValue": 0.2 },
+          { "move": "CROSS", "pauseTime": 800, "direction": "right", "tiltValue": 0.5 }
+        ]
+      },
+      {
         "comboId": 1,
         "name": "Uppercut Combo",
         "moves": [
@@ -60,18 +140,96 @@ export const combinationSets = [{
           { "move": "JAB", "pauseTime": 800, "direction": "left", "tiltValue": 0.3 }
         ]
       }
+      ,
+      {
+        "comboId": 2,
+        "name": "Hook Cross Uppercut",
+        "moves": [
+          { "move": "LEFT\nHOOK", "pauseTime": 700, "direction": "left", "tiltValue": 0.5 },
+          { "move": "CROSS", "pauseTime": 700, "direction": "right", "tiltValue": 0.3 },
+          { "move": "RIGHT\nUPPERCUT", "pauseTime": 900, "direction": "up", "tiltValue": 0.6 }
+        ]
+      }
     ],
     "advanced": [
       {
         "comboId": 0,
         "name": "Speed 6-Punch Combo",
         "moves": [
+          { "move": "JAB", "pauseTime": 600, "direction": "left", "tiltValue": 0.2 },
+          { "move": "CROSS", "pauseTime": 600, "direction": "right", "tiltValue": 0.2 },
+          { "move": "LEFT\nHOOK", "pauseTime": 800, "direction": "left", "tiltValue": 0.3 },
+          { "move": "RIGHT\nHOOK", "pauseTime": 800, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT\nUPPERCUT", "pauseTime": 900, "direction": "up", "tiltValue": 0.6 },
+          { "move": "RIGHT\nUPPERCUT", "pauseTime": 900, "direction": "up", "tiltValue": 0.6 }
+        ]
+      },
+      {
+        "comboId": 5,
+        "name": "Full Strike Arsenal",
+        "moves": [
+          { "move": "JAB", "pauseTime": 600, "direction": "left", "tiltValue": 0.2 },
+          { "move": "CROSS", "pauseTime": 600, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT\nHIGH KICK", "pauseTime": 1100, "direction": "left", "tiltValue": 0.5 },
+          { "move": "RIGHT\nELBOW", "pauseTime": 800, "direction": "right", "tiltValue": 0.5 },
+          { "move": "LEFT\nKNEE", "pauseTime": 900, "direction": "left", "tiltValue": 0.5 },
+          { "move": "RIGHT\nLOW KICK", "pauseTime": 1000, "direction": "up", "tiltValue": 0.5 }
+        ]
+      },
+      {
+        "comboId": 6,
+        "name": "Kick Boxing Special",
+        "moves": [
+          { "move": "LEFT\nPUSH KICK", "pauseTime": 600, "direction": "up", "tiltValue": 0.5 },
+          { "move": "RIGHT\nCROSS", "pauseTime": 400, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT\nHOOK", "pauseTime": 400, "direction": "left", "tiltValue": 0.4 },
+          { "move": "RIGHT\nHIGH KICK", "pauseTime": 800, "direction": "up", "tiltValue": 0.7 },
+          { "move": "LEFT\nLOW KICK", "pauseTime": 600, "direction": "up", "tiltValue": 0.5 }
+        ]
+      },
+      {
+        "comboId": 3,
+        "name": "Complete Strike Package",
+        "moves": [
           { "move": "JAB", "pauseTime": 300, "direction": "left", "tiltValue": 0.2 },
-          { "move": "CROSS", "pauseTime": 300, "direction": "right", "tiltValue": 0.2 },
-          { "move": "LEFT\nHOOK", "pauseTime": 500, "direction": "left", "tiltValue": 0.3 },
-          { "move": "RIGHT\nHOOK", "pauseTime": 500, "direction": "right", "tiltValue": 0.3 },
-          { "move": "LEFT\nUPPERCUT", "pauseTime": 600, "direction": "up", "tiltValue": 0.5 },
-          { "move": "RIGHT\nUPPERCUT", "pauseTime": 600, "direction": "up", "tiltValue": 0.5 }
+          { "move": "CROSS", "pauseTime": 300, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT\nHOOK", "pauseTime": 400, "direction": "left", "tiltValue": 0.4 },
+          { "move": "RIGHT\nELBOW", "pauseTime": 500, "direction": "right", "tiltValue": 0.5 },
+          { "move": "LEFT\nKNEE", "pauseTime": 600, "direction": "up", "tiltValue": 0.6 },
+          { "move": "RIGHT\nUPPERCUT", "pauseTime": 400, "direction": "up", "tiltValue": 0.5 },
+          { "move": "LEFT\nELBOW", "pauseTime": 500, "direction": "left", "tiltValue": 0.5 }
+        ]
+      },
+      {
+        "comboId": 4,
+        "name": "Dutch Kickboxing Flow",
+        "moves": [
+          { "move": "JAB", "pauseTime": 300, "direction": "left", "tiltValue": 0.2 },
+          { "move": "CROSS", "pauseTime": 300, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT\nHOOK", "pauseTime": 400, "direction": "left", "tiltValue": 0.4 },
+          { "move": "RIGHT\nKNEE", "pauseTime": 600, "direction": "up", "tiltValue": 0.6 },
+          { "move": "LEFT\nELBOW", "pauseTime": 500, "direction": "left", "tiltValue": 0.5 },
+          { "move": "RIGHT\nHOOK", "pauseTime": 400, "direction": "right", "tiltValue": 0.4 }
+        ]
+      },
+      {
+        "comboId": 1,
+        "name": "Body-Head Blitz",
+        "moves": [
+          { "move": "LEFT\nHOOK", "pauseTime": 400, "direction": "left", "tiltValue": 0.4 },
+          { "move": "RIGHT\nHOOK", "pauseTime": 400, "direction": "right", "tiltValue": 0.4 },
+          { "move": "LEFT\nUPPERCUT", "pauseTime": 400, "direction": "up", "tiltValue": 0.5 },
+          { "move": "CROSS", "pauseTime": 400, "direction": "right", "tiltValue": 0.3 },
+          { "move": "RIGHT\nHOOK", "pauseTime": 600, "direction": "right", "tiltValue": 0.5 }
+        ]
+      },
+      {
+        "comboId": 2,
+        "name": "Elbow Cross Combo",
+        "moves": [
+          { "move": "LEFT\nELBOW", "pauseTime": 500, "direction": "left", "tiltValue": 0.5 },
+          { "move": "CROSS", "pauseTime": 400, "direction": "right", "tiltValue": 0.3 },
+          { "move": "RIGHT\nELBOW", "pauseTime": 600, "direction": "right", "tiltValue": 0.5 }
         ]
       }
     ]
@@ -86,8 +244,8 @@ export const combinationSets = [{
         "comboId": 0,
         "name": "Slip and Jab",
         "moves": [
-          { "move": "SLIP", "pauseTime": 800, "direction": "left", "tiltValue": 0.5 },
-          { "move": "JAB", "pauseTime": 800, "direction": "left", "tiltValue": 0.2 }
+          { "move": "SLIP", "pauseTime": 1100, "direction": "down", "tiltValue": 0.4 },
+          { "move": "JAB", "pauseTime": 1100, "direction": "left", "tiltValue": 0.2 }
         ]
       },
       {
@@ -98,15 +256,34 @@ export const combinationSets = [{
           { "move": "CROSS", "pauseTime": 800, "direction": "right", "tiltValue": 0.3 }
         ]
       }
+      ,
+      {
+        "comboId": 2,
+        "name": "Slip Block",
+        "moves": [
+          { "move": "SLIP", "pauseTime": 700, "direction": "down", "tiltValue": 0.4 },
+          { "move": "BLOCK", "pauseTime": 700, "direction": "up", "tiltValue": 0.4 }
+        ]
+      }
     ],
     "intermediate": [
       {
         "comboId": 0,
         "name": "Slip, Hook, Roll",
         "moves": [
-          { "move": "SLIP", "pauseTime": 600, "direction": "left", "tiltValue": 0.6 },
+          { "move": "SLIP", "pauseTime": 600, "direction": "down", "tiltValue": 0.4 },
           { "move": "LEFT\nHOOK", "pauseTime": 800, "direction": "left", "tiltValue": 0.4 },
           { "move": "ROLL", "pauseTime": 1000, "direction": "right", "tiltValue": 0.6 }
+        ]
+      }
+      ,
+      {
+        "comboId": 1,
+        "name": "Roll Slip Block",
+        "moves": [
+          { "move": "ROLL", "pauseTime": 800, "direction": "right", "tiltValue": 0.6 },
+          { "move": "SLIP", "pauseTime": 700, "direction": "down", "tiltValue": 0.4 },
+          { "move": "BLOCK", "pauseTime": 700, "direction": "up", "tiltValue": 0.4 }
         ]
       }
     ],
@@ -118,6 +295,58 @@ export const combinationSets = [{
           { "move": "ROLL", "pauseTime": 1000, "direction": "right", "tiltValue": 0.5 },
           { "move": "BLOCK", "pauseTime": 800, "direction": "up", "tiltValue": 0.3 },
           { "move": "RIGHT\nUPPERCUT", "pauseTime": 800, "direction": "up", "tiltValue": 0.5 }
+        ]
+      },
+      {
+        "comboId": 5,
+        "name": "Defense to Kicks",
+        "moves": [
+          { "move": "BLOCK", "pauseTime": 600, "direction": "down", "tiltValue": 0.3 },
+          { "move": "SLIP", "pauseTime": 400, "direction": "down", "tiltValue": 0.3 },
+          { "move": "RIGHT\nLOW KICK", "pauseTime": 700, "direction": "up", "tiltValue": 0.2 },
+          { "move": "LEFT\nHIGH KICK", "pauseTime": 800, "direction": "up", "tiltValue": 0.7 },
+          { "move": "CROSS", "pauseTime": 400, "direction": "right", "tiltValue": 0.3 }
+        ]
+      },
+      {
+        "comboId": 3,
+        "name": "Advanced Defense Chain",
+        "moves": [
+          { "move": "SLIP", "pauseTime": 400, "direction": "left", "tiltValue": 0.4 },
+          { "move": "ROLL", "pauseTime": 500, "direction": "right", "tiltValue": 0.5 },
+          { "move": "BLOCK", "pauseTime": 400, "direction": "up", "tiltValue": 0.4 },
+          { "move": "LEFT\nELBOW", "pauseTime": 500, "direction": "left", "tiltValue": 0.5 },
+          { "move": "RIGHT\nKNEE", "pauseTime": 600, "direction": "up", "tiltValue": 0.6 }
+        ]
+      },
+      {
+        "comboId": 4,
+        "name": "Counter Attack Master",
+        "moves": [
+          { "move": "SLIP", "pauseTime": 400, "direction": "right", "tiltValue": 0.4 },
+          { "move": "LEFT\nHOOK", "pauseTime": 400, "direction": "left", "tiltValue": 0.4 },
+          { "move": "RIGHT\nELBOW", "pauseTime": 500, "direction": "right", "tiltValue": 0.5 },
+          { "move": "LEFT\nKNEE", "pauseTime": 600, "direction": "up", "tiltValue": 0.6 },
+          { "move": "CROSS", "pauseTime": 400, "direction": "right", "tiltValue": 0.4 }
+        ]
+      },
+      {
+        "comboId": 2,
+        "name": "Elbow Knee Rush",
+        "moves": [
+          { "move": "LEFT\nELBOW", "pauseTime": 500, "direction": "left", "tiltValue": 0.5 },
+          { "move": "RIGHT\nKNEE", "pauseTime": 600, "direction": "up", "tiltValue": 0.6 },
+          { "move": "RIGHT\nELBOW", "pauseTime": 500, "direction": "right", "tiltValue": 0.5 }
+        ]
+      }
+      ,
+      {
+        "comboId": 1,
+        "name": "Double Roll Uppercut",
+        "moves": [
+          { "move": "ROLL", "pauseTime": 900, "direction": "up", "tiltValue": 0.3 },
+          { "move": "ROLL", "pauseTime": 900, "direction": "up", "tiltValue": 0.3 },
+          { "move": "RIGHT\nUPPERCUT", "pauseTime": 1000, "direction": "up", "tiltValue": 0.6 }
         ]
       }
     ]
@@ -144,6 +373,15 @@ export const combinationSets = [{
           { "move": "CROSS", "pauseTime": 800, "direction": "right", "tiltValue": 0.3 }
         ]
       }
+      ,
+      {
+        "comboId": 2,
+        "name": "Step Cross",
+        "moves": [
+          { "move": "STEP LEFT", "pauseTime": 600, "direction": "left", "tiltValue": 0.2 },
+          { "move": "CROSS", "pauseTime": 800, "direction": "right", "tiltValue": 0.3 }
+        ]
+      }
     ],
     "intermediate": [
       {
@@ -154,15 +392,57 @@ export const combinationSets = [{
           { "move": "LEFT\nHOOK", "pauseTime": 800, "direction": "left", "tiltValue": 0.4 }
         ]
       }
+      ,
+      {
+        "comboId": 1,
+        "name": "Circle Hook",
+        "moves": [
+          { "move": "STEP RIGHT", "pauseTime": 600, "direction": "right", "tiltValue": 0.2 },
+          { "move": "LEFT\nHOOK", "pauseTime": 900, "direction": "left", "tiltValue": 0.4 }
+        ]
+      }
     ],
     "advanced": [
       {
         "comboId": 0,
         "name": "Pivot Hook Blitz",
         "moves": [
-          { "move": "PIVOT LEFT", "pauseTime": 500, "direction": "left", "tiltValue": 0.4 },
-          { "move": "LEFT\nHOOK", "pauseTime": 800, "direction": "left", "tiltValue": 0.4 },
-          { "move": "RIGHT\nUPPERCUT", "pauseTime": 800, "direction": "up", "tiltValue": 0.5 }
+          { "move": "PIVOT LEFT", "pauseTime": 800, "direction": "left", "tiltValue": 0.4 },
+          { "move": "LEFT\nHOOK", "pauseTime": 1100, "direction": "left", "tiltValue": 0.4 },
+          { "move": "RIGHT\nUPPERCUT", "pauseTime": 1100, "direction": "up", "tiltValue": 0.5 }
+        ]
+      },
+      {
+        "comboId": 2,
+        "name": "Advanced Footwork Chain",
+        "moves": [
+          { "move": "L-STEP", "pauseTime": 800, "direction": "left", "tiltValue": 0.3 },
+          { "move": "PIVOT RIGHT", "pauseTime": 800, "direction": "right", "tiltValue": 0.4 },
+          { "move": "LEFT\nHOOK", "pauseTime": 700, "direction": "left", "tiltValue": 0.4 },
+          { "move": "RIGHT\nELBOW", "pauseTime": 800, "direction": "right", "tiltValue": 0.5 },
+          { "move": "LEFT\nKNEE", "pauseTime": 900, "direction": "up", "tiltValue": 0.6 }
+        ]
+      },
+      {
+        "comboId": 3,
+        "name": "Circle and Strike Elite",
+        "moves": [
+          { "move": "STEP RIGHT", "pauseTime": 400, "direction": "right", "tiltValue": 0.3 },
+          { "move": "PIVOT LEFT", "pauseTime": 400, "direction": "left", "tiltValue": 0.4 },
+          { "move": "JAB", "pauseTime": 300, "direction": "left", "tiltValue": 0.2 },
+          { "move": "CROSS", "pauseTime": 300, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT\nELBOW", "pauseTime": 500, "direction": "left", "tiltValue": 0.5 },
+          { "move": "RIGHT\nKNEE", "pauseTime": 600, "direction": "up", "tiltValue": 0.6 }
+        ]
+      }
+      ,
+      {
+        "comboId": 1,
+        "name": "Pivot Cross Blitz",
+        "moves": [
+          { "move": "PIVOT RIGHT", "pauseTime": 500, "direction": "right", "tiltValue": 0.4 },
+          { "move": "CROSS", "pauseTime": 800, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT\nHOOK", "pauseTime": 900, "direction": "left", "tiltValue": 0.4 }
         ]
       }
     ]

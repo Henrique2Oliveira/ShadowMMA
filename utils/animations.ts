@@ -39,25 +39,34 @@ export const animate3DMove = (
   }).start();
 };
 export const addRandomMovement = (scale: Animated.Value) => {
-  const randomDelay = Math.random() * 2000 + 1000; // Random delay between 1-3 seconds
-  const randomScale = 0.85 + Math.random() * 0.3; // Random scale between 0.95-1.05
+  const randomDelay = Math.floor(Math.random() * 3000); // Random delay between 1-3 seconds
 
   return new Promise<void>((resolve) => {
     setTimeout(() => {
       Animated.sequence([
+        // Pulse outward with a bouncy spring
         Animated.spring(scale, {
-          toValue: randomScale,
+          toValue: 1.2,
           useNativeDriver: true,
-          damping: 15,
-          stiffness: 80,
-          mass: 1
+          damping: 4,
+          stiffness: 90,
+          mass: 0.8
         }),
+        // Contract inward with a quick spring
+        Animated.spring(scale, {
+          toValue: 0.8,
+          useNativeDriver: true,
+          damping: 3,
+          stiffness: 100,
+          mass: 0.5
+        }),
+        // Return to normal size with a gentle bounce
         Animated.spring(scale, {
           toValue: 1,
           useNativeDriver: true,
-          damping: 15,
+          damping: 5,
           stiffness: 80,
-          mass: 1
+          mass: 0.7
         })
       ]).start(() => resolve());
     }, randomDelay);
