@@ -3,7 +3,7 @@ import { Animated } from 'react-native';
 export type Move = {
   move: string;
   pauseTime: number;
-  direction: 'up' | 'down' | 'left' | 'right' | 'pulse';
+  direction: 'up' | 'down' | 'left' | 'right';
   tiltValue: number;
 };
 
@@ -19,102 +19,59 @@ export const animate3DMove = (
   scale.stopAnimation();
 
   // Handle vertical movements with spring
-  if (move.direction !== 'pulse') {
-    Animated.spring(tiltX, {
-      toValue: move.direction === 'up' ? -move.tiltValue :
-        move.direction === 'down' ? move.tiltValue : 0,
-      useNativeDriver: true,
-      damping: 14,
-      stiffness: 100,
-      mass: 2
-    }).start();
+  Animated.spring(tiltX, {
+    toValue: move.direction === 'up' ? -move.tiltValue :
+      move.direction === 'down' ? move.tiltValue : 0,
+    useNativeDriver: true,
+    damping: 14,
+    stiffness: 100,
+    mass: 2
+  }).start();
 
-    // Handle horizontal movements with spring
-    Animated.spring(tiltY, {
-      toValue: move.direction === 'left' ? -move.tiltValue :
-        move.direction === 'right' ? move.tiltValue : 0,
-      useNativeDriver: true,
-      damping: 14,
-      stiffness: 100,
-      mass: 2
-    }).start();
-  }
+  // Handle horizontal movements with spring
+  Animated.spring(tiltY, {
+    toValue: move.direction === 'left' ? -move.tiltValue :
+      move.direction === 'right' ? move.tiltValue : 0,
+    useNativeDriver: true,
+    damping: 14,
+    stiffness: 100,
+    mass: 2
+  }).start();
+};
+export const addRandomMovement = (scale: Animated.Value) => {
+  const randomDelay = Math.random() * 2000 + 1000; // Random delay between 1-3 seconds
+  const randomScale = 0.90 + Math.random() * 0.3; // Random scale between 0.95-1.05
 
-  // Add pulse animation only for pulse direction
-  if (move.direction === 'pulse') {
-    // First reset any existing tilts
-    Animated.parallel([
-      Animated.spring(tiltX, {
-        toValue: 0,
-        useNativeDriver: true,
-        damping: 14,
-        stiffness: 100,
-        mass: 2
-      }),
-      Animated.spring(tiltY, {
-        toValue: 0,
-        useNativeDriver: true,
-        damping: 14,
-        stiffness: 100,
-        mass: 2
-      })
-    ]).start();
-
-    // Map tiltValue (typically 0-1) to scale ranges
-    const scaleUp = 1 - (move.tiltValue * 0.5);    // tiltValue 0.4 -> scale 1.2, tiltValue 1.0 -> scale 1.5
-    const scaleDown = 1 + (move.tiltValue * 0.3);   // tiltValue 0.4 -> scale 0.88, tiltValue 1.0 -> scale 0.7
-    
-    Animated.sequence([
-      Animated.spring(scale, {
-        toValue: scaleUp,
-        useNativeDriver: true,
-        damping: 8,
-        stiffness: 100,
-        mass: 1
-      }),
-      Animated.spring(scale, {
-        toValue: scaleDown,
-        useNativeDriver: true,
-        damping: 12,
-        stiffness: 140,
-        mass: 1
-      }),
-      Animated.spring(scale, {
-        toValue: 1,
-        useNativeDriver: true,
-        damping: 8,
-        stiffness: 100,
-        mass: 1
-      })
-    ]).start(() => {
-      // Reset scale, tiltX, and tiltY after sequence completes
-      Animated.parallel([
+  return new Promise<void>((resolve) => {
+    setTimeout(() => {
+      Animated.sequence([
+        Animated.spring(scale, {
+          toValue: randomScale,
+          useNativeDriver: true,
+          damping: 15,
+          stiffness: 80,
+          mass: 1
+        }),
         Animated.spring(scale, {
           toValue: 1,
           useNativeDriver: true,
-          damping: 12,
-          stiffness: 100,
+          damping: 15,
+          stiffness: 80,
           mass: 1
-        }),
-        Animated.spring(tiltX, {
-          toValue: 0,
-          useNativeDriver: true,
-          damping: 14,
-          stiffness: 100,
-          mass: 2
-        }),
-        Animated.spring(tiltY, {
-          toValue: 0,
-          useNativeDriver: true,
-          damping: 14,
-          stiffness: 100,
-          mass: 2
         })
-      ]).start();
-    });
-  }
+      ]).start(() => resolve());
+    }, randomDelay);
+  });
 };
-
+/**
+ * Starts an animation that changes the value of the given Animated.Value to 1 over time.
+ * The duration of the animation is the given pauseTime divided by the given speedMultiplier.
+ * The animation is not driven by the native driver.
+ * @param {Animated.Value} moveProgress The Animated.Value to animate.
+ * @param {number} pauseTime The duration of the animation in milliseconds.
+ * @param {number} speedMultiplier The speed multiplier to apply to the animation.
+ * @returns {Animated.CompositeAnimation} The started animation.
+ */
 export const startMoveProgress = (
   moveProgress: Animated.Value,
   pauseTime: number,

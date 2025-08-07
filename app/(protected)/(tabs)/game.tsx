@@ -1,6 +1,6 @@
 import { db } from '@/FirebaseConfig';
 import { Colors, Typography } from '@/themes/theme';
-import { animate3DMove, startMoveProgress } from '@/utils/animations';
+import { addRandomMovement, animate3DMove, startMoveProgress } from '@/utils/animations';
 import { formatTime } from '@/utils/time';
 import { Ionicons } from '@expo/vector-icons';
 import { useIsFocused } from '@react-navigation/core';
@@ -55,7 +55,7 @@ export default function Game() {
           }
         }
       });
-      
+
       if (bellSound) {
         try {
           bellSound.unloadAsync();
@@ -132,7 +132,7 @@ export default function Game() {
   interface Move {
     move: string;
     pauseTime: number;
-    direction: "left" | "right" | "up" | "down" | "pulse";
+    direction: "left" | "right" | "up" | "down";
     tiltValue: number;
   }
 
@@ -404,6 +404,27 @@ export default function Game() {
       }
     }
   }, [currentMove, moves, gameState.isPaused, gameState.isRestPeriod, tiltX, tiltY, scale, sounds, isMuted]);
+  // Add random movement effect
+  React.useEffect(() => {
+    let isAnimating = false;
+
+    const addRandomMovementIfNotAnimating = async () => {
+      if (!isAnimating && !gameState.isPaused && !gameState.isRestPeriod && !gameState.isGameOver) {
+        isAnimating = true;
+        await addRandomMovement(scale);
+        isAnimating = false;
+        addRandomMovementIfNotAnimating();
+      }
+    };
+
+    if (!gameState.isPaused && !gameState.isRestPeriod && !gameState.isGameOver) {
+      addRandomMovementIfNotAnimating();
+    }
+
+    return () => {
+      isAnimating = true; // Prevent new animations from starting during cleanup
+    };
+  }, [gameState.isPaused, gameState.isRestPeriod, gameState.isGameOver]);
 
   React.useEffect(() => {
     if (currentMove) {
