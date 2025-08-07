@@ -38,16 +38,31 @@ export default function Game() {
         setBellSound(bell);
       } catch (error) {
         console.error('Error loading sounds:', error);
+        // Set error state here if you want to show error UI
       }
     };
 
     loadSounds();
 
     return () => {
+      // Cleanup sounds with error handling
       sounds.forEach(sound => {
-        if (sound) sound.unloadAsync();
+        if (sound) {
+          try {
+            sound.unloadAsync();
+          } catch (error) {
+            console.error('Error unloading sound:', error);
+          }
+        }
       });
-      bellSound?.unloadAsync();
+      
+      if (bellSound) {
+        try {
+          bellSound.unloadAsync();
+        } catch (error) {
+          console.error('Error unloading bell sound:', error);
+        }
+      }
     };
   }, []);
 
@@ -345,14 +360,14 @@ export default function Game() {
   }, [gameState.isPaused, gameState.isGameOver, gameState.isRestPeriod, gameState.currentRound,
     totalRounds, roundDurationMs, restTimeMs]);
 
-  const handleSpeedChange = () => {
+  const handleSpeedChange = React.useCallback(() => {
     if (!gameState.isPaused) return;
     setSpeedMultiplier(current => {
       const speeds = [1, 1.5, 2, 2.5, 3];  // Matches the values from FightModeModal
       const currentIndex = speeds.indexOf(current);
       return speeds[(currentIndex + 1) % speeds.length];
     });
-  };
+  }, [gameState.isPaused]);
 
   const updateMoveProg = React.useCallback(() => {
     if (currentMove) {
