@@ -249,8 +249,8 @@ export default function Index() {
           onPress={buttons[5].onPress}
           disabled={buttons[5].disabled}>
           <View style={styles.buttonWideContent}>
-            <MaterialCommunityIcons name="boxing-glove" size={70} color={Colors.background} style={[styles.buttonIcon, { marginBottom: 0, marginRight: 20 }]} />
-            <Text style={[styles.textButton, { flex: 1, fontSize: 46 }]}>{buttons[5].title}</Text>
+            <MaterialCommunityIcons name="boxing-glove" size={60} color={Colors.background} style={[styles.buttonIcon, { transform: [{ rotate: '90deg' }], marginBottom: 0, marginRight: 10 }]} />
+            <Text style={[styles.textButton, { flex: 1}]}>{buttons[5].title}</Text>
           </View>
         </TouchableOpacity>
         <TouchableOpacity

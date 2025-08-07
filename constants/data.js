@@ -82,10 +82,9 @@ export const combinationSets = [{
       },
       {
         "comboId": 8,
-        "name": "Push Kick Setup",
+        "name": "Jab Cross Hook",
         "moves": [
           { "move": "JAB", "pauseTime": 300, "direction": "left", "tiltValue": 0.2 },
-          { "move": "RIGHT\nPUSH KICK", "pauseTime": 600, "direction": "up", "tiltValue": 0.3 },
           { "move": "LEFT\nHOOK", "pauseTime": 400, "direction": "left", "tiltValue": 0.4 },
           { "move": "CROSS", "pauseTime": 400, "direction": "right", "tiltValue": 0.3 }
         ]
@@ -271,9 +270,9 @@ export const combinationSets = [{
         "comboId": 0,
         "name": "Slip, Hook, Roll",
         "moves": [
-          { "move": "SLIP", "pauseTime": 600, "direction": "down", "tiltValue": 0.4 },
-          { "move": "LEFT\nHOOK", "pauseTime": 800, "direction": "left", "tiltValue": 0.4 },
-          { "move": "ROLL", "pauseTime": 1000, "direction": "right", "tiltValue": 0.6 }
+          { "move": "SLIP", "pauseTime": 600, "direction": "down", "tiltValue": 0.3 },
+          { "move": "LEFT\nHOOK", "pauseTime": 800, "direction": "left", "tiltValue": 0.3 },
+          { "move": "ROLL", "pauseTime": 1000, "direction": "down", "tiltValue": 0.3 }
         ]
       }
       ,
@@ -281,9 +280,9 @@ export const combinationSets = [{
         "comboId": 1,
         "name": "Roll Slip Block",
         "moves": [
-          { "move": "ROLL", "pauseTime": 800, "direction": "right", "tiltValue": 0.6 },
-          { "move": "SLIP", "pauseTime": 700, "direction": "down", "tiltValue": 0.4 },
-          { "move": "BLOCK", "pauseTime": 700, "direction": "up", "tiltValue": 0.4 }
+          { "move": "ROLL", "pauseTime": 900, "direction": "down", "tiltValue": 0.3 },
+          { "move": "SLIP", "pauseTime": 800, "direction": "down", "tiltValue": 0.3 },
+          { "move": "BLOCK", "pauseTime": 600, "direction": "up", "tiltValue": 0.3 }
         ]
       }
     ],
@@ -292,7 +291,7 @@ export const combinationSets = [{
         "comboId": 0,
         "name": "Roll, Block, Uppercut",
         "moves": [
-          { "move": "ROLL", "pauseTime": 1000, "direction": "right", "tiltValue": 0.5 },
+          { "move": "ROLL", "pauseTime": 1000, "direction": "down", "tiltValue": 0.4 },
           { "move": "BLOCK", "pauseTime": 800, "direction": "up", "tiltValue": 0.3 },
           { "move": "RIGHT\nUPPERCUT", "pauseTime": 800, "direction": "up", "tiltValue": 0.5 }
         ]
@@ -312,21 +311,21 @@ export const combinationSets = [{
         "comboId": 3,
         "name": "Advanced Defense Chain",
         "moves": [
-          { "move": "SLIP", "pauseTime": 400, "direction": "left", "tiltValue": 0.4 },
-          { "move": "ROLL", "pauseTime": 500, "direction": "right", "tiltValue": 0.5 },
+          { "move": "SLIP", "pauseTime": 400, "direction": "down", "tiltValue": 0.4 },
+          { "move": "ROLL", "pauseTime": 500, "direction": "down", "tiltValue": 0.5 },
           { "move": "BLOCK", "pauseTime": 400, "direction": "up", "tiltValue": 0.4 },
           { "move": "LEFT\nELBOW", "pauseTime": 500, "direction": "left", "tiltValue": 0.5 },
-          { "move": "RIGHT\nKNEE", "pauseTime": 600, "direction": "up", "tiltValue": 0.6 }
+          { "move": "RIGHT\nKNEE", "pauseTime": 900, "direction": "up", "tiltValue": 0.3 }
         ]
       },
       {
         "comboId": 4,
         "name": "Counter Attack Master",
         "moves": [
-          { "move": "SLIP", "pauseTime": 400, "direction": "right", "tiltValue": 0.4 },
+          { "move": "SLIP", "pauseTime": 400, "direction": "down", "tiltValue": 0.4 },
           { "move": "LEFT\nHOOK", "pauseTime": 400, "direction": "left", "tiltValue": 0.4 },
           { "move": "RIGHT\nELBOW", "pauseTime": 500, "direction": "right", "tiltValue": 0.5 },
-          { "move": "LEFT\nKNEE", "pauseTime": 600, "direction": "up", "tiltValue": 0.6 },
+          { "move": "LEFT\nKNEE", "pauseTime": 600, "direction": "up", "tiltValue": 0.4 },
           { "move": "CROSS", "pauseTime": 400, "direction": "right", "tiltValue": 0.4 }
         ]
       },
@@ -335,7 +334,7 @@ export const combinationSets = [{
         "name": "Elbow Knee Rush",
         "moves": [
           { "move": "LEFT\nELBOW", "pauseTime": 500, "direction": "left", "tiltValue": 0.5 },
-          { "move": "RIGHT\nKNEE", "pauseTime": 600, "direction": "up", "tiltValue": 0.6 },
+          { "move": "RIGHT\nKNEE", "pauseTime": 600, "direction": "up", "tiltValue": 0.4 },
           { "move": "RIGHT\nELBOW", "pauseTime": 500, "direction": "right", "tiltValue": 0.5 }
         ]
       }

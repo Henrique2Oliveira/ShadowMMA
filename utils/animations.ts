@@ -39,14 +39,14 @@ export const animate3DMove = (
   }).start();
 };
 export const addRandomMovement = (scale: Animated.Value) => {
-  const randomDelay = Math.floor(Math.random() * 3000); // Random delay between 1-3 seconds
+  const randomDelay = 3000; // Random delay between 1-3 seconds
 
   return new Promise<void>((resolve) => {
     setTimeout(() => {
       Animated.sequence([
         // Pulse outward with a bouncy spring
         Animated.spring(scale, {
-          toValue: 1.2,
+          toValue: 1.05,
           useNativeDriver: true,
           damping: 4,
           stiffness: 90,
@@ -54,7 +54,7 @@ export const addRandomMovement = (scale: Animated.Value) => {
         }),
         // Contract inward with a quick spring
         Animated.spring(scale, {
-          toValue: 0.8,
+          toValue: 0.95,
           useNativeDriver: true,
           damping: 3,
           stiffness: 100,
@@ -72,15 +72,7 @@ export const addRandomMovement = (scale: Animated.Value) => {
     }, randomDelay);
   });
 };
-/**
- * Starts an animation that changes the value of the given Animated.Value to 1 over time.
- * The duration of the animation is the given pauseTime divided by the given speedMultiplier.
- * The animation is not driven by the native driver.
- * @param {Animated.Value} moveProgress The Animated.Value to animate.
- * @param {number} pauseTime The duration of the animation in milliseconds.
- * @param {number} speedMultiplier The speed multiplier to apply to the animation.
- * @returns {Animated.CompositeAnimation} The started animation.
- */
+
 export const startMoveProgress = (
   moveProgress: Animated.Value,
   pauseTime: number,

@@ -140,7 +140,7 @@ export default function Game() {
   const [currentMove, setCurrentMove] = React.useState<Move | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
 
-  // Fetch moves from Firestore based on difficulty
+  // Fetch moves from Firestore based on difficulty - make fetch from http endpoint in the future and with id, and types of moves
   React.useEffect(() => {
     const fetchMoves = async () => {
       console.log("Fetching moves...");
