@@ -42,6 +42,7 @@ export default function Combos() {
       description: 'Basic 1-2 combination',
       difficulty: 'beginner',
       level: '1',
+      type: 'attack',
       config: {
         roundDuration: '2',
         numRounds: '3',
@@ -56,6 +57,37 @@ export default function Combos() {
       description: 'Classic 1-2-3 combo',
       difficulty: 'beginner',
       level: '2',
+      type: 'attack',
+      config: {
+        roundDuration: '2',
+        numRounds: '3',
+        restTime: '1',
+        moveSpeed: '1',
+        difficulty: 'beginner',
+        category: '0'
+      }
+    },
+    {
+      title: 'SLIP-BLOCK-SLIP',
+      description: 'Basic defensive movement pattern',
+      difficulty: 'beginner',
+      level: '1',
+      type: 'defense',
+      config: {
+        roundDuration: '2',
+        numRounds: '3',
+        restTime: '1',
+        moveSpeed: '1',
+        difficulty: 'beginner',
+        category: '0'
+      }
+    },
+    {
+      title: 'PIVOT-STEP',
+      description: 'Basic footwork pattern',
+      difficulty: 'beginner',
+      level: '1',
+      type: 'footwork',
       config: {
         roundDuration: '2',
         numRounds: '3',
@@ -70,6 +102,37 @@ export default function Combos() {
       description: 'Double jab setup',
       difficulty: 'intermediate',
       level: '3',
+      type: 'attack',
+      config: {
+        roundDuration: '3',
+        numRounds: '3',
+        restTime: '1',
+        moveSpeed: '1.5',
+        difficulty: 'intermediate',
+        category: '0'
+      }
+    },
+    {
+      title: 'DUCK-WEAVE-BLOCK',
+      description: 'Intermediate defense combination',
+      difficulty: 'intermediate',
+      level: '3',
+      type: 'defense',
+      config: {
+        roundDuration: '3',
+        numRounds: '3',
+        restTime: '1',
+        moveSpeed: '1.5',
+        difficulty: 'intermediate',
+        category: '0'
+      }
+    },
+    {
+      title: 'LATERAL-PIVOT-STEP',
+      description: 'Intermediate footwork pattern',
+      difficulty: 'intermediate',
+      level: '3',
+      type: 'footwork',
       config: {
         roundDuration: '3',
         numRounds: '3',
@@ -84,6 +147,7 @@ export default function Combos() {
       description: 'Advanced 1-2-3-2 combination',
       difficulty: 'intermediate',
       level: '4',
+      type: 'attack',
       config: {
         roundDuration: '3',
         numRounds: '3',
@@ -98,6 +162,37 @@ export default function Combos() {
       description: 'Body-head combination',
       difficulty: 'advanced',
       level: '5',
+      type: 'attack',
+      config: {
+        roundDuration: '3',
+        numRounds: '4',
+        restTime: '1',
+        moveSpeed: '2',
+        difficulty: 'advanced',
+        category: '0'
+      }
+    },
+    {
+      title: 'SLIP-ROLL-WEAVE-BLOCK',
+      description: 'Advanced defensive sequence',
+      difficulty: 'advanced',
+      level: '5',
+      type: 'defense',
+      config: {
+        roundDuration: '3',
+        numRounds: '4',
+        restTime: '1',
+        moveSpeed: '2',
+        difficulty: 'advanced',
+        category: '0'
+      }
+    },
+    {
+      title: 'PIVOT-SWITCH-LATERAL',
+      description: 'Advanced footwork sequence',
+      difficulty: 'advanced',
+      level: '5',
+      type: 'footwork',
       config: {
         roundDuration: '3',
         numRounds: '4',
@@ -112,8 +207,8 @@ export default function Combos() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <MaterialCommunityIcons name="boxing-glove" size={34} color="#ffc108" />
-        <Text style={styles.headerText}>Combo Gallery</Text>
+        <MaterialCommunityIcons name="boxing-glove" size={40} style={{ transform: [{ rotate: '90deg' }] }} color="#ffc108" />
+        <Text style={styles.headerText}>Combo List</Text>
       </View>
 
       <View style={styles.comboList}>
@@ -124,10 +219,18 @@ export default function Combos() {
             onPress={() => setModalConfig(combo.config)}
           >
             <LinearGradient
-              colors={[Colors.button, "#3f3f3fff"]}
+              colors={[Colors.button, "#5a5a5aff"]}
               style={styles.cardGradient}
             >
-              <Text style={styles.comboTitle}>{combo.title}</Text>
+              <View style={styles.titleContainer}>
+                <MaterialCommunityIcons
+                  name={combo.type === 'attack' ? 'boxing-glove' : combo.type === 'defense' ? 'shield' : 'run-fast'}
+                  size={24}
+                  color="#ffffffff"
+                  style={styles.typeIcon}
+                />
+                <Text style={styles.comboTitle}>{combo.title}</Text>
+              </View>
               <Text style={styles.comboDescription}>{combo.description}</Text>
               <View style={styles.levelBadge}>
                 <Text style={styles.levelText}>Level {combo.level}</Text>
@@ -162,31 +265,43 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  typeIcon: {
+    marginRight: 10,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
+    justifyContent: 'center',
+    padding: 15,
     backgroundColor: Colors.background,
   },
   headerText: {
     color: Colors.text,
-    fontSize: 24,
+    fontSize: 32,
+    textAlign: "center",
     fontFamily: Typography.fontFamily,
     marginLeft: 10,
     fontWeight: 'bold',
+    textShadowColor: "#000",
+    textShadowOffset: { width: 1, height: 1 },
   },
   comboList: {
     padding: 16,
     paddingBottom: 170,
   },
   comboCard: {
-    marginBottom: 28,
+    marginBottom: 24,
     borderRadius: 12,
     overflow: 'hidden',
     elevation: 5,
-    shadowColor: '#000',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.15,
     shadowRadius: 3.84,
   },
   cardGradient: {

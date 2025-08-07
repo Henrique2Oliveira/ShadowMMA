@@ -18,8 +18,8 @@ export default function Index() {
   const [numRounds, setNumRounds] = React.useState('1');
   const [restTime, setRestTime] = React.useState('1');
   const [moveSpeed, setMoveSpeed] = React.useState('1');
-  const [difficulty, setDifficulty] = React.useState('beginner');
   const [category, setCategory] = React.useState('0');
+  const [difficulty, setDifficulty] = React.useState('beginner');
 
   // Expose the show modal function globally
   React.useEffect(() => {
@@ -62,17 +62,19 @@ export default function Index() {
   const buttons = [
     {
       title: 'Random FIGHT',
+      disabled: false,
       onPress: () => setModalConfig({
         roundDuration: '3',
         numRounds: '3',
         restTime: '1',
         moveSpeed: '1',
         difficulty: 'beginner',
-        category: Math.floor(Math.random() * 6).toString()
+        category: Math.floor(Math.random() * 6).toString() // 0-5 for the 6 categories in the database
       })
     },
     {
       title: '5 Min',
+      disabled: false,
       onPress: () => setModalConfig({
         roundDuration: '5',
         numRounds: '1',
@@ -84,6 +86,7 @@ export default function Index() {
     },
     {
       title: '15 Min',
+      disabled: false,
       onPress: () => setModalConfig({
         roundDuration: '5',
         numRounds: '3',
@@ -95,6 +98,7 @@ export default function Index() {
     },
     {
       title: 'Footwork',
+      disabled: false,
       onPress: () => setModalConfig({
         roundDuration: '3',
         numRounds: '3',
@@ -106,6 +110,7 @@ export default function Index() {
     },
     {
       title: 'Defense Work',
+      disabled: false,
       onPress: () => setModalConfig({
         roundDuration: '3',
         numRounds: '5',
@@ -117,15 +122,30 @@ export default function Index() {
     },
     {
       title: 'Combos',
+      disabled: false,
       onPress: () => router.push('/combos')
     },
     {
       title: 'Unlock Your Next Move',
+      disabled: true,
       onPress: () => setModalConfig({})
     },
     {
       title: 'Custom Fights',
+      disabled: true,
       onPress: () => setModalConfig({}) // Uses default values
+    },
+    {
+      title: 'Warmup Session',
+      disabled: true,
+      onPress: () => setModalConfig({
+        roundDuration: '5',
+        numRounds: '1',
+        restTime: '1',
+        moveSpeed: '0.8',
+        difficulty: 'beginner',
+        category: '0'
+      })
     },
   ];
 
@@ -167,8 +187,8 @@ export default function Index() {
 
       {/* Content */}
       <View style={styles.container}>
-        <LinearGradient colors={[Colors.green, Colors.darkGreen]} style={styles.linearGradientButton}>
-          <TouchableOpacity onPress={buttons[0].onPress}>
+        <LinearGradient colors={[Colors.green, Colors.darkGreen]} style={[styles.linearGradientButton, buttons[0].disabled && { opacity: 0.4 }]}>
+          <TouchableOpacity onPress={buttons[0].onPress} disabled={buttons[0].disabled}>
             <Image source={require('@/assets/images/jab-icon.png')} style={styles.imageButton} />
             <Text style={[styles.textButton, { textAlign: 'left', fontSize: 44, lineHeight: 55 }]}>
               {buttons[0].title.split(' ').map((word, index) => (
@@ -182,18 +202,27 @@ export default function Index() {
         </LinearGradient>
 
         <View style={styles.row}>
-          <TouchableOpacity style={[styles.button, { zIndex: 5 }]} onPress={buttons[1].onPress}>
+          <TouchableOpacity 
+            style={[styles.button, { zIndex: 5 }, buttons[1].disabled && { opacity: 0.4 }]} 
+            onPress={buttons[1].onPress}
+            disabled={buttons[1].disabled}>
             <MaterialCommunityIcons name="timer-outline" size={60} color={Colors.background} style={styles.buttonIcon} />
             <Text style={[styles.textButton, { fontSize: 36 }]}>{buttons[1].title}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={buttons[2].onPress}>
+          <TouchableOpacity 
+            style={[styles.button, buttons[2].disabled && { opacity: 0.4 }]} 
+            onPress={buttons[2].onPress}
+            disabled={buttons[2].disabled}>
             <MaterialCommunityIcons name="timer-sand" size={60} color={Colors.background} style={styles.buttonIcon} />
             <Text style={[styles.textButton, { fontSize: 36 }]}>{buttons[2].title}</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.row}>
-          <TouchableOpacity style={styles.button} onPress={buttons[3].onPress}>
+          <TouchableOpacity 
+            style={[styles.button, buttons[3].disabled && { opacity: 0.4 }]} 
+            onPress={buttons[3].onPress}
+            disabled={buttons[3].disabled}>
             <View style={{ position: 'absolute', top: -40, transform: [{ rotate: '40deg' }], }}>
               <Ionicons name="footsteps" size={80} color={Colors.background} style={styles.buttonIcon} />
               <Ionicons name="footsteps" size={80} color={Colors.background} style={styles.buttonIcon} />
@@ -202,7 +231,10 @@ export default function Index() {
               <Text style={[styles.textButton]}>{buttons[3].title}</Text>
             </View>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={buttons[4].onPress}>
+          <TouchableOpacity 
+            style={[styles.button, buttons[4].disabled && { opacity: 0.4 }]} 
+            onPress={buttons[4].onPress}
+            disabled={buttons[4].disabled}>
             <MaterialCommunityIcons name="shield" size={50} color={Colors.background} style={styles.buttonIcon} />
             <Text style={[styles.textButton, { fontSize: 32 }]}>{buttons[4].title}</Text>
           </TouchableOpacity>
@@ -211,9 +243,11 @@ export default function Index() {
         <TouchableOpacity
           style={[
             styles.buttonWide,
-            { backgroundColor: Colors.darkGreen, borderColor: Colors.green }
+            { backgroundColor: Colors.darkGreen, borderColor: Colors.green },
+            buttons[5].disabled && { opacity: 0.4 }
           ]}
-          onPress={buttons[5].onPress}>
+          onPress={buttons[5].onPress}
+          disabled={buttons[5].disabled}>
           <View style={styles.buttonWideContent}>
             <MaterialCommunityIcons name="boxing-glove" size={70} color={Colors.background} style={[styles.buttonIcon, { marginBottom: 0, marginRight: 20 }]} />
             <Text style={[styles.textButton, { flex: 1, fontSize: 46 }]}>{buttons[5].title}</Text>
@@ -223,10 +257,10 @@ export default function Index() {
           style={[
             styles.buttonWide,
             { backgroundColor: Colors.darkGreen, borderColor: Colors.green },
-            { opacity: 0.4 }
+            buttons[6].disabled && { opacity: 0.4 }
           ]}
           onPress={buttons[6].onPress}
-          disabled={true}>
+          disabled={buttons[6].disabled}>
           <View style={styles.buttonWideContent}>
             <MaterialCommunityIcons name="lock" size={60} color={Colors.background} style={[styles.buttonIcon, { marginBottom: 0, marginRight: 20 }]} />
             <Text style={[styles.textButton, { flex: 1 }]}>{buttons[6].title}</Text>
@@ -235,12 +269,28 @@ export default function Index() {
         <TouchableOpacity
           style={[
             styles.buttonWide,
-            { backgroundColor: Colors.darkGreen, borderColor: Colors.green }
+            { backgroundColor: Colors.darkGreen, borderColor: Colors.green },
+            buttons[7].disabled && { opacity: 0.4 }
           ]}
-          onPress={buttons[7].onPress}>
+          onPress={buttons[7].onPress}
+          disabled={buttons[7].disabled}>
           <View style={styles.buttonWideContent}>
             <MaterialCommunityIcons name="cog" size={60} color={Colors.background} style={[styles.buttonIcon, { marginBottom: 0, marginRight: 20 }]} />
             <Text style={[styles.textButton, { flex: 1 }]}>{buttons[7].title}</Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.buttonWide,
+            { backgroundColor: Colors.darkGreen, borderColor: Colors.green },
+            buttons[8].disabled && { opacity: 0.4 }
+          ]}
+          onPress={buttons[8].onPress}
+          disabled={buttons[8].disabled}>
+          <View style={styles.buttonWideContent}>
+            <MaterialCommunityIcons name="run" size={60} color={Colors.background} style={[styles.buttonIcon, { marginBottom: 0, marginRight: 20 }]} />
+            <Text style={[styles.textButton, { flex: 1 }]}>{buttons[8].title}</Text>
           </View>
         </TouchableOpacity>
       </View>

@@ -175,7 +175,7 @@ export default function Gallery() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Move Gallery</Text>
+      <Text style={styles.title}>Move Library</Text>
 
       <FlatList
         data={moves}

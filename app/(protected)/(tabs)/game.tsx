@@ -185,8 +185,7 @@ export default function Game() {
     };
 
     fetchMoves();
-  }, []);
-
+  }, [params.category, params.difficulty]);
 
 
   const [speedMultiplier, setSpeedMultiplier] = React.useState(parseFloat(params.moveSpeed || '1'));

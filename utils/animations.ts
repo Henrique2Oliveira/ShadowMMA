@@ -40,7 +40,7 @@ export const animate3DMove = (
 };
 export const addRandomMovement = (scale: Animated.Value) => {
   const randomDelay = Math.random() * 2000 + 1000; // Random delay between 1-3 seconds
-  const randomScale = 0.90 + Math.random() * 0.3; // Random scale between 0.95-1.05
+  const randomScale = 0.85 + Math.random() * 0.3; // Random scale between 0.95-1.05
 
   return new Promise<void>((resolve) => {
     setTimeout(() => {
