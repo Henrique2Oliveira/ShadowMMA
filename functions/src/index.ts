@@ -8,6 +8,7 @@
  */
 
 import { initializeApp } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { setGlobalOptions } from "firebase-functions";
 import { onRequest } from "firebase-functions/https";
@@ -31,72 +32,152 @@ setGlobalOptions({ maxInstances: 10 });
 // Initialize Firebase Admin at the top of your file
 const app = initializeApp();
 const db = getFirestore(app);
+const admin = getAuth(app);
 
-// GET endpoint
-export const getData = onRequest(async (request, response) => {
-  // Only allow GET requests
+// GET endpoint to fetch combo data
+export const getCombos = onRequest(async (request, response) => {
   if (request.method !== 'GET') {
     response.status(405).send('Method Not Allowed');
     return;
   }
 
   try {
-    logger.info("GET request received", {structuredData: true});
-    
-    // Get the collection and document ID from query parameters
-    const { collection, docId } = request.query;
+    const { category, difficulty, idToken } = request.query;
 
-    if (!collection || !docId) {
-      response.status(400).send('Bad Request: Missing collection or document ID');
+    if (!idToken) {
+      response.status(401).send('Unauthorized: No token provided');
       return;
     }
 
-    // Get document from Firestore
-    const docRef = db.collection(collection).doc(docId as string);
-    const docSnap = await docRef.get();
+    // Verify the Firebase ID token
+    const decodedToken = await admin.verifyIdToken(idToken as string);
+    const uid = decodedToken.uid;
 
-    if (!docSnap.exists) {
-      response.status(404).send('Document not found');
+    // Get user data to check fightsLeft
+    const userDoc = await db.collection('users').doc(uid).get();
+    
+    if (!userDoc.exists) {
+      response.status(404).send('User not found');
       return;
     }
 
-    const data = docSnap.data();
-    response.status(200).json(data);
+    const userData = userDoc.data();
+
+    if (!userData || userData.fightsLeft <= 0) {
+      response.status(403).send('No fights left');
+      return;
+    }
+
+    // Get combos from the database
+    const comboDoc = await db.collection('combos').doc(category as string).get();
     
+    if (!comboDoc.exists) {
+      response.status(404).send('Combos not found');
+      return;
+    }
+
+    const comboData = comboDoc.data();
+    if (!comboData || !comboData.levels) {
+      response.status(400).send('Invalid combo data');
+      return;
+    }
+
+    const difficultyLevel = (difficulty as string)?.toLowerCase() || 'beginner';
+    
+    if (!comboData.levels[difficultyLevel]) {
+      response.status(400).send('Invalid difficulty level');
+      return;
+    }
+
+    // Get random 3 combos from the selected difficulty
+    const combos = comboData.levels[difficultyLevel];
+    const randomCombos = combos
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 3);
+
+    response.status(200).json(randomCombos);
   } catch (error) {
-    logger.error("Error in GET request", error);
+    logger.error("Error in GET request:", error);
     response.status(500).send('Internal Server Error');
   }
 });
 
-// POST endpoint
-export const postData = onRequest((request, response) => {
-  // Only allow POST requests
+// POST endpoint to update fightsLeft and get combos
+export const startFight = onRequest(async (request, response) => {
   if (request.method !== 'POST') {
     response.status(405).send('Method Not Allowed');
     return;
   }
 
   try {
-    logger.info("POST request received", {structuredData: true});
-    const requestData = request.body;
+    const { idToken, category, difficulty } = request.body;
 
-    // Validate request body
-    if (!requestData) {
-      response.status(400).send('Bad Request: No data provided');
+    if (!idToken || !category || !difficulty) {
+      response.status(400).send('Bad Request: Missing required fields');
       return;
     }
 
-    // Add your POST logic here
-    const responseData = {
-      message: "Data successfully received",
-      receivedData: requestData,
-      timestamp: new Date().toISOString()
-    };
+    // Verify the Firebase ID token
+    const decodedToken = await admin.verifyIdToken(idToken);
+    const uid = decodedToken.uid;
 
-    response.status(200).json(responseData);
+    // Get user document
+    const userRef = db.collection('users').doc(uid);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      response.status(404).send('User not found');
+      return;
+    }
+
+    const userData = userDoc.data();
+
+    if (!userData || userData.fightsLeft <= 0) {
+      response.status(403).send('No fights left');
+      return;
+    }
+
+    // Get combos from the database
+    const comboDoc = await db.collection('combos').doc(category).get();
+    
+    if (!comboDoc.exists) {
+      response.status(404).send('Combos not found');
+      return;
+    }
+
+    const comboData = comboDoc.data();
+    
+    if (!comboData || !comboData.levels) {
+      response.status(500).send('Invalid combo data');
+      return;
+    }
+
+    const difficultyLevel = difficulty.toLowerCase();
+    
+    if (!comboData.levels[difficultyLevel]) {
+      response.status(400).send('Invalid difficulty level');
+      return;
+    }
+
+    // Get random 3 combos from the selected difficulty
+    const combos = comboData.levels[difficultyLevel];
+    const randomCombos = combos
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 3);
+
+    // Decrease fightsLeft by 1
+    await userRef.update({
+      fightsLeft: userData.fightsLeft - 1
+    });
+
+    // Return the combos and updated fightsLeft
+    response.status(200).json({
+      combos: randomCombos,
+      fightsLeft: userData.fightsLeft - 1
+    });
+
   } catch (error) {
-    logger.error("Error in POST request", error);
+    logger.error("Error in POST request:", error);
     response.status(500).send('Internal Server Error');
   }
 });

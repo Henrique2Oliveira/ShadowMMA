@@ -17,7 +17,7 @@ export default function Combos() {
   const [restTime, setRestTime] = React.useState('1');
   const [moveSpeed, setMoveSpeed] = React.useState('1');
   const [difficulty, setDifficulty] = React.useState('beginner');
-  const [category, setCategory] = React.useState('basic');
+  const [category, setCategory] = React.useState('0');
 
   const setModalConfig = (config: {
     roundDuration?: string;

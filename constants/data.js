@@ -1,7 +1,7 @@
 // MMA Combinations Library
 export const combinationSets = [{
   "id": 0,
-  "category": "basic",
+  "category": "attack",
   "levels": {
     "beginner": [
       {

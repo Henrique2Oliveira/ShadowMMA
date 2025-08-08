@@ -1,15 +1,15 @@
-import { db } from '@/FirebaseConfig';
+import { app } from '@/FirebaseConfig';
 import { Colors, Typography } from '@/themes/theme';
 import { addRandomMovement, animate3DMove, startMoveProgress } from '@/utils/animations';
 import { formatTime } from '@/utils/time';
 import { Ionicons } from '@expo/vector-icons';
+import { getAuth } from '@firebase/auth';
 import { useIsFocused } from '@react-navigation/core';
 import { Audio } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
-import { doc, getDoc } from 'firebase/firestore';
 import React from 'react';
-import { ActivityIndicator, Animated, AppState, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, AppState, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function Game() {
   // Load sound effects
@@ -140,45 +140,76 @@ export default function Game() {
   const [currentMove, setCurrentMove] = React.useState<Move | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
 
-  // Fetch moves from Firestore based on difficulty - make fetch from http endpoint in the future and with id, and types of moves
+  // Fetch moves from Firebase Cloud Function
   React.useEffect(() => {
     const fetchMoves = async () => {
-      console.log("Fetching moves...");
+      console.log("Fetching moves from Cloud Function...");
       setIsLoading(true);
       try {
-        const docRef = doc(db, "combos", params.category || "basic");
-        console.log("Fetching moves from:", docRef.path);
-        const docSnap = await getDoc(docRef);
+        // Get the current user's ID token
+        const auth = getAuth(app);
+        const user = auth.currentUser;
 
-        if (docSnap.exists()) {
-          console.log("Document data:", docSnap.data());
-          const data = docSnap.data();
-          const difficulty = params.difficulty?.toLowerCase() || 'beginner';
-
-          // Get moves from the selected difficulty level
-          if (data.levels[difficulty]) {
-            console.log(`Fetching moves for difficulty: ${difficulty}`);
-            const allMoves = data.levels[difficulty].reduce((acc: Move[], combo: any) => {
-              return [...acc, ...combo.moves];
-            }, []);
-            setMoves(allMoves);
-            if (allMoves.length > 0) {
-              setCurrentMove(allMoves[0]);
-            }
-          } else {
-            console.log(`No moves found for difficulty: ${difficulty}`);
-            // Fallback to beginner if selected difficulty doesn't exist
-            const beginnerMoves = data.levels.beginner.reduce((acc: Move[], combo: any) => {
-              return [...acc, ...combo.moves];
-            }, []);
-            setMoves(beginnerMoves);
-            setCurrentMove(beginnerMoves[0]);
-          }
-        } else {
-          console.log("No such document!");
+        if (!user) {
+          throw new Error('No authenticated user');
         }
+
+        const idToken = await user.getIdToken();
+
+        // Make the API call to your Cloud Function
+        const response = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/startFight', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            idToken,
+            category: params.category || '0',
+            difficulty: params.difficulty?.toLowerCase() || 'beginner'
+          })
+        });
+
+        // Clear URL parameters after successful fetch
+        router.setParams({});
+
+        if (!response.ok) {
+          if (response.status === 403) {
+            Alert.alert(
+              'No Fights Left',
+              'You have no fights remaining. Watch an ad or upgrade your plan to continue.',
+              [{ text: 'OK', onPress: () => router.back() }]
+            );
+            return;
+          }
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Received data:", data);
+
+        if (data.combos && data.combos.length > 0) {
+          // Extract all moves from the combos
+          const allMoves = data.combos.reduce((acc: Move[], combo: any) => {
+            return [...acc, ...combo.moves];
+          }, []);
+
+          setMoves(allMoves);
+          if (allMoves.length > 0) {
+            setCurrentMove(allMoves[0]);
+          }
+          // You might want to update the user context with the new fightsLeft value
+          console.log(`Fights left: ${data.fightsLeft}`);
+        } else {
+          throw new Error('No moves found in response');
+        }
+
       } catch (error) {
         console.error("Error fetching moves:", error);
+        Alert.alert(
+          'Error',
+          'Failed to start fight. Please try again later.',
+          [{ text: 'OK', onPress: () => router.back() }]
+        );
       } finally {
         setIsLoading(false);
       }
