@@ -1,3 +1,4 @@
+import { useUserData } from '@/contexts/UserDataContext';
 import { app } from '@/FirebaseConfig';
 import { Colors, Typography } from '@/themes/theme';
 import { addRandomMovement, animate3DMove, startMoveProgress } from '@/utils/animations';
@@ -12,6 +13,8 @@ import React from 'react';
 import { ActivityIndicator, Alert, Animated, AppState, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function Game() {
+  const { updateUserData } = useUserData();
+  
   // Load sound effects
   const [sounds, setSounds] = React.useState<Audio.Sound[]>([]);
   const [isMuted, setIsMuted] = React.useState(false);
@@ -143,31 +146,30 @@ export default function Game() {
   // Fetch moves from Firebase Cloud Function
   React.useEffect(() => {
     const fetchMoves = async () => {
-      console.log("Fetching moves from Cloud Function...");
+
       setIsLoading(true);
       try {
-        // Get the current user's ID token
         const auth = getAuth(app);
         const user = auth.currentUser;
-
-        if (!user) {
-          throw new Error('No authenticated user');
-        }
-
+        if (!user) throw new Error('No user');
         const idToken = await user.getIdToken();
-
-        // Make the API call to your Cloud Function
+        // console.log('User ID Token:', idToken);
         const response = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/startFight', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`,
           },
           body: JSON.stringify({
-            idToken,
             category: params.category || '0',
             difficulty: params.difficulty?.toLowerCase() || 'beginner'
           })
         });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Error response:', errorText);
+        }
 
         // Clear URL parameters after successful fetch
         router.setParams({});
@@ -185,7 +187,6 @@ export default function Game() {
         }
 
         const data = await response.json();
-        console.log("Received data:", data);
 
         if (data.combos && data.combos.length > 0) {
           // Extract all moves from the combos
@@ -197,8 +198,10 @@ export default function Game() {
           if (allMoves.length > 0) {
             setCurrentMove(allMoves[0]);
           }
-          // You might want to update the user context with the new fightsLeft value
-          console.log(`Fights left: ${data.fightsLeft}`);
+          // Update the user's fights left in the context
+          if (data.fightsLeft !== undefined) {
+            updateUserData({ fightsLeft: data.fightsLeft });
+          }
         } else {
           throw new Error('No moves found in response');
         }

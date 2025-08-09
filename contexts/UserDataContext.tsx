@@ -17,6 +17,7 @@ type UserDataContextType = {
   userData: UserData | null;
   setUserData: (data: UserData | null) => void;
   refreshUserData: (userId: string) => Promise<void>;
+  updateUserData: (updates: Partial<UserData>) => void;
 };
 
 const UserDataContext = createContext<UserDataContextType | undefined>(undefined);
@@ -38,8 +39,12 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateUserData = (updates: Partial<UserData>) => {
+    setUserData(current => current ? { ...current, ...updates } : null);
+  };
+
   return (
-    <UserDataContext.Provider value={{ userData, setUserData, refreshUserData }}>
+    <UserDataContext.Provider value={{ userData, setUserData, refreshUserData, updateUserData }}>
       {children}
     </UserDataContext.Provider>
   );

@@ -61,7 +61,7 @@ export default function Index() {
 
   const buttons = [
     {
-      title: 'Random FIGHT',
+      title: 'START FIGHT',
       disabled: false,
       onPress: () => setModalConfig({
         roundDuration: '3',
@@ -69,7 +69,7 @@ export default function Index() {
         restTime: '1',
         moveSpeed: '1',
         difficulty: 'beginner',
-        category: Math.floor(Math.random() * 2).toString() // 0-5 for the 6 categories in the database
+        category: "0"
       })
     },
     {

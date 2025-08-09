@@ -13,7 +13,6 @@ import { getFirestore } from "firebase-admin/firestore";
 import { setGlobalOptions } from "firebase-functions";
 import { onRequest } from "firebase-functions/https";
 import * as logger from "firebase-functions/logger";
-
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
 
@@ -29,156 +28,83 @@ import * as logger from "firebase-functions/logger";
 // this will be the maximum concurrent request count.
 setGlobalOptions({ maxInstances: 10 });
 
-// Initialize Firebase Admin at the top of your file
-const app = initializeApp();
-const db = getFirestore(app);
-const admin = getAuth(app);
+//// Inicializa o Admin SDK
+initializeApp();
 
-// GET endpoint to fetch combo data
-export const getCombos = onRequest(async (request, response) => {
-  if (request.method !== 'GET') {
-    response.status(405).send('Method Not Allowed');
+const db = getFirestore();
+const auth = getAuth();
+
+export const startFight = onRequest(async (req, res) => {
+  if (req.method !== "POST") {
+    res.status(405).send("Method Not Allowed");
     return;
   }
 
   try {
-    const { category, difficulty, idToken } = request.query;
+    const { category, difficulty } = req.body;
 
-    if (!idToken) {
-      response.status(401).send('Unauthorized: No token provided');
+    // Verifica token no header Authorization: Bearer <token>
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith("Bearer ")) {
+      res.status(401).send("Unauthorized: Missing or invalid token");
       return;
     }
 
-    // Verify the Firebase ID token
-    const decodedToken = await admin.verifyIdToken(idToken as string);
+    const idToken = authHeader.split("Bearer ")[1];
+    const decodedToken = await auth.verifyIdToken(idToken);
     const uid = decodedToken.uid;
 
-    // Get user data to check fightsLeft
-    const userDoc = await db.collection('users').doc(uid).get();
-    
-    if (!userDoc.exists) {
-      response.status(404).send('User not found');
+    if (!category || !difficulty) {
+      res.status(400).send("Bad Request: Missing category or difficulty");
       return;
     }
 
-    const userData = userDoc.data();
-
-    if (!userData || userData.fightsLeft <= 0) {
-      response.status(403).send('No fights left');
-      return;
-    }
-
-    // Get combos from the database
-    const comboDoc = await db.collection('combos').doc(category as string).get();
-    
-    if (!comboDoc.exists) {
-      response.status(404).send('Combos not found');
-      return;
-    }
-
-    const comboData = comboDoc.data();
-    if (!comboData || !comboData.levels) {
-      response.status(400).send('Invalid combo data');
-      return;
-    }
-
-    const difficultyLevel = (difficulty as string)?.toLowerCase() || 'beginner';
-    
-    if (!comboData.levels[difficultyLevel]) {
-      response.status(400).send('Invalid difficulty level');
-      return;
-    }
-
-    // Get random 3 combos from the selected difficulty
-    const combos = comboData.levels[difficultyLevel];
-    const randomCombos = combos
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 3);
-
-    response.status(200).json(randomCombos);
-  } catch (error) {
-    logger.error("Error in GET request:", error);
-    response.status(500).send('Internal Server Error');
-  }
-});
-
-// POST endpoint to update fightsLeft and get combos
-export const startFight = onRequest(async (request, response) => {
-  if (request.method !== 'POST') {
-    response.status(405).send('Method Not Allowed');
-    return;
-  }
-
-  try {
-    const { idToken, category, difficulty } = request.body;
-
-    if (!idToken || !category || !difficulty) {
-      response.status(400).send('Bad Request: Missing required fields');
-      return;
-    }
-
-    // Verify the Firebase ID token
-    const decodedToken = await admin.verifyIdToken(idToken);
-    const uid = decodedToken.uid;
-
-    // Get user document
-    const userRef = db.collection('users').doc(uid);
+    // Busca dados do usuário
+    const userRef = db.collection("users").doc(uid);
     const userDoc = await userRef.get();
-
     if (!userDoc.exists) {
-      response.status(404).send('User not found');
+      res.status(404).send("User not found");
       return;
     }
 
     const userData = userDoc.data();
-
-    if (!userData || userData.fightsLeft <= 0) {
-      response.status(403).send('No fights left');
+    if (!userData?.fightsLeft || userData.fightsLeft <= 0) {
+      res.status(403).json({
+        error: "No fights left",
+        fightsLeft: userData?.fightsLeft || 0
+      });
       return;
     }
 
-    // Get combos from the database
-    const comboDoc = await db.collection('combos').doc(category).get();
-    
+    // Busca combos para a categoria
+    const comboDoc = await db.collection("combos").doc(category).get();
     if (!comboDoc.exists) {
-      response.status(404).send('Combos not found');
+      res.status(404).send("Combos not found");
       return;
     }
 
     const comboData = comboDoc.data();
-    
-    if (!comboData || !comboData.levels) {
-      response.status(500).send('Invalid combo data');
-      return;
-    }
-
     const difficultyLevel = difficulty.toLowerCase();
-    
-    if (!comboData.levels[difficultyLevel]) {
-      response.status(400).send('Invalid difficulty level');
+
+    if (!comboData?.levels?.[difficultyLevel]) {
+      res.status(400).send("Invalid difficulty level");
       return;
     }
 
-    // Get random 3 combos from the selected difficulty
+    // Seleciona 3 combos aleatórios
     const combos = comboData.levels[difficultyLevel];
-    const randomCombos = combos
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 3);
+    const randomCombos = combos.sort(() => 0.5 - Math.random()).slice(0, 3);
 
-    // Decrease fightsLeft by 1
-    await userRef.update({
-      fightsLeft: userData.fightsLeft - 1
-    });
+    // Atualiza fightsLeft do usuário
+    await userRef.update({ fightsLeft: userData.fightsLeft - 1 });
 
-    // Return the combos and updated fightsLeft
-    response.status(200).json({
+    // Retorna resposta
+    res.status(200).json({
       combos: randomCombos,
-      fightsLeft: userData.fightsLeft - 1
+      fightsLeft: userData.fightsLeft - 1,
     });
-
   } catch (error) {
-    logger.error("Error in POST request:", error);
-    response.status(500).send('Internal Server Error');
+    logger.error("Error in startFight:", error);
+    res.status(500).send("Internal Server Error");
   }
 });
-

@@ -13,6 +13,7 @@ type UserData = {
   combos: number;
   plan: string;
   xp: number;
+  fightsLeft: number;
 };
 
 export default function Profile() {
@@ -21,10 +22,23 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      refreshUserData(user.uid);
-    }
+    const loadData = async () => {
+      if (user) {
+        setLoading(true);
+        await refreshUserData(user.uid);
+        setLoading(false);
+      }
+    };
+    loadData();
   }, [user]);
+
+  // Update loading state when userData changes
+  useEffect(() => {
+    if (userData) {
+      setLoading(false);
+    }
+  }, [userData]);
+
 
   const handleLogout = async () => {
     try {
@@ -34,6 +48,15 @@ export default function Profile() {
     }
   };
 
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <MaterialCommunityIcons name="loading" size={50} color={Colors.text} />
+        <Text style={styles.loadingText}>Loading profile...</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView>
       <View style={styles.container}>
@@ -41,7 +64,7 @@ export default function Profile() {
           <View style={styles.avatarContainer}>
             <MaterialCommunityIcons name="account-circle" size={100} color={Colors.text} />
           </View>
-          <Text style={styles.name}>{userData?.name || 'Loading...'}</Text>
+          <Text style={styles.name}>{userData?.name || 'Anonymous'}</Text>
           <Text style={styles.subtitle}>{userData?.plan === 'free' ? 'Free Member' : 'Premium Member'}</Text>
         </View>
 
@@ -60,21 +83,32 @@ export default function Profile() {
           </View>
         </View>
 
-        <View style={styles.infoContainer}>
-          <View style={styles.infoRow}>
-            <MaterialCommunityIcons name="medal" size={24} color={Colors.text} />
-            <Text style={styles.infoText}>Level {userData?.level || 1}</Text>
+        <View style={styles.statsRow}>
+          <View style={[styles.infoContainer, styles.fightsContainer]}>
+            <View style={styles.fightsRow}>
+              <MaterialCommunityIcons name="boxing-glove" style={{ transform: [{ rotate: '90deg' }] }} size={42} color={Colors.text} />
+              <View style={styles.fightsInfo}>
+                <Text style={styles.fightsTitle}>Fights Left Today</Text>
+                <Text style={styles.fightsNumber}>{userData?.fightsLeft || 0}</Text>
+              </View>
+            </View>
           </View>
-          <View style={styles.infoRow}>
-            <MaterialCommunityIcons name="fire" size={24} color={Colors.text} />
-            <Text style={styles.infoText}>XP: {userData?.xp || 0}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <MaterialCommunityIcons name="target" size={24} color={Colors.text} />
-            <Text style={styles.infoText}>Next Level: {((userData?.level || 1) + 1)}</Text>
+
+          <View style={[styles.infoContainer, styles.levelContainer]}>
+            <View style={styles.infoRow}>
+              <MaterialCommunityIcons name="medal" size={24} color={Colors.text} />
+              <Text style={styles.infoText}>Level {userData?.level || 1}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <MaterialCommunityIcons name="fire" size={24} color={Colors.text} />
+              <Text style={styles.infoText}>XP: {userData?.xp || 0}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <MaterialCommunityIcons name="target" size={24} color={Colors.text} />
+              <Text style={styles.infoText}>Next Level: {((userData?.level || 1) + 1)}</Text>
+            </View>
           </View>
         </View>
-
         <View style={styles.buttonList}>
           <TouchableOpacity style={styles.button} onPress={() => { }}>
             <MaterialCommunityIcons name="cog" size={24} color={Colors.text} />
@@ -107,6 +141,16 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
     padding: 20,
     paddingBottom: 240,
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: Colors.text,
+    marginTop: 15,
+    fontSize: 16,
+    fontFamily: Typography.fontFamily,
   },
   buttonList: {
     marginTop: 30,
@@ -173,16 +217,26 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily,
     marginTop: 5,
   },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 15,
+    gap: 15,
+  },
   infoContainer: {
-    marginTop: 30,
     backgroundColor: Colors.button,
     borderRadius: 15,
-    padding: 20,
+    padding: 25,
+    flex: 1,
+  },
+  levelContainer: {
+    flex: 4,
+    
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 10,
   },
   infoText: {
     color: Colors.text,
@@ -190,8 +244,32 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily,
     marginLeft: 15,
   },
+  fightsContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 140,
+  },
+  fightsRow: {
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  fightsInfo: {
+    alignItems: 'center',
+  },
+  fightsTitle: {
+    color: Colors.text,
+    fontSize: 14,
+    fontFamily: Typography.fontFamily,
+    opacity: 0.8,
+  },
+  fightsNumber: {
+    color: Colors.text,
+    fontSize: 28,
+    fontFamily: Typography.fontFamily,
+    fontWeight: 'bold',
+    textShadowColor: "#000",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 2,
+  },
 });
-function refreshUserData(uid: string) {
-  throw new Error('Function not implemented.');
-}
 
