@@ -3,7 +3,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useCallback, useState } from 'react';
 import { FlatList, ListRenderItem, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-type MoveIconName = 'hand-front-right' | 'karate' | 'arm-flex' | 'human-handsdown';
+type MoveIconName = 'boxing-glove' | 'karate' | 'arm-flex' | 'human-handsdown';
 
 interface Move {
   id: number;
@@ -23,28 +23,28 @@ export default function Gallery() {
       name: 'Jab',
       category: 'Punch',
       description: 'A quick, straight punch thrown with the lead hand. The jab is a versatile punch that can be used to maintain distance, set up combinations, or score points.',
-      icon: 'hand-front-right'
+      icon: 'boxing-glove'
     },
     {
       id: 2,
       name: 'Cross',
       category: 'Punch',
       description: 'A powerful straight punch thrown with the rear hand. The cross is often thrown after a jab and is one of the most powerful punches.',
-      icon: 'hand-front-right'
+      icon: 'boxing-glove'
     },
     {
       id: 3,
       name: 'Hook',
       category: 'Punch',
       description: 'A punch thrown in a circular motion, typically targeting the side of the opponent\'s head. Can be thrown with either hand.',
-      icon: 'hand-front-right'
+      icon: 'boxing-glove'
     },
     {
       id: 4,
       name: 'Uppercut',
       category: 'Punch',
       description: 'A vertical, rising punch thrown with either hand, targeting the chin. Especially effective in close range.',
-      icon: 'hand-front-right'
+      icon: 'boxing-glove'
     },
     {
       id: 5,
@@ -114,7 +114,7 @@ export default function Gallery() {
       name: 'Parry',
       category: 'Defense',
       description: 'A defensive technique where you redirect an incoming strike by knocking it slightly off course with your hand.',
-      icon: 'hand-front-right'
+      icon: 'boxing-glove'
     },
     {
       id: 15,
@@ -159,7 +159,7 @@ export default function Gallery() {
       >
         <MaterialCommunityIcons
           name={move.icon}
-          size={32}
+          size={45}
           color="white"
           style={styles.moveIcon}
         />
@@ -183,6 +183,8 @@ export default function Gallery() {
         keyExtractor={keyExtractor}
         contentContainerStyle={styles.movesContainer}
         showsVerticalScrollIndicator={false}
+        numColumns={2}
+        columnWrapperStyle={styles.row}
         initialNumToRender={8}
         maxToRenderPerBatch={5}
         windowSize={5}
@@ -245,36 +247,48 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   movesContainer: {
-    paddingHorizontal: 20,
+    padding: 5,
     paddingBottom: 160,
+  },
+  row: {
+    justifyContent: 'center',
+    marginBottom: 12,
+    gap: 12,
   },
   moveCard: {
     backgroundColor: Colors.button,
     borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
-    flexDirection: 'row',
+    padding: 12,
+    width: '45%',
+    aspectRatio: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   moveIcon: {
-    marginRight: 15,
+    marginBottom: 6,
   },
   moveInfo: {
-    flex: 1,
+    alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: 4,
   },
   moveName: {
     color: Colors.text,
-    fontSize: 24,
+    fontSize: 18,
     fontFamily: Typography.fontFamily,
+    textAlign: 'center',
     textShadowColor: "#000",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+    flexWrap: 'wrap',
   },
   moveCategory: {
     color: Colors.text,
     opacity: 0.8,
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: Typography.fontFamily,
+    textAlign: 'center',
+    marginTop: 2,
   },
   modalOverlay: {
     flex: 1,
