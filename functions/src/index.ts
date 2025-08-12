@@ -45,6 +45,7 @@ export const restoreUserLivesDaily = onSchedule({
     const usersSnapshot = await db.collection("users").get();
     const batch = db.batch();
     usersSnapshot.forEach((doc) => {
+      //No futuro adicionar se o user tem mais que 3 vidas se sim n aciona
       batch.update(doc.ref, { fightsLeft: 3 });
     });
     await batch.commit();

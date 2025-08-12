@@ -207,7 +207,7 @@ export default function Combos() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <MaterialCommunityIcons name="boxing-glove" size={40} style={{ transform: [{ rotate: '90deg' }] }} color="#ffc108" />
+        <MaterialCommunityIcons name="boxing-glove" size={40} style={{ transform: [{ rotate: '90deg' }] }} color={Colors.bgGameDark} />
         <Text style={styles.headerText}>Combo List</Text>
       </View>
 
@@ -225,8 +225,8 @@ export default function Combos() {
               <View style={styles.titleContainer}>
                 <MaterialCommunityIcons
                   name={combo.type === 'attack' ? 'boxing-glove' : combo.type === 'defense' ? 'shield' : 'run-fast'}
-                  size={24}
-                  color="#ffffffff"
+                  size={130}
+                  color="#02020247"
                   style={styles.typeIcon}
                 />
                 <Text style={styles.comboTitle}>{combo.title}</Text>
@@ -271,7 +271,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   typeIcon: {
-    marginRight: 10,
+    position: 'absolute',
+    right: -25,
+    top: -15,
+    overflow: 'hidden',
   },
   header: {
     flexDirection: 'row',
@@ -312,30 +315,30 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: Typography.fontFamily,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 4,
     textShadowColor: "#000",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
   comboDescription: {
     color: Colors.text,
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: Typography.fontFamily,
-    opacity: 0.9,
+    opacity: 0.75,
     marginBottom: 12,
   },
   levelBadge: {
     position: 'absolute',
     bottom: 10,
     right: 10,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(22, 22, 22, 1)',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 12,
   },
   levelText: {
     color: Colors.text,
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: Typography.fontFamily,
     textTransform: 'capitalize',
   },

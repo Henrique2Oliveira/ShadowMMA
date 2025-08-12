@@ -5,7 +5,7 @@ import { addRandomMovement, animate3DMove, startMoveProgress } from '@/utils/ani
 import { formatTime } from '@/utils/time';
 import { Ionicons } from '@expo/vector-icons';
 import { getAuth } from '@firebase/auth';
-import { useIsFocused } from '@react-navigation/core';
+import { useIsFocused } from '@react-navigation/native';
 import { Audio } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -14,7 +14,7 @@ import { ActivityIndicator, Alert, Animated, AppState, StyleSheet, Text, Touchab
 
 export default function Game() {
   const { updateUserData } = useUserData();
-  
+
   // Load sound effects
   const [sounds, setSounds] = React.useState<Audio.Sound[]>([]);
   const [isMuted, setIsMuted] = React.useState(false);
@@ -153,7 +153,7 @@ export default function Game() {
         const user = auth.currentUser;
         if (!user) throw new Error('No user');
         const idToken = await user.getIdToken();
-        // console.log('User ID Token:', idToken);
+
         const response = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/startFight', {
           method: 'POST',
           headers: {
@@ -165,26 +165,20 @@ export default function Game() {
             difficulty: params.difficulty?.toLowerCase() || 'beginner'
           })
         });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Error response:', errorText);
-        }
-
-        // Clear URL parameters after successful fetch
-        router.setParams({});
 
         if (!response.ok) {
           if (response.status === 403) {
             Alert.alert(
               'No Fights Left',
               'You have no fights remaining. Watch an ad or upgrade your plan to continue.',
-              [{ text: 'OK', onPress: () => router.back() }]
+              [{ text: 'OK', onPress: () => router.navigate('/(protected)/(tabs)') }]
             );
+            
             return;
           }
           throw new Error(`HTTP error! status: ${response.status}`);
         }
+
 
         const data = await response.json();
 
@@ -211,7 +205,7 @@ export default function Game() {
         Alert.alert(
           'Error',
           'Failed to start fight. Please try again later.',
-          [{ text: 'OK', onPress: () => router.back() }]
+          [{ text: 'OK', onPress: () => router.navigate('/(protected)/(tabs)') }]
         );
       } finally {
         setIsLoading(false);
