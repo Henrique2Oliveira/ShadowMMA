@@ -34,6 +34,28 @@ initializeApp();
 const db = getFirestore();
 const auth = getAuth();
 
+// Scheduled function to restore all users' lives to 3 every day at midnight UTC
+import { onSchedule } from "firebase-functions/v2/scheduler";
+
+export const restoreUserLivesDaily = onSchedule({
+  schedule: "0 0 * * *", // Every day at midnight UTC
+  timeZone: "UTC",
+}, async (event) => {
+  try {
+    const usersSnapshot = await db.collection("users").get();
+    const batch = db.batch();
+    usersSnapshot.forEach((doc) => {
+      batch.update(doc.ref, { fightsLeft: 3 });
+    });
+    await batch.commit();
+    logger.log("All users' lives have been restored to 3.");
+  } catch (error) {
+    logger.error("Error restoring user lives:", error);
+  }
+});
+
+
+
 export const startFight = onRequest(async (req, res) => {
   if (req.method !== "POST") {
     res.status(405).send("Method Not Allowed");
