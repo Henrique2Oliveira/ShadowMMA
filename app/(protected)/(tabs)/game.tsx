@@ -3,14 +3,14 @@ import { app } from '@/FirebaseConfig';
 import { Colors, Typography } from '@/themes/theme';
 import { addRandomMovement, animate3DMove, startMoveProgress } from '@/utils/animations';
 import { formatTime } from '@/utils/time';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { getAuth } from '@firebase/auth';
 import { useIsFocused } from '@react-navigation/native';
 import { Audio } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
-import { ActivityIndicator, Alert, Animated, AppState, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, AppState, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function Game() {
   const { updateUserData } = useUserData();
@@ -142,6 +142,8 @@ export default function Game() {
   const [moves, setMoves] = React.useState<Move[]>([]);
   const [currentMove, setCurrentMove] = React.useState<Move | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [showCombosModal, setShowCombosModal] = React.useState(false);
+  const [combos, setCombos] = React.useState<{ name: string; moves: Move[] }[]>([]);
 
   // Fetch moves from Firebase Cloud Function
   React.useEffect(() => {
@@ -173,7 +175,7 @@ export default function Game() {
               'You have no fights remaining. Watch an ad or upgrade your plan to continue.',
               [{ text: 'OK', onPress: () => router.navigate('/(protected)/(tabs)') }]
             );
-            
+
             return;
           }
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -187,6 +189,14 @@ export default function Game() {
           const allMoves = data.combos.reduce((acc: Move[], combo: any) => {
             return [...acc, ...combo.moves];
           }, []);
+
+          // Store combos with their moves and show modal
+          const comboData = data.combos.map((combo: any) => ({
+            name: combo.name,
+            moves: combo.moves
+          }));
+          setCombos(comboData);
+          setShowCombosModal(true);
 
           setMoves(allMoves);
           if (allMoves.length > 0) {
@@ -485,187 +495,312 @@ export default function Game() {
   }
 
   return (
-    <LinearGradient
-      colors={[Colors.bgGameDark, 'rgba(230, 87, 87, 1)', Colors.bgGameDark]}
-      style={styles.container}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 1 }}
-    >
-      <View style={styles.timerContainer}>
-        <Text style={styles.roundText}>Round {gameState.currentRound}/{totalRounds}</Text>
-
-        {!gameState.isRestPeriod && <Text style={styles.timerText}>
-          {formatTime(gameState.timeLeft)}
-        </Text>}
-
-      </View>
-
-      <Animated.View style={[
-        styles.card,
-        {
-          transform: animationsEnabled ? [
-            {
-              rotateX: tiltX.interpolate({
-                inputRange: [-0.4, 0, 0.4],
-                outputRange: ['-40deg', '0deg', '40deg']
-              })
-            },
-            {
-              rotateY: tiltY.interpolate({
-                inputRange: [-0.4, 0, 0.4],
-                outputRange: ['-40deg', '0deg', '40deg']
-              })
-            },
-            {
-              scale: scale
-            }
-          ] : []
-        }
-      ]}>
-        <LinearGradient
-          colors={['#171717ff', '#1a1a1aff',]}
-          style={styles.gradientBackground}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-        >
-          <Text style={styles.text} numberOfLines={2} adjustsFontSizeToFit>
-            {gameState.isGameOver ? "FIGHT OVER!🎉" : currentMove?.move || ""}
-          </Text>
-
-          {gameState.isRestPeriod && (
-            <Text style={styles.restTimeText}>
-              {formatTime(gameState.timeLeft)}
-            </Text>
-          )}
-
-          {!gameState.isPaused && !gameState.isGameOver && !gameState.isRestPeriod && (
-            <View style={styles.progressBarContainer}>
-              <Animated.View
-                style={[
-                  styles.progressBar,
-                  {
-                    width: moveProgress.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: ['0%', '100%']
-                    })
-                  }
-                ]}
-              />
+    <>
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showCombosModal}
+        onRequestClose={() => setShowCombosModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowCombosModal(false)}
+            >
+              <MaterialCommunityIcons name="close" size={24} color="white" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Combos Set</Text>
+            <View style={styles.optionsContainer}>
+              {combos.map((combo, index) => (
+                <View key={index} style={styles.comboContainer}>
+                  <Text style={styles.comboName}>{combo.name}</Text>
+                  <View style={styles.movesContainer}>
+                    <Text style={styles.moveText}>
+                      {combo.moves.map((move, moveIndex) => (
+                        <Text key={moveIndex}>
+                          {move.move.replace(/\n/g, ' ')}
+                          {moveIndex < combo.moves.length - 1 ? '   →   ' : ''}
+                        </Text>
+                      ))}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+              <TouchableOpacity
+                style={styles.startButton}
+                onPress={() => setShowCombosModal(false)}
+              >
+                <Text style={styles.startButtonText}>Start Training</Text>
+              </TouchableOpacity>
             </View>
-          )}
-        </LinearGradient>
-      </Animated.View>
-
-      {/* Game Over Buttons */}
-
-      {/* Show Level Up % and new unlocked things etc when game over add animations */}
-      {gameState.isGameOver && (
-        <View style={styles.gameOverButtonsContainer}>
-          <TouchableOpacity
-            style={styles.gameOverButton}
-            onPress={() => router.push("/")}
-          >
-            <Ionicons
-              name="home"
-              size={38}
-              color={Colors.bgDark}
-            />
-          </TouchableOpacity>
-
-          <TouchableOpacity  //only when player see a ads or is premium user (add icon for premium or ads first)
-            style={styles.gameOverButton}
-            onPress={() => {
-              setGameState({
-                currentRound: 1,
-                isRestPeriod: false,
-                timeLeft: roundDurationMs,
-                isPaused: false,
-                isGameOver: false
-              });
-              setCurrentMove(moves[0]);
-              setAnimationsEnabled(true);
-            }}
-          >
-            <Ionicons
-              name="refresh"
-              size={42}
-              color={Colors.bgDark}
-            />
-          </TouchableOpacity>
+          </View>
         </View>
-      )}
+      </Modal>
 
-      {/* Control Buttons Container */}
-      <View style={styles.buttonsContainer}>
-        <Animated.View style={{ opacity: sideButtonsOpacity }}>
-          {/* Home Button */}
-          <TouchableOpacity
-            style={[styles.sideButton, !gameState.isPaused && styles.disabledButton]}
-            onPress={() => gameState.isPaused && router.push("/")}
+      <LinearGradient
+        colors={[Colors.bgGameDark, 'rgba(230, 87, 87, 1)', Colors.bgGameDark]}
+        style={styles.container}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+      >
+        <View style={styles.timerContainer}>
+          <Text style={styles.roundText}>Round {gameState.currentRound}/{totalRounds}</Text>
+
+          {!gameState.isRestPeriod && <Text style={styles.timerText}>
+            {formatTime(gameState.timeLeft)}
+          </Text>}
+
+        </View>
+
+        <Animated.View style={[
+          styles.card,
+          {
+            transform: animationsEnabled ? [
+              {
+                rotateX: tiltX.interpolate({
+                  inputRange: [-0.4, 0, 0.4],
+                  outputRange: ['-40deg', '0deg', '40deg']
+                })
+              },
+              {
+                rotateY: tiltY.interpolate({
+                  inputRange: [-0.4, 0, 0.4],
+                  outputRange: ['-40deg', '0deg', '40deg']
+                })
+              },
+              {
+                scale: scale
+              }
+            ] : []
+          }
+        ]}>
+          <LinearGradient
+            colors={['#171717ff', '#1a1a1aff',]}
+            style={styles.gradientBackground}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
           >
-            <Ionicons
-              name="home"
-              size={30}
-              color={Colors.bgDark}
-            />
-          </TouchableOpacity>
-          {/* Sound Toggle Button */}
-          <TouchableOpacity
-            style={[styles.sideButton, !gameState.isPaused && styles.disabledButton]}
-            onPress={() => gameState.isPaused && setIsMuted(!isMuted)}
-          >
-            <Ionicons
-              name={isMuted ? "volume-mute" : "volume-high"}
-              size={30}
-              color={Colors.bgDark}
-            />
-          </TouchableOpacity>
+            <Text style={styles.text} numberOfLines={2} adjustsFontSizeToFit>
+              {gameState.isGameOver ? "FIGHT OVER!🎉" : currentMove?.move || ""}
+            </Text>
+
+            {gameState.isRestPeriod && (
+              <Text style={styles.restTimeText}>
+                {formatTime(gameState.timeLeft)}
+              </Text>
+            )}
+
+            {!gameState.isPaused && !gameState.isGameOver && !gameState.isRestPeriod && (
+              <View style={styles.progressBarContainer}>
+                <Animated.View
+                  style={[
+                    styles.progressBar,
+                    {
+                      width: moveProgress.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0%', '100%']
+                      })
+                    }
+                  ]}
+                />
+              </View>
+            )}
+          </LinearGradient>
         </Animated.View>
 
+        {/* Game Over Buttons */}
 
-        {/* Pause/Play Button - Hidden when fight is over */}
-        {!gameState.isGameOver && (
-          <TouchableOpacity
-            style={styles.pauseButton}
-            onPress={handlePress}
-          >
-            <Ionicons
-              name={gameState.isPaused ? "play" : "pause"}
-              size={40}
-              color={Colors.bgDark}
-            />
-          </TouchableOpacity>
+        {/* Show Level Up % and new unlocked things etc when game over add animations */}
+        {gameState.isGameOver && (
+          <View style={styles.gameOverButtonsContainer}>
+            <TouchableOpacity
+              style={styles.gameOverButton}
+              onPress={() => router.push("/")}
+            >
+              <Ionicons
+                name="home"
+                size={38}
+                color={Colors.bgDark}
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity  //only when player see a ads or is premium user (add icon for premium or ads first)
+              style={styles.gameOverButton}
+              onPress={() => {
+                setGameState({
+                  currentRound: 1,
+                  isRestPeriod: false,
+                  timeLeft: roundDurationMs,
+                  isPaused: false,
+                  isGameOver: false
+                });
+                setCurrentMove(moves[0]);
+                setAnimationsEnabled(true);
+              }}
+            >
+              <Ionicons
+                name="refresh"
+                size={42}
+                color={Colors.bgDark}
+              />
+            </TouchableOpacity>
+          </View>
         )}
 
-        <Animated.View style={{ opacity: sideButtonsOpacity }}>
-          {/* Speed Button */}
-          <TouchableOpacity
-            style={[styles.sideButton, !gameState.isPaused && styles.disabledButton]}
-            onPress={handleSpeedChange}
-          >
-            <Text style={styles.speedText}>x{speedMultiplier}</Text>
-          </TouchableOpacity>
+        {/* Control Buttons Container */}
+        <View style={styles.buttonsContainer}>
+          <Animated.View style={{ opacity: sideButtonsOpacity }}>
+            {/* Home Button */}
+            <TouchableOpacity
+              style={[styles.sideButton, !gameState.isPaused && styles.disabledButton]}
+              onPress={() => gameState.isPaused && router.push("/")}
+            >
+              <Ionicons
+                name="home"
+                size={30}
+                color={Colors.bgDark}
+              />
+            </TouchableOpacity>
+            {/* Sound Toggle Button */}
+            <TouchableOpacity
+              style={[styles.sideButton, !gameState.isPaused && styles.disabledButton]}
+              onPress={() => gameState.isPaused && setIsMuted(!isMuted)}
+            >
+              <Ionicons
+                name={isMuted ? "volume-mute" : "volume-high"}
+                size={30}
+                color={Colors.bgDark}
+              />
+            </TouchableOpacity>
+          </Animated.View>
 
-          {/* Animation Toggle Button */}
-          <TouchableOpacity
-            style={[styles.sideButton, (!animationsEnabled || !gameState.isPaused) && styles.disabledButton]}
-            onPress={() => gameState.isPaused && setAnimationsEnabled(!animationsEnabled)}
-          >
-            <Ionicons
-              name={animationsEnabled ? "cube" : "cube-outline"}
-              size={30}
-              color={Colors.bgDark}
-            />
-          </TouchableOpacity>
 
-        </Animated.View>
-      </View>
+          {/* Pause/Play Button - Hidden when fight is over */}
+          {!gameState.isGameOver && (
+            <TouchableOpacity
+              style={styles.pauseButton}
+              onPress={handlePress}
+            >
+              <Ionicons
+                name={gameState.isPaused ? "play" : "pause"}
+                size={40}
+                color={Colors.bgDark}
+              />
+            </TouchableOpacity>
+          )}
 
-    </LinearGradient>
+          <Animated.View style={{ opacity: sideButtonsOpacity }}>
+            {/* Speed Button */}
+            <TouchableOpacity
+              style={[styles.sideButton, !gameState.isPaused && styles.disabledButton]}
+              onPress={handleSpeedChange}
+            >
+              <Text style={styles.speedText}>x{speedMultiplier}</Text>
+            </TouchableOpacity>
+
+            {/* Animation Toggle Button */}
+            <TouchableOpacity
+              style={[styles.sideButton, (!animationsEnabled || !gameState.isPaused) && styles.disabledButton]}
+              onPress={() => gameState.isPaused && setAnimationsEnabled(!animationsEnabled)}
+            >
+              <Ionicons
+                name={animationsEnabled ? "cube" : "cube-outline"}
+                size={30}
+                color={Colors.bgDark}
+              />
+            </TouchableOpacity>
+
+          </Animated.View>
+        </View>
+
+      </LinearGradient>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: Colors.background,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingBottom: 40,
+    minHeight: 300,
+    width: '100%',
+  },
+  modalTitle: {
+    color: Colors.text,
+    fontSize: 28,
+    fontFamily: Typography.fontFamily,
+    marginTop: 20,
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  optionsContainer: {
+    width: '100%',
+    marginTop: 20,
+  },
+  comboContainer: {
+    marginBottom: 15,
+    backgroundColor: '#444444',
+    borderRadius: 10,
+    padding: 15,
+    paddingBottom: 17,
+    borderBottomWidth: 4,
+    borderBottomColor: "#2b2b2bff",
+  },
+  comboName: {
+    color: Colors.text,
+    fontSize: 18,
+    fontFamily: Typography.fontFamily,
+
+    marginBottom: 8,
+  },
+  movesContainer: {
+    paddingLeft: 10,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  moveText: {
+    color: "white",
+    backgroundColor: '#363636ff',
+    padding: 10,
+    borderRadius: 10,
+    fontSize: 16,
+    fontFamily: Typography.fontFamily,
+    lineHeight: 22,
+    flexShrink: 1,
+  },
+  closeButton: {
+    position: 'absolute',
+    right: 20,
+    top: 20,
+    zIndex: 1,
+  },
+  closeButtonText: {
+    color: Colors.text,
+    fontSize: 16,
+    fontFamily: Typography.fontFamily,
+  },
+  startButton: {
+    backgroundColor: Colors.darkGreen,
+    paddingVertical: 15,
+    borderRadius: 10,
+    marginTop: 20,
+  },
+  startButtonText: {
+    color: Colors.text,
+    fontSize: 20,
+    fontFamily: Typography.fontFamily,
+    textAlign: 'center',
+
+  },
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -689,7 +824,6 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily,
     color: '#ffd700',
     fontSize: 28,
-    fontWeight: 'bold',
     marginTop: 5,
   },
   restTimeText: {
@@ -767,7 +901,6 @@ const styles = StyleSheet.create({
   },
   text: {
     color: Colors.text,
-    fontWeight: 'bold',
     fontSize: 40,
     textAlign: 'center',
     width: '100%',
@@ -822,7 +955,6 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontFamily: Typography.fontFamily,
     color: Colors.bgDark,
-    fontWeight: 'bold',
   },
   disabledButton: {
     backgroundColor: '#d4d4d4',

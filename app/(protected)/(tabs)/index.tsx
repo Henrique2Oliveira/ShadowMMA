@@ -173,7 +173,6 @@ export default function Index() {
           <Text style={{
             color: Colors.text,
             fontSize: 20,
-            fontWeight: 'bold',
             fontFamily: Typography.fontFamily,
             marginLeft: 12,
             textShadowColor: "#000",
