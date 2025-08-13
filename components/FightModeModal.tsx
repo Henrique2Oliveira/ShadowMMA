@@ -60,7 +60,6 @@ export const FIGHT_OPTIONS: {
     { value: '1.5', label: '1.5x' },
     { value: '2', label: '2x' },
     { value: '2.5', label: '2.5x' },
-    { value: '3', label: '3x' },
   ],
   difficulty: [
     { value: 'beginner', label: 'Easy' },
@@ -132,7 +131,7 @@ export function FightModeModal({
           >
             <MaterialCommunityIcons name="close" size={24} color="white" />
           </TouchableOpacity>
-          <Text style={styles.modalTitle}>Fight Mode</Text>
+          <Text style={styles.modalTitle}>Fight Mode Options</Text>
 
           <View style={styles.optionsContainer}>
             <View style={styles.optionRow}>
@@ -364,7 +363,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     color: 'white',
-    fontSize: 24,
+    fontSize: 27,
     fontFamily: Typography.fontFamily,
     marginTop: 20,
     marginBottom: 15,

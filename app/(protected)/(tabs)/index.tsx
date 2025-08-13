@@ -92,7 +92,7 @@ export default function Index() {
         numRounds: '3',
         restTime: '1',
         moveSpeed: '1',
-        difficulty: 'intermediate',
+        difficulty: 'beginner',
         category: '0'
       })
     },
@@ -104,7 +104,7 @@ export default function Index() {
         numRounds: '3',
         restTime: '1',
         moveSpeed: '1',
-        difficulty: 'intermediate',
+        difficulty: 'beginner',
         category: '2'
       })
     },
@@ -116,7 +116,7 @@ export default function Index() {
         numRounds: '5',
         restTime: '0.5',
         moveSpeed: '1',
-        difficulty: 'intermediate',
+        difficulty: 'beginner',
         category: '1'
       })
     },

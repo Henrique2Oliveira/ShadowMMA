@@ -34,7 +34,7 @@ export const combinationSets = [{
         "name": "Double Jab Cross",
         "moves": [
           { "move": "JAB", "pauseTime": 700, "direction": "left", "tiltValue": 0.2 },
-          { "move": "JAB", "pauseTime": 700, "direction": "left", "tiltValue": 0.2 },
+          { "move": "JAB", "pauseTime": 800, "direction": "left", "tiltValue": 0.2 },
           { "move": "CROSS", "pauseTime": 1100, "direction": "right", "tiltValue": 0.3 }
         ]
       },

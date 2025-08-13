@@ -198,9 +198,18 @@ export default function Game() {
           setCombos(comboData);
           setShowCombosModal(true);
 
-          setMoves(allMoves);
+          // Add countdown cards at the beginning
+          const countdownMoves: Move[] = [
+            { move: "Ready?", pauseTime: 800, direction: "down" as const, tiltValue: 3.75 },
+            { move: "3", pauseTime: 1000, direction: "down" as const, tiltValue: 3.75 },
+            { move: "2", pauseTime: 1000, direction: "down" as const, tiltValue: 3.75 },
+            { move: "1", pauseTime: 1000, direction: "down" as const, tiltValue: 3.75 },
+            { move: "Fight!", pauseTime: 1600, direction: "up" as const, tiltValue: 3.75 },
+          ];
+
+          setMoves([...countdownMoves, ...allMoves]);
           if (allMoves.length > 0) {
-            setCurrentMove(allMoves[0]);
+            setCurrentMove(countdownMoves[0]);
           }
           // Update the user's fights left in the context
           if (data.fightsLeft !== undefined) {
@@ -239,11 +248,11 @@ export default function Game() {
       isGameOver: false
     });
     setCurrentMove({
-      move: "Ready?",
+      move: "Continue?",
       pauseTime: 1000,
-      direction: "up",
+      direction: "down",
       tiltValue: 3.75
-    });
+    },);
 
     setSpeedMultiplier(parseFloat(params.moveSpeed || '1'));
     setAnimationsEnabled(true);
@@ -400,7 +409,7 @@ export default function Game() {
   const handleSpeedChange = React.useCallback(() => {
     if (!gameState.isPaused) return;
     setSpeedMultiplier(current => {
-      const speeds = [1, 1.5, 2, 2.5, 3];  // Matches the values from FightModeModal
+      const speeds = [1, 1.5, 2, 2.5];  // Matches the values from FightModeModal
       const currentIndex = speeds.indexOf(current);
       return speeds[(currentIndex + 1) % speeds.length];
     });
@@ -421,26 +430,61 @@ export default function Game() {
     return () => animation?.stop();
   }, [gameState.isPaused, updateMoveProg,]);
 
+  const [isCountdownComplete, setIsCountdownComplete] = React.useState(false);
+  const countdownLength = 5; // Length of countdown sequence (Ready?, 3, 2, 1, Fight!)
+
   const updateMove = React.useCallback(() => {
     if (!gameState.isPaused && !gameState.isRestPeriod && currentMove && moves.length > 0) {
       const currentIndex = moves.indexOf(currentMove);
-      const nextMove = moves[(currentIndex + 1) % moves.length];
-      setCurrentMove(nextMove);
-      animate3DMove(nextMove, tiltX, tiltY, scale);
+
+      // Check if we're still in the countdown sequence
+      if (!isCountdownComplete && currentIndex < countdownLength - 1) {
+        // Continue with countdown
+        const nextMove = moves[currentIndex + 1];
+        setCurrentMove(nextMove);
+        animate3DMove(nextMove, tiltX, tiltY, scale);
+
+        // If this is the last countdown move
+        if (currentIndex === countdownLength - 2) {
+          setIsCountdownComplete(true);
+        }
+      } else {
+        // For regular moves, start from after the countdown sequence
+        const effectiveIndex = isCountdownComplete ? currentIndex : countdownLength - 1;
+        const nextIndex = (effectiveIndex + 1 - countdownLength) % (moves.length - countdownLength) + countdownLength;
+        const nextMove = moves[nextIndex];
+        setCurrentMove(nextMove);
+        animate3DMove(nextMove, tiltX, tiltY, scale);
+      }
 
       // Play a random sound effect if not muted
       if (sounds.length > 0 && !isMuted) {
         const randomSound = sounds[Math.floor(Math.random() * sounds.length)];
         if (randomSound) {
-          randomSound.stopAsync().then(() => {
-            randomSound.playFromPositionAsync(0);
-          }).catch((error: Error) => {
-            console.error('Error playing sound:', error);
-          });
+          (async () => {
+            try {
+              // Get the current status first
+              const status = await randomSound.getStatusAsync();
+              
+              // Only try to stop if the sound is currently playing
+              if (status.isLoaded && status.isPlaying) {
+                await randomSound.stopAsync();
+              }
+              
+              // Make sure the sound is loaded before playing
+              if (status.isLoaded) {
+                await randomSound.setPositionAsync(0);
+                await randomSound.playAsync();
+              }
+            } catch (error) {
+              // Log the error but don't throw it to prevent app crashes
+              console.warn('Sound effect error:', error);
+            }
+          })();
         }
       }
     }
-  }, [currentMove, moves, gameState.isPaused, gameState.isRestPeriod, tiltX, tiltY, scale, sounds, isMuted]);
+  }, [currentMove, moves, gameState.isPaused, gameState.isRestPeriod, tiltX, tiltY, scale, sounds, isMuted, isCountdownComplete]);
   // Add random movement effect
   React.useEffect(() => {
     let isAnimating = false;
@@ -531,7 +575,7 @@ export default function Game() {
                 style={styles.startButton}
                 onPress={() => setShowCombosModal(false)}
               >
-                <Text style={styles.startButtonText}>Start Training</Text>
+                <Text style={styles.startButtonText}>Next</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -582,7 +626,7 @@ export default function Game() {
             end={{ x: 0, y: 1 }}
           >
             <Text style={styles.text} numberOfLines={2} adjustsFontSizeToFit>
-              {gameState.isGameOver ? "FIGHT OVER!🎉" : currentMove?.move || ""}
+              {gameState.isGameOver ? "FIGHT OVER!" : currentMove?.move || ""}
             </Text>
 
             {gameState.isRestPeriod && (
@@ -635,6 +679,7 @@ export default function Game() {
                   isPaused: false,
                   isGameOver: false
                 });
+                setIsCountdownComplete(false);
                 setCurrentMove(moves[0]);
                 setAnimationsEnabled(true);
               }}
@@ -726,7 +771,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: Colors.background,
+    backgroundColor: "#2a2a2a",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
