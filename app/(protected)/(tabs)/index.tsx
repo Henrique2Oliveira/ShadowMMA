@@ -234,8 +234,8 @@ export default function Index() {
             style={[styles.button, buttons[4].disabled && { opacity: 0.4 }]}
             onPress={buttons[4].onPress}
             disabled={buttons[4].disabled}>
-            <MaterialCommunityIcons name="shield" size={50} color={Colors.background} style={styles.buttonIcon} />
-            <Text style={[styles.textButton, { fontSize: 32 }]}>{buttons[4].title}</Text>
+            <MaterialCommunityIcons name="shield" size={68} color={Colors.background} style={styles.buttonIcon} />
+            <Text style={[styles.textButton, { fontSize: 28 }]}>{buttons[4].title}</Text>
           </TouchableOpacity>
         </View>
 

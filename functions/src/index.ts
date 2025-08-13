@@ -91,12 +91,16 @@ export const startFight = onRequest(async (req, res) => {
     }
 
     const userData = userDoc.data();
-    if (!userData?.fightsLeft || userData.fightsLeft <= 0) {
-      res.status(403).json({
-        error: "No fights left",
-        fightsLeft: userData?.fightsLeft || 0
-      });
-      return;
+    
+    // If user is not pro, check fights left
+    if (userData?.plan !== 'pro') {
+      if (!userData?.fightsLeft || userData.fightsLeft <= 0) {
+        res.status(403).json({
+          error: "No fights left",
+          fightsLeft: userData?.fightsLeft || 0
+        });
+        return;
+      }
     }
 
     // Busca combos para a categoria
@@ -118,13 +122,18 @@ export const startFight = onRequest(async (req, res) => {
     const combos = comboData.levels[difficultyLevel];
     const randomCombos = combos.sort(() => 0.5 - Math.random()).slice(0, 3);
 
-    // Atualiza fightsLeft do usuário
-    await userRef.update({ fightsLeft: userData.fightsLeft - 1 });
+    let updatedFightsLeft = userData.fightsLeft;
+    
+    // Only update and return fightsLeft for free users
+    if (userData.plan !== 'pro') {
+      updatedFightsLeft = userData.fightsLeft - 1;
+      await userRef.update({ fightsLeft: updatedFightsLeft });
+    }
 
     // Retorna resposta
     res.status(200).json({
       combos: randomCombos,
-      fightsLeft: userData.fightsLeft - 1,
+      fightsLeft: updatedFightsLeft,
     });
   } catch (error) {
     logger.error("Error in startFight:", error);

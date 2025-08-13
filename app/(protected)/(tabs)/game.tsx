@@ -796,10 +796,9 @@ const styles = StyleSheet.create({
   },
   startButtonText: {
     color: Colors.text,
-    fontSize: 20,
+    fontSize: 19,
     fontFamily: Typography.fontFamily,
     textAlign: 'center',
-
   },
   container: {
     flex: 1,

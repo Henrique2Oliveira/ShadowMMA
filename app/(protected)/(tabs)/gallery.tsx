@@ -1,5 +1,5 @@
 import { Colors, Typography } from '@/themes/theme';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import React, { useCallback, useState } from 'react';
 import { FlatList, ListRenderItem, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -175,7 +175,10 @@ export default function Gallery() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Move Library</Text>
+      <View style={styles.headerRow}>
+        <MaterialIcons name="school" size={42} color="white"> </MaterialIcons>
+        <Text style={styles.title}>Move Library</Text>
+      </View>
 
       <FlatList
         data={moves}
@@ -227,7 +230,7 @@ export default function Gallery() {
           </View>
         </TouchableOpacity>
       </Modal>
-    </View>
+    </View >
   );
 }
 
@@ -235,6 +238,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    gap: 10,
   },
   title: {
     color: Colors.text,

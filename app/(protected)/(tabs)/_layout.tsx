@@ -1,5 +1,5 @@
 import { Colors, Typography } from '@/themes/theme';
-import { Entypo, MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
 import { Tabs, useRouter } from 'expo-router';
 import React from 'react';
@@ -114,11 +114,13 @@ export default function TabsLayout() {
         options={{
           title: 'Combos',
           tabBarShowLabel: false,
+
           tabBarIcon: ({ focused }) => (
-            <Entypo
-              name="list"
-              size={40}
+            <MaterialCommunityIcons
+              name="boxing-glove"
+              size={43}
               marginRight={-20}
+              style={{ transform: [{ rotateZ: '90deg' }] }}
               color={focused ? 'white' : '#e6e6e6ff'}
             />
           ),

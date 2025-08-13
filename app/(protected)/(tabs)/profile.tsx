@@ -88,8 +88,10 @@ export default function Profile() {
             <View style={styles.fightsRow}>
               <MaterialCommunityIcons name="boxing-glove" style={{ transform: [{ rotate: '90deg' }] }} size={42} color={Colors.text} />
               <View style={styles.fightsInfo}>
-                <Text style={styles.fightsTitle}>Fights Left Today</Text>
-                <Text style={styles.fightsNumber}>{userData?.fightsLeft || 0}</Text>
+                <Text style={styles.fightsTitle}>{userData?.plan === 'pro' ? 'Premium Status' : 'Fights Left Today'}</Text>
+                <Text style={styles.fightsNumber}>
+                  {userData?.plan === 'pro' ? '∞' : userData?.fightsLeft || 0}
+                </Text>
               </View>
             </View>
           </View>
