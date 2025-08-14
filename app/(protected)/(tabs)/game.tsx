@@ -6,9 +6,9 @@ import { MoveCard } from '@/components/MoveCard';
 import { TimerDisplay } from '@/components/TimerDisplay';
 import { useUserData } from '@/contexts/UserDataContext';
 import { app } from '@/FirebaseConfig';
+import { useGameAnimations } from '@/hooks/useGameAnimations';
 import { Colors } from '@/themes/theme';
 import { Move } from '@/types/game';
-import { addRandomMovement, animate3DMove, startMoveProgress } from '@/utils/animations';
 import { getAuth } from '@firebase/auth';
 import { useIsFocused } from '@react-navigation/native';
 import { Audio } from 'expo-av';
@@ -181,24 +181,8 @@ export default function Game() {
             difficulty: params.difficulty?.toLowerCase() || 'beginner'
           })
         });
-        //reset tilt and scale animations when new game starts
-        Animated.parallel([
-          Animated.timing(tiltX, {
-            toValue: 0,
-            duration: 100,
-            useNativeDriver: true
-          }),
-          Animated.timing(tiltY, {
-            toValue: 0,
-            duration: 100,
-            useNativeDriver: true
-          }),
-          Animated.timing(scale, {
-            toValue: 1,
-            duration: 100,
-            useNativeDriver: true
-          })
-        ]).start();
+        // Reset animations when new game starts
+        resetAnimations();
 
         if (!response.ok) {
           if (response.status === 403) {
@@ -270,11 +254,18 @@ export default function Game() {
 
   }, [params.roundDuration, params.numRounds, params.restTime, params.moveSpeed, roundDurationMs, params.timestamp, params.category, params.difficulty]);
 
-  const tiltX = React.useRef(new Animated.Value(0)).current;
-  const tiltY = React.useRef(new Animated.Value(0)).current;
-  const scale = React.useRef(new Animated.Value(1)).current;
+  const {
+    tiltX,
+    tiltY,
+    scale,
+    moveProgress,
+    resetAnimations,
+    animateMove,
+    updateMoveProgress,
+    animateRestPeriod,
+    addRandomMovementEffect
+  } = useGameAnimations();
   const sideButtonsOpacity = React.useRef(new Animated.Value(0)).current;
-  const moveProgress = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
@@ -369,21 +360,7 @@ export default function Game() {
             }
 
             // Show fight over animation
-            Animated.timing(tiltX, {
-              toValue: 3.65,
-              duration: 800,
-              useNativeDriver: true
-            }).start();
-            Animated.timing(tiltY, {
-              toValue: 0,
-              duration: 200,
-              useNativeDriver: true
-            }).start();
-            Animated.timing(scale, {
-              toValue: 1.1,
-              duration: 1500,
-              useNativeDriver: true
-            }).start();
+            animateRestPeriod();
           }
         } else {
           setGameState(prev => ({
@@ -411,10 +388,10 @@ export default function Game() {
 
   const updateMoveProg = React.useCallback(() => {
     if (currentMove) {
-      return startMoveProgress(moveProgress, currentMove.pauseTime, speedMultiplier);
+      return updateMoveProgress(currentMove.pauseTime, speedMultiplier);
     }
     return null;
-  }, [currentMove, speedMultiplier, moveProgress]);
+  }, [currentMove, speedMultiplier, updateMoveProgress]);
 
   React.useEffect(() => {
     let animation: Animated.CompositeAnimation | null = null;
@@ -436,7 +413,7 @@ export default function Game() {
         // Continue with countdown
         const nextMove = moves[currentIndex + 1];
         setCurrentMove(nextMove);
-        animate3DMove(nextMove, tiltX, tiltY, scale);
+        animateMove(nextMove);
 
         // If this is the last countdown move
         if (currentIndex === countdownLength - 2) {
@@ -454,7 +431,7 @@ export default function Game() {
           setCurrentComboName(nextMove.comboName);
         }
 
-        animate3DMove(nextMove, tiltX, tiltY, scale);
+        animateMove(nextMove);
       }
 
       // Play a random sound effect if not muted
@@ -492,7 +469,7 @@ export default function Game() {
     const addRandomMovementIfNotAnimating = async () => {
       if (!isAnimating && !gameState.isPaused && !gameState.isRestPeriod && !gameState.isGameOver) {
         isAnimating = true;
-        await addRandomMovement(scale);
+        await addRandomMovementEffect();
         isAnimating = false;
         addRandomMovementIfNotAnimating();
       }
@@ -505,7 +482,7 @@ export default function Game() {
     return () => {
       isAnimating = true; // Prevent new animations from starting during cleanup
     };
-  }, [gameState.isPaused, gameState.isRestPeriod, gameState.isGameOver]);
+  }, [gameState.isPaused, gameState.isRestPeriod, gameState.isGameOver, addRandomMovementEffect]);
 
   React.useEffect(() => {
     if (currentMove) {
