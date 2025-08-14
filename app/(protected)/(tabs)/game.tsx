@@ -7,6 +7,7 @@ import { TimerDisplay } from '@/components/TimerDisplay';
 import { useUserData } from '@/contexts/UserDataContext';
 import { app } from '@/FirebaseConfig';
 import { Colors } from '@/themes/theme';
+import { Move } from '@/types/game';
 import { addRandomMovement, animate3DMove, startMoveProgress } from '@/utils/animations';
 import { getAuth } from '@firebase/auth';
 import { useIsFocused } from '@react-navigation/native';
@@ -137,14 +138,6 @@ export default function Game() {
     isGameOver: false
   });
 
-  interface Move {
-    move: string;
-    pauseTime: number;
-    direction: "left" | "right" | "up" | "down";
-    tiltValue: number;
-    comboName?: string;  // Optional because countdown moves won't have a combo name
-  }
-
   const [moves, setMoves] = React.useState<Move[]>([]);
   const [currentMove, setCurrentMove] = React.useState<Move | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -152,10 +145,24 @@ export default function Game() {
   const [combos, setCombos] = React.useState<{ name: string; moves: Move[] }[]>([]);
   const [currentComboName, setCurrentComboName] = React.useState<string>("");
 
-  // Fetch moves from Firebase Cloud Function
-  React.useEffect(() => {
-    const fetchMoves = async () => {
 
+  const [speedMultiplier, setSpeedMultiplier] = React.useState(parseFloat(params.moveSpeed || '1'));
+  const [animationsEnabled, setAnimationsEnabled] = React.useState(true);
+
+  // Reset game state and fetch moves when component mounts or when params change
+  React.useEffect(() => {
+    setGameState({
+      currentRound: 0,
+      isRestPeriod: false,
+      timeLeft: roundDurationMs,
+      isPaused: true,
+      isGameOver: false
+    });
+
+    setSpeedMultiplier(parseFloat(params.moveSpeed || '1'));
+    setAnimationsEnabled(true);
+
+    const fetchMoves = async () => {
       setIsLoading(true);
       try {
         const auth = getAuth(app);
@@ -174,6 +181,24 @@ export default function Game() {
             difficulty: params.difficulty?.toLowerCase() || 'beginner'
           })
         });
+        //reset tilt and scale animations when new game starts
+        Animated.parallel([
+          Animated.timing(tiltX, {
+            toValue: 0,
+            duration: 100,
+            useNativeDriver: true
+          }),
+          Animated.timing(tiltY, {
+            toValue: 0,
+            duration: 100,
+            useNativeDriver: true
+          }),
+          Animated.timing(scale, {
+            toValue: 1,
+            duration: 100,
+            useNativeDriver: true
+          })
+        ]).start();
 
         if (!response.ok) {
           if (response.status === 403) {
@@ -182,12 +207,10 @@ export default function Game() {
               'You have no fights remaining. Watch an ad or upgrade your plan to continue.',
               [{ text: 'OK', onPress: () => router.navigate('/(protected)/(tabs)') }]
             );
-
             return;
           }
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-
 
         const data = await response.json();
 
@@ -233,7 +256,7 @@ export default function Game() {
 
       } catch (error) {
         console.error("Error fetching moves:", error);
-        Alert.alert( //switch with the new modal component when it's ready 
+        Alert.alert(
           'Error',
           'Failed to start fight. Please try again later.',
           [{ text: 'OK', onPress: () => router.navigate('/(protected)/(tabs)') }]
@@ -244,50 +267,8 @@ export default function Game() {
     };
 
     fetchMoves();
-  }, [params.category, params.difficulty, params.timestamp]);
 
-
-  const [speedMultiplier, setSpeedMultiplier] = React.useState(parseFloat(params.moveSpeed || '1'));
-  const [animationsEnabled, setAnimationsEnabled] = React.useState(true);
-
-  // Reset game state when component mounts or when params change
-  React.useEffect(() => {
-    setGameState({
-      currentRound: 0,
-      isRestPeriod: false,
-      timeLeft: roundDurationMs,
-      isPaused: true,
-      isGameOver: false
-    });
-    // setCurrentMove({
-    //   move: "Continue?",
-    //   pauseTime: 1000,
-    //   direction: "down",
-    //   tiltValue: 3.75
-    // },);
-
-    setSpeedMultiplier(parseFloat(params.moveSpeed || '1'));
-    setAnimationsEnabled(true);
-    //reset tilt and scale animations when new game starts
-    Animated.parallel([
-      Animated.timing(tiltX, {
-        toValue: 0,
-        duration: 100,
-        useNativeDriver: true
-      }),
-      Animated.timing(tiltY, {
-        toValue: 0,
-        duration: 100,
-        useNativeDriver: true
-      }),
-      Animated.timing(scale, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true
-      })
-    ]).start();
-
-  }, [params.roundDuration, params.numRounds, params.restTime, params.moveSpeed, roundDurationMs, params.timestamp]);
+  }, [params.roundDuration, params.numRounds, params.restTime, params.moveSpeed, roundDurationMs, params.timestamp, params.category, params.difficulty]);
 
   const tiltX = React.useRef(new Animated.Value(0)).current;
   const tiltY = React.useRef(new Animated.Value(0)).current;
@@ -467,12 +448,12 @@ export default function Game() {
         const nextIndex = (effectiveIndex + 1 - countdownLength) % (moves.length - countdownLength) + countdownLength;
         const nextMove = moves[nextIndex];
         setCurrentMove(nextMove);
-        
+
         // Update current combo name for regular moves
         if (isCountdownComplete && nextMove.comboName) {
           setCurrentComboName(nextMove.comboName);
         }
-        
+
         animate3DMove(nextMove, tiltX, tiltY, scale);
       }
 
@@ -484,12 +465,12 @@ export default function Game() {
             try {
               // Get the current status first
               const status = await randomSound.getStatusAsync();
-              
+
               // Only try to stop if the sound is currently playing
               if (status.isLoaded && status.isPlaying) {
                 await randomSound.stopAsync();
               }
-              
+
               // Make sure the sound is loaded before playing
               if (status.isLoaded) {
                 await randomSound.setPositionAsync(0);
