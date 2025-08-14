@@ -95,7 +95,8 @@ export function FightModeModal({
         restTime,
         moveSpeed,
         difficulty,
-        category
+        category,
+        timestamp: Date.now().toString()
       }
     });
   };

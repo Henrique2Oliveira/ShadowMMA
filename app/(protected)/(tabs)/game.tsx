@@ -1,16 +1,20 @@
+import { CombosModal } from '@/components/CombosModal';
+import { GameControls } from '@/components/GameControls';
+import { GameOverButtons } from '@/components/GameOverButtons';
+import { LoadingScreen } from '@/components/LoadingScreen';
+import { MoveCard } from '@/components/MoveCard';
+import { TimerDisplay } from '@/components/TimerDisplay';
 import { useUserData } from '@/contexts/UserDataContext';
 import { app } from '@/FirebaseConfig';
-import { Colors, Typography } from '@/themes/theme';
+import { Colors } from '@/themes/theme';
 import { addRandomMovement, animate3DMove, startMoveProgress } from '@/utils/animations';
-import { formatTime } from '@/utils/time';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { getAuth } from '@firebase/auth';
 import { useIsFocused } from '@react-navigation/native';
 import { Audio } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
-import { ActivityIndicator, Alert, Animated, AppState, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Animated, AppState, StyleSheet } from 'react-native';
 
 export default function Game() {
   const { updateUserData } = useUserData();
@@ -116,6 +120,7 @@ export default function Game() {
     moveSpeed: string;
     difficulty: string;
     category: string;
+    timestamp: string;
   }>();
 
   // Convert minutes to milliseconds and store round duration and rest time
@@ -137,6 +142,7 @@ export default function Game() {
     pauseTime: number;
     direction: "left" | "right" | "up" | "down";
     tiltValue: number;
+    comboName?: string;  // Optional because countdown moves won't have a combo name
   }
 
   const [moves, setMoves] = React.useState<Move[]>([]);
@@ -144,6 +150,7 @@ export default function Game() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [showCombosModal, setShowCombosModal] = React.useState(false);
   const [combos, setCombos] = React.useState<{ name: string; moves: Move[] }[]>([]);
+  const [currentComboName, setCurrentComboName] = React.useState<string>("");
 
   // Fetch moves from Firebase Cloud Function
   React.useEffect(() => {
@@ -185,9 +192,14 @@ export default function Game() {
         const data = await response.json();
 
         if (data.combos && data.combos.length > 0) {
-          // Extract all moves from the combos
+          // Extract all moves from the combos and track which combo they belong to
           const allMoves = data.combos.reduce((acc: Move[], combo: any) => {
-            return [...acc, ...combo.moves];
+            // Add combo reference to each move
+            const movesWithCombo = combo.moves.map((move: Move) => ({
+              ...move,
+              comboName: combo.name // Add the combo name to each move
+            }));
+            return [...acc, ...movesWithCombo];
           }, []);
 
           // Store combos with their moves and show modal
@@ -232,7 +244,7 @@ export default function Game() {
     };
 
     fetchMoves();
-  }, [params.category, params.difficulty]);
+  }, [params.category, params.difficulty, params.timestamp]);
 
 
   const [speedMultiplier, setSpeedMultiplier] = React.useState(parseFloat(params.moveSpeed || '1'));
@@ -347,6 +359,7 @@ export default function Game() {
               direction: 'up',
               tiltValue: 1
             });
+            setCurrentComboName("");
             Animated.timing(tiltY, {
               toValue: 0,
               duration: 200,
@@ -454,6 +467,12 @@ export default function Game() {
         const nextIndex = (effectiveIndex + 1 - countdownLength) % (moves.length - countdownLength) + countdownLength;
         const nextMove = moves[nextIndex];
         setCurrentMove(nextMove);
+        
+        // Update current combo name for regular moves
+        if (isCountdownComplete && nextMove.comboName) {
+          setCurrentComboName(nextMove.comboName);
+        }
+        
         animate3DMove(nextMove, tiltX, tiltY, scale);
       }
 
@@ -530,57 +549,16 @@ export default function Game() {
   };
 
   if (isLoading) {
-    return (
-      <View style={[styles.container, { backgroundColor: Colors.bgGameDark }]}>
-        <ActivityIndicator size="large" color={Colors.text} />
-        <Text style={[styles.loadingText]}>Loading Fight...</Text>
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   return (
     <>
-      <Modal
-        animationType="fade"
-        transparent={true}
+      <CombosModal
         visible={showCombosModal}
-        onRequestClose={() => setShowCombosModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setShowCombosModal(false)}
-            >
-              <MaterialCommunityIcons name="close" size={24} color="white" />
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>Combos Set</Text>
-            <View style={styles.optionsContainer}>
-              {combos.map((combo, index) => (
-                <View key={index} style={styles.comboContainer}>
-                  <Text style={styles.comboName}>{combo.name}</Text>
-                  <View style={styles.movesContainer}>
-                    <Text style={styles.moveText}>
-                      {combo.moves.map((move, moveIndex) => (
-                        <Text key={moveIndex}>
-                          {move.move.replace(/\n/g, ' ')}
-                          {moveIndex < combo.moves.length - 1 ? '   →   ' : ''}
-                        </Text>
-                      ))}
-                    </Text>
-                  </View>
-                </View>
-              ))}
-              <TouchableOpacity
-                style={styles.startButton}
-                onPress={() => setShowCombosModal(false)}
-              >
-                <Text style={styles.startButtonText}>Next</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        combos={combos}
+        onClose={() => setShowCombosModal(false)}
+      />
 
       <LinearGradient
         colors={[Colors.bgGameDark, 'rgba(230, 87, 87, 1)', Colors.bgGameDark]}
@@ -588,420 +566,66 @@ export default function Game() {
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
       >
-        <View style={styles.timerContainer}>
-          <Text style={styles.roundText}>Round {gameState.currentRound}/{totalRounds}</Text>
+        <TimerDisplay
+          currentRound={gameState.currentRound}
+          totalRounds={totalRounds}
+          timeLeft={gameState.timeLeft}
+          comboName={currentComboName}
+          isRestPeriod={gameState.isRestPeriod}
+        />
 
-          {!gameState.isRestPeriod && <Text style={styles.timerText}>
-            {formatTime(gameState.timeLeft)}
-          </Text>}
+        <MoveCard
+          move={currentMove?.move || ""}
+          tiltX={tiltX}
+          tiltY={tiltY}
+          scale={scale}
+          moveProgress={moveProgress}
+          timeLeft={gameState.timeLeft}
+          isGameOver={gameState.isGameOver}
+          isRestPeriod={gameState.isRestPeriod}
+          isPaused={gameState.isPaused}
+          animationsEnabled={animationsEnabled}
+        />
 
-        </View>
-
-        <Animated.View style={[
-          styles.card,
-          {
-            transform: animationsEnabled ? [
-              {
-                rotateX: tiltX.interpolate({
-                  inputRange: [-0.4, 0, 0.4],
-                  outputRange: ['-40deg', '0deg', '40deg']
-                })
-              },
-              {
-                rotateY: tiltY.interpolate({
-                  inputRange: [-0.4, 0, 0.4],
-                  outputRange: ['-40deg', '0deg', '40deg']
-                })
-              },
-              {
-                scale: scale
-              }
-            ] : []
-          }
-        ]}>
-          <LinearGradient
-            colors={['#171717ff', '#1a1a1aff',]}
-            style={styles.gradientBackground}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-          >
-            <Text style={styles.text} numberOfLines={2} adjustsFontSizeToFit>
-              {gameState.isGameOver ? "FIGHT OVER!" : currentMove?.move || ""}
-            </Text>
-
-            {gameState.isRestPeriod && (
-              <Text style={styles.restTimeText}>
-                {formatTime(gameState.timeLeft)}
-              </Text>
-            )}
-
-            {!gameState.isPaused && !gameState.isGameOver && !gameState.isRestPeriod && (
-              <View style={styles.progressBarContainer}>
-                <Animated.View
-                  style={[
-                    styles.progressBar,
-                    {
-                      width: moveProgress.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: ['0%', '100%']
-                      })
-                    }
-                  ]}
-                />
-              </View>
-            )}
-          </LinearGradient>
-        </Animated.View>
-
-        {/* Game Over Buttons */}
-
-        {/* Show Level Up % and new unlocked things etc when game over add animations */}
         {gameState.isGameOver && (
-          <View style={styles.gameOverButtonsContainer}>
-            <TouchableOpacity
-              style={styles.gameOverButton}
-              onPress={() => router.push("/")}
-            >
-              <Ionicons
-                name="home"
-                size={38}
-                color={Colors.bgDark}
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity  //only when player see a ads or is premium user (add icon for premium or ads first)
-              style={styles.gameOverButton}
-              onPress={() => {
-                setGameState({
-                  currentRound: 1,
-                  isRestPeriod: false,
-                  timeLeft: roundDurationMs,
-                  isPaused: false,
-                  isGameOver: false
-                });
-                setIsCountdownComplete(false);
-                setCurrentMove(moves[0]);
-                setAnimationsEnabled(true);
-              }}
-            >
-              <Ionicons
-                name="refresh"
-                size={42}
-                color={Colors.bgDark}
-              />
-            </TouchableOpacity>
-          </View>
+          <GameOverButtons
+            onRestart={() => {
+              setGameState({
+                currentRound: 1,
+                isRestPeriod: false,
+                timeLeft: roundDurationMs,
+                isPaused: false,
+                isGameOver: false
+              });
+              setIsCountdownComplete(false);
+              setCurrentMove(moves[0]);
+              setAnimationsEnabled(true);
+            }}
+          />
         )}
 
-        {/* Control Buttons Container */}
-        <View style={styles.buttonsContainer}>
-          <Animated.View style={{ opacity: sideButtonsOpacity }}>
-            {/* Home Button */}
-            <TouchableOpacity
-              style={[styles.sideButton, !gameState.isPaused && styles.disabledButton]}
-              onPress={() => gameState.isPaused && router.push("/")}
-            >
-              <Ionicons
-                name="home"
-                size={30}
-                color={Colors.bgDark}
-              />
-            </TouchableOpacity>
-            {/* Sound Toggle Button */}
-            <TouchableOpacity
-              style={[styles.sideButton, !gameState.isPaused && styles.disabledButton]}
-              onPress={() => gameState.isPaused && setIsMuted(!isMuted)}
-            >
-              <Ionicons
-                name={isMuted ? "volume-mute" : "volume-high"}
-                size={30}
-                color={Colors.bgDark}
-              />
-            </TouchableOpacity>
-          </Animated.View>
-
-
-          {/* Pause/Play Button - Hidden when fight is over */}
-          {!gameState.isGameOver && (
-            <TouchableOpacity
-              style={styles.pauseButton}
-              onPress={handlePress}
-            >
-              <Ionicons
-                name={gameState.isPaused ? "play" : "pause"}
-                size={40}
-                color={Colors.bgDark}
-              />
-            </TouchableOpacity>
-          )}
-
-          <Animated.View style={{ opacity: sideButtonsOpacity }}>
-            {/* Speed Button */}
-            <TouchableOpacity
-              style={[styles.sideButton, !gameState.isPaused && styles.disabledButton]}
-              onPress={handleSpeedChange}
-            >
-              <Text style={styles.speedText}>x{speedMultiplier}</Text>
-            </TouchableOpacity>
-
-            {/* Animation Toggle Button */}
-            <TouchableOpacity
-              style={[styles.sideButton, (!animationsEnabled || !gameState.isPaused) && styles.disabledButton]}
-              onPress={() => gameState.isPaused && setAnimationsEnabled(!animationsEnabled)}
-            >
-              <Ionicons
-                name={animationsEnabled ? "cube" : "cube-outline"}
-                size={30}
-                color={Colors.bgDark}
-              />
-            </TouchableOpacity>
-
-          </Animated.View>
-        </View>
-
+        <GameControls
+          isPaused={gameState.isPaused}
+          isMuted={isMuted}
+          isAnimationsEnabled={animationsEnabled}
+          speedMultiplier={speedMultiplier}
+          sideButtonsOpacity={sideButtonsOpacity}
+          onPauseToggle={handlePress}
+          onMuteToggle={() => gameState.isPaused && setIsMuted(!isMuted)}
+          onSpeedChange={handleSpeedChange}
+          onAnimationsToggle={() => gameState.isPaused && setAnimationsEnabled(!animationsEnabled)}
+          isGameOver={gameState.isGameOver}
+        />
       </LinearGradient>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: "#2a2a2a",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    paddingBottom: 40,
-    minHeight: 300,
-    width: '100%',
-  },
-  modalTitle: {
-    color: Colors.text,
-    fontSize: 28,
-    fontFamily: Typography.fontFamily,
-    marginTop: 20,
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  optionsContainer: {
-    width: '100%',
-    marginTop: 20,
-  },
-  comboContainer: {
-    marginBottom: 15,
-    backgroundColor: '#444444',
-    borderRadius: 10,
-    padding: 15,
-    paddingBottom: 17,
-    borderBottomWidth: 4,
-    borderBottomColor: "#2b2b2bff",
-  },
-  comboName: {
-    color: Colors.text,
-    fontSize: 18,
-    fontFamily: Typography.fontFamily,
-
-    marginBottom: 8,
-  },
-  movesContainer: {
-    paddingLeft: 10,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  moveText: {
-    color: "white",
-    backgroundColor: '#363636ff',
-    padding: 10,
-    borderRadius: 10,
-    fontSize: 16,
-    fontFamily: Typography.fontFamily,
-    lineHeight: 22,
-    flexShrink: 1,
-  },
-  closeButton: {
-    position: 'absolute',
-    right: 20,
-    top: 20,
-    zIndex: 1,
-  },
-  closeButtonText: {
-    color: Colors.text,
-    fontSize: 16,
-    fontFamily: Typography.fontFamily,
-  },
-  startButton: {
-    backgroundColor: Colors.darkGreen,
-    paddingVertical: 15,
-    borderRadius: 10,
-    marginTop: 20,
-  },
-  startButtonText: {
-    color: Colors.text,
-    fontSize: 19,
-    fontFamily: Typography.fontFamily,
-    textAlign: 'center',
-  },
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
-  },
-  loadingText: {
-    color: Colors.text,
-    fontSize: 24,
-    fontFamily: Typography.fontFamily,
-    marginTop: 20,
-    textAlign: 'center',
-  },
-  roundText: {
-    fontFamily: Typography.fontFamily,
-    color: '#fff',
-    fontSize: 24,
-    marginBottom: 5,
-  },
-  restText: {
-    fontFamily: Typography.fontFamily,
-    color: '#ffd700',
-    fontSize: 28,
-    marginTop: 5,
-  },
-  restTimeText: {
-    fontFamily: Typography.fontFamily,
-    color: '#ffffff',
-    fontSize: 32,
-    marginTop: 10,
-  },
-  gameOverButtonsContainer: {
-    position: 'absolute',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 50,
-    bottom: 140,
-  },
-  gameOverButton: {
-    backgroundColor: '#ffffffff',
-    width: 80,
-    height: 80,
-    borderRadius: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  progressBarContainer: {
-    width: '80%',
-    height: 8,
-    backgroundColor: '#000000ff',
-    borderRadius: 4,
-    overflow: 'hidden',
-    marginTop: 10,
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: '#ffffffff',
-    borderRadius: 4,
-  },
-  timerContainer: {
-    position: 'absolute',
-    top: 20,
-    width: '100%',
-    alignItems: 'center',
-  },
-  timerText: {
-    fontFamily: Typography.fontFamily,
-    color: '#fff',
-    fontSize: 32,
-  },
-  pauseButton: {
-    position: 'absolute',
-    bottom: 40,
-    alignSelf: 'center',
-    backgroundColor: '#efefefff',
-    width: 80,
-    height: 80,
-    borderRadius: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  text: {
-    color: Colors.text,
-    fontSize: 40,
-    textAlign: 'center',
-    width: '100%',
-    lineHeight: 48,
-    fontFamily: Typography.fontFamily,
-    flexShrink: 1,
-    flexWrap: 'wrap'
-  },
-  card: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 280,
-    height: 220,
-    borderRadius: 25,
-    overflow: 'hidden',
-  },
-  gradientBackground: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-  },
-  buttonsContainer: {
-    position: 'absolute',
-    bottom: 30,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 50,
-  },
-  sideButton: {
-    backgroundColor: '#efefefff',
-    width: 80,
-    height: 50,
-    marginVertical: 10,
-    marginHorizontal: 30,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  speedText: {
-    fontSize: 28,
-    fontFamily: Typography.fontFamily,
-    color: Colors.bgDark,
-  },
-  disabledButton: {
-    backgroundColor: '#d4d4d4',
-    opacity: 0.8,
   },
 });
