@@ -2,7 +2,7 @@ import { Colors, Typography } from '@/themes/theme';
 import { Move } from '@/types/game';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface CombosModalProps {
   visible: boolean;
@@ -31,7 +31,7 @@ export const CombosModal: React.FC<CombosModalProps> = ({
             <MaterialCommunityIcons name="close" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.modalTitle}>Combos</Text>
-          <View style={styles.optionsContainer}>
+          <ScrollView style={styles.optionsContainer}>
             {combos.map((combo, index) => (
               <View key={index} style={styles.comboContainer}>
                 <Text style={styles.comboName}>{combo.name}</Text>
@@ -47,13 +47,13 @@ export const CombosModal: React.FC<CombosModalProps> = ({
                 </View>
               </View>
             ))}
+          </ScrollView>
             <TouchableOpacity
               style={styles.startButton}
               onPress={onClose}
             >
               <Text style={styles.startButtonText}>Next</Text>
             </TouchableOpacity>
-          </View>
         </View>
       </View>
     </Modal>
@@ -86,6 +86,7 @@ const styles = StyleSheet.create({
   optionsContainer: {
     width: '100%',
     marginTop: 20,
+    maxHeight: '80%',
   },
   comboContainer: {
     marginBottom: 15,

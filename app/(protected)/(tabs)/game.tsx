@@ -212,11 +212,11 @@ export default function Game() {
 
           // Add countdown cards at the beginning
           const countdownMoves: Move[] = [
-            { move: "Ready?", pauseTime: 800, direction: "down" as const, tiltValue: 3.75 },
-            { move: "3", pauseTime: 1000, direction: "down" as const, tiltValue: 3.75 },
-            { move: "2", pauseTime: 1000, direction: "down" as const, tiltValue: 3.75 },
-            { move: "1", pauseTime: 1000, direction: "down" as const, tiltValue: 3.75 },
-            { move: "Fight!", pauseTime: 1600, direction: "up" as const, tiltValue: 3.75 },
+            { move: "Ready?", pauseTime: 800, direction: "down" as const, tiltValue: 3.65 },
+            { move: "3", pauseTime: 1000, direction: "down" as const, tiltValue: 3.65 },
+            { move: "2", pauseTime: 1000, direction: "down" as const, tiltValue: 3.65 },
+            { move: "1", pauseTime: 1000, direction: "down" as const, tiltValue: 3.65 },
+            { move: "Fight!", pauseTime: 1600, direction: "up" as const, tiltValue: 3.65 },
           ];
 
           setMoves([...countdownMoves, ...allMoves]);
@@ -233,7 +233,7 @@ export default function Game() {
 
       } catch (error) {
         console.error("Error fetching moves:", error);
-        Alert.alert(
+        Alert.alert( //switch with the new modal component when it's ready 
           'Error',
           'Failed to start fight. Please try again later.',
           [{ text: 'OK', onPress: () => router.navigate('/(protected)/(tabs)') }]
@@ -259,12 +259,12 @@ export default function Game() {
       isPaused: true,
       isGameOver: false
     });
-    setCurrentMove({
-      move: "Continue?",
-      pauseTime: 1000,
-      direction: "down",
-      tiltValue: 3.75
-    },);
+    // setCurrentMove({
+    //   move: "Continue?",
+    //   pauseTime: 1000,
+    //   direction: "down",
+    //   tiltValue: 3.75
+    // },);
 
     setSpeedMultiplier(parseFloat(params.moveSpeed || '1'));
     setAnimationsEnabled(true);
@@ -287,7 +287,7 @@ export default function Game() {
       })
     ]).start();
 
-  }, [params.roundDuration, params.numRounds, params.restTime, params.moveSpeed, roundDurationMs]);
+  }, [params.roundDuration, params.numRounds, params.restTime, params.moveSpeed, roundDurationMs, params.timestamp]);
 
   const tiltX = React.useRef(new Animated.Value(0)).current;
   const tiltY = React.useRef(new Animated.Value(0)).current;
