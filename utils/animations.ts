@@ -73,7 +73,7 @@ export const addRandomMovement = (scale: Animated.Value) => {
   });
 };
 
-export const startMoveProgress = (
+export const startMoveProgress = ( // TRY to smoothly animate the move progress
   moveProgress: Animated.Value,
   pauseTime: number,
   speedMultiplier: number

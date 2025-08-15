@@ -1,44 +1,42 @@
+import { useUserData } from '@/contexts/UserDataContext';
 import { Colors } from '@/themes/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { LevelBar } from './LevelBar';
 
-interface GameOverButtonsProps {
-  onRestart: () => void;
-}
+export const GameOverButtons: React.FC = () => {
+  const { userData } = useUserData();
 
-export const GameOverButtons: React.FC<GameOverButtonsProps> = ({
-  onRestart
-}) => {
   return (
-    <View style={styles.gameOverButtonsContainer}>
-      <TouchableOpacity
-        style={styles.gameOverButton}
-        onPress={() => router.push("/")}
-      >
-        <Ionicons
-          name="home"
-          size={38}
-          color={Colors.bgDark}
-        />
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.gameOverButton}
-        onPress={onRestart}
-      >
-        <Ionicons
-          name="refresh"
-          size={42}
-          color={Colors.bgDark}
-        />
-      </TouchableOpacity>
-    </View>
+    <>
+      <View style={styles.levelBarContainer}>
+        <LevelBar xp={userData?.xp || 50} level={userData?.level || 1} />
+      </View>
+      <View style={styles.gameOverButtonsContainer}>
+        <TouchableOpacity
+          style={styles.gameOverButton}
+          onPress={() => router.push("/")}
+        >
+          <Ionicons
+            name="home"
+            size={38}
+            color={Colors.bgDark}
+          />
+        </TouchableOpacity>
+      </View>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
+  levelBarContainer: {
+    position: 'absolute',
+    top: -200,
+    width: '100%',
+    alignItems: 'center',
+  },
   gameOverButtonsContainer: {
     position: 'absolute',
     flexDirection: 'row',

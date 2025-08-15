@@ -2,6 +2,7 @@ import { CombosModal } from '@/components/CombosModal';
 import { GameControls } from '@/components/GameControls';
 import { GameOptionsModal } from '@/components/GameOptionsModal';
 import { GameOverButtons } from '@/components/GameOverButtons';
+import { LevelBar } from '@/components/LevelBar';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { MoveCard } from '@/components/MoveCard';
 import { TimerDisplay } from '@/components/TimerDisplay';
@@ -19,7 +20,7 @@ import React from 'react';
 import { Alert, Animated, AppState, StyleSheet } from 'react-native';
 
 export default function Game() {
-  const { updateUserData } = useUserData();
+  const { updateUserData, userData } = useUserData();
 
   // Load sound effects
   const [sounds, setSounds] = React.useState<Audio.Sound[]>([]);
@@ -294,31 +295,32 @@ export default function Game() {
 
         if (newTimeLeft === 0) {
           clearInterval(interval);
-          setCurrentComboName("");
-          resetAnimations();
 
-          // Handle period transitions
+          // Handle period transitions 
           if (gameState.isRestPeriod) {
             // End of rest period - start next round
+
             setGameState(prev => ({
               ...prev,
               isRestPeriod: false,
               timeLeft: roundDurationMs,
             }));
-            setCurrentMove(moves[3]); // Start with "Fight!" move
-
+            setCurrentMove(moves[5]); // Set to the first move of the next round
+            // Play bell sound if not muted
             playBellSound();
 
-          } else if (gameState.currentRound + 1 <= totalRounds) {
+          } else if (gameState.currentRound + 2 <= totalRounds) {
             // End of round - start rest period
-            animateRestPeriod();
+
+            // Play bell sound if not muted
             playBellSound();
+
             setGameState(prev => ({
               ...prev,
               isRestPeriod: true,
               isPaused: false,
-              currentRound: prev.currentRound + 1,
               timeLeft: restTimeMs,
+              currentRound: prev.currentRound + 1,
             }));
             setCurrentMove({
               move: `Rest Time`,
@@ -326,16 +328,49 @@ export default function Game() {
               direction: 'up',
               tiltValue: 1
             });
-
+            setCurrentComboName("");
+            Animated.timing(tiltX, {
+              toValue: 3.65,
+              duration: 800,
+              useNativeDriver: true
+            }).start();
+            Animated.timing(tiltY, {
+              toValue: 0,
+              duration: 200,
+              useNativeDriver: true
+            }).start();
+            Animated.timing(scale, {
+              toValue: 1.1,
+              duration: 1500,
+              useNativeDriver: true
+            }).start();
           } else {
-            animateRestPeriod();
             // End of final round - game over
+            // Play bell sound if not muted
             setGameState(prev => ({
               ...prev,
               isPaused: true,
-              isGameOver: true
+              isGameOver: true,
             }));
             playBellSound();
+            Animated.parallel([
+              Animated.timing(tiltX, {
+                toValue: 0,
+                duration: 100,
+                useNativeDriver: true
+              }),
+              Animated.timing(tiltY, {
+                toValue: 0,
+                duration: 100,
+                useNativeDriver: true
+              }),
+              Animated.timing(scale, {
+                toValue: 1,
+                duration: 100,
+                useNativeDriver: true
+              })
+            ]).start();
+
           }
         } else {
           setGameState(prev => ({
@@ -350,8 +385,7 @@ export default function Game() {
       if (interval) clearInterval(interval);
     };
   }, [gameState.isPaused, gameState.isGameOver, gameState.isRestPeriod,
-    totalRounds, roundDurationMs, restTimeMs]);
-
+    totalRounds]);
   const handleSpeedChange = React.useCallback(() => {
     if (!gameState.isPaused) return;
     setSpeedMultiplier(current => {
@@ -501,13 +535,15 @@ export default function Game() {
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
       >
-        <TimerDisplay
-          currentRound={gameState.currentRound}
-          totalRounds={totalRounds}
-          timeLeft={gameState.timeLeft}
-          comboName={currentComboName}
-          isRestPeriod={gameState.isRestPeriod}
-        />
+        {!gameState.isGameOver && (
+          <TimerDisplay
+            currentRound={gameState.currentRound}
+            totalRounds={totalRounds}
+            timeLeft={gameState.timeLeft}
+            comboName={currentComboName}
+            isRestPeriod={gameState.isRestPeriod}
+          />
+        )}
 
         <MoveCard
           move={currentMove?.move || ""}
@@ -523,20 +559,10 @@ export default function Game() {
         />
 
         {gameState.isGameOver && (
-          <GameOverButtons
-            onRestart={() => {
-              setGameState({
-                currentRound: 1,
-                isRestPeriod: false,
-                timeLeft: roundDurationMs,
-                isPaused: false,
-                isGameOver: false
-              });
-              setIsCountdownComplete(false);
-              setCurrentMove(moves[0]);
-              setAnimationsEnabled(true);
-            }}
-          />
+          <>
+            <LevelBar xp={userData?.xp || 0} level={userData?.level || 0} />
+            <GameOverButtons />
+          </>
         )}
 
         <GameControls
