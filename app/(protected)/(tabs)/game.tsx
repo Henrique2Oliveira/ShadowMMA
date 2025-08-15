@@ -1,5 +1,6 @@
 import { CombosModal } from '@/components/CombosModal';
 import { GameControls } from '@/components/GameControls';
+import { GameOptionsModal } from '@/components/GameOptionsModal';
 import { GameOverButtons } from '@/components/GameOverButtons';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { MoveCard } from '@/components/MoveCard';
@@ -138,6 +139,8 @@ export default function Game() {
     isGameOver: false
   });
 
+  const [isOptionsModalVisible, setIsOptionsModalVisible] = React.useState(false);
+
   const [moves, setMoves] = React.useState<Move[]>([]);
   const [currentMove, setCurrentMove] = React.useState<Move | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -183,7 +186,7 @@ export default function Game() {
         });
         // Reset animations when new game starts
         resetAnimations();
-
+        setCurrentComboName("")
         if (!response.ok) {
           if (response.status === 403) {
             Alert.alert(
@@ -267,6 +270,7 @@ export default function Game() {
   } = useGameAnimations();
   const sideButtonsOpacity = React.useRef(new Animated.Value(0)).current;
 
+  // Handle app state changes to pause the game
   React.useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
 
@@ -290,8 +294,7 @@ export default function Game() {
               isRestPeriod: false,
               timeLeft: roundDurationMs,
             }));
-            setCurrentMove(moves[0]);
-
+            setCurrentMove(moves[0]); 
             // Play bell sound if not muted
             if (!isMuted && bellSound) {
               bellSound.stopAsync().then(() => {
@@ -320,11 +323,6 @@ export default function Game() {
               currentRound: prev.currentRound + 1,
               timeLeft: restTimeMs,
             }));
-            Animated.timing(tiltX, {
-              toValue: 3.65,
-              duration: 800,
-              useNativeDriver: true
-            }).start();
             setCurrentMove({
               move: `Rest Time`,
               pauseTime: restTimeMs,
@@ -332,6 +330,11 @@ export default function Game() {
               tiltValue: 1
             });
             setCurrentComboName("");
+            Animated.timing(tiltX, {
+              toValue: 3.65,
+              duration: 800,
+              useNativeDriver: true
+            }).start();
             Animated.timing(tiltY, {
               toValue: 0,
               duration: 200,
@@ -350,6 +353,9 @@ export default function Game() {
               isGameOver: true
             }));
 
+            // Show fight over animation
+            animateRestPeriod();
+
             // Play bell sound if not muted
             if (!isMuted && bellSound) {
               bellSound.stopAsync().then(() => {
@@ -358,9 +364,6 @@ export default function Game() {
                 console.error('Error playing bell sound:', error);
               });
             }
-
-            // Show fight over animation
-            animateRestPeriod();
           }
         } else {
           setGameState(prev => ({
@@ -374,7 +377,7 @@ export default function Game() {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [gameState.isPaused, gameState.isGameOver, gameState.isRestPeriod, gameState.currentRound,
+  }, [gameState.isPaused, gameState.isGameOver, gameState.isRestPeriod,
     totalRounds, roundDurationMs, restTimeMs]);
 
   const handleSpeedChange = React.useCallback(() => {
@@ -417,7 +420,16 @@ export default function Game() {
 
         // If this is the last countdown move
         if (currentIndex === countdownLength - 2) {
+
           setIsCountdownComplete(true);
+          // Play bell sound if not muted
+          if (!isMuted && bellSound && isCountdownComplete) {
+            bellSound.stopAsync().then(() => {
+              bellSound.playFromPositionAsync(0);
+            }).catch((error) => {
+              console.error('Error playing bell sound:', error);
+            });
+          }
         }
       } else {
         // For regular moves, start from after the countdown sequence
@@ -571,8 +583,27 @@ export default function Game() {
           onPauseToggle={handlePress}
           onMuteToggle={() => gameState.isPaused && setIsMuted(!isMuted)}
           onSpeedChange={handleSpeedChange}
-          onAnimationsToggle={() => gameState.isPaused && setAnimationsEnabled(!animationsEnabled)}
+          onOptionsPress={() => gameState.isPaused && setIsOptionsModalVisible(true)}
           isGameOver={gameState.isGameOver}
+        />
+
+        <GameOptionsModal
+          visible={isOptionsModalVisible}
+          onClose={() => setIsOptionsModalVisible(false)}
+          isMuted={isMuted}
+          onMuteToggle={() => setIsMuted(!isMuted)}
+          speedMultiplier={speedMultiplier}
+          onSpeedChange={handleSpeedChange}
+          isAnimationsEnabled={animationsEnabled}
+          onAnimationsToggle={() => setAnimationsEnabled(!animationsEnabled)}
+          onShowCombos={() => {
+            setIsOptionsModalVisible(false);
+            setShowCombosModal(true);
+          }}
+          onQuit={() => {
+            setIsOptionsModalVisible(false);
+            router.replace('/(protected)/(tabs)');
+          }}
         />
       </LinearGradient>
     </>

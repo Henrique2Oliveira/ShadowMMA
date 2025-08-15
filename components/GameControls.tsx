@@ -13,7 +13,7 @@ interface GameControlsProps {
   onPauseToggle: () => void;
   onMuteToggle: () => void;
   onSpeedChange: () => void;
-  onAnimationsToggle: () => void;
+  onOptionsPress: () => void;
   isGameOver: boolean;
 }
 
@@ -26,7 +26,7 @@ export const GameControls: React.FC<GameControlsProps> = ({
   onPauseToggle,
   onMuteToggle,
   onSpeedChange,
-  onAnimationsToggle,
+  onOptionsPress,
   isGameOver,
 }) => {
   return (
@@ -51,6 +51,7 @@ export const GameControls: React.FC<GameControlsProps> = ({
             color={Colors.bgDark}
           />
         </TouchableOpacity>
+
       </Animated.View>
 
       {/* Pause/Play Button - Hidden when fight is over */}
@@ -72,16 +73,12 @@ export const GameControls: React.FC<GameControlsProps> = ({
         >
           <Text style={styles.speedText}>x{speedMultiplier}</Text>
         </TouchableOpacity>
-
-        {/* Animation Toggle Button */}
+        {/* Options Button */}
         <TouchableOpacity
-          style={[styles.sideButton, (!isAnimationsEnabled || !isPaused) && styles.disabledButton]}
-          onPress={onAnimationsToggle}
+          style={[styles.sideButton, !isPaused && styles.disabledButton]}
+          onPress={onOptionsPress}
         >
-          <Ionicons
-            name={isAnimationsEnabled ? "cube" : "cube-outline"}
-            size={30}
-            color={Colors.bgDark}
+          <Ionicons name="options" size={30} color={Colors.bgDark}
           />
         </TouchableOpacity>
       </Animated.View>

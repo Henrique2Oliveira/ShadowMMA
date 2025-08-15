@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   movesContainer: {
-    paddingLeft: 10,
+
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
