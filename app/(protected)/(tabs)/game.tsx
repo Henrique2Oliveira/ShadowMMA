@@ -32,6 +32,16 @@ export default function Game() {
 
   const [bellSound, setBellSound] = React.useState<Audio.Sound | null>(null);
 
+  const playBellSound = React.useCallback(() => {
+    if (!isMuted && bellSound) {
+      bellSound.stopAsync().then(() => {
+        bellSound.playFromPositionAsync(0);
+      }).catch((error) => {
+        console.error('Error playing bell sound:', error);
+      });
+    }
+  }, [bellSound, isMuted]);
+
   React.useEffect(() => {
     const loadSounds = async () => {
       try {
@@ -255,7 +265,7 @@ export default function Game() {
 
     fetchMoves();
 
-  }, [params.roundDuration, params.numRounds, params.restTime, params.moveSpeed, roundDurationMs, params.timestamp, params.category, params.difficulty]);
+  }, [params.roundDuration, params.numRounds, params.restTime, params.moveSpeed, params.timestamp, params.category, params.difficulty]);
 
   const {
     tiltX,
@@ -284,38 +294,25 @@ export default function Game() {
 
         if (newTimeLeft === 0) {
           clearInterval(interval);
+          setCurrentComboName("");
+          resetAnimations();
 
           // Handle period transitions
           if (gameState.isRestPeriod) {
             // End of rest period - start next round
-
             setGameState(prev => ({
               ...prev,
               isRestPeriod: false,
               timeLeft: roundDurationMs,
             }));
-            setCurrentMove(moves[0]); 
-            // Play bell sound if not muted
-            if (!isMuted && bellSound) {
-              bellSound.stopAsync().then(() => {
-                bellSound.playFromPositionAsync(0);
-              }).catch((error) => {
-                console.error('Error playing bell sound:', error);
-              });
-            }
+            setCurrentMove(moves[3]); // Start with "Fight!" move
+
+            playBellSound();
 
           } else if (gameState.currentRound + 1 <= totalRounds) {
             // End of round - start rest period
-
-            // Play bell sound if not muted
-            if (!isMuted && bellSound) {
-              bellSound.stopAsync().then(() => {
-                bellSound.playFromPositionAsync(0);
-              }).catch((error) => {
-                console.error('Error playing bell sound:', error);
-              });
-            }
-
+            animateRestPeriod();
+            playBellSound();
             setGameState(prev => ({
               ...prev,
               isRestPeriod: true,
@@ -329,41 +326,16 @@ export default function Game() {
               direction: 'up',
               tiltValue: 1
             });
-            setCurrentComboName("");
-            Animated.timing(tiltX, {
-              toValue: 3.65,
-              duration: 800,
-              useNativeDriver: true
-            }).start();
-            Animated.timing(tiltY, {
-              toValue: 0,
-              duration: 200,
-              useNativeDriver: true
-            }).start();
-            Animated.timing(scale, {
-              toValue: 1.1,
-              duration: 1500,
-              useNativeDriver: true
-            }).start();
+
           } else {
+            animateRestPeriod();
             // End of final round - game over
             setGameState(prev => ({
               ...prev,
               isPaused: true,
               isGameOver: true
             }));
-
-            // Show fight over animation
-            animateRestPeriod();
-
-            // Play bell sound if not muted
-            if (!isMuted && bellSound) {
-              bellSound.stopAsync().then(() => {
-                bellSound.playFromPositionAsync(0);
-              }).catch((error) => {
-                console.error('Error playing bell sound:', error);
-              });
-            }
+            playBellSound();
           }
         } else {
           setGameState(prev => ({
@@ -422,14 +394,7 @@ export default function Game() {
         if (currentIndex === countdownLength - 2) {
 
           setIsCountdownComplete(true);
-          // Play bell sound if not muted
-          if (!isMuted && bellSound && isCountdownComplete) {
-            bellSound.stopAsync().then(() => {
-              bellSound.playFromPositionAsync(0);
-            }).catch((error) => {
-              console.error('Error playing bell sound:', error);
-            });
-          }
+          playBellSound();
         }
       } else {
         // For regular moves, start from after the countdown sequence
