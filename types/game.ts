@@ -7,8 +7,8 @@ export interface Move {
 }
 
 export interface Combo {
-  comboId: number;
-  level: number;
+  comboId: string;
   name: string;
   moves: Move[];
+  level: number;
 }

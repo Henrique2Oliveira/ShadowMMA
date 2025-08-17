@@ -365,7 +365,6 @@ export default function Game() {
                     // Update the context with new XP and level
                     updateUserData({
                       xp: data.newXp,
-                      level: data.newLevel
                     });
                   })
                   .catch(error => console.error('Error updating XP:', error));
@@ -555,7 +554,7 @@ export default function Game() {
       />
 
       <LinearGradient
-        colors={[Colors.bgGameDark, 'rgba(230, 87, 87, 1)', Colors.bgGameDark]}
+        colors={[Colors.bgGameDark, 'rgb(230, 87, 87)', Colors.bgGameDark]}
         style={styles.container}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
@@ -585,7 +584,7 @@ export default function Game() {
 
         {gameState.isGameOver && (
           <>
-            <LevelBar xp={userData?.xp || 0} level={userData?.level || 0} />
+            <LevelBar xp={userData?.xp || 0}  />
             <GameOverButtons />
           </>
         )}

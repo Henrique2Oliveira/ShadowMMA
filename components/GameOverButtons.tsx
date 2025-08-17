@@ -3,13 +3,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { LevelBar } from './LevelBar';
 
 export const GameOverButtons: React.FC = () => {
   const { userData } = useUserData();
   const [displayXp, setDisplayXp] = useState(userData?.xp || 0);
-  const [displayLevel, setDisplayLevel] = useState(userData?.level || 1);
 
   useEffect(() => {
     // Calculate start and end XP values
@@ -31,11 +29,8 @@ export const GameOverButtons: React.FC = () => {
         
         animationFrame = requestAnimationFrame(animateCount);
       } else {
-        // Animation complete, update level
+        // Animation complete
         setDisplayXp(endXp);
-        setTimeout(() => {
-          setDisplayLevel(userData?.level || 1);
-        }, 200);
       }
     };
 
@@ -49,12 +44,12 @@ export const GameOverButtons: React.FC = () => {
       clearTimeout(timeoutId);
     };
 
-  }, [userData?.xp, userData?.level]);
+  }, [userData?.xp]);
 
   return (
     <>
       <View style={styles.levelBarContainer}>
-        <LevelBar xp={displayXp} level={displayLevel} />
+        <LevelBar xp={displayXp} />
       </View>
       <View style={styles.gameOverButtonsContainer}>
         <TouchableOpacity
@@ -84,16 +79,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 50,
-    bottom: 140,
+    bottom: 100,
   },
   gameOverButton: {
-    backgroundColor: Colors.grayLevelBar,
     width: 80,
     height: 80,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(27, 27, 27, 1)',
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: {

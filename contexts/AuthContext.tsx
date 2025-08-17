@@ -192,12 +192,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await setDoc(userDocRef, {
         email: email,
         name: name,
-        level: 1,
         xp: 10,
         plan: 'free',
         hours: 0, // hours of training
         moves: 4,
-        combos: 0,
+        combos: 1,
         fightsLeft: 3, // Default fights left for a day for free users
         playing: false, // Default playing status
         // planExpiresAt: serverTimestamp(),

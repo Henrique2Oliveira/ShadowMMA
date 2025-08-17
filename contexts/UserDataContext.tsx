@@ -4,7 +4,6 @@ import React, { createContext, useContext, useState } from 'react';
 
 export type UserData = {
   name?: string;
-  level: number;
   xp: number;
   hours?: number;
   moves?: number;

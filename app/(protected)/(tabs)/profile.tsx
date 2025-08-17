@@ -7,7 +7,6 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 
 type UserData = {
   name: string;
-  level: number;
   hours: number;
   moves: number;
   combos: number;
@@ -99,7 +98,7 @@ export default function Profile() {
           <View style={[styles.infoContainer, styles.levelContainer]}>
             <View style={styles.infoRow}>
               <MaterialCommunityIcons name="medal" size={24} color={Colors.text} />
-              <Text style={styles.infoText}>Level {userData?.level || 1}</Text>
+              <Text style={styles.infoText}>Level {userData?.xp ? Math.floor(userData.xp / 100) + 1 : 1}</Text>
             </View>
             <View style={styles.infoRow}>
               <MaterialCommunityIcons name="fire" size={24} color={Colors.text} />
@@ -107,7 +106,7 @@ export default function Profile() {
             </View>
             <View style={styles.infoRow}>
               <MaterialCommunityIcons name="target" size={24} color={Colors.text} />
-              <Text style={styles.infoText}>Next Level: {((userData?.level || 1) + 1)}</Text>
+              <Text style={styles.infoText}>Streak: -</Text>
             </View>
           </View>
         </View>

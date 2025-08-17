@@ -5,11 +5,11 @@ import { Animated, StyleSheet, Text, View } from 'react-native';
 
 interface LevelBarProps {
   xp: number;
-  level: number;
 }
 
-export const LevelBar: React.FC<LevelBarProps> = ({ xp, level }) => {
-  // Calculate XP percentage (0-100)
+export const LevelBar: React.FC<LevelBarProps> = ({ xp }) => {
+  // Calculate level and XP percentage
+  const level = Math.floor(xp / 100) + 1 || 1; // Level starts at 1
   const xpPercentage = xp % 100;
   const animatedWidth = useRef(new Animated.Value(0)).current;
 
@@ -21,7 +21,7 @@ export const LevelBar: React.FC<LevelBarProps> = ({ xp, level }) => {
       friction: 7
     }).start();
   }, [xpPercentage]);
-  
+
   return (
     <View style={styles.container}>
       <View style={styles.barContainer}>
@@ -34,7 +34,7 @@ export const LevelBar: React.FC<LevelBarProps> = ({ xp, level }) => {
             height: '100%',
           }}>
             <LinearGradient
-              colors={['#ffd429ff', '#eaba1dff']}
+              colors={['#ffd700', '#ffa000']}
               start={{ x: 0, y: 1 }}
               end={{ x: 1, y: 0 }}
               style={{
@@ -77,10 +77,11 @@ const styles = StyleSheet.create({
   },
   progressBarContainer: {
     flex: 1,
-    height: 34,
+    height: 38,
     borderRadius: 8,
-    borderColor: "rgba(200, 124, 31, 0.95)",
-    backgroundColor: "#bd891fff",
+    borderWidth: 4,
+    borderColor: "rgba(36, 36, 36, 0.42)",
+    backgroundColor: "#7b590aff",
     overflow: 'hidden',
     shadowOpacity: 0.3,
     shadowRadius: 4.65,

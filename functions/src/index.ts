@@ -91,30 +91,24 @@ export const handleGameOver = onRequest(async (req, res) => {
       res.status(400).json({
         error: "User was not playing",
         oldXp: userData?.xp || 0,
-        oldLevel: userData?.level || 1
       });
       return;
     }
 
-    // Calculate new XP and level
+    // Calculate new XP
     const oldXp = userData.xp || 0;
-    const oldLevel = userData.level || 1;
     const newXp = oldXp + Math.floor(Math.random() * (50 - 33 + 1)) + 33;
-    const newLevel = oldLevel + 1;
 
     // Update user data
     await userRef.update({
       xp: newXp,
-      level: newLevel,
       playing: false
     });
 
     // Return old and new values for animation
     res.status(200).json({
       oldXp,
-      newXp,
-      oldLevel,
-      newLevel
+      newXp
     });
 
   } catch (error) {
