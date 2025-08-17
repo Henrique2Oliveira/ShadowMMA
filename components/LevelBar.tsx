@@ -54,6 +54,11 @@ export const LevelBar: React.FC<LevelBarProps> = ({ xp }) => {
       <Text style={styles.levelText}>
         LEVEL {level}
       </Text>
+      <View style={styles.newComboContainer}>
+        <Text style={styles.newComboText}>
+          New Combo Unlocked: Jab → Cross → Hook
+        </Text>
+      </View>
     </View>
   );
 };
@@ -68,6 +73,20 @@ const styles = StyleSheet.create({
     marginVertical: 35,
     width: '90%',
     maxWidth: 300,
+  },
+  newComboContainer: {
+    backgroundColor: '#272727ff',
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 10,
+    width: '100%',
+
+  },
+  newComboText: {
+    color: Colors.text,
+    fontSize: 16,
+    fontFamily: Typography.fontFamily,
+    textAlign: 'center',
   },
   barContainer: {
     width: '100%',
