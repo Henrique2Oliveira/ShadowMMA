@@ -34,13 +34,13 @@ export const LevelBar: React.FC<LevelBarProps> = ({ xp }) => {
             height: '100%',
           }}>
             <LinearGradient
-              colors={['#ffd700', '#ffa000']}
+              colors={['#934683', '#CB04A5']}
               start={{ x: 0, y: 1 }}
               end={{ x: 1, y: 0 }}
               style={{
                 width: '100%',
                 height: '100%',
-                borderRadius: 4
+                borderRadius: 8
               }}
             />
           </Animated.View>
@@ -78,10 +78,10 @@ const styles = StyleSheet.create({
   progressBarContainer: {
     flex: 1,
     height: 38,
-    borderRadius: 8,
+    borderRadius: 16,
     borderWidth: 4,
-    borderColor: "rgba(36, 36, 36, 0.42)",
-    backgroundColor: "#7b590aff",
+    borderColor: "rgba(0, 0, 0, 0.79)",
+    backgroundColor: "#df97ef69",
     overflow: 'hidden',
     shadowOpacity: 0.3,
     shadowRadius: 4.65,
@@ -100,17 +100,18 @@ const styles = StyleSheet.create({
   },
   xpText: {
     color: Colors.text,
-    fontSize: 16,
+    paddingBottom: 2,
+    fontSize: 14,
     fontFamily: Typography.fontFamily,
     textShadowColor: "#000",
-    textShadowOffset: { width: 1, height: 1 },
+    textShadowOffset: { width: 1, height:1 },
     textShadowRadius: 3,
     textAlign: 'center',
-    fontWeight: 'bold',
+
   },
   levelText: {
     color: Colors.text,
-    fontSize: 20,
+    fontSize: 32,
     fontFamily: Typography.fontFamily,
     textAlign: 'center',
     textShadowColor: "#000",

@@ -156,7 +156,7 @@ export default function Index() {
       {/* Header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', paddingHorizontal: 10, backgroundColor: Colors.background, paddingTop: 20 }}>
         <View style={{ maxWidth: '90%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-          <MaterialCommunityIcons name="star" size={34} color="#ffc108" style={{ marginRight: 10, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 5 }} />
+          <MaterialCommunityIcons name="boxing-glove" size={36} color="#ffd700" style={{ marginRight: 10, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 3.84, elevation: 5, transform: [{ rotateZ: '90deg' }] }} />
 
           <View style={{ width: "60%", height: 28, borderRadius: 8, backgroundColor: "#7b590aff", overflow: 'hidden', shadowOpacity: 0.3, shadowRadius: 4.65, elevation: 8 }}>
             <LinearGradient
