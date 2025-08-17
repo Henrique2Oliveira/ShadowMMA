@@ -10,7 +10,7 @@ import { useUserData } from '@/contexts/UserDataContext';
 import { app } from '@/FirebaseConfig';
 import { useGameAnimations } from '@/hooks/useGameAnimations';
 import { Colors } from '@/themes/theme';
-import { Move } from '@/types/game';
+import { Combo, Move } from '@/types/game';
 import { getAuth } from '@firebase/auth';
 import { useIsFocused } from '@react-navigation/native';
 import { Audio } from 'expo-av';
@@ -156,7 +156,7 @@ export default function Game() {
   const [currentMove, setCurrentMove] = React.useState<Move | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [showCombosModal, setShowCombosModal] = React.useState(false);
-  const [combos, setCombos] = React.useState<{ name: string; moves: Move[] }[]>([]);
+  const [combos, setCombos] = React.useState<Combo[]>([]);
   const [currentComboName, setCurrentComboName] = React.useState<string>("");
 
 
@@ -225,6 +225,8 @@ export default function Game() {
 
           // Store combos with their moves and show modal
           const comboData = data.combos.map((combo: any) => ({
+            comboId: combo.comboId,
+            level: combo.level,
             name: combo.name,
             moves: combo.moves
           }));

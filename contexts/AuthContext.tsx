@@ -199,6 +199,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         moves: 4,
         combos: 0,
         fightsLeft: 3, // Default fights left for a day for free users
+        // planExpiresAt: serverTimestamp(),
         createdAt: serverTimestamp(),
         lastLoginAt: serverTimestamp()
       });

@@ -12,9 +12,9 @@ export const LevelBar: React.FC<LevelBarProps> = ({ xp, level }) => {
   return (
     <View style={styles.container}>
 
-      <View style={{ width: "60%", height: 28, borderRadius: 8, borderWidth: 4, borderColor: "rgba(45, 45, 45, 1)", backgroundColor: "#7b590aff", overflow: 'hidden', shadowOpacity: 0.3, shadowRadius: 4.65, elevation: 8 }}>
+      <View style={{ width: "90%", height: 28, borderRadius: 8, borderWidth: 4, borderColor: "rgba(45, 45, 45, 0.28)", backgroundColor: "#a5a5a5ff", overflow: 'hidden', shadowOpacity: 0.3, shadowRadius: 4.65, elevation: 8 }}>
         <LinearGradient
-          colors={['#ffd700', '#ffa000']}
+          colors={['#ffffffff', '#ffffffff']}
           start={{ x: 0, y: 1 }}
           end={{ x: 1, y: 0 }}
           style={{

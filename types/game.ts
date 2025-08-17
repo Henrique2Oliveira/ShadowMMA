@@ -7,19 +7,8 @@ export interface Move {
 }
 
 export interface Combo {
+  comboId: number;
+  level: number;
   name: string;
   moves: Move[];
-}
-
-export interface GameState {
-  currentRound: number;
-  isRestPeriod: boolean;
-  timeLeft: number;
-  isPaused: boolean;
-  isGameOver: boolean;
-}
-
-export interface FightResponse {
-  combos: Combo[];
-  fightsLeft?: number;
 }

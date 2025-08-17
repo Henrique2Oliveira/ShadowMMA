@@ -1,5 +1,4 @@
 import { useUserData } from '@/contexts/UserDataContext';
-import { Colors } from '@/themes/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
@@ -21,8 +20,8 @@ export const GameOverButtons: React.FC = () => {
         >
           <Ionicons
             name="home"
-            size={38}
-            color={Colors.bgDark}
+            size={34}
+            color={'#ffffff'}
           />
         </TouchableOpacity>
       </View>
@@ -46,10 +45,10 @@ const styles = StyleSheet.create({
     bottom: 140,
   },
   gameOverButton: {
-    backgroundColor: '#ffffffff',
-    width: 80,
-    height: 80,
-    borderRadius: 50,
+    backgroundColor: '#272727ff',
+    width: "60%",
+    height: 60,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,

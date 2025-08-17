@@ -1,12 +1,22 @@
 import { Colors, Typography } from '@/themes/theme';
 import { Move } from '@/types/game';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import React from 'react';
-import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import {
+  Animated,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
+
+type AnimatedValue = Animated.Value;
 
 interface CombosModalProps {
   visible: boolean;
-  combos: { name: string; moves: Move[] }[];
+  combos: { name: string; moves: Move[]; level: number }[];
   onClose: () => void;
 }
 
@@ -15,6 +25,29 @@ export const CombosModal: React.FC<CombosModalProps> = ({
   combos,
   onClose,
 }) => {
+  const slideAnims = useRef<AnimatedValue[]>(
+    combos.map(() => new Animated.Value(300))
+  ).current;
+
+  useEffect(() => {
+    if (visible) {
+      // Reset animations when modal opens
+      slideAnims.forEach((anim: AnimatedValue) => anim.setValue(300));
+      
+      // Create sequential animations
+      const animations = slideAnims.map((anim: AnimatedValue, index: number) => {
+        return Animated.timing(anim, {
+          toValue: 0,
+          duration: 500,
+          delay: index * 100, // Stagger the animations
+          useNativeDriver: true,
+        });
+      });
+
+      // Start all animations
+      Animated.parallel(animations).start();
+    }
+  }, [visible]);
   return (
     <Modal
       animationType="fade"
@@ -33,8 +66,21 @@ export const CombosModal: React.FC<CombosModalProps> = ({
           <Text style={styles.modalTitle}>Combos</Text>
           <ScrollView style={styles.optionsContainer}>
             {combos.map((combo, index) => (
-              <View key={index} style={styles.comboContainer}>
-                <Text style={styles.comboName}>{combo.name}</Text>
+              <Animated.View 
+                key={index} 
+                style={[
+                  styles.comboContainer,
+                  {
+                    transform: [{ translateX: slideAnims[index] }]
+                  }
+                ]}
+              >
+                <View style={styles.comboHeader}>
+                  <Text style={styles.comboName}>{combo.name}</Text>
+                  <View style={styles.levelBadge}>
+                    <Text style={styles.levelText}>Lvl {combo.level}</Text>
+                  </View>
+                </View>
                 <View style={styles.movesContainer}>
                   <Text style={styles.moveText}>
                     {combo.moves.map((move, moveIndex) => (
@@ -45,7 +91,7 @@ export const CombosModal: React.FC<CombosModalProps> = ({
                     ))}
                   </Text>
                 </View>
-              </View>
+              </Animated.View>
             ))}
           </ScrollView>
             <TouchableOpacity
@@ -97,11 +143,30 @@ const styles = StyleSheet.create({
     borderBottomWidth: 4,
     borderBottomColor: "#2b2b2bff",
   },
+  comboHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   comboName: {
     color: Colors.text,
     fontSize: 18,
     fontFamily: Typography.fontFamily,
-    marginBottom: 8,
+    flex: 1,
+  },
+  levelBadge: {
+    backgroundColor: Colors.grayLevelBar,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginLeft: 10,
+  },
+  levelText: {
+    color: Colors.text,
+    fontSize: 14,
+    fontFamily: Typography.fontFamily,
+
   },
   movesContainer: {
 
