@@ -66,13 +66,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isRateLimited = (email: string) => {
     const attempt = attempts.get(email);
     if (!attempt) return false;
-    
+
     const now = Date.now();
     if (now - attempt.lastAttempt > LOCKOUT_TIME) {
       attempts.delete(email);
       return false;
     }
-    
+
     return attempt.count >= MAX_ATTEMPTS;
   };
 
@@ -87,8 +87,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Input validation
       if (!email || !password) {
-        return { 
-          success: false, 
+        return {
+          success: false,
           error: { code: 'auth/missing-fields', message: 'Email and password are required.' }
         };
       }
@@ -111,22 +111,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (isRateLimited(email)) {
         return {
           success: false,
-          error: { 
-            code: 'auth/too-many-requests', 
-            message: 'Too many login attempts. Please try again later.' 
+          error: {
+            code: 'auth/too-many-requests',
+            message: 'Too many login attempts. Please try again later.'
           }
         };
       }
 
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       attempts.delete(email); // Clear attempts on successful login
-      
+
       // Update last login timestamp
       const userDocRef = doc(db, 'users', userCredential.user.uid);
       await setDoc(userDocRef, {
         lastLoginAt: serverTimestamp()
       }, { merge: true });
-      
+
       return { success: true };
     } catch (error: any) {
       recordAttempt(email);
@@ -144,12 +144,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Input validation
       if (!email || !password) {
-        return { 
-          success: false, 
+        return {
+          success: false,
           error: { code: 'auth/missing-fields', message: 'Email and password are required.' }
         };
       }
-      
+
       if (!name) {
         return {
           success: false,
@@ -186,24 +186,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      
+
       // Create user document in Firestore with default values
       const userDocRef = doc(db, 'users', userCredential.user.uid);
       await setDoc(userDocRef, {
         email: email,
         name: name,
         level: 1,
-        xp: 10, 
+        xp: 10,
         plan: 'free',
         hours: 0, // hours of training
         moves: 4,
         combos: 0,
         fightsLeft: 3, // Default fights left for a day for free users
+        playing: false, // Default playing status
         // planExpiresAt: serverTimestamp(),
         createdAt: serverTimestamp(),
         lastLoginAt: serverTimestamp()
       });
-      
+
       return { success: true };
     } catch (error: any) {
       return {
@@ -227,8 +228,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const resetPassword = async (email: string) => {
     try {
       if (!email) {
-        return { 
-          success: false, 
+        return {
+          success: false,
           error: { code: 'auth/missing-email', message: 'Email is required.' }
         };
       }

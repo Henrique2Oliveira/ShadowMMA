@@ -1,17 +1,60 @@
 import { useUserData } from '@/contexts/UserDataContext';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { LevelBar } from './LevelBar';
 
 export const GameOverButtons: React.FC = () => {
   const { userData } = useUserData();
+  const [displayXp, setDisplayXp] = useState(userData?.xp || 0);
+  const [displayLevel, setDisplayLevel] = useState(userData?.level || 1);
+
+  useEffect(() => {
+    // Calculate start and end XP values
+    const startXp = (userData?.xp || 0) - 20; // Previous XP
+    const endXp = userData?.xp || 0; // New XP
+    
+    let frameCount = 0;
+    const totalFrames = 50; // Number of steps in the counting animation
+    let animationFrame: number;
+    
+    const animateCount = () => {
+      frameCount++;
+      
+      if (frameCount <= totalFrames) {
+        // Use easeOut effect for smooth deceleration
+        const progress = 1 - Math.pow(1 - frameCount / totalFrames, 3);
+        const currentXp = startXp + Math.floor((endXp - startXp) * progress);
+        setDisplayXp(currentXp);
+        
+        animationFrame = requestAnimationFrame(animateCount);
+      } else {
+        // Animation complete, update level
+        setDisplayXp(endXp);
+        setTimeout(() => {
+          setDisplayLevel(userData?.level || 1);
+        }, 200);
+      }
+    };
+
+    // Start animation after a delay
+    const timeoutId = setTimeout(() => {
+      animateCount();
+    }, 150);
+
+    return () => {
+      cancelAnimationFrame(animationFrame);
+      clearTimeout(timeoutId);
+    };
+
+  }, [userData?.xp, userData?.level]);
 
   return (
     <>
       <View style={styles.levelBarContainer}>
-        <LevelBar xp={userData?.xp || 50} level={userData?.level || 1} />
+        <LevelBar xp={displayXp} level={displayLevel} />
       </View>
       <View style={styles.gameOverButtonsContainer}>
         <TouchableOpacity
@@ -19,9 +62,9 @@ export const GameOverButtons: React.FC = () => {
           onPress={() => router.push("/")}
         >
           <Ionicons
-            name="home"
+            name="arrow-back-outline"
             size={34}
-            color={'#ffffff'}
+            color={'rgb(255, 255, 255)'}
           />
         </TouchableOpacity>
       </View>
@@ -45,9 +88,9 @@ const styles = StyleSheet.create({
     bottom: 140,
   },
   gameOverButton: {
-    backgroundColor: '#272727ff',
-    width: "60%",
-    height: 60,
+    backgroundColor: Colors.grayLevelBar,
+    width: 80,
+    height: 80,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',

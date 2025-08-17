@@ -1,7 +1,7 @@
 import { Colors, Typography } from '@/themes/theme';
 import { LinearGradient } from 'expo-linear-gradient';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 
 interface LevelBarProps {
   xp: number;
@@ -9,31 +9,50 @@ interface LevelBarProps {
 }
 
 export const LevelBar: React.FC<LevelBarProps> = ({ xp, level }) => {
+  // Calculate XP percentage (0-100)
+  const xpPercentage = xp % 100;
+  const animatedWidth = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(animatedWidth, {
+      toValue: xpPercentage,
+      useNativeDriver: false,
+      tension: 30,
+      friction: 7
+    }).start();
+  }, [xpPercentage]);
+  
   return (
     <View style={styles.container}>
-
-      <View style={{ width: "90%", height: 28, borderRadius: 8, borderWidth: 4, borderColor: "rgba(45, 45, 45, 0.28)", backgroundColor: "#a5a5a5ff", overflow: 'hidden', shadowOpacity: 0.3, shadowRadius: 4.65, elevation: 8 }}>
-        <LinearGradient
-          colors={['#ffffffff', '#ffffffff']}
-          start={{ x: 0, y: 1 }}
-          end={{ x: 1, y: 0 }}
-          style={{
-            width: `${xp || 50}%`,
+      <View style={styles.barContainer}>
+        <View style={styles.progressBarContainer}>
+          <Animated.View style={{
+            width: animatedWidth.interpolate({
+              inputRange: [0, 100],
+              outputRange: ['0%', '100%']
+            }),
             height: '100%',
-            borderRadius: 4
           }}>
-        </LinearGradient>
+            <LinearGradient
+              colors={['#ffd429ff', '#eaba1dff']}
+              start={{ x: 0, y: 1 }}
+              end={{ x: 1, y: 0 }}
+              style={{
+                width: '100%',
+                height: '100%',
+                borderRadius: 4
+              }}
+            />
+          </Animated.View>
+          <View style={styles.xpTextContainer}>
+            <Text style={styles.xpText}>
+              {Math.floor(xpPercentage)}%
+            </Text>
+          </View>
+        </View>
       </View>
-      <Text style={{
-        color: Colors.text,
-        fontSize: 20,
-        fontFamily: Typography.fontFamily,
-        marginLeft: 12,
-        textShadowColor: "#000",
-        textShadowOffset: { width: 1, height: 1 },
-        textShadowRadius: 3,
-      }}>
-        LEVEL {level|| "-"}
+      <Text style={styles.levelText}>
+        LEVEL {level}
       </Text>
     </View>
   );
@@ -41,6 +60,8 @@ export const LevelBar: React.FC<LevelBarProps> = ({ xp, level }) => {
 
 const styles = StyleSheet.create({
   container: {
+    position: "absolute",
+    top: 10,
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
@@ -48,25 +69,49 @@ const styles = StyleSheet.create({
     width: '90%',
     maxWidth: 300,
   },
-  progressBar: {
-    width: "60%",
-    height: 28,
+  barContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  progressBarContainer: {
+    flex: 1,
+    height: 34,
     borderRadius: 8,
-    backgroundColor: "#7b590aff",
+    borderColor: "rgba(200, 124, 31, 0.95)",
+    backgroundColor: "#bd891fff",
     overflow: 'hidden',
     shadowOpacity: 0.3,
     shadowRadius: 4.65,
     elevation: 8,
+    position: 'relative', // For absolute positioning of xpTextContainer
   },
-  progress: {
-    height: '100%',
-    borderRadius: 4,
+  xpTextContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  xpText: {
+    color: Colors.text,
+    fontSize: 16,
+    fontFamily: Typography.fontFamily,
+    textShadowColor: "#000",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+    textAlign: 'center',
+    fontWeight: 'bold',
   },
   levelText: {
     color: Colors.text,
     fontSize: 20,
     fontFamily: Typography.fontFamily,
-    marginLeft: 12,
+    textAlign: 'center',
     textShadowColor: "#000",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,

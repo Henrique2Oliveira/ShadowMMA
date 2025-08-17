@@ -6,7 +6,7 @@ export const combinationSets = [{
     "beginner": [
       {
         "comboId": 0,
-        "level": 0,
+        "level": 1,
         "name": "1-2 (Jab Cross)",
         "moves": [
           { "move": "JAB", "pauseTime": 1100, "direction": "left", "tiltValue": 0.3 },
@@ -263,7 +263,7 @@ export const combinationSets = [{
     "beginner": [
       {
         "comboId": 0,
-        "level": 0,
+        "level": 1,
         "name": "Slip and Jab",
         "moves": [
           { "move": "SLIP", "pauseTime": 1100, "direction": "down", "tiltValue": 0.4 },
@@ -391,7 +391,7 @@ export const combinationSets = [{
     "beginner": [
       {
         "comboId": 0,
-        "level": 0,
+        "level": 1,
         "name": "Step Jab",
         "moves": [
           { "move": "STEP LEFT", "pauseTime": 600, "direction": "left", "tiltValue": 0.2 },

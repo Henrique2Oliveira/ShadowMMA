@@ -57,6 +57,72 @@ export const restoreUserLivesDaily = onSchedule({
 
 
 
+export const handleGameOver = onRequest(async (req, res) => {
+  if (req.method !== "POST") {
+    res.status(405).send("Method Not Allowed");
+    return;
+  }
+
+  try {
+    // Verify user authentication
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith("Bearer ")) {
+      res.status(401).send("Unauthorized: Missing or invalid token");
+      return;
+    }
+
+    const idToken = authHeader.split("Bearer ")[1];
+    const decodedToken = await auth.verifyIdToken(idToken);
+    const uid = decodedToken.uid;
+
+    // Get user data
+    const userRef = db.collection("users").doc(uid);
+    const userDoc = await userRef.get();
+    
+    if (!userDoc.exists) {
+      res.status(404).send("User not found");
+      return;
+    }
+
+    const userData = userDoc.data();
+
+    // Check if user was playing
+    if (!userData?.playing) {
+      res.status(400).json({
+        error: "User was not playing",
+        oldXp: userData?.xp || 0,
+        oldLevel: userData?.level || 1
+      });
+      return;
+    }
+
+    // Calculate new XP and level
+    const oldXp = userData.xp || 0;
+    const oldLevel = userData.level || 1;
+    const newXp = oldXp + Math.floor(Math.random() * (50 - 33 + 1)) + 33;
+    const newLevel = oldLevel + 1;
+
+    // Update user data
+    await userRef.update({
+      xp: newXp,
+      level: newLevel,
+      playing: false
+    });
+
+    // Return old and new values for animation
+    res.status(200).json({
+      oldXp,
+      newXp,
+      oldLevel,
+      newLevel
+    });
+
+  } catch (error) {
+    logger.error("Error in handleGameOver:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
 export const startFight = onRequest(async (req, res) => {
   if (req.method !== "POST") {
     res.status(405).send("Method Not Allowed");
@@ -124,11 +190,17 @@ export const startFight = onRequest(async (req, res) => {
 
     let updatedFightsLeft = userData.fightsLeft;
     
-    // Only update and return fightsLeft for free users
+    // Update the user's playing status and fightsLeft
+    const updates: any = { playing: true };
+    
+    // Only update fightsLeft for free users
     if (userData.plan !== 'pro') {
       updatedFightsLeft = userData.fightsLeft - 1;
-      await userRef.update({ fightsLeft: updatedFightsLeft });
+      updates.fightsLeft = updatedFightsLeft;
     }
+    
+    // Update the user's playing status
+    await userRef.update(updates);
 
     // Retorna resposta
     res.status(200).json({

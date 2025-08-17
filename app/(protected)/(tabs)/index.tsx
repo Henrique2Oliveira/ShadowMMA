@@ -164,7 +164,7 @@ export default function Index() {
               start={{ x: 0, y: 1 }}
               end={{ x: 1, y: 0 }}
               style={{
-                width: `${userData?.xp || 50}%`,
+                width: `${((userData?.xp ?? 0) % 100) || 50}%`,
                 height: '100%',
                 borderRadius: 4
               }}>
@@ -179,7 +179,7 @@ export default function Index() {
             textShadowOffset: { width: 1, height: 1 },
             textShadowRadius: 3,
           }}>
-            LEVEL {userData?.level || "-"}
+            LEVEL {userData?.level}
           </Text>
         </View>
       </View>

@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   optionsContainer: {
     width: '100%',
     marginTop: 20,
-    maxHeight: '80%',
+    maxHeight: '70%',
   },
   comboContainer: {
     marginBottom: 15,
@@ -156,6 +156,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   levelBadge: {
+    position: 'absolute',
+    right: -5,
+    top: -5,
+    zIndex: 1,
     backgroundColor: Colors.grayLevelBar,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -169,9 +173,8 @@ const styles = StyleSheet.create({
 
   },
   movesContainer: {
+    flexDirection: 'column',
 
-    flexDirection: 'row',
-    flexWrap: 'wrap',
   },
   moveText: {
     color: "white",

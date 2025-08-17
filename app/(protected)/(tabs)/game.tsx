@@ -348,6 +348,30 @@ export default function Game() {
             }).start();
           } else {
             // End of final round - game over
+            // Update XP and level on game over
+            const auth = getAuth(app);
+            const user = auth.currentUser;
+            if (user) {
+              user.getIdToken().then(idToken => {
+                fetch('https://us-central1-shadow-mma.cloudfunctions.net/handleGameOver', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${idToken}`,
+                  }
+                })
+                  .then(response => response.json())
+                  .then(data => {
+                    // Update the context with new XP and level
+                    updateUserData({
+                      xp: data.newXp,
+                      level: data.newLevel
+                    });
+                  })
+                  .catch(error => console.error('Error updating XP:', error));
+              });
+            }
+
             // Play bell sound if not muted
             setGameState(prev => ({
               ...prev,
@@ -428,9 +452,7 @@ export default function Game() {
 
         // If this is the last countdown move
         if (currentIndex === countdownLength - 2) {
-
           setIsCountdownComplete(true);
-          playBellSound();
         }
       } else {
         // For regular moves, start from after the countdown sequence
@@ -442,6 +464,7 @@ export default function Game() {
         // Update current combo name for regular moves
         if (isCountdownComplete && nextMove.comboName) {
           setCurrentComboName(nextMove.comboName);
+
         }
 
         animateMove(nextMove);
