@@ -125,23 +125,16 @@ export const startFight = onRequest(async (req, res) => {
   }
 
   try {
-    const { category, difficulty, comboId } = req.body as {
-      category?: string;
-      difficulty?: string;
-      comboId?: string | number;
-    };
-
-    // Verifica token no header Authorization: Bearer <token>
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith("Bearer ")) {
       res.status(401).send("Unauthorized: Missing or invalid token");
       return;
     }
-
     const idToken = authHeader.split("Bearer ")[1];
     const decodedToken = await auth.verifyIdToken(idToken);
     const uid = decodedToken.uid;
 
+    const { category, difficulty, comboId } = req.method === "POST" ? req.body : req.query;
     const categoryToUse = (category ?? '0').toString();
     const difficultyParam = difficulty?.toLowerCase();
     if (!comboId && (!categoryToUse || !difficultyParam)) {

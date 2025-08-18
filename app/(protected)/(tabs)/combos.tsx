@@ -132,40 +132,62 @@ export default function Combos() {
     fetchCombos();
   }, [fetchCombos]);
 
-  const renderItem = useCallback(({ item }: { item: ComboMeta }) => (
-    <TouchableOpacity
-      style={styles.comboCard}
-      onPress={() =>
-        setModalConfig({
-          roundDuration: '2',
-          numRounds: '3',
-          restTime: '1',
-          moveSpeed: '1',
-          difficulty: item.difficulty,
-          category: item.categoryId,
-          comboId: item.comboId,
-        })
-      }
-    >
-      <LinearGradient colors={[Colors.button, '#5a5a5aff']} style={styles.cardGradient}>
-        <View style={styles.titleContainer}>
-          <MaterialCommunityIcons
-            name={item.type === 'attack' ? 'boxing-glove' : item.type === 'defense' ? 'shield' : 'run-fast'}
-            size={130}
-            color="#02020247"
-            style={styles.typeIcon}
-          />
-          <Text style={styles.comboTitle}>{item.name}</Text>
-        </View>
-        <Text style={styles.comboDescription}>
-          {item.categoryName ? `${item.categoryName} • ${item.difficulty}` : item.difficulty}
-        </Text>
-        <View style={styles.levelBadge}>
-          <Text style={styles.levelText}>Level {item.level}</Text>
-        </View>
-      </LinearGradient>
-    </TouchableOpacity>
-  ), [setModalConfig]);
+  const getUserLevel = (xp: number) => {
+    // Simple level calculation: every 100 XP is a new level, starting from level 1
+    return Math.floor(xp / 100) + 1;
+  };
+
+  const renderItem = useCallback(({ item }: { item: ComboMeta }) => {
+    const userLevel = getUserLevel(userData?.xp || 0);
+    const isLocked = item.level > userLevel;
+
+    return (
+      <TouchableOpacity
+        style={[styles.comboCard, isLocked && styles.lockedCard]}
+        onPress={() => {
+          if (!isLocked) {
+            setModalConfig({
+              roundDuration: '2',
+              numRounds: '3',
+              restTime: '1',
+              moveSpeed: '1',
+              difficulty: item.difficulty,
+              category: item.categoryId,
+              comboId: item.comboId,
+            });
+          }
+        }}
+        disabled={isLocked}
+      >
+        <LinearGradient colors={[Colors.button, '#5a5a5aff']} style={styles.cardGradient}>
+          <View style={styles.titleContainer}>
+            <MaterialCommunityIcons
+              name={item.type === 'attack' ? 'boxing-glove' : item.type === 'defense' ? 'shield' : 'run-fast'}
+              size={130}
+              color="#02020247"
+              style={styles.typeIcon}
+            />
+            <Text style={[styles.comboTitle, isLocked && styles.lockedText]}>{item.name}</Text>
+            {isLocked && (
+              <MaterialCommunityIcons
+                name="lock"
+                size={48}
+                color={Colors.text}
+                style={styles.lockIcon}
+              />
+              
+            )}
+          </View>
+          <Text style={[styles.comboDescription, isLocked && styles.lockedText]}>
+            {item.categoryName ? `${item.categoryName} • ${item.difficulty}` : item.difficulty}
+          </Text>
+          <View style={[styles.levelBadge, isLocked && styles.lockedLevelBadge]}>
+            <Text style={[styles.levelText, isLocked && styles.lockedLevelText]}>Level {item.level}</Text>
+          </View>
+        </LinearGradient>
+      </TouchableOpacity>
+    );
+  }, [setModalConfig, userData?.xp]);
 
   const keyExtractor = useCallback((item: ComboMeta) => item.id, []);
 
@@ -233,6 +255,25 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  lockedCard: {
+    opacity: 0.5,
+  },
+  lockedText: {
+    color: Colors.text + '99',  // Adding transparency to the text
+  },
+  lockIcon: {
+    position: 'absolute',
+    left: '50%',
+    top: '50%',
+    transform: [{ translateX: -12 }, { translateY: -12 }], // Half of the icon size (24/2)
+    zIndex: 1,
+  },
+  lockedLevelBadge: {
+    backgroundColor: 'rgba(22, 22, 22, 0.5)',
+  },
+  lockedLevelText: {
+    color: Colors.text + '99',
   },
   titleContainer: {
     flexDirection: 'row',
