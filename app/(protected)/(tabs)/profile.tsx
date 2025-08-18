@@ -98,11 +98,11 @@ export default function Profile() {
           <View style={[styles.infoContainer, styles.levelContainer]}>
             <View style={styles.infoRow}>
               <MaterialCommunityIcons name="medal" size={24} color={Colors.text} />
-              <Text style={styles.infoText}>Level {userData?.xp ? Math.floor(userData.xp / 100) + 1 : 1}</Text>
+              <Text style={styles.infoText}>Level {userData?.xp ? Math.floor(userData.xp / 100) : 0}</Text>
             </View>
             <View style={styles.infoRow}>
               <MaterialCommunityIcons name="fire" size={24} color={Colors.text} />
-              <Text style={styles.infoText}>XP: {userData?.xp || 0}</Text>
+              <Text style={styles.infoText}>XP: {userData?.xp || "-"}</Text>
             </View>
             <View style={styles.infoRow}>
               <MaterialCommunityIcons name="target" size={24} color={Colors.text} />

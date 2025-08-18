@@ -9,7 +9,7 @@ interface LevelBarProps {
 
 export const LevelBar: React.FC<LevelBarProps> = ({ xp }) => {
   // Calculate level and XP percentage
-  const level = Math.floor(xp / 100) + 1 || 1; // Level starts at 1
+  const level = Math.floor(xp / 100)  || 0; // Level starts at 0
   const xpPercentage = xp % 100;
   const animatedWidth = useRef(new Animated.Value(0)).current;
 
@@ -54,9 +54,10 @@ export const LevelBar: React.FC<LevelBarProps> = ({ xp }) => {
       <Text style={styles.levelText}>
         LEVEL {level}
       </Text>
+      
       <View style={styles.newComboContainer}>
         <Text style={styles.newComboText}>
-          New Combo Unlocked: Jab → Cross → Hook
+          New Combo Unlocked!
         </Text>
       </View>
     </View>
@@ -75,11 +76,11 @@ const styles = StyleSheet.create({
     maxWidth: 300,
   },
   newComboContainer: {
-    backgroundColor: '#272727ff',
+    backgroundColor: '#0000003c',
     borderRadius: 10,
     padding: 12,
     marginTop: 10,
-    width: '100%',
+    width: '150%',
 
   },
   newComboText: {

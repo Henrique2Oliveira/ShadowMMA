@@ -179,7 +179,7 @@ export default function Index() {
             textShadowOffset: { width: 1, height: 1 },
             textShadowRadius: 3,
           }}>
-            LEVEL {userData?.xp ? Math.floor(userData.xp / 100) + 1 : 1}
+            LEVEL {userData?.xp ? Math.floor(userData.xp / 100) : 0}
           </Text>
         </View>
       </View>

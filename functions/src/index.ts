@@ -97,7 +97,7 @@ export const handleGameOver = onRequest(async (req, res) => {
 
     // Calculate new XP
     const oldXp = userData.xp || 0;
-    const newXp = oldXp + Math.floor(Math.random() * (50 - 33 + 1)) + 33;
+    const newXp = oldXp + Math.floor(Math.random() * (65 - 42 + 1)) + 33;
 
     // Update user data
     await userRef.update({

@@ -11,7 +11,7 @@ export const GameOverButtons: React.FC = () => {
 
   useEffect(() => {
     // Calculate start and end XP values
-    const startXp = (userData?.xp || 0) - 20; // Previous XP
+    const startXp = (userData?.xp || 0) - 25; // Previous XP
     const endXp = userData?.xp || 0; // New XP
     
     let frameCount = 0;
@@ -37,7 +37,7 @@ export const GameOverButtons: React.FC = () => {
     // Start animation after a delay
     const timeoutId = setTimeout(() => {
       animateCount();
-    }, 150);
+    }, 100);
 
     return () => {
       cancelAnimationFrame(animationFrame);
