@@ -33,7 +33,7 @@ export default function Combos() {
   const [numRounds, setNumRounds] = React.useState('1');
   const [restTime, setRestTime] = React.useState('1');
   const [moveSpeed, setMoveSpeed] = React.useState('1');
-  const [difficulty, setDifficulty] = React.useState('beginner');
+  const [movesMode, setMovesMode] = React.useState<string[]>(['punches']);
   const [category, setCategory] = React.useState('0');
   const [selectedComboId, setSelectedComboId] = React.useState<string | number | undefined>(undefined);
 
@@ -42,15 +42,15 @@ export default function Combos() {
     numRounds?: string;
     restTime?: string;
     moveSpeed?: string;
-    difficulty?: string;
+    movesMode?: string[];
     category?: string;
-  comboId?: string | number;
+    comboId?: string | number;
   }) => {
     setRoundDuration(config.roundDuration || roundDuration);
     setNumRounds(config.numRounds || numRounds);
     setRestTime(config.restTime || restTime);
     setMoveSpeed(config.moveSpeed || moveSpeed);
-    setDifficulty(config.difficulty || difficulty);
+    setMovesMode(config.movesMode || movesMode);
     setCategory(config.category || category);
   setSelectedComboId(config.comboId);
     setIsModalVisible(true);
@@ -151,7 +151,7 @@ export default function Combos() {
               numRounds: '3',
               restTime: '1',
               moveSpeed: '1',
-              difficulty: item.difficulty,
+              movesMode: [item.difficulty],  // Convert the combo's difficulty to initial moves mode
               category: item.categoryId,
               comboId: item.comboId,
             });
@@ -179,7 +179,7 @@ export default function Combos() {
             )}
           </View>
           <Text style={[styles.comboDescription, isLocked && styles.lockedText]}>
-            {item.categoryName ? `${item.categoryName} • ${item.difficulty}` : item.difficulty}
+            {item.categoryName ? `${item.categoryName} • ${item.difficulty}` : item.difficulty} {/* Keep showing original difficulty for now */}
           </Text>
           <View style={[styles.levelBadge, isLocked && styles.lockedLevelBadge]}>
             <Text style={[styles.levelText, isLocked && styles.lockedLevelText]}>Level {item.level}</Text>
@@ -241,8 +241,8 @@ export default function Combos() {
         setRestTime={setRestTime}
         moveSpeed={moveSpeed}
         setMoveSpeed={setMoveSpeed}
-        difficulty={difficulty}
-        setDifficulty={setDifficulty}
+        movesMode={movesMode}
+        setMovesMode={setMovesMode}
         category={category}
   comboId={selectedComboId}
         onStartFight={() => setIsModalVisible(false)}
@@ -264,16 +264,17 @@ const styles = StyleSheet.create({
   },
   lockIcon: {
     position: 'absolute',
-    left: '50%',
-    top: '50%',
-    transform: [{ translateX: -12 }, { translateY: -12 }], // Half of the icon size (24/2)
+    right: '10%',
+    top: '10%',
+    transform: [ { translateX: -12 }], // Half of the icon size (24/2)
     zIndex: 1,
   },
   lockedLevelBadge: {
-    backgroundColor: 'rgba(22, 22, 22, 0.5)',
+    backgroundColor: 'rgba(22, 22, 22, 1)',
   },
   lockedLevelText: {
     color: Colors.text + '99',
+    
   },
   titleContainer: {
     flexDirection: 'row',

@@ -16,8 +16,8 @@ interface FightModeModalProps {
   setRestTime: (time: string) => void;
   moveSpeed: string;
   setMoveSpeed: (speed: string) => void;
-  difficulty: string;
-  setDifficulty: (difficulty: string) => void;
+  movesMode: string[];
+  setMovesMode: (movesMode: string[]) => void;
   category: string;
   comboId?: string | number; // hidden param, not shown in UI
   onStartFight: () => void;
@@ -33,7 +33,7 @@ export const FIGHT_OPTIONS: {
   numberOfRounds: FightOption[];
   restTimes: FightOption[];
   moveSpeeds: FightOption[];
-  difficulty: FightOption[];
+  movesMode: FightOption[];
 } = {
   roundDurations: [
     { value: '1', label: '1 m' },
@@ -62,11 +62,10 @@ export const FIGHT_OPTIONS: {
     { value: '2', label: '2x' },
     { value: '2.5', label: '2.5x' },
   ],
-  difficulty: [
-    { value: 'beginner', label: 'Easy' },
-    { value: 'intermediate', label: 'Med' },
-    { value: 'advanced', label: 'Hard' },
-
+  movesMode: [
+    { value: 'punches', label: 'Strikes' },
+    { value: 'kicks', label: 'Kicks' },
+    { value: 'defense', label: 'Defense' },
   ],
 };
 
@@ -81,8 +80,8 @@ export function FightModeModal({
   setRestTime,
   moveSpeed,
   setMoveSpeed,
-  difficulty,
-  setDifficulty,
+  movesMode,
+  setMovesMode,
   category,
   comboId,
   onStartFight,
@@ -96,7 +95,7 @@ export function FightModeModal({
         numRounds,
         restTime,
         moveSpeed,
-        difficulty,
+        movesMode: movesMode.join(','),
         category,
         comboId: comboId !== undefined && comboId !== null ? String(comboId) : undefined,
         timestamp: Date.now().toString()
@@ -104,19 +103,6 @@ export function FightModeModal({
     });
   };
 
-  // Get color based on difficulty
-  const getDifficultyColor = (difficultyValue: string) => {
-    switch (difficultyValue) {
-      case 'beginner':
-        return '#4CAF50'; // Light green
-      case 'intermediate':
-        return '#d7a40bff'; // Amber
-      case 'advanced':
-        return '#F44336'; // Red
-      default:
-        return Colors.darkGreen;
-    }
-  };
   return (
     <Modal
       animationType="slide"
@@ -231,22 +217,38 @@ export function FightModeModal({
 
 
             <View style={styles.optionRow}>
-              <Text style={styles.optionLabel}>Difficulty:</Text>
+              <Text style={styles.optionLabel}>Moves:</Text>
               <View style={styles.buttonContainer}>
-                {FIGHT_OPTIONS.difficulty.map((diff) => (
+                {FIGHT_OPTIONS.movesMode.map((move) => (
                   <TouchableOpacity
-                    key={diff.value}
+                    key={move.value}
                     style={[
-                      styles.difficultyButton,
-                      difficulty === diff.value && [styles.difficultyButtonActive, { backgroundColor: getDifficultyColor(diff.value) }]
+                      styles.moveModeButton,
+                      movesMode.includes(move.value) && styles.moveModeButtonActive
                     ]}
-                    onPress={() => setDifficulty(diff.value)}
+                    onPress={() => {
+                      const newMovesMode = movesMode.includes(move.value)
+                        ? movesMode.length > 1 
+                          ? movesMode.filter(m => m !== move.value)
+                          : movesMode // Don't remove if it's the last selected option
+                        : [...movesMode, move.value];
+                      setMovesMode(newMovesMode);
+                    }}
                   >
+                    <MaterialCommunityIcons 
+                      name={
+                        move.value === 'punches' ? 'hand-back-right' :
+                        move.value === 'kicks' ? 'foot-print' :
+                        'shield'
+                      } 
+                      size={24} 
+                      color={movesMode.includes(move.value) ? '#FFFFFF' : '#FFFFFF80'} 
+                    />
                     <Text style={[
-                      styles.difficultyButtonText,
-                      difficulty === diff.value && styles.difficultyButtonTextActive
+                      styles.moveModeButtonText,
+                      movesMode.includes(move.value) && styles.moveModeButtonTextActive
                     ]}>
-                      {diff.label}
+                      {move.label}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -300,26 +302,28 @@ const styles = StyleSheet.create({
     flex: 2,
     justifyContent: 'space-between',
   },
-  difficultyButton: {
+  moveModeButton: {
     backgroundColor: '#444444',
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     borderRadius: 8,
     flex: 1,
+    alignItems: 'center',
+    gap: 4,
   },
-  difficultyButtonActive: {
+  moveModeButtonActive: {
     backgroundColor: Colors.darkGreen,
   },
-  difficultyButtonText: {
+  moveModeButtonText: {
     color: '#FFFFFF80',
-    fontSize: 16,
+    fontSize: 12,
     fontFamily: Typography.fontFamily,
     textAlign: 'center',
   },
-  difficultyButtonTextActive: {
+  moveModeButtonTextActive: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 12,
+    fontFamily: Typography.fontFamily,
   },
   sliderContainer: {
     flex: 2,

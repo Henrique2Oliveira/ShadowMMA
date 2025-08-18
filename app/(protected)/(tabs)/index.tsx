@@ -18,8 +18,8 @@ export default function Index() {
   const [numRounds, setNumRounds] = React.useState('1');
   const [restTime, setRestTime] = React.useState('1');
   const [moveSpeed, setMoveSpeed] = React.useState('1');
+  const [movesMode, setMovesMode] = React.useState<string[]>(['punches']);
   const [category, setCategory] = React.useState('0');
-  const [difficulty, setDifficulty] = React.useState('beginner');
 
   // Expose the show modal function globally
   React.useEffect(() => {
@@ -28,7 +28,7 @@ export default function Index() {
       numRounds: '3',
       restTime: '1',
       moveSpeed: '1',
-      difficulty: 'beginner',
+      movesMode: ['punches'],
       category: '0'
     });
     return () => {
@@ -47,14 +47,14 @@ export default function Index() {
     numRounds?: string;
     restTime?: string;
     moveSpeed?: string;
-    difficulty?: string;
+    movesMode?: string[];
     category?: string;
   }) => {
     setRoundDuration(config.roundDuration || roundDuration);
     setNumRounds(config.numRounds || numRounds);
     setRestTime(config.restTime || restTime);
     setMoveSpeed(config.moveSpeed || moveSpeed);
-    setDifficulty(config.difficulty || difficulty);
+    setMovesMode(config.movesMode || movesMode);
     setCategory(config.category || category);
     setIsModalVisible(true);
   };
@@ -68,7 +68,7 @@ export default function Index() {
         numRounds: '3',
         restTime: '1',
         moveSpeed: '1',
-        difficulty: 'beginner',
+        movesMode: ['punches', 'defense'],
         category: "0"
       })
     },
@@ -80,7 +80,7 @@ export default function Index() {
         numRounds: '1',
         restTime: '1',
         moveSpeed: '1',
-        difficulty: 'beginner',
+        movesMode: ['punches', 'defense'],
         category: '0'
       })
     },
@@ -92,7 +92,7 @@ export default function Index() {
         numRounds: '3',
         restTime: '1',
         moveSpeed: '1',
-        difficulty: 'beginner',
+        movesMode: ['punches', 'defense'],
         category: '0'
       })
     },
@@ -104,7 +104,7 @@ export default function Index() {
         numRounds: '3',
         restTime: '1',
         moveSpeed: '1',
-        difficulty: 'beginner',
+        movesMode: ['footwork'],
         category: '2'
       })
     },
@@ -116,7 +116,7 @@ export default function Index() {
         numRounds: '5',
         restTime: '0.5',
         moveSpeed: '1',
-        difficulty: 'beginner',
+        movesMode: ['defense'],
         category: '1'
       })
     },
@@ -143,7 +143,7 @@ export default function Index() {
         numRounds: '1',
         restTime: '1',
         moveSpeed: '0.8',
-        difficulty: 'beginner',
+        movesMode: ['punches', 'kicks', 'defense'],
         category: '0'
       })
     },
@@ -305,8 +305,8 @@ export default function Index() {
         setRestTime={setRestTime}
         moveSpeed={moveSpeed}
         setMoveSpeed={setMoveSpeed}
-        difficulty={difficulty}
-        setDifficulty={setDifficulty}
+        movesMode={movesMode}
+        setMovesMode={setMovesMode}
         category={category}
         onStartFight={() => setIsModalVisible(false)}
       />
