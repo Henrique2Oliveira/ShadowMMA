@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
   button: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: "#0000009f",
     padding: 15,
     borderRadius: 10,
     marginBottom: 10,
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginTop: 30,
-    backgroundColor: Colors.background,
+    backgroundColor: "#0000009f",
     borderRadius: 15,
     padding: 20,
   },
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     gap: 15,
   },
   infoContainer: {
-    backgroundColor: Colors.background,
+    backgroundColor: "#0000009f",
     borderRadius: 15,
     padding: 25,
     flex: 1,

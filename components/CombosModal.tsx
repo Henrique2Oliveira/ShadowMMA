@@ -39,7 +39,7 @@ export const CombosModal: React.FC<CombosModalProps> = ({
         return Animated.timing(anim, {
           toValue: 0,
           duration: 500,
-          delay: index * 100, // Stagger the animations
+          delay: index * 150, // Stagger the animations
           useNativeDriver: true,
         });
       });

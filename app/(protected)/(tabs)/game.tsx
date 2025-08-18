@@ -169,7 +169,7 @@ export default function Game() {
 
   // Power-up: Speed Boost (random 25% chance to appear, lasts 45s)
   const BOOST_CHANCE = 0.25; // 25% chance per check
-  const BOOST_DURATION_MS = 30_000; // 45 seconds
+  const BOOST_DURATION_MS = 30_000; // 30 seconds
   const BOOST_MULTIPLIER = 1.5; // 1.5x speed (pause time reduced by ~33%)
   const BOOST_CHECK_INTERVAL_MS = 20_000; // check every 20s while fighting
 
