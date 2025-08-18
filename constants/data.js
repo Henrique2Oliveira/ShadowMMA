@@ -4,22 +4,22 @@ export const combinationSets = [{
   "category": "attack",
   "levels": {
     "beginner": [
-      { "comboId": 0, "level": 1, "name": "1", "moves": [
+      { "comboId": 0, "level": 1, "name": "1-Jab", "moves": [
         { "move": "JAB", "pauseTime": 1000, "direction": "left", "tiltValue": 0.3 }
       ]},
-      { "comboId": 1, "level": 1, "name": "2", "moves": [
+      { "comboId": 1, "level": 1, "name": "2-Cross", "moves": [
         { "move": "CROSS", "pauseTime": 1000, "direction": "right", "tiltValue": 0.3 }
       ]},
-      { "comboId": 2, "level": 1, "name": "3", "moves": [
+      { "comboId": 2, "level": 1, "name": "3-Hook", "moves": [
         { "move": "LEAD\nHOOK", "pauseTime": 1100, "direction": "left", "tiltValue": 0.5 }
       ]},
-      { "comboId": 3, "level": 1, "name": "4", "moves": [
+      { "comboId": 3, "level": 1, "name": "4-Rear Hook", "moves": [
         { "move": "REAR\nHOOK", "pauseTime": 1100, "direction": "right", "tiltValue": 0.5 }
       ]},
-      { "comboId": 4, "level": 1, "name": "5", "moves": [
+      { "comboId": 4, "level": 1, "name": "5-Lead Uppercut", "moves": [
         { "move": "LEAD\nUPPERCUT", "pauseTime": 1100, "direction": "up", "tiltValue": 0.5 }
       ]},
-      { "comboId": 5, "level": 1, "name": "6", "moves": [
+      { "comboId": 5, "level": 1, "name": "6-Rear Uppercut", "moves": [
         { "move": "REAR\nUPPERCUT", "pauseTime": 1100, "direction": "up", "tiltValue": 0.5 }
       ]},
       { "comboId": 6, "level": 1, "name": "Lead Elbow", "moves": [
@@ -579,6 +579,84 @@ export const combinationSets = [{
         ]
       }
     ]
+  }
+}
+,
+{
+  "id": 3,
+  "category": "single-attack",
+  "levels": {
+    "beginner": [
+      { "comboId": 0, "level": 1, "name": "Jab", "moves": [
+        { "move": "JAB", "pauseTime": 1000, "direction": "left", "tiltValue": 0.3 }
+      ]},
+      { "comboId": 1, "level": 1, "name": "Cross", "moves": [
+        { "move": "CROSS", "pauseTime": 1000, "direction": "right", "tiltValue": 0.3 }
+      ]},
+      { "comboId": 2, "level": 1, "name": "Lead Hook", "moves": [
+        { "move": "LEAD\nHOOK", "pauseTime": 1100, "direction": "left", "tiltValue": 0.5 }
+      ]},
+      { "comboId": 3, "level": 1, "name": "Rear Hook", "moves": [
+        { "move": "REAR\nHOOK", "pauseTime": 1100, "direction": "right", "tiltValue": 0.5 }
+      ]},
+      { "comboId": 4, "level": 1, "name": "Lead Uppercut", "moves": [
+        { "move": "LEAD\nUPPERCUT", "pauseTime": 1100, "direction": "up", "tiltValue": 0.5 }
+      ]},
+      { "comboId": 5, "level": 1, "name": "Rear Uppercut", "moves": [
+        { "move": "REAR\nUPPERCUT", "pauseTime": 1100, "direction": "up", "tiltValue": 0.5 }
+      ]},
+      { "comboId": 6, "level": 1, "name": "Lead Elbow", "moves": [
+        { "move": "LEAD\nELBOW", "pauseTime": 1600, "direction": "left", "tiltValue": 0.5 }
+      ]},
+      { "comboId": 7, "level": 1, "name": "Rear Elbow", "moves": [
+        { "move": "REAR\nELBOW", "pauseTime": 1600, "direction": "right", "tiltValue": 0.5 }
+      ]},
+      { "comboId": 8, "level": 1, "name": "Lead Knee", "moves": [
+        { "move": "LEAD\nKNEE", "pauseTime": 1700, "direction": "up", "tiltValue": 0.6 }
+      ]},
+      { "comboId": 9, "level": 1, "name": "Rear Knee", "moves": [
+        { "move": "REAR\nKNEE", "pauseTime": 1700, "direction": "up", "tiltValue": 0.6 }
+      ]},
+      { "comboId": 10, "level": 1, "name": "Lead Low Kick", "moves": [
+        { "move": "LEAD\nLOW KICK", "pauseTime": 2200, "direction": "up", "tiltValue": 0.5 }
+      ]},
+      { "comboId": 11, "level": 1, "name": "Rear Low Kick", "moves": [
+        { "move": "REAR\nLOW KICK", "pauseTime": 2200, "direction": "up", "tiltValue": 0.5 }
+      ]},
+      { "comboId": 12, "level": 1, "name": "Lead High Kick", "moves": [
+        { "move": "LEAD\nHIGH KICK", "pauseTime": 2300, "direction": "up", "tiltValue": 0.7 }
+      ]},
+      { "comboId": 13, "level": 1, "name": "Rear High Kick", "moves": [
+        { "move": "REAR\nHIGH KICK", "pauseTime": 2300, "direction": "up", "tiltValue": 0.7 }
+      ]},
+      { "comboId": 14, "level": 1, "name": "Lead Push Kick", "moves": [
+        { "move": "LEAD\nPUSH KICK", "pauseTime": 2100, "direction": "up", "tiltValue": 0.5 }
+      ]},
+      { "comboId": 15, "level": 1, "name": "Rear Push Kick", "moves": [
+        { "move": "REAR\nPUSH KICK", "pauseTime": 2100, "direction": "up", "tiltValue": 0.5 }
+      ]}
+    ],
+    "intermediate": [],
+    "advanced": []
+  }
+},
+{
+  "id": 4,
+  "category": "single-defense",
+  "levels": {
+    "beginner": [
+      { "comboId": 0, "level": 1, "name": "Slip", "moves": [
+        { "move": "SLIP", "pauseTime": 1500, "direction": "down", "tiltValue": 0.4 }
+      ]},
+      { "comboId": 1, "level": 1, "name": "Roll", "moves": [
+        { "move": "ROLL", "pauseTime": 1700, "direction": "down", "tiltValue": 0.4 }
+      ]},
+      { "comboId": 2, "level": 1, "name": "Block", "moves": [
+        { "move": "BLOCK", "pauseTime": 1000, "direction": "up", "tiltValue": 0.5 }
+      ]}
+    ],
+    "intermediate": [],
+    "advanced": []
   }
 }
 ];

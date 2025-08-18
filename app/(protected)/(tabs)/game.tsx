@@ -134,6 +134,7 @@ export default function Game() {
     moveSpeed: string;
     difficulty: string;
     category: string;
+  comboId?: string;
     timestamp: string;
   }>();
 
@@ -262,7 +263,7 @@ export default function Game() {
         if (!user) throw new Error('No user');
         const idToken = await user.getIdToken();
 
-        const response = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/startFight', {
+    const response = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/startFight', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -270,7 +271,8 @@ export default function Game() {
           },
           body: JSON.stringify({
             category: params.category || '0',
-            difficulty: params.difficulty?.toLowerCase() || 'beginner'
+      difficulty: params.difficulty?.toLowerCase() || 'beginner',
+      comboId: params.comboId || undefined,
           })
         });
         // Reset animations when new game starts
@@ -346,7 +348,7 @@ export default function Game() {
 
     fetchMoves();
 
-  }, [params.roundDuration, params.numRounds, params.restTime, params.moveSpeed, params.timestamp, params.category, params.difficulty]);
+  }, [params.roundDuration, params.numRounds, params.restTime, params.moveSpeed, params.timestamp, params.category, params.difficulty, params.comboId]);
 
   const {
     tiltX,

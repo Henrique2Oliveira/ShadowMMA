@@ -19,6 +19,7 @@ interface FightModeModalProps {
   difficulty: string;
   setDifficulty: (difficulty: string) => void;
   category: string;
+  comboId?: string | number; // hidden param, not shown in UI
   onStartFight: () => void;
 }
 
@@ -83,6 +84,7 @@ export function FightModeModal({
   difficulty,
   setDifficulty,
   category,
+  comboId,
   onStartFight,
 }: FightModeModalProps) {
   const handleStartFight = () => {
@@ -96,6 +98,7 @@ export function FightModeModal({
         moveSpeed,
         difficulty,
         category,
+        comboId: comboId !== undefined && comboId !== null ? String(comboId) : undefined,
         timestamp: Date.now().toString()
       }
     });

@@ -1,11 +1,28 @@
 import { FightModeModal } from '@/components/FightModeModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
+import { app as firebaseApp } from '@/FirebaseConfig.js';
 import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
-import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { getAuth as getClientAuth } from 'firebase/auth';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+type ComboMeta = {
+  id: string;
+  name: string;
+  level: number;
+  type?: string;
+  difficulty: string;
+  categoryId: string;
+  categoryName?: string;
+  comboId?: number | string;
+};
+
+const CACHE_KEY = 'combos_meta_cache_v2_cat0_asc';
+const CACHE_TTL_MS = 1000 * 60 * 10; // 10 minutes
 
 export default function Combos() {
   const { user } = useAuth();
@@ -18,6 +35,7 @@ export default function Combos() {
   const [moveSpeed, setMoveSpeed] = React.useState('1');
   const [difficulty, setDifficulty] = React.useState('beginner');
   const [category, setCategory] = React.useState('0');
+  const [selectedComboId, setSelectedComboId] = React.useState<string | number | undefined>(undefined);
 
   const setModalConfig = (config: {
     roundDuration?: string;
@@ -26,6 +44,7 @@ export default function Combos() {
     moveSpeed?: string;
     difficulty?: string;
     category?: string;
+  comboId?: string | number;
   }) => {
     setRoundDuration(config.roundDuration || roundDuration);
     setNumRounds(config.numRounds || numRounds);
@@ -33,212 +52,161 @@ export default function Combos() {
     setMoveSpeed(config.moveSpeed || moveSpeed);
     setDifficulty(config.difficulty || difficulty);
     setCategory(config.category || category);
+  setSelectedComboId(config.comboId);
     setIsModalVisible(true);
   };
 
-  const combos = [
-    {
-      title: 'JAB-CROSS',
-      description: 'Basic 1-2 combination',
-      difficulty: 'beginner',
-      level: '1',
-      type: 'attack',
-      config: {
-        roundDuration: '2',
-        numRounds: '3',
-        restTime: '1',
-        moveSpeed: '1',
-        difficulty: 'beginner',
-        category: '0'
+  const [combos, setCombos] = useState<ComboMeta[] | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const clientAuth = useMemo(() => getClientAuth(firebaseApp), []);
+
+  const loadFromCache = useCallback(async () => {
+    try {
+      const raw = await AsyncStorage.getItem(CACHE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as { ts: number; data: ComboMeta[] };
+      if (Date.now() - parsed.ts < CACHE_TTL_MS) {
+        return parsed.data;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const saveToCache = useCallback(async (data: ComboMeta[]) => {
+    try {
+      await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+    } catch {}
+  }, []);
+
+  const fetchCombos = useCallback(
+    async (forceRefresh = false) => {
+      setError(null);
+      setLoading(true);
+      try {
+        if (!forceRefresh) {
+          const cached = await loadFromCache();
+          if (cached) {
+            setCombos(cached);
+            setLoading(false);
+            return;
+          }
+        }
+
+        const token = await clientAuth.currentUser?.getIdToken();
+        if (!token) throw new Error('Not authenticated');
+
+        // Infer regionless callable URL using default emulator/deployed domain conventions.
+        // Using onRequest endpoint: /getCombosMeta
+  // Use production URL to work on device and web without emulator setup
+  const url = 'https://us-central1-shadow-mma.cloudfunctions.net/getCombosMeta?category=0';
+
+        const resp = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!resp.ok) {
+          const text = await resp.text();
+          throw new Error(text || `Request failed: ${resp.status}`);
+        }
+        const json = (await resp.json()) as { combos: ComboMeta[] };
+        setCombos(json.combos);
+        saveToCache(json.combos);
+      } catch (e: any) {
+        setError(e?.message || 'Failed to load combos');
+      } finally {
+        setLoading(false);
       }
     },
-    {
-      title: 'JAB-CROSS-HOOK',
-      description: 'Classic 1-2-3 combo',
-      difficulty: 'beginner',
-      level: '2',
-      type: 'attack',
-      config: {
-        roundDuration: '2',
-        numRounds: '3',
-        restTime: '1',
-        moveSpeed: '1',
-        difficulty: 'beginner',
-        category: '0'
+    [clientAuth, loadFromCache, saveToCache]
+  );
+
+  useEffect(() => {
+    fetchCombos();
+  }, [fetchCombos]);
+
+  const renderItem = useCallback(({ item }: { item: ComboMeta }) => (
+    <TouchableOpacity
+      style={styles.comboCard}
+      onPress={() =>
+        setModalConfig({
+          roundDuration: '2',
+          numRounds: '3',
+          restTime: '1',
+          moveSpeed: '1',
+          difficulty: item.difficulty,
+          category: item.categoryId,
+          comboId: item.comboId,
+        })
       }
-    },
-    {
-      title: 'SLIP-BLOCK-SLIP',
-      description: 'Basic defensive movement pattern',
-      difficulty: 'beginner',
-      level: '1',
-      type: 'defense',
-      config: {
-        roundDuration: '2',
-        numRounds: '3',
-        restTime: '1',
-        moveSpeed: '1',
-        difficulty: 'beginner',
-        category: '0'
-      }
-    },
-    {
-      title: 'PIVOT-STEP',
-      description: 'Basic footwork pattern',
-      difficulty: 'beginner',
-      level: '1',
-      type: 'footwork',
-      config: {
-        roundDuration: '2',
-        numRounds: '3',
-        restTime: '1',
-        moveSpeed: '1',
-        difficulty: 'beginner',
-        category: '0'
-      }
-    },
-    {
-      title: 'DOUBLE JAB-CROSS',
-      description: 'Double jab setup',
-      difficulty: 'intermediate',
-      level: '3',
-      type: 'attack',
-      config: {
-        roundDuration: '3',
-        numRounds: '3',
-        restTime: '1',
-        moveSpeed: '1.5',
-        difficulty: 'intermediate',
-        category: '0'
-      }
-    },
-    {
-      title: 'DUCK-WEAVE-BLOCK',
-      description: 'Intermediate defense combination',
-      difficulty: 'intermediate',
-      level: '3',
-      type: 'defense',
-      config: {
-        roundDuration: '3',
-        numRounds: '3',
-        restTime: '1',
-        moveSpeed: '1.5',
-        difficulty: 'intermediate',
-        category: '0'
-      }
-    },
-    {
-      title: 'LATERAL-PIVOT-STEP',
-      description: 'Intermediate footwork pattern',
-      difficulty: 'intermediate',
-      level: '3',
-      type: 'footwork',
-      config: {
-        roundDuration: '3',
-        numRounds: '3',
-        restTime: '1',
-        moveSpeed: '1.5',
-        difficulty: 'intermediate',
-        category: '0'
-      }
-    },
-    {
-      title: 'JAB-CROSS-HOOK-CROSS',
-      description: 'Advanced 1-2-3-2 combination',
-      difficulty: 'intermediate',
-      level: '4',
-      type: 'attack',
-      config: {
-        roundDuration: '3',
-        numRounds: '3',
-        restTime: '1',
-        moveSpeed: '1.5',
-        difficulty: 'intermediate',
-        category: '0'
-      }
-    },
-    {
-      title: 'BODY JAB-HOOK-CROSS',
-      description: 'Body-head combination',
-      difficulty: 'advanced',
-      level: '5',
-      type: 'attack',
-      config: {
-        roundDuration: '3',
-        numRounds: '4',
-        restTime: '1',
-        moveSpeed: '2',
-        difficulty: 'advanced',
-        category: '0'
-      }
-    },
-    {
-      title: 'SLIP-ROLL-WEAVE-BLOCK',
-      description: 'Advanced defensive sequence',
-      difficulty: 'advanced',
-      level: '5',
-      type: 'defense',
-      config: {
-        roundDuration: '3',
-        numRounds: '4',
-        restTime: '1',
-        moveSpeed: '2',
-        difficulty: 'advanced',
-        category: '0'
-      }
-    },
-    {
-      title: 'PIVOT-SWITCH-LATERAL',
-      description: 'Advanced footwork sequence',
-      difficulty: 'advanced',
-      level: '5',
-      type: 'footwork',
-      config: {
-        roundDuration: '3',
-        numRounds: '4',
-        restTime: '1',
-        moveSpeed: '2',
-        difficulty: 'advanced',
-        category: '0'
-      }
-    },
-  ];
+    >
+      <LinearGradient colors={[Colors.button, '#5a5a5aff']} style={styles.cardGradient}>
+        <View style={styles.titleContainer}>
+          <MaterialCommunityIcons
+            name={item.type === 'attack' ? 'boxing-glove' : item.type === 'defense' ? 'shield' : 'run-fast'}
+            size={130}
+            color="#02020247"
+            style={styles.typeIcon}
+          />
+          <Text style={styles.comboTitle}>{item.name}</Text>
+        </View>
+        <Text style={styles.comboDescription}>
+          {item.categoryName ? `${item.categoryName} • ${item.difficulty}` : item.difficulty}
+        </Text>
+        <View style={styles.levelBadge}>
+          <Text style={styles.levelText}>Level {item.level}</Text>
+        </View>
+      </LinearGradient>
+    </TouchableOpacity>
+  ), [setModalConfig]);
+
+  const keyExtractor = useCallback((item: ComboMeta) => item.id, []);
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <MaterialCommunityIcons name="boxing-glove" size={40} style={{ transform: [{ rotate: '90deg' }] }} color={Colors.bgGameDark} />
         <Text style={styles.headerText}>Combo List</Text>
       </View>
 
-      <View style={styles.comboList}>
-        {combos.map((combo, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.comboCard}
-            onPress={() => setModalConfig(combo.config)}
-          >
-            <LinearGradient
-              colors={[Colors.button, "#5a5a5aff"]}
-              style={styles.cardGradient}
-            >
-              <View style={styles.titleContainer}>
-                <MaterialCommunityIcons
-                  name={combo.type === 'attack' ? 'boxing-glove' : combo.type === 'defense' ? 'shield' : 'run-fast'}
-                  size={130}
-                  color="#02020247"
-                  style={styles.typeIcon}
-                />
-                <Text style={styles.comboTitle}>{combo.title}</Text>
-              </View>
-              <Text style={styles.comboDescription}>{combo.description}</Text>
-              <View style={styles.levelBadge}>
-                <Text style={styles.levelText}>Level {combo.level}</Text>
-              </View>
-            </LinearGradient>
+      {loading && !combos && (
+        <View style={{ padding: 24, alignItems: 'center' }}>
+          <ActivityIndicator color={Colors.text} />
+          <Text style={{ color: Colors.text, marginTop: 8, fontFamily: Typography.fontFamily }}>Loading combos…</Text>
+        </View>
+      )}
+
+      {!!error && (
+        <View style={errStyles.errorBox}>
+          <Text style={errStyles.errorText}>Couldn’t load combos.</Text>
+          <TouchableOpacity onPress={() => fetchCombos(true)}>
+            <Text style={errStyles.retryText}>Retry</Text>
           </TouchableOpacity>
-        ))}
-      </View>
+        </View>
+      )}
+
+      {combos && combos.length > 0 && (
+        <FlatList
+          data={combos}
+          keyExtractor={keyExtractor}
+          contentContainerStyle={styles.comboList}
+          renderItem={renderItem}
+          refreshControl={<RefreshControl refreshing={loading} onRefresh={() => fetchCombos(true)} tintColor={Colors.text} />}
+        />
+      )}
+
+      {combos && combos.length === 0 && !loading && !error && (
+        <View style={{ padding: 24, alignItems: 'center' }}>
+          <Text style={{ color: Colors.text, fontFamily: Typography.fontFamily }}>No combos available.</Text>
+        </View>
+      )}
 
       <FightModeModal
         isVisible={isModalVisible}
@@ -254,9 +222,10 @@ export default function Combos() {
         difficulty={difficulty}
         setDifficulty={setDifficulty}
         category={category}
+  comboId={selectedComboId}
         onStartFight={() => setIsModalVisible(false)}
       />
-    </ScrollView>
+    </View>
   );
 }
 
@@ -341,5 +310,36 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: Typography.fontFamily,
     textTransform: 'capitalize',
+  },
+});
+
+const errStyles = StyleSheet.create({
+  errorBox: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    backgroundColor: '#2a0000',
+    borderColor: '#ff4d4f',
+    borderWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  errorText: {
+    color: '#ffbbbb',
+    fontFamily: Typography.fontFamily,
+    fontSize: 14,
+    flex: 1,
+  },
+  retryText: {
+    color: '#ffffff',
+    fontFamily: Typography.fontFamily,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#ff4d4f',
+    borderRadius: 8,
+    overflow: 'hidden',
   },
 });
