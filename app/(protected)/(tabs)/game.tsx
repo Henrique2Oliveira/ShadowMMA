@@ -11,6 +11,7 @@ import { app } from '@/FirebaseConfig';
 import { useGameAnimations } from '@/hooks/useGameAnimations';
 import { Colors } from '@/themes/theme';
 import { Combo, Move } from '@/types/game';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getAuth } from '@firebase/auth';
 import { useIsFocused } from '@react-navigation/native';
 import { Audio } from 'expo-av';
@@ -158,10 +159,83 @@ export default function Game() {
   const [showCombosModal, setShowCombosModal] = React.useState(false);
   const [combos, setCombos] = React.useState<Combo[]>([]);
   const [currentComboName, setCurrentComboName] = React.useState<string>("");
+  const [stance, setStance] = React.useState<'orthodox' | 'southpaw'>(
+    'orthodox'
+  );
 
 
   const [speedMultiplier, setSpeedMultiplier] = React.useState(parseFloat(params.moveSpeed || '1'));
   const [animationsEnabled, setAnimationsEnabled] = React.useState(true);
+
+  // Power-up: Speed Boost (random 25% chance to appear, lasts 45s)
+  const BOOST_CHANCE = 0.25; // 25% chance per check
+  const BOOST_DURATION_MS = 30_000; // 45 seconds
+  const BOOST_MULTIPLIER = 1.5; // 1.5x speed (pause time reduced by ~33%)
+  const BOOST_CHECK_INTERVAL_MS = 20_000; // check every 20s while fighting
+
+  const [isBoostActive, setIsBoostActive] = React.useState(false);
+  const [boostRemainingMs, setBoostRemainingMs] = React.useState(0);
+  const effectiveSpeedMultiplier = React.useMemo(
+    () => speedMultiplier * (isBoostActive ? BOOST_MULTIPLIER : 1),
+    [speedMultiplier, isBoostActive]
+  );
+
+  // Bubble pulse animation while boost is active
+  const boostPulse = React.useRef(new Animated.Value(0)).current;
+  React.useEffect(() => {
+    if (!isBoostActive) return;
+    boostPulse.setValue(0);
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(boostPulse, { toValue: 1, duration: 800, useNativeDriver: true }),
+        Animated.timing(boostPulse, { toValue: 0, duration: 800, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [isBoostActive, boostPulse]);
+
+  // Tick remaining time only while actively fighting (pauses during pause/rest/game over)
+  const lastBoostTickRef = React.useRef<number | null>(null);
+  const canTickBoost = !gameState.isPaused && !gameState.isRestPeriod && !gameState.isGameOver;
+  React.useEffect(() => {
+    if (!isBoostActive || !canTickBoost) {
+      lastBoostTickRef.current = null;
+      return;
+    }
+    const id = setInterval(() => {
+      const now = Date.now();
+      const last = lastBoostTickRef.current ?? now;
+      const delta = now - last;
+      lastBoostTickRef.current = now;
+      setBoostRemainingMs(prev => {
+        const next = Math.max(0, prev - delta);
+        if (next <= 0) {
+          setIsBoostActive(false);
+        }
+        return next;
+      });
+    }, 100);
+    return () => clearInterval(id);
+  }, [isBoostActive, canTickBoost]);
+
+  // Randomly trigger boost while fighting (not paused/rest/game over)
+  React.useEffect(() => {
+    if (gameState.isPaused || gameState.isRestPeriod || gameState.isGameOver) return;
+    let checkTimer: ReturnType<typeof setInterval> | null = null;
+    // Skip if already active
+    if (!isBoostActive) {
+      checkTimer = setInterval(() => {
+        if (Math.random() < BOOST_CHANCE) {
+          setIsBoostActive(true);
+          setBoostRemainingMs(BOOST_DURATION_MS);
+        }
+      }, BOOST_CHECK_INTERVAL_MS);
+    }
+    return () => {
+      if (checkTimer) clearInterval(checkTimer);
+    };
+  }, [gameState.isPaused, gameState.isRestPeriod, gameState.isGameOver, isBoostActive]);
 
   // Reset game state and fetch moves when component mounts or when params change
   React.useEffect(() => {
@@ -175,6 +249,10 @@ export default function Game() {
 
     setSpeedMultiplier(parseFloat(params.moveSpeed || '1'));
     setAnimationsEnabled(true);
+  // Reset Speed Boost state on new game
+  setIsBoostActive(false);
+  setBoostRemainingMs(0);
+  if (lastBoostTickRef) lastBoostTickRef.current = null;
 
     const fetchMoves = async () => {
       setIsLoading(true);
@@ -422,10 +500,10 @@ export default function Game() {
 
   const updateMoveProg = React.useCallback(() => {
     if (currentMove) {
-      return updateMoveProgress(currentMove.pauseTime, speedMultiplier);
+    return updateMoveProgress(currentMove.pauseTime, effectiveSpeedMultiplier);
     }
     return null;
-  }, [currentMove, speedMultiplier, updateMoveProgress]);
+  }, [currentMove, effectiveSpeedMultiplier, updateMoveProgress]);
 
   React.useEffect(() => {
     let animation: Animated.CompositeAnimation | null = null;
@@ -447,7 +525,10 @@ export default function Game() {
         // Continue with countdown
         const nextMove = moves[currentIndex + 1];
         setCurrentMove(nextMove);
-        animateMove(nextMove);
+        const adjusted = (stance === 'southpaw' && (nextMove.direction === 'left' || nextMove.direction === 'right'))
+          ? { ...nextMove, tiltValue: -nextMove.tiltValue }
+          : nextMove;
+        animateMove(adjusted);
 
         // If this is the last countdown move
         if (currentIndex === countdownLength - 2) {
@@ -457,16 +538,18 @@ export default function Game() {
         // For regular moves, start from after the countdown sequence
         const effectiveIndex = isCountdownComplete ? currentIndex : countdownLength - 1;
         const nextIndex = (effectiveIndex + 1 - countdownLength) % (moves.length - countdownLength) + countdownLength;
-        const nextMove = moves[nextIndex];
-        setCurrentMove(nextMove);
+  const nextMove = moves[nextIndex];
+  setCurrentMove(nextMove);
 
         // Update current combo name for regular moves
         if (isCountdownComplete && nextMove.comboName) {
           setCurrentComboName(nextMove.comboName);
 
         }
-
-        animateMove(nextMove);
+        const adjusted = (stance === 'southpaw' && (nextMove.direction === 'left' || nextMove.direction === 'right'))
+          ? { ...nextMove, tiltValue: -nextMove.tiltValue }
+          : nextMove;
+        animateMove(adjusted);
       }
 
       // Play a random sound effect if not muted
@@ -496,7 +579,7 @@ export default function Game() {
         }
       }
     }
-  }, [currentMove, moves, gameState.isPaused, gameState.isRestPeriod, tiltX, tiltY, scale, sounds, isMuted, isCountdownComplete]);
+  }, [currentMove, moves, gameState.isPaused, gameState.isRestPeriod, tiltX, tiltY, scale, sounds, isMuted, isCountdownComplete, stance]);
   // Add random movement effect
   React.useEffect(() => {
     let isAnimating = false;
@@ -521,10 +604,10 @@ export default function Game() {
 
   React.useEffect(() => {
     if (currentMove) {
-      const timer = setInterval(updateMove, currentMove.pauseTime / speedMultiplier);
+    const timer = setInterval(updateMove, currentMove.pauseTime / effectiveSpeedMultiplier);
       return () => clearInterval(timer);
     }
-  }, [currentMove, speedMultiplier, updateMove]);
+  }, [currentMove, effectiveSpeedMultiplier, updateMove]);
 
   const handlePress = () => {
     setGameState(prev => ({
@@ -567,6 +650,35 @@ export default function Game() {
             comboName={currentComboName}
             isRestPeriod={gameState.isRestPeriod}
           />
+        )}
+
+        {/* Speed Boost bubble indicator - placed below combo name */}
+  {isBoostActive && !gameState.isRestPeriod && !gameState.isGameOver && (
+          <Animated.View
+            style={[
+              styles.boostBubble,
+              {
+                transform: [
+                  {
+                    scale: boostPulse.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [1, 1.08],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
+            <MaterialCommunityIcons name="lightning-bolt-outline" size={18} color="#e8c916ff" style={{ marginRight: 4 }} />
+            <Animated.Text style={styles.boostText}>
+              Speed Boost
+            </Animated.Text>
+            {boostRemainingMs > 0 && (
+              <Animated.Text style={styles.boostTime}>
+                {Math.ceil(boostRemainingMs / 1000)}s
+              </Animated.Text>
+            )}
+          </Animated.View>
         )}
 
         <MoveCard
@@ -615,6 +727,8 @@ export default function Game() {
             setIsOptionsModalVisible(false);
             setShowCombosModal(true);
           }}
+          stance={stance}
+          onToggleStance={() => setStance(prev => prev === 'orthodox' ? 'southpaw' : 'orthodox')}
           onQuit={() => {
             setIsOptionsModalVisible(false);
             router.replace('/(protected)/(tabs)');
@@ -631,5 +745,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
+  },
+  boostBubble: {
+  position: 'absolute',
+  top: 140, // below the combo name (which sits at top: 100)
+  alignSelf: 'center',
+  backgroundColor: 'rgba(0, 0, 0, 0.9)',
+  borderRadius: 20,
+  paddingHorizontal: 18,
+  paddingVertical: 6,
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 8,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.3,
+  shadowRadius: 4,
+  elevation: 4,
+  },
+  boostText: {
+    color: '#ffffffff',
+    fontWeight: '700',
+  },
+  boostTime: {
+    color: '#ffffffff',
+    fontWeight: '600',
+    marginLeft: 6,
   },
 });

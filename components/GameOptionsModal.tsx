@@ -14,6 +14,9 @@ interface GameOptionsModalProps {
   isAnimationsEnabled: boolean;
   onShowCombos: () => void;
   onQuit: () => void;
+  // Stance controls
+  stance: 'orthodox' | 'southpaw';
+  onToggleStance: () => void;
 }
 
 export const GameOptionsModal: React.FC<GameOptionsModalProps> = ({
@@ -27,6 +30,8 @@ export const GameOptionsModal: React.FC<GameOptionsModalProps> = ({
   isAnimationsEnabled,
   onShowCombos,
   onQuit,
+  stance,
+  onToggleStance,
 }) => {
   const options = [
     {
@@ -38,6 +43,11 @@ export const GameOptionsModal: React.FC<GameOptionsModalProps> = ({
       icon: 'flash-outline',
       label: `Speed: ${speedMultiplier}x`,
       onPress: onSpeedChange,
+    },
+    {
+      icon: 'walk',
+      label: `Stance: ${stance === 'orthodox' ? 'Orthodox' : 'Southpaw'}`,
+      onPress: onToggleStance,
     },
     {
       icon: isAnimationsEnabled ? 'cube-outline' : 'cube',

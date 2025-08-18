@@ -3,7 +3,7 @@ import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ImageBackground, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type UserData = {
   name: string;
@@ -57,8 +57,14 @@ export default function Profile() {
   }
 
   return (
-    <ScrollView>
+    <ImageBackground
+      source={require('@/assets/images/bg-gym-profile.png')}
+      style={styles.bg}
+      resizeMode="cover"
+    >
+      <ScrollView>
       <View style={styles.container}>
+        <Text style={styles.screenTitle}>My Gym</Text>
         <View style={styles.header}>
           <View style={styles.avatarContainer}>
             <MaterialCommunityIcons name="account-circle" size={100} color={Colors.text} />
@@ -132,16 +138,32 @@ export default function Profile() {
           </TouchableOpacity>
         </View>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  bg: {
+    flex: 1,
+    width: '100%',
+    height: '100%'
+  },
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: 'transparent',
     padding: 20,
     paddingBottom: 240,
+  },
+  screenTitle: {
+    color: '#FFFFFF',
+    fontSize: 32,
+    fontFamily: Typography.fontFamily,
+    fontWeight: 'bold',
+    textShadowColor: '#000',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 3,
+    marginTop: 10,
   },
   loadingContainer: {
     justifyContent: 'center',
@@ -159,7 +181,7 @@ const styles = StyleSheet.create({
   button: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.button,
+    backgroundColor: Colors.background,
     padding: 15,
     borderRadius: 10,
     marginBottom: 10,
@@ -196,7 +218,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginTop: 30,
-    backgroundColor: Colors.button,
+    backgroundColor: Colors.background,
     borderRadius: 15,
     padding: 20,
   },
@@ -225,7 +247,7 @@ const styles = StyleSheet.create({
     gap: 15,
   },
   infoContainer: {
-    backgroundColor: Colors.button,
+    backgroundColor: Colors.background,
     borderRadius: 15,
     padding: 25,
     flex: 1,
