@@ -263,51 +263,79 @@ export const startFight = onRequest(async (req, res) => {
   const xp = typeof userData.xp === 'number' ? userData.xp : 0;
   const currentUserLevel = Math.floor(xp / 100) + 1;
 
-  // Get all available moves from data.js categories
-  const combos = [] as any[];
-  
-  // Load moves from the selected types and filter by user level
+  // Build pools per selected move type and filter by user level
+  type ComboT = any;
+  const typePools: Record<string, ComboT[]> = {};
+  let totalAvailable = 0;
   moveTypesArray.forEach((moveType) => {
-    if ((comboData as any)?.levels?.[moveType]) {
-      const movesForType = (comboData as any).levels[moveType].filter((c: any) => 
-        typeof c?.level === 'number' && c.level <= currentUserLevel
-      );
-      combos.push(...movesForType);
+    const arr: ComboT[] = ((comboData as any)?.levels?.[moveType] || []).filter(
+      (c: any) => typeof c?.level === 'number' && c.level <= currentUserLevel
+    );
+    if (arr.length) {
+      // Slight shuffle then sort by level desc to prefer higher within each type
+      const shuffled = [...arr].sort(() => Math.random() - 0.5);
+      shuffled.sort((a, b) => (b.level as number) - (a.level as number));
+      typePools[moveType] = shuffled;
+      totalAvailable += shuffled.length;
     }
   });
 
   // If no moves found for selected types, default to Punches
-  if (combos.length === 0 && (comboData as any)?.levels?.Punches) {
-    const punchMoves = (comboData as any).levels.Punches.filter((c: any) => 
-      typeof c?.level === 'number' && c.level <= currentUserLevel
+  if (totalAvailable === 0 && (comboData as any)?.levels?.Punches) {
+    const punchMoves = (comboData as any).levels.Punches.filter(
+      (c: any) => typeof c?.level === 'number' && c.level <= currentUserLevel
     );
-    combos.push(...punchMoves);
+    if (punchMoves.length) {
+      const shuffled = [...punchMoves].sort(() => Math.random() - 0.5);
+      shuffled.sort((a, b) => (b.level as number) - (a.level as number));
+      typePools['Punches'] = shuffled;
+      totalAvailable = shuffled.length;
+    }
   }
 
   // Decide random quantity between 3 and 5 (limited by available combos)
-  const maxPick = Math.min(5, combos.length);
-  const pickCount = combos.length < 3
-    ? combos.length // return all if less than 3 available
+  const maxPick = Math.min(5, totalAvailable);
+  const pickCount = totalAvailable < 3
+    ? totalAvailable // return all if less than 3 available
     : 3 + Math.floor(Math.random() * (maxPick - 3 + 1)); // integer between 3 and maxPick
 
-  // Dar preferência a combos de nível mais alto dentro dos disponíveis
-  let randomCombos: any[] = [];
+  // Interleave picks across the selected types in round-robin, ensuring at least one highest-level overall
+  let randomCombos: ComboT[] = [];
   if (pickCount > 0) {
-    // Find highest level available
-    const highestLevel = combos.reduce((max: number, c: any) => Math.max(max, c.level as number), -Infinity);
-    const highestLevelCombos = combos.filter((c: any) => c.level === highestLevel);
-    
-    // Ensure at least one high level combo
+    // Compute global highest level and ensure one such combo is included first
+    const allCombos: ComboT[] = Object.values(typePools).flat();
+    const highestLevel = allCombos.reduce((max: number, c: any) => Math.max(max, c.level as number), -Infinity);
+    const highestLevelCombos = allCombos.filter((c: any) => c.level === highestLevel);
     const chosenTop = highestLevelCombos[Math.floor(Math.random() * highestLevelCombos.length)];
-    const remainingPool = combos.filter((c: any) => c !== chosenTop);
-    
-    // Fill remaining slots with random combos
-    const remainingCount = pickCount - 1;
-    const rest = remainingCount > 0
-      ? [...remainingPool].sort(() => Math.random() - 0.5).slice(0, remainingCount)
-      : [];
-      
-    randomCombos = [chosenTop, ...rest];
+    randomCombos.push(chosenTop);
+
+    // Remove chosenTop from its type pool
+    for (const t of Object.keys(typePools)) {
+      const idx = typePools[t].indexOf(chosenTop);
+      if (idx !== -1) {
+        typePools[t].splice(idx, 1);
+        break;
+      }
+    }
+
+    // Round-robin selection among types until reaching pickCount
+    const typeOrder = Object.keys(typePools).filter((t) => typePools[t]?.length);
+    let ti = 0;
+    while (randomCombos.length < pickCount && typeOrder.length > 0) {
+      const t = typeOrder[ti % typeOrder.length];
+      const pool = typePools[t];
+      if (pool && pool.length) {
+        randomCombos.push(pool.shift() as ComboT); // take next highest from this type
+      }
+      // Drop empty types from rotation
+      for (let i = typeOrder.length - 1; i >= 0; i--) {
+        const tt = typeOrder[i];
+        if (!typePools[tt] || typePools[tt].length === 0) {
+          typeOrder.splice(i, 1);
+        }
+      }
+      ti++;
+    }
   }
 
     let updatedFightsLeft = userData.fightsLeft;
@@ -384,7 +412,6 @@ export const getCombosMeta = onRequest(async (req, res) => {
       name: string;
       level: number;
       type: string;
-      difficulty?: string; // mirror of type for UI compatibility
       categoryId: string;
       categoryName?: string;
       comboId: number | string;
@@ -418,7 +445,6 @@ export const getCombosMeta = onRequest(async (req, res) => {
             name: String(displayName),
             level: levelNum,
             type: normalizedType,
-            difficulty: normalizedType,
             categoryId,
             categoryName,
             comboId: comboIdVal,
