@@ -63,9 +63,9 @@ export const FIGHT_OPTIONS: {
     { value: '2.5', label: '2.5x' },
   ],
   movesMode: [
-    { value: 'punches', label: 'Strikes' },
-    { value: 'kicks', label: 'Kicks' },
-    { value: 'defense', label: 'Defense' },
+    { value: 'Punches', label: 'Strikes' },
+    { value: 'Kicks', label: 'Kicks' },
+    { value: 'Defense', label: 'Defense' },
   ],
 };
 
@@ -237,8 +237,8 @@ export function FightModeModal({
                   >
                     <MaterialCommunityIcons 
                       name={
-                        move.value === 'punches' ? 'hand-back-right' :
-                        move.value === 'kicks' ? 'foot-print' :
+                        move.value === 'Punches' ? 'hand-back-right' :
+                        move.value === 'Kicks' ? 'foot-print' :
                         'shield'
                       } 
                       size={24} 
@@ -344,12 +344,10 @@ const styles = StyleSheet.create({
     color: '#ffffff80',
     fontSize: 14,
     fontFamily: Typography.fontFamily,
-    textAlign: 'center',
   },
   sliderLabelActive: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
   },
   modalOverlay: {
     flex: 1,

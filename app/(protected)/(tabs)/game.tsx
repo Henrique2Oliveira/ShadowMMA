@@ -132,9 +132,9 @@ export default function Game() {
     numRounds: string;
     restTime: string;
     moveSpeed: string;
-    difficulty: string;
+    movesMode: string;
     category: string;
-  comboId?: string;
+    comboId?: string;
     timestamp: string;
   }>();
 
@@ -271,8 +271,8 @@ export default function Game() {
           },
           body: JSON.stringify({
             category: params.category || '0',
-      difficulty: params.difficulty?.toLowerCase() || 'beginner',
-      comboId: params.comboId || undefined,
+            movesMode: params.movesMode || 'Punches',
+            comboId: params.comboId || undefined,
           })
         });
         // Reset animations when new game starts
@@ -348,7 +348,7 @@ export default function Game() {
 
     fetchMoves();
 
-  }, [params.roundDuration, params.numRounds, params.restTime, params.moveSpeed, params.timestamp, params.category, params.difficulty, params.comboId]);
+  }, [params.roundDuration, params.numRounds, params.restTime, params.moveSpeed, params.timestamp, params.category, params.movesMode, params.comboId]);
 
   const {
     tiltX,

@@ -159,7 +159,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 32,
     fontFamily: Typography.fontFamily,
-    fontWeight: 'bold',
     textShadowColor: '#000',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 3,

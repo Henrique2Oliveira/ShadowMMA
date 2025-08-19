@@ -68,7 +68,7 @@ export default function Index() {
         numRounds: '3',
         restTime: '1',
         moveSpeed: '1',
-        movesMode: ['punches', 'defense'],
+        movesMode: ['Punches', 'Defense'],
         category: "0"
       })
     },
@@ -80,7 +80,7 @@ export default function Index() {
         numRounds: '1',
         restTime: '1',
         moveSpeed: '1',
-        movesMode: ['punches', 'defense'],
+        movesMode: ['Punches', 'Defense'],
         category: '0'
       })
     },
@@ -92,7 +92,7 @@ export default function Index() {
         numRounds: '3',
         restTime: '1',
         moveSpeed: '1',
-        movesMode: ['punches', 'defense'],
+        movesMode: ['Punches', 'Defense'],
         category: '0'
       })
     },
@@ -104,8 +104,8 @@ export default function Index() {
         numRounds: '3',
         restTime: '1',
         moveSpeed: '1',
-        movesMode: ['footwork'],
-        category: '2'
+        movesMode: ['Kicks'],
+        category: '0'
       })
     },
     {
@@ -116,8 +116,8 @@ export default function Index() {
         numRounds: '5',
         restTime: '0.5',
         moveSpeed: '1',
-        movesMode: ['defense'],
-        category: '1'
+        movesMode: ['Defense'],
+        category: '0'
       })
     },
     {
@@ -143,7 +143,7 @@ export default function Index() {
         numRounds: '1',
         restTime: '1',
         moveSpeed: '0.8',
-        movesMode: ['punches', 'kicks', 'defense'],
+        movesMode: ['Punches', 'Kicks', 'Defense'], // All moves for warmup make a new collection and and make new levels just for warmup exercises
         category: '0'
       })
     },

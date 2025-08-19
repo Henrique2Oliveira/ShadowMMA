@@ -52,7 +52,7 @@ export default function Combos() {
     setMoveSpeed(config.moveSpeed || moveSpeed);
     setMovesMode(config.movesMode || movesMode);
     setCategory(config.category || category);
-  setSelectedComboId(config.comboId);
+    setSelectedComboId(config.comboId);
     setIsModalVisible(true);
   };
 
@@ -152,7 +152,7 @@ export default function Combos() {
               restTime: '1',
               moveSpeed: '1',
               movesMode: [item.difficulty],  // Convert the combo's difficulty to initial moves mode
-              category: item.categoryId,
+              category: "0",
               comboId: item.comboId,
             });
           }
@@ -162,7 +162,7 @@ export default function Combos() {
         <LinearGradient colors={[Colors.button, '#5a5a5aff']} style={styles.cardGradient}>
           <View style={styles.titleContainer}>
             <MaterialCommunityIcons
-              name={item.type === 'attack' ? 'boxing-glove' : item.type === 'defense' ? 'shield' : 'run-fast'}
+              name={item.type === 'Punches' ? 'boxing-glove' : item.type === 'Defense' ? 'shield' : 'run-fast'}
               size={130}
               color="#02020247"
               style={styles.typeIcon}
@@ -179,7 +179,7 @@ export default function Combos() {
             )}
           </View>
           <Text style={[styles.comboDescription, isLocked && styles.lockedText]}>
-            {item.categoryName ? `${item.categoryName} • ${item.difficulty}` : item.difficulty} {/* Keep showing original difficulty for now */}
+            {item.categoryName ? `${item.difficulty}` : item.difficulty} 
           </Text>
           <View style={[styles.levelBadge, isLocked && styles.lockedLevelBadge]}>
             <Text style={[styles.levelText, isLocked && styles.lockedLevelText]}>Level {item.level}</Text>

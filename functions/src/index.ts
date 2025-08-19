@@ -2,7 +2,24 @@
  * Import function triggers from their respective submodules:
  *
  * import {onCall} from "firebase-functions/v2/https";
- * import {onDocumentWritten} from "firebase-functions/v2/firestore";
+ * impor    const { category = '0', comboId, moveTypes = 'Punches' } = req.method === "POST" ? req.body : req.query;
+    const categoryToUse = category.toString();
+    const moveTypesArray = (typeof moveTypes === 'string' ? moveTypes.split(',') : ['Punches']).slice(0, 3);
+    
+    if (!comboId && !categoryToUse) {
+      res.status(400).send("Bad Request: Missing category");
+      return;
+    }
+
+    // Busca dados do usuário
+    const userRef = db.collection("users").doc(uid);
+    const userDoc = await userRef.get();
+    if (!userDoc.exists) {
+      res.status(404).send("User not found");
+      return;
+    }
+
+    const userData = userDoc.data();n} from "firebase-functions/v2/firestore";
  *
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
@@ -134,11 +151,22 @@ export const startFight = onRequest(async (req, res) => {
     const decodedToken = await auth.verifyIdToken(idToken);
     const uid = decodedToken.uid;
 
-    const { category, difficulty, comboId } = req.method === "POST" ? req.body : req.query;
-    const categoryToUse = (category ?? '0').toString();
-    const difficultyParam = difficulty?.toLowerCase();
-    if (!comboId && (!categoryToUse || !difficultyParam)) {
-      res.status(400).send("Bad Request: Missing category or difficulty");
+    // Accept both moveTypes and movesMode from client, defaulting to Punches
+    const bodyOrQuery: any = req.method === "POST" ? req.body : req.query;
+    const category = (bodyOrQuery?.category ?? '0') as string | number;
+    const comboId = bodyOrQuery?.comboId as string | number | undefined;
+    const moveTypesRaw = (bodyOrQuery?.moveTypes ?? bodyOrQuery?.movesMode ?? 'Punches') as string | string[];
+    const categoryToUse = category.toString();
+    const moveTypesArray = (
+      typeof moveTypesRaw === 'string' ? moveTypesRaw.split(',') : Array.isArray(moveTypesRaw) ? moveTypesRaw : ['Punches']
+    )
+      .map((s) => s.toString())
+      .map((s) => s.trim())
+      .map((s) => (s.length ? s : 'Punches'))
+      .slice(0, 3);
+    
+    if (!comboId && !categoryToUse) {
+      res.status(400).send("Bad Request: Missing category");
       return;
     }
 
@@ -151,7 +179,7 @@ export const startFight = onRequest(async (req, res) => {
     }
 
     const userData = userDoc.data();
-    
+ 
     // If user is not pro, check fights left
     if (userData?.plan !== 'pro') {
       if (!userData?.fightsLeft || userData.fightsLeft <= 0) {
@@ -171,21 +199,30 @@ export const startFight = onRequest(async (req, res) => {
     }
 
     const comboData = comboDoc.data();
-    const difficultyLevel = (difficultyParam || '').toLowerCase();
 
-    // If a specific comboId is requested, find and return only that combo (regardless of difficulty)
+    // If a specific comboId is requested, find and return only that combo
     if (comboId !== undefined && comboId !== null) {
       const targetIdStr = String(comboId);
-      const levelsObj = (comboData as any)?.levels || {};
-      let found: any | null = null;
-      for (const key of Object.keys(levelsObj)) {
-        const arr = Array.isArray(levelsObj[key]) ? levelsObj[key] : [];
-        const match = arr.find((c: any) => String(c?.comboId) === targetIdStr);
-        if (match) {
-          found = match;
-          break;
+      let found: any | undefined = undefined;
+
+      // Prefer a flat combos array if present
+      const combosArray = (comboData as any)?.combos;
+      if (Array.isArray(combosArray)) {
+        found = combosArray.find((c: any) => String(c?.comboId) === targetIdStr);
+      }
+      // Otherwise search within levels across all types
+      if (!found && (comboData as any)?.levels && typeof (comboData as any).levels === 'object') {
+        const levelsObj = (comboData as any).levels as Record<string, any[]>;
+        for (const typeKey of Object.keys(levelsObj)) {
+          const arr = Array.isArray(levelsObj[typeKey]) ? levelsObj[typeKey] : [];
+          const hit = arr.find((c: any) => String(c?.comboId) === targetIdStr);
+          if (hit) {
+            found = hit;
+            break;
+          }
         }
       }
+
       if (!found) {
         res.status(404).send("Combo not found");
         return;
@@ -216,45 +253,61 @@ export const startFight = onRequest(async (req, res) => {
       return;
     }
 
-    if (!comboData?.levels?.[difficultyLevel]) {
-      res.status(400).send("Invalid difficulty level");
+    // Validate that we have levels to pick from for random selection
+    if (!(comboData as any)?.levels || typeof (comboData as any).levels !== 'object') {
+      res.status(400).send("Invalid combos data structure: missing levels");
       return;
     }
 
-  // Seleciona de 1 a 4 combos aleatórios com nível <= nível do usuário (xp % 100)
-  const combos = comboData.levels[difficultyLevel] as any[];
+  // Get the user's level from XP
   const xp = typeof userData.xp === 'number' ? userData.xp : 0;
-  const userLevel = ((xp % 100) + 100) % 100; // 0-99
+  const currentUserLevel = Math.floor(xp / 100) + 1;
 
-  // Combos elegíveis: nível numérico e <= nível do usuário (inclui nível 0 quando userLevel = 0)
-  const eligibleCombos = combos.filter((c: any) => typeof c?.level === 'number' && c.level <= userLevel);
+  // Get all available moves from data.js categories
+  const combos = [] as any[];
+  
+  // Load moves from the selected types and filter by user level
+  moveTypesArray.forEach((moveType) => {
+    if ((comboData as any)?.levels?.[moveType]) {
+      const movesForType = (comboData as any).levels[moveType].filter((c: any) => 
+        typeof c?.level === 'number' && c.level <= currentUserLevel
+      );
+      combos.push(...movesForType);
+    }
+  });
 
-  // Decide quantidade aleatória entre 3 e 5 (limitado pela quantidade disponível)
-  const maxPick = Math.min(5, eligibleCombos.length);
-  const pickCount = eligibleCombos.length < 3
-    ? eligibleCombos.length // se menos de 3 disponíveis, retorna todas
-    : 3 + Math.floor(Math.random() * (maxPick - 3 + 1)); // inteiro entre 3 e maxPick
+  // If no moves found for selected types, default to Punches
+  if (combos.length === 0 && (comboData as any)?.levels?.Punches) {
+    const punchMoves = (comboData as any).levels.Punches.filter((c: any) => 
+      typeof c?.level === 'number' && c.level <= currentUserLevel
+    );
+    combos.push(...punchMoves);
+  }
 
-  // Dar preferência a combos de nível mais alto dentro dos elegíveis (garante 1 do nível mais alto)
+  // Decide random quantity between 3 and 5 (limited by available combos)
+  const maxPick = Math.min(5, combos.length);
+  const pickCount = combos.length < 3
+    ? combos.length // return all if less than 3 available
+    : 3 + Math.floor(Math.random() * (maxPick - 3 + 1)); // integer between 3 and maxPick
+
+  // Dar preferência a combos de nível mais alto dentro dos disponíveis
   let randomCombos: any[] = [];
   if (pickCount > 0) {
-    const highestLevel = eligibleCombos.reduce((max: number, c: any) => Math.max(max, c.level as number), -Infinity);
-    const highestLevelCombos = eligibleCombos.filter((c: any) => c.level === highestLevel);
-    const chosenTop = highestLevelCombos.length > 0
-      ? highestLevelCombos[Math.floor(Math.random() * highestLevelCombos.length)]
-      : null;
-
-    if (chosenTop) {
-      const remainingPool = eligibleCombos.filter((c: any) => c !== chosenTop);
-      const remainingCount = Math.max(0, pickCount - 1);
-      const rest = remainingCount === 0
-        ? []
-        : [...remainingPool].sort(() => Math.random() - 0.5).slice(0, remainingCount);
-      randomCombos = [chosenTop, ...rest];
-    } else {
-      // Fallback if for some reason we didn't find a top (shouldn't happen)
-      randomCombos = [...eligibleCombos].sort(() => Math.random() - 0.5).slice(0, pickCount);
-    }
+    // Find highest level available
+    const highestLevel = combos.reduce((max: number, c: any) => Math.max(max, c.level as number), -Infinity);
+    const highestLevelCombos = combos.filter((c: any) => c.level === highestLevel);
+    
+    // Ensure at least one high level combo
+    const chosenTop = highestLevelCombos[Math.floor(Math.random() * highestLevelCombos.length)];
+    const remainingPool = combos.filter((c: any) => c !== chosenTop);
+    
+    // Fill remaining slots with random combos
+    const remainingCount = pickCount - 1;
+    const rest = remainingCount > 0
+      ? [...remainingPool].sort(() => Math.random() - 0.5).slice(0, remainingCount)
+      : [];
+      
+    randomCombos = [chosenTop, ...rest];
   }
 
     let updatedFightsLeft = userData.fightsLeft;
@@ -309,22 +362,19 @@ export const getCombosMeta = onRequest(async (req, res) => {
     const category = (req.method === "GET" ? req.query.category : (req.body?.category as string | undefined)) as
       | string
       | undefined;
-    const difficulty = (req.method === "GET"
-      ? req.query.difficulty
-      : (req.body?.difficulty as string | undefined)) as string | undefined;
     const comboIdQuery = (req.method === "GET"
       ? (req.query.comboId as string | undefined)
       : (req.body?.comboId as string | undefined)) as string | undefined;
-
-    const normalizeDifficulty = (d?: string) => (typeof d === "string" ? d.toLowerCase().trim() : undefined);
-    const difficultyFilter = normalizeDifficulty(difficulty);
+    const moveTypeFilter = (req.method === "GET"
+      ? (req.query.moveType as string | undefined)
+      : (req.body?.moveType as string | undefined)) as string | undefined;
 
     type ComboItem = {
-      id: string;
+      comboId?: string | number;
       name?: string;
       title?: string;
       level?: number;
-      type?: string;
+      type?: string; // e.g., Punches | Kicks | Defense
       description?: string;
       // any other fields are ignored on output
     };
@@ -333,42 +383,48 @@ export const getCombosMeta = onRequest(async (req, res) => {
       id: string; // composed id for stable FlatList keys
       name: string;
       level: number;
-      type?: string;
-      difficulty: string;
+      type: string;
+      difficulty?: string; // mirror of type for UI compatibility
       categoryId: string;
       categoryName?: string;
-      comboId?: number | string;
+      comboId: number | string;
     }> = [];
 
-    const pushCombos = (
+    const pushFromLevels = (
       categoryId: string,
       categoryName: string | undefined,
-      levelObj: Record<string, ComboItem[]>
+      levelsObj: Record<string, ComboItem[]>
     ) => {
-      // levels is expected to be an object: { beginner: ComboItem[], intermediate: ComboItem[], advanced: ComboItem[] }
-      Object.entries(levelObj || {}).forEach(([diffKey, arr]) => {
-        const dkey = diffKey.toLowerCase();
-        if (difficultyFilter && difficultyFilter !== dkey) return;
-        if (!Array.isArray(arr)) return;
+      if (!levelsObj || typeof levelsObj !== 'object') return;
+      for (const typeKey of Object.keys(levelsObj)) {
+        const arr = Array.isArray(levelsObj[typeKey]) ? levelsObj[typeKey] : [];
         arr.forEach((combo, idx) => {
-          const levelNum = typeof combo.level === "number" ? combo.level : 0;
-          const displayName = (combo as any).name || (combo as any).title || `Combo ${idx + 1}`;
-          const comboIdVal = (combo as any).comboId ?? idx;
+          const levelNum = typeof combo.level === 'number' ? combo.level : 0;
+          const displayName = combo.name || combo.title || `Combo ${idx + 1}`;
+          const comboIdVal = combo.comboId ?? idx;
+          const comboType = (combo.type || typeKey || 'Punches');
+          const normalizedType = comboType.toString();
+
+          // Filter by moveType if specified (expects case-sensitive values like 'Punches')
+          if (moveTypeFilter && moveTypeFilter !== normalizedType) return;
+
+          // Filter by comboId if specified
           if (comboIdQuery && String(comboIdVal) !== String(comboIdQuery)) return;
-          // Create a stable id combining category, difficulty and comboId
-          const composedId = `${categoryId}:${dkey}:${comboIdVal}`;
+
+          const composedId = `${categoryId}:${comboIdVal}`;
+
           results.push({
             id: composedId,
             name: String(displayName),
             level: levelNum,
-            type: (combo as any).type,
-            difficulty: dkey,
+            type: normalizedType,
+            difficulty: normalizedType,
             categoryId,
             categoryName,
             comboId: comboIdVal,
           });
         });
-      });
+      }
     };
 
     // Force default to category '0' when none provided, as requested
@@ -381,7 +437,11 @@ export const getCombosMeta = onRequest(async (req, res) => {
         return;
       }
       const data = docSnap.data() as any;
-      pushCombos(docSnap.id, data?.category, data?.levels ?? {});
+      if (!data?.levels || typeof data.levels !== 'object') {
+        res.status(400).send("Invalid combos data structure: missing levels");
+        return;
+      }
+      pushFromLevels(docSnap.id, data?.category, data.levels as Record<string, ComboItem[]>);
     }
 
     // Sort by level asc then name asc
