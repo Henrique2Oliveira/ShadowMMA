@@ -46,6 +46,7 @@ export default function Combos() {
     movesMode?: string[];
     category?: string;
     comboId?: string | number;
+    moveType?: string;
   }) => {
     setRoundDuration(config.roundDuration || roundDuration);
     setNumRounds(config.numRounds || numRounds);
@@ -100,9 +101,7 @@ export default function Combos() {
         const token = await clientAuth.currentUser?.getIdToken();
         if (!token) throw new Error('Not authenticated');
 
-        // Infer regionless callable URL using default emulator/deployed domain conventions.
-        // Using onRequest endpoint: /getCombosMeta
-  // Use production URL to work on device and web without emulator setup
+
   const url = 'https://us-central1-shadow-mma.cloudfunctions.net/getCombosMeta?category=0';
 
         const resp = await fetch(url, {
@@ -152,9 +151,10 @@ export default function Combos() {
               numRounds: '3',
               restTime: '1',
               moveSpeed: '1',
-              movesMode: [],
+              movesMode: [item.type ?? 'Punches'],
               category: "0",
               comboId: item.comboId,
+
             });
           }
         }}
@@ -245,7 +245,8 @@ export default function Combos() {
         movesMode={movesMode}
         setMovesMode={setMovesMode}
         category={category}
-  comboId={selectedComboId}
+        comboId={selectedComboId}
+        moveType={selectedComboId ? combos?.find(c => c.comboId === selectedComboId)?.type : undefined}
         onStartFight={() => setIsModalVisible(false)}
       />
     </View>

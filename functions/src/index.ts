@@ -157,19 +157,17 @@ export const startFight = onRequest(async (req, res) => {
     const comboId = bodyOrQuery?.comboId as string | number | undefined;
     const categoryToUse = category.toString();
     
-    // Only process moveTypes if no comboId is provided
-    const moveTypesArray = !comboId ? (
-      (() => {
-        const moveTypesRaw = (bodyOrQuery?.moveTypes ?? bodyOrQuery?.movesMode ?? 'Punches') as string | string[];
-        return (
-          typeof moveTypesRaw === 'string' ? moveTypesRaw.split(',') : Array.isArray(moveTypesRaw) ? moveTypesRaw : ['Punches']
-        )
-          .map((s) => s.toString())
-          .map((s) => s.trim())
-          .map((s) => (s.length ? s : 'Punches'))
-          .slice(0, 3);
-      })()
-    ) : [];
+    // Process moveTypes for both combo selection and specific comboId
+    const moveTypesArray = (() => {
+      const moveTypesRaw = (bodyOrQuery?.moveTypes ?? bodyOrQuery?.movesMode ?? 'Punches') as string | string[];
+      return (
+        typeof moveTypesRaw === 'string' ? moveTypesRaw.split(',') : Array.isArray(moveTypesRaw) ? moveTypesRaw : ['Punches']
+      )
+        .map((s) => s.toString())
+        .map((s) => s.trim())
+        .map((s) => (s.length ? s : 'Punches'))
+        .slice(0, 3);
+    })();
     
     if (!comboId && !categoryToUse) {
       res.status(400).send("Bad Request: Missing category");
@@ -214,17 +212,20 @@ export const startFight = onRequest(async (req, res) => {
       // Prefer a flat combos array if present
       const combosArray = (comboData as any)?.combos;
       if (Array.isArray(combosArray)) {
-        found = combosArray.find((c: any) => String(c?.comboId) === targetIdStr);
+        found = combosArray.find((c: any) => 
+          String(c?.comboId) === targetIdStr && 
+          (!moveTypesArray.length || moveTypesArray.includes(c?.type || 'Punches'))
+        );
       }
       // Otherwise search within levels across all types
       if (!found && (comboData as any)?.levels && typeof (comboData as any).levels === 'object') {
         const levelsObj = (comboData as any).levels as Record<string, any[]>;
-        for (const typeKey of Object.keys(levelsObj)) {
-          const arr = Array.isArray(levelsObj[typeKey]) ? levelsObj[typeKey] : [];
-          const hit = arr.find((c: any) => String(c?.comboId) === targetIdStr);
-          if (hit) {
-            found = hit;
-            break;
+        // When searching for a specific combo, only look in the specified moveType
+        if (moveTypesArray.length === 1) {
+          const typeKey = moveTypesArray[0];
+          if (levelsObj[typeKey]) {
+            const arr = Array.isArray(levelsObj[typeKey]) ? levelsObj[typeKey] : [];
+            found = arr.find((c: any) => String(c?.comboId) === targetIdStr);
           }
         }
       }

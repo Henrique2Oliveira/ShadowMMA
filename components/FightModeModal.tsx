@@ -20,6 +20,7 @@ interface FightModeModalProps {
   setMovesMode: (movesMode: string[]) => void;
   category: string;
   comboId?: string | number; // hidden param, not shown in UI
+  moveType?: string; // The move type of the selected combo
   onStartFight: () => void;
 }
 
@@ -84,6 +85,7 @@ export function FightModeModal({
   setMovesMode,
   category,
   comboId,
+  moveType,
   onStartFight,
 }: FightModeModalProps) {
   const handleStartFight = () => {
@@ -95,7 +97,9 @@ export function FightModeModal({
         numRounds,
         restTime,
         moveSpeed,
-        movesMode: movesMode.join(','),
+        // If comboId is provided, use its specific moveType
+        // otherwise use the selected moveTypes from the modal
+        movesMode: comboId ? moveType || 'Punches' : movesMode.join(','),
         category,
         comboId: comboId !== undefined && comboId !== null ? String(comboId) : undefined,
         timestamp: Date.now().toString()
