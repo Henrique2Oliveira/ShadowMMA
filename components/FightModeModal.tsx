@@ -216,44 +216,46 @@ export function FightModeModal({
 
 
 
-            <View style={styles.optionRow}>
-              <Text style={styles.optionLabel}>Moves:</Text>
-              <View style={styles.buttonContainer}>
-                {FIGHT_OPTIONS.movesMode.map((move) => (
-                  <TouchableOpacity
-                    key={move.value}
-                    style={[
-                      styles.moveModeButton,
-                      movesMode.includes(move.value) && styles.moveModeButtonActive
-                    ]}
-                    onPress={() => {
-                      const newMovesMode = movesMode.includes(move.value)
-                        ? movesMode.length > 1 
-                          ? movesMode.filter(m => m !== move.value)
-                          : movesMode // Don't remove if it's the last selected option
-                        : [...movesMode, move.value];
-                      setMovesMode(newMovesMode);
-                    }}
-                  >
-                    <MaterialCommunityIcons 
-                      name={
-                        move.value === 'Punches' ? 'hand-back-right' :
-                        move.value === 'Kicks' ? 'foot-print' :
-                        'shield'
-                      } 
-                      size={24} 
-                      color={movesMode.includes(move.value) ? '#FFFFFF' : '#FFFFFF80'} 
-                    />
-                    <Text style={[
-                      styles.moveModeButtonText,
-                      movesMode.includes(move.value) && styles.moveModeButtonTextActive
-                    ]}>
-                      {move.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+            {comboId === undefined && (
+              <View style={styles.optionRow}>
+                <Text style={styles.optionLabel}>Moves:</Text>
+                <View style={styles.buttonContainer}>
+                  {FIGHT_OPTIONS.movesMode.map((move) => (
+                    <TouchableOpacity
+                      key={move.value}
+                      style={[
+                        styles.moveModeButton,
+                        movesMode.includes(move.value) && styles.moveModeButtonActive
+                      ]}
+                      onPress={() => {
+                        const newMovesMode = movesMode.includes(move.value)
+                          ? movesMode.length > 1 
+                            ? movesMode.filter(m => m !== move.value)
+                            : movesMode // Don't remove if it's the last selected option
+                          : [...movesMode, move.value];
+                        setMovesMode(newMovesMode);
+                      }}
+                    >
+                      <MaterialCommunityIcons 
+                        name={
+                          move.value === 'Punches' ? 'hand-back-right' :
+                          move.value === 'Kicks' ? 'foot-print' :
+                          'shield'
+                        } 
+                        size={24} 
+                        color={movesMode.includes(move.value) ? '#FFFFFF' : '#FFFFFF80'} 
+                      />
+                      <Text style={[
+                        styles.moveModeButtonText,
+                        movesMode.includes(move.value) && styles.moveModeButtonTextActive
+                      ]}>
+                        {move.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
-            </View>
+            )}
 
             <View style={styles.optionRow}>
               <Text style={styles.optionLabel}>Move Speed:</Text>

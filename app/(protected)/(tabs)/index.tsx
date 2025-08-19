@@ -18,7 +18,7 @@ export default function Index() {
   const [numRounds, setNumRounds] = React.useState('1');
   const [restTime, setRestTime] = React.useState('1');
   const [moveSpeed, setMoveSpeed] = React.useState('1');
-  const [movesMode, setMovesMode] = React.useState<string[]>(['punches']);
+  const [movesMode, setMovesMode] = React.useState<string[]>(['Punches']);
   const [category, setCategory] = React.useState('0');
 
   // Expose the show modal function globally
@@ -28,7 +28,7 @@ export default function Index() {
       numRounds: '3',
       restTime: '1',
       moveSpeed: '1',
-      movesMode: ['punches'],
+      movesMode: ['Punches'],
       category: '0'
     });
     return () => {

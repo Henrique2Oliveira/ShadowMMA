@@ -15,13 +15,14 @@ type ComboMeta = {
   name: string;
   level: number;
   type?: string;
-  difficulty: string;
+  // Server returns a single move type for the combo (e.g., 'Punches' | 'Kicks' | 'Defense')
+  // Replaces previous `difficulty` string usage
   categoryId: string;
   categoryName?: string;
   comboId?: number | string;
 };
 
-const CACHE_KEY = 'combos_meta_cache_v2_cat0_asc';
+const CACHE_KEY = 'combos_meta_cache_v3_cat0_asc';
 const CACHE_TTL_MS = 1000 * 60 * 10; // 10 minutes
 
 export default function Combos() {
@@ -33,7 +34,7 @@ export default function Combos() {
   const [numRounds, setNumRounds] = React.useState('1');
   const [restTime, setRestTime] = React.useState('1');
   const [moveSpeed, setMoveSpeed] = React.useState('1');
-  const [movesMode, setMovesMode] = React.useState<string[]>(['punches']);
+  const [movesMode, setMovesMode] = React.useState<string[]>(['Punches']);
   const [category, setCategory] = React.useState('0');
   const [selectedComboId, setSelectedComboId] = React.useState<string | number | undefined>(undefined);
 
@@ -151,7 +152,7 @@ export default function Combos() {
               numRounds: '3',
               restTime: '1',
               moveSpeed: '1',
-              movesMode: [item.difficulty],  // Convert the combo's difficulty to initial moves mode
+              movesMode: [],
               category: "0",
               comboId: item.comboId,
             });
@@ -179,7 +180,7 @@ export default function Combos() {
             )}
           </View>
           <Text style={[styles.comboDescription, isLocked && styles.lockedText]}>
-            {item.categoryName ? `${item.difficulty}` : item.difficulty} 
+            {item.categoryName ? `${item.type ?? ''}` : item.type ?? ''}
           </Text>
           <View style={[styles.levelBadge, isLocked && styles.lockedLevelBadge]}>
             <Text style={[styles.levelText, isLocked && styles.lockedLevelText]}>Level {item.level}</Text>

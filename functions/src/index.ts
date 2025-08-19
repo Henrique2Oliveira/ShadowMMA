@@ -155,15 +155,21 @@ export const startFight = onRequest(async (req, res) => {
     const bodyOrQuery: any = req.method === "POST" ? req.body : req.query;
     const category = (bodyOrQuery?.category ?? '0') as string | number;
     const comboId = bodyOrQuery?.comboId as string | number | undefined;
-    const moveTypesRaw = (bodyOrQuery?.moveTypes ?? bodyOrQuery?.movesMode ?? 'Punches') as string | string[];
     const categoryToUse = category.toString();
-    const moveTypesArray = (
-      typeof moveTypesRaw === 'string' ? moveTypesRaw.split(',') : Array.isArray(moveTypesRaw) ? moveTypesRaw : ['Punches']
-    )
-      .map((s) => s.toString())
-      .map((s) => s.trim())
-      .map((s) => (s.length ? s : 'Punches'))
-      .slice(0, 3);
+    
+    // Only process moveTypes if no comboId is provided
+    const moveTypesArray = !comboId ? (
+      (() => {
+        const moveTypesRaw = (bodyOrQuery?.moveTypes ?? bodyOrQuery?.movesMode ?? 'Punches') as string | string[];
+        return (
+          typeof moveTypesRaw === 'string' ? moveTypesRaw.split(',') : Array.isArray(moveTypesRaw) ? moveTypesRaw : ['Punches']
+        )
+          .map((s) => s.toString())
+          .map((s) => s.trim())
+          .map((s) => (s.length ? s : 'Punches'))
+          .slice(0, 3);
+      })()
+    ) : [];
     
     if (!comboId && !categoryToUse) {
       res.status(400).send("Bad Request: Missing category");
@@ -363,13 +369,6 @@ export const startFight = onRequest(async (req, res) => {
   }
 });
 
-/**
- * Returns a minimal, optimized list of combo metadata for the client to list.
- * Requires Authorization: Bearer <idToken>
- * Optional query params:
- *  - category: string (doc id)
- *  - difficulty: beginner|intermediate|advanced (filters combos inside levels)
- */
 export const getCombosMeta = onRequest(async (req, res) => {
   try {
     // Enforce GET (or allow POST with same behavior)
@@ -438,10 +437,8 @@ export const getCombosMeta = onRequest(async (req, res) => {
           // Filter by comboId if specified
           if (comboIdQuery && String(comboIdVal) !== String(comboIdQuery)) return;
 
-          const composedId = `${categoryId}:${comboIdVal}`;
-
           results.push({
-            id: composedId,
+            id: `${categoryId}-${typeKey}-${String(comboIdVal)}`,
             name: String(displayName),
             level: levelNum,
             type: normalizedType,
