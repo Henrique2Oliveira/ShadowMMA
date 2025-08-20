@@ -1,6 +1,6 @@
 import { Colors, Typography } from '@/themes/theme';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 
 interface LevelBarProps {
@@ -9,9 +9,11 @@ interface LevelBarProps {
 
 export const LevelBar: React.FC<LevelBarProps> = ({ xp }) => {
   // Calculate level and XP percentage
-  const level = Math.floor(xp / 100)  || 0; // Level starts at 0
+  const level = Math.floor(xp / 100) || 0; // Level starts at 0
   const xpPercentage = xp % 100;
   const animatedWidth = useRef(new Animated.Value(0)).current;
+  const [previousLevel, setPreviousLevel] = useState(level);
+  const [showNewCombo, setShowNewCombo] = useState(false);
 
   useEffect(() => {
     Animated.spring(animatedWidth, {
@@ -21,6 +23,18 @@ export const LevelBar: React.FC<LevelBarProps> = ({ xp }) => {
       friction: 7
     }).start();
   }, [xpPercentage]);
+
+  useEffect(() => {
+    if (level > previousLevel) {
+      setShowNewCombo(true);
+      // Hide the message after 3 seconds
+      const timer = setTimeout(() => {
+        setShowNewCombo(false);
+      }, 3000);
+      setPreviousLevel(level);
+      return () => clearTimeout(timer);
+    }
+  }, [level, previousLevel]);
 
   return (
     <View style={styles.container}>
@@ -34,7 +48,7 @@ export const LevelBar: React.FC<LevelBarProps> = ({ xp }) => {
             height: '100%',
           }}>
             <LinearGradient
-              colors={['#934683', '#CB04A5']}
+              colors={['#ddb217ff', '#0bcb04ff']}
               start={{ x: 0, y: 1 }}
               end={{ x: 1, y: 0 }}
               style={{
@@ -55,11 +69,13 @@ export const LevelBar: React.FC<LevelBarProps> = ({ xp }) => {
         LEVEL {level}
       </Text>
       
-      <View style={styles.newComboContainer}>
-        <Text style={styles.newComboText}>
-          New Combo Unlocked!
-        </Text>
-      </View>
+      {showNewCombo && (
+        <View style={styles.newComboContainer}>
+          <Text style={styles.newComboText}>
+            New Combo Unlocked!
+          </Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -101,7 +117,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 4,
     borderColor: "rgba(0, 0, 0, 0.79)",
-    backgroundColor: "#df97ef69",
+    backgroundColor: "#bcef9769",
     overflow: 'hidden',
     shadowOpacity: 0.3,
     shadowRadius: 4.65,
