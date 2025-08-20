@@ -263,13 +263,6 @@ export default function Game() {
         if (!user) throw new Error('No user');
         const idToken = await user.getIdToken();
 
-        console.log('Sending request to server with:', {
-          category: params.category || '0',
-          movesMode: params.movesMode || 'Punches',
-          comboId: params.comboId || undefined,
-          
-        });
-
     const response = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/startFight', {
           method: 'POST',
           headers: {

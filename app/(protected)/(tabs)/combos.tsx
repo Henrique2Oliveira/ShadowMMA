@@ -232,16 +232,6 @@ export default function Combos() {
         comboId={selectedComboId}
         moveType={movesMode[0]}
         onStartFight={() => {
-          console.log({
-            roundDuration: `Rounds: ${roundDuration}`,
-            numRounds: `Duration: ${numRounds}`,
-            restTime: `Rest time: ${restTime}`,
-            moveSpeed: `Move speed: ${moveSpeed}`,
-            movesMode: `Type: ${movesMode.join(', ')}`,
-            category: `Category: ${category}`,
-            comboId: selectedComboId ? `Combo ID: ${selectedComboId}` : undefined,
-            moveType: selectedComboId ? combos?.find(c => c.comboId === selectedComboId)?.type : undefined,
-          });
           setIsModalVisible(false);
         }}
       />
