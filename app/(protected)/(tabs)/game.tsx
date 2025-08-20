@@ -250,10 +250,10 @@ export default function Game() {
 
     setSpeedMultiplier(parseFloat(params.moveSpeed || '1'));
     setAnimationsEnabled(true);
-  // Reset Speed Boost state on new game
-  setIsBoostActive(false);
-  setBoostRemainingMs(0);
-  if (lastBoostTickRef) lastBoostTickRef.current = null;
+    // Reset Speed Boost state on new game
+    setIsBoostActive(false);
+    setBoostRemainingMs(0);
+    if (lastBoostTickRef) lastBoostTickRef.current = null;
 
     const fetchMoves = async () => {
       setIsLoading(true);
@@ -262,6 +262,13 @@ export default function Game() {
         const user = auth.currentUser;
         if (!user) throw new Error('No user');
         const idToken = await user.getIdToken();
+
+        console.log('Sending request to server with:', {
+          category: params.category || '0',
+          movesMode: params.movesMode || 'Punches',
+          comboId: params.comboId || undefined,
+          
+        });
 
     const response = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/startFight', {
           method: 'POST',
@@ -502,7 +509,7 @@ export default function Game() {
 
   const updateMoveProg = React.useCallback(() => {
     if (currentMove) {
-    return updateMoveProgress(currentMove.pauseTime, effectiveSpeedMultiplier);
+      return updateMoveProgress(currentMove.pauseTime, effectiveSpeedMultiplier);
     }
     return null;
   }, [currentMove, effectiveSpeedMultiplier, updateMoveProgress]);
@@ -540,8 +547,8 @@ export default function Game() {
         // For regular moves, start from after the countdown sequence
         const effectiveIndex = isCountdownComplete ? currentIndex : countdownLength - 1;
         const nextIndex = (effectiveIndex + 1 - countdownLength) % (moves.length - countdownLength) + countdownLength;
-  const nextMove = moves[nextIndex];
-  setCurrentMove(nextMove);
+        const nextMove = moves[nextIndex];
+        setCurrentMove(nextMove);
 
         // Update current combo name for regular moves
         if (isCountdownComplete && nextMove.comboName) {
@@ -606,7 +613,7 @@ export default function Game() {
 
   React.useEffect(() => {
     if (currentMove) {
-    const timer = setInterval(updateMove, currentMove.pauseTime / effectiveSpeedMultiplier);
+      const timer = setInterval(updateMove, currentMove.pauseTime / effectiveSpeedMultiplier);
       return () => clearInterval(timer);
     }
   }, [currentMove, effectiveSpeedMultiplier, updateMove]);
@@ -655,7 +662,7 @@ export default function Game() {
         )}
 
         {/* Speed Boost bubble indicator - placed below combo name */}
-  {isBoostActive && !gameState.isRestPeriod && !gameState.isGameOver && (
+        {isBoostActive && !gameState.isRestPeriod && !gameState.isGameOver && (
           <Animated.View
             style={[
               styles.boostBubble,
@@ -698,7 +705,7 @@ export default function Game() {
 
         {gameState.isGameOver && (
           <>
-            <LevelBar xp={userData?.xp || 0}  />
+            <LevelBar xp={userData?.xp || 0} />
             <GameOverButtons />
           </>
         )}
@@ -749,21 +756,21 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   boostBubble: {
-  position: 'absolute',
-  top: 140, // below the combo name (which sits at top: 100)
-  alignSelf: 'center',
-  backgroundColor: 'rgba(0, 0, 0, 0.9)',
-  borderRadius: 20,
-  paddingHorizontal: 18,
-  paddingVertical: 6,
-  flexDirection: 'row',
-  alignItems: 'center',
-  gap: 8,
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.3,
-  shadowRadius: 4,
-  elevation: 4,
+    position: 'absolute',
+    top: 140, // below the combo name (which sits at top: 100)
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   boostText: {
     color: '#ffffffff',

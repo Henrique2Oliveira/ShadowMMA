@@ -81,7 +81,7 @@ export default function Combos() {
   const saveToCache = useCallback(async (data: ComboMeta[]) => {
     try {
       await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
-    } catch {}
+    } catch { }
   }, []);
 
   const fetchCombos = useCallback(
@@ -102,7 +102,7 @@ export default function Combos() {
         if (!token) throw new Error('Not authenticated');
 
 
-  const url = 'https://us-central1-shadow-mma.cloudfunctions.net/getCombosMeta?category=0';
+        const url = 'https://us-central1-shadow-mma.cloudfunctions.net/getCombosMeta?category=0';
 
         const resp = await fetch(url, {
           method: 'GET',
@@ -134,7 +134,7 @@ export default function Combos() {
 
   const getUserLevel = (xp: number) => {
     // Simple level calculation: every 100 XP is a new level, starting from level 1
-    return Math.floor(xp / 100) + 1;
+    return Math.floor(xp / 100);
   };
 
   const handleComboPress = useCallback((item: ComboMeta, isLocked: boolean) => {
@@ -144,7 +144,7 @@ export default function Combos() {
         numRounds: '3',
         restTime: '1',
         moveSpeed: '1',
-        movesMode: [item.type ?? 'Punches'],
+        movesMode: [item.type || 'Punches'],
         category: "0",
         comboId: item.comboId,
       });
@@ -230,8 +230,20 @@ export default function Combos() {
         setMovesMode={setMovesMode}
         category={category}
         comboId={selectedComboId}
-        moveType={selectedComboId ? combos?.find(c => c.comboId === selectedComboId)?.type : undefined}
-        onStartFight={() => setIsModalVisible(false)}
+        moveType={movesMode[0]}
+        onStartFight={() => {
+          console.log({
+            roundDuration: `Rounds: ${roundDuration}`,
+            numRounds: `Duration: ${numRounds}`,
+            restTime: `Rest time: ${restTime}`,
+            moveSpeed: `Move speed: ${moveSpeed}`,
+            movesMode: `Type: ${movesMode.join(', ')}`,
+            category: `Category: ${category}`,
+            comboId: selectedComboId ? `Combo ID: ${selectedComboId}` : undefined,
+            moveType: selectedComboId ? combos?.find(c => c.comboId === selectedComboId)?.type : undefined,
+          });
+          setIsModalVisible(false);
+        }}
       />
     </View>
   );
@@ -252,7 +264,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: '10%',
     top: '10%',
-    transform: [ { translateX: -12 }], // Half of the icon size (24/2)
+    transform: [{ translateX: -12 }], // Half of the icon size (24/2)
     zIndex: 1,
   },
   lockedLevelBadge: {
@@ -260,7 +272,7 @@ const styles = StyleSheet.create({
   },
   lockedLevelText: {
     color: Colors.text + '99',
-    
+
   },
   titleContainer: {
     flexDirection: 'row',

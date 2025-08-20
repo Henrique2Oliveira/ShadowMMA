@@ -21,12 +21,18 @@ const ComboCard = React.memo(({
   level,
   categoryName,
   isLocked,
-  onPress
+  onPress,
+  comboId
 }: ComboCardProps) => {
   return (
     <TouchableOpacity
       style={[styles.comboCard, isLocked && styles.lockedCard]}
-      onPress={onPress}
+
+      onPress={() => {
+        console.log(`Combo ID: ${comboId}, Type: ${type} being sent to server`);
+
+        onPress();
+      }}
       disabled={isLocked}
     >
       <LinearGradient colors={[Colors.button, '#5a5a5aff']} style={styles.cardGradient}>
