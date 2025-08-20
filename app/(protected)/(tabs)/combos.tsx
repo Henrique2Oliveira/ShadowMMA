@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontFamily: Typography.fontFamily,
     marginLeft: 10,
-    fontWeight: 'bold',
+
     textShadowColor: "#000",
     textShadowOffset: { width: 1, height: 1 },
   },
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontSize: 24,
     fontFamily: Typography.fontFamily,
-    fontWeight: 'bold',
+
     marginBottom: 4,
     textShadowColor: "#000",
     textShadowOffset: { width: 1, height: 1 },

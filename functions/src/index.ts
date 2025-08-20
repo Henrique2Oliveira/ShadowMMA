@@ -301,7 +301,7 @@ export const startFight = onRequest(async (req, res) => {
   }
 
   // Decide random quantity between 3 and 5 (limited by available combos)
-  const maxPick = Math.min(5, totalAvailable);
+  const maxPick = Math.min(4, totalAvailable);
   const pickCount = totalAvailable < 3
     ? totalAvailable // return all if less than 3 available
     : 3 + Math.floor(Math.random() * (maxPick - 3 + 1)); // integer between 3 and maxPick

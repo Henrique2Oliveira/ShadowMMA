@@ -33,7 +33,7 @@ const ComboCard = React.memo(({
       <LinearGradient colors={[Colors.button, '#5a5a5aff']} style={styles.cardGradient}>
         <View style={styles.titleContainer}>
           <MaterialCommunityIcons
-            name={type === 'Punches' ? 'boxing-glove' : type === 'Defense' ? 'shield' : 'run-fast'}
+            name={type === 'Punches' ? 'boxing-glove' : type === 'Defense' ? 'shield' : 'karate'}
             size={115}
             color="#02020247"
             style={styles.typeIcon}

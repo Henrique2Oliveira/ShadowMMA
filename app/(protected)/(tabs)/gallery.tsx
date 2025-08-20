@@ -159,7 +159,7 @@ export default function Gallery() {
       >
         <MaterialCommunityIcons
           name={move.icon}
-          size={45}
+          size={55}
           color="white"
           style={styles.moveIcon}
         />
@@ -217,7 +217,7 @@ export default function Gallery() {
                 <View style={styles.modalHeader}>
                   <MaterialCommunityIcons
                     name={selectedMove.icon}
-                    size={40}
+                    size={50}
                     color="white"
                     style={styles.modalIcon}
                   />
@@ -294,8 +294,8 @@ const styles = StyleSheet.create({
   },
   moveCategory: {
     color: Colors.text,
-    opacity: 0.8,
-    fontSize: 14,
+    opacity: 0.7,
+    fontSize: 16,
     fontFamily: Typography.fontFamily,
     textAlign: 'center',
     marginTop: 2,

@@ -139,6 +139,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#444444',
     borderRadius: 10,
     padding: 15,
+    marginHorizontal: 10,
     paddingBottom: 17,
     borderBottomWidth: 4,
     borderBottomColor: "#2b2b2bff",
@@ -174,7 +175,9 @@ const styles = StyleSheet.create({
   },
   movesContainer: {
     flexDirection: 'column',
-
+    padding: 3,
+    
+    alignItems: 'flex-start', //maybe remove this if not needed
   },
   moveText: {
     color: "white",

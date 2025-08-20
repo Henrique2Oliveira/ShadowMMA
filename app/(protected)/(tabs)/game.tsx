@@ -160,9 +160,7 @@ export default function Game() {
   const [showCombosModal, setShowCombosModal] = React.useState(false);
   const [combos, setCombos] = React.useState<Combo[]>([]);
   const [currentComboName, setCurrentComboName] = React.useState<string>("");
-  const [stance, setStance] = React.useState<'orthodox' | 'southpaw'>(
-    'orthodox'
-  );
+  const [stance, setStance] = React.useState<'orthodox' | 'southpaw'>('orthodox');
 
 
   const [speedMultiplier, setSpeedMultiplier] = React.useState(parseFloat(params.moveSpeed || '1'));
