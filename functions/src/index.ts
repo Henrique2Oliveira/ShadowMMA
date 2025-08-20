@@ -183,7 +183,7 @@ export const startFight = onRequest(async (req, res) => {
     }
 
     const userData = userDoc.data();
- 
+
     // If user is not pro, check fights left
     if (userData?.plan !== 'pro') {
       if (!userData?.fightsLeft || userData.fightsLeft <= 0) {
@@ -214,18 +214,17 @@ export const startFight = onRequest(async (req, res) => {
       if (Array.isArray(combosArray)) {
         found = combosArray.find((c: any) => 
           String(c?.comboId) === targetIdStr && 
-          (!moveTypesArray.length || moveTypesArray.includes(c?.type || 'Punches'))
+          moveTypesArray.includes(c?.type || 'Punches')
         );
       }
-      // Otherwise search within levels across all types
+      // Search within levels across specified move types
       if (!found && (comboData as any)?.levels && typeof (comboData as any).levels === 'object') {
         const levelsObj = (comboData as any).levels as Record<string, any[]>;
-        // When searching for a specific combo, only look in the specified moveType
-        if (moveTypesArray.length === 1) {
-          const typeKey = moveTypesArray[0];
-          if (levelsObj[typeKey]) {
-            const arr = Array.isArray(levelsObj[typeKey]) ? levelsObj[typeKey] : [];
-            found = arr.find((c: any) => String(c?.comboId) === targetIdStr);
+        // Search through each requested move type
+        for (const moveType of moveTypesArray) {
+          if (levelsObj[moveType]) {
+            found = levelsObj[moveType].find((c: any) => String(c?.comboId) === targetIdStr);
+            if (found) break;
           }
         }
       }

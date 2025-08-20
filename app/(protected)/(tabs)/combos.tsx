@@ -1,3 +1,4 @@
+import ComboCard from '@/components/ComboCard';
 import { FightModeModal } from '@/components/FightModeModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
@@ -5,7 +6,6 @@ import { app as firebaseApp } from '@/FirebaseConfig.js';
 import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LinearGradient } from 'expo-linear-gradient';
 import { getAuth as getClientAuth } from 'firebase/auth';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -137,58 +137,37 @@ export default function Combos() {
     return Math.floor(xp / 100) + 1;
   };
 
+  const handleComboPress = useCallback((item: ComboMeta, isLocked: boolean) => {
+    if (!isLocked) {
+      setModalConfig({
+        roundDuration: '2',
+        numRounds: '3',
+        restTime: '1',
+        moveSpeed: '1',
+        movesMode: [item.type ?? 'Punches'],
+        category: "0",
+        comboId: item.comboId,
+      });
+    }
+  }, [setModalConfig]);
+
   const renderItem = useCallback(({ item }: { item: ComboMeta }) => {
     const userLevel = getUserLevel(userData?.xp || 0);
     const isLocked = item.level > userLevel;
 
     return (
-      <TouchableOpacity
-        style={[styles.comboCard, isLocked && styles.lockedCard]}
-        onPress={() => {
-          if (!isLocked) {
-            setModalConfig({
-              roundDuration: '2',
-              numRounds: '3',
-              restTime: '1',
-              moveSpeed: '1',
-              movesMode: [item.type ?? 'Punches'],
-              category: "0",
-              comboId: item.comboId,
-
-            });
-          }
-        }}
-        disabled={isLocked}
-      >
-        <LinearGradient colors={[Colors.button, '#5a5a5aff']} style={styles.cardGradient}>
-          <View style={styles.titleContainer}>
-            <MaterialCommunityIcons
-              name={item.type === 'Punches' ? 'boxing-glove' : item.type === 'Defense' ? 'shield' : 'run-fast'}
-              size={130}
-              color="#02020247"
-              style={styles.typeIcon}
-            />
-            <Text style={[styles.comboTitle, isLocked && styles.lockedText]}>{item.name}</Text>
-            {isLocked && (
-              <MaterialCommunityIcons
-                name="lock"
-                size={48}
-                color={Colors.text}
-                style={styles.lockIcon}
-              />
-              
-            )}
-          </View>
-          <Text style={[styles.comboDescription, isLocked && styles.lockedText]}>
-            {item.categoryName ? `${item.type ?? ''}` : item.type ?? ''}
-          </Text>
-          <View style={[styles.levelBadge, isLocked && styles.lockedLevelBadge]}>
-            <Text style={[styles.levelText, isLocked && styles.lockedLevelText]}>Level {item.level}</Text>
-          </View>
-        </LinearGradient>
-      </TouchableOpacity>
+      <ComboCard
+        id={item.id}
+        name={item.name}
+        level={item.level}
+        type={item.type}
+        categoryName={item.categoryName}
+        comboId={item.comboId}
+        isLocked={isLocked}
+        onPress={() => handleComboPress(item, isLocked)}
+      />
     );
-  }, [setModalConfig, userData?.xp]);
+  }, [userData?.xp, handleComboPress]);
 
   const keyExtractor = useCallback((item: ComboMeta) => item.id, []);
 
@@ -222,6 +201,11 @@ export default function Combos() {
           contentContainerStyle={styles.comboList}
           renderItem={renderItem}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={() => fetchCombos(true)} tintColor={Colors.text} />}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={true}
+          initialNumToRender={8}
+          updateCellsBatchingPeriod={50}
         />
       )}
 
@@ -369,7 +353,7 @@ const errStyles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
   },
   errorText: {
     color: '#ffbbbb',
