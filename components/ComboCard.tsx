@@ -115,7 +115,6 @@ const styles = StyleSheet.create({
   },
   levelBadge: {
     position: 'absolute',
-
     top: 8,
     right: 8,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -126,7 +125,7 @@ const styles = StyleSheet.create({
   levelText: {
     color: Colors.text,
     fontFamily: Typography.fontFamily,
-    fontSize: 12,
+    fontSize: 15,
   },
 });
 

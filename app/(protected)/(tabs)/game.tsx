@@ -77,7 +77,6 @@ export default function Game() {
         setBellSound(bell);
       } catch (error) {
         console.error('Error loading sounds:', error);
-        // Set error state here if you want to show error UI
       }
     };
 
@@ -518,7 +517,19 @@ export default function Game() {
                       xp: data.newXp,
                     });
                   })
-                  .catch(error => console.error('Error updating XP:', error));
+                  .catch(error => {
+                    console.error('Error updating XP:', error);
+                    setCurrentModal({
+                      visible: true,
+                      title: 'XP Update Error',
+                      message: 'Failed to update your XP. Your progress may not be saved.',
+                      type: 'error',
+                      primaryButton: {
+                        text: 'OK',
+                        onPress: () => setCurrentModal(null)
+                      }
+                    });
+                  });
               });
             }
 
@@ -529,6 +540,18 @@ export default function Game() {
               isGameOver: true,
             }));
             playBellSound();
+            
+            // Show completion modal
+            setCurrentModal({
+              visible: true,
+              title: 'Workout Complete! 🎉',
+              message: `Great job! You've completed all ${totalRounds} rounds. Keep up the good work!`,
+              type: 'success',
+              primaryButton: {
+                text: 'Close',
+                onPress: () => setCurrentModal(null)
+              }
+            });
             Animated.parallel([
               Animated.timing(tiltX, {
                 toValue: 0,
@@ -816,7 +839,23 @@ export default function Game() {
           onToggleStance={() => setStance((prev) => prev === 'orthodox' ? 'southpaw' : 'orthodox')}
           onQuit={() => {
             setIsOptionsModalVisible(false);
-            router.replace('/(protected)/(tabs)');
+            setCurrentModal({
+              visible: true,
+              title: 'Quit Workout?',
+              message: 'Are you sure you want to end this workout? Your progress will not be saved.',
+              type: 'warning',
+              primaryButton: {
+                text: 'Stay',
+                onPress: () => setCurrentModal(null)
+              },
+              secondaryButton: {
+                text: 'Quit',
+                onPress: () => {
+                  setCurrentModal(null);
+                  router.replace('/(protected)/(tabs)');
+                }
+              }
+            });
           }}
         />
       </LinearGradient>

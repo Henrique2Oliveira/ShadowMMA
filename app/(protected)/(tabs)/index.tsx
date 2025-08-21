@@ -97,7 +97,7 @@ export default function Index() {
       })
     },
     {
-      title: 'Footwork',
+      title: 'Kicks',
       disabled: false,
       onPress: () => setModalConfig({
         roundDuration: '3',
@@ -109,7 +109,7 @@ export default function Index() {
       })
     },
     {
-      title: 'Defense Work',
+      title: 'Defense',
       disabled: false,
       onPress: () => setModalConfig({
         roundDuration: '3',
@@ -224,10 +224,10 @@ export default function Index() {
             onPress={buttons[3].onPress}
             disabled={buttons[3].disabled}>
             <View style={{ position: 'absolute', top: -40, transform: [{ rotate: '40deg' }], }}>
-              <Ionicons name="footsteps" size={80} color={Colors.background} style={styles.buttonIcon} />
-              <Ionicons name="footsteps" size={80} color={Colors.background} style={styles.buttonIcon} />
+              <Ionicons name="footsteps" size={78} color={Colors.background} style={styles.buttonIcon} />
+              <Ionicons name="footsteps" size={78} color={Colors.background} style={styles.buttonIcon} />
             </View>
-            <View style={{ position: 'absolute', bottom: 15, left: 0, right: 0 }}>
+            <View style={{ position: 'absolute', bottom: 12, left: 0, right: 0 }}>
               <Text style={[styles.textButton]}>{buttons[3].title}</Text>
             </View>
           </TouchableOpacity>
@@ -235,8 +235,8 @@ export default function Index() {
             style={[styles.button, buttons[4].disabled && { opacity: 0.4 }]}
             onPress={buttons[4].onPress}
             disabled={buttons[4].disabled}>
-            <MaterialCommunityIcons name="shield" size={68} color={Colors.background} style={styles.buttonIcon} />
-            <Text style={[styles.textButton, { fontSize: 28 }]}>{buttons[4].title}</Text>
+            <MaterialCommunityIcons name="shield" size={75} color={Colors.background} style={styles.buttonIcon} />
+            <Text style={[styles.textButton, { fontSize: 32 }]}>{buttons[4].title}</Text>
           </TouchableOpacity>
         </View>
 
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 25,
-    paddingTop: 20,
+    paddingTop: 10,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Colors.background,
