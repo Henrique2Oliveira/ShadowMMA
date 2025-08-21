@@ -1,3 +1,4 @@
+import { AlertModal } from '@/components/AlertModal';
 import { CombosModal } from '@/components/CombosModal';
 import { GameControls } from '@/components/GameControls';
 import { GameOptionsModal } from '@/components/GameOptionsModal';
@@ -19,9 +20,25 @@ import { Audio } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
-import { Alert, Animated, AppState, StyleSheet } from 'react-native';
+import { Animated, AppState, StyleSheet } from 'react-native';
+
+type ModalConfig = {
+  visible: boolean;
+  title: string;
+  message: string;
+  type?: 'error' | 'warning' | 'success' | 'info';
+  primaryButton: {
+    text: string;
+    onPress: () => void;
+  };
+  secondaryButton?: {
+    text: string;
+    onPress: () => void;
+  };
+};
 
 export default function Game() {
+  const [currentModal, setCurrentModal] = React.useState<ModalConfig | null>(null);
   const { updateUserData, userData } = useUserData();
 
   // Load sound effects
@@ -293,11 +310,27 @@ export default function Game() {
         setCurrentComboName("")
         if (!response.ok) {
           if (response.status === 403) {
-            Alert.alert(
-              'No Fights Left',
-              'You have no fights remaining. Watch an ad or upgrade your plan to continue.',
-              [{ text: 'OK', onPress: () => router.navigate('/(protected)/(tabs)') }]
-            );
+            setCurrentModal({
+              visible: true,
+              title: 'No Fights Left',
+              message: 'You have reached your daily fight limit. Upgrade to Pro for unlimited fights!',
+              type: 'warning',
+              primaryButton: {
+                text: 'Upgrade to Pro',
+                onPress: () => {
+                  setCurrentModal(null);
+                  // Add your upgrade navigation logic here
+                  router.navigate('/(protected)/(tabs)');
+                }
+              },
+              secondaryButton: {
+                text: 'Maybe Later',
+                onPress: () => {
+                  setCurrentModal(null);
+                  router.navigate('/(protected)/(tabs)');
+                }
+              }
+            });
             return;
           }
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -324,7 +357,7 @@ export default function Game() {
               direction: 'down',
               tiltValue: 0.1
             };
-            allMoves = [ ...allMoves, returnMove];
+            allMoves = [...allMoves, returnMove];
           }
 
           // Store combos with their moves and show modal
@@ -359,12 +392,26 @@ export default function Game() {
         }
 
       } catch (error) {
+        setCurrentModal({
+          visible: true,
+          title: 'Error',
+          message: 'Failed to start fight. Please try again later.',
+          type: 'warning',
+          primaryButton: {
+            text: 'OK',
+            onPress: () => {
+              setCurrentModal(null);
+              router.navigate('/(protected)/(tabs)');
+            }
+          }
+        });
         console.error("Error fetching moves:", error);
-        Alert.alert(
-          'Error',
-          'Failed to start fight. Please try again later.',
-          [{ text: 'OK', onPress: () => router.navigate('/(protected)/(tabs)') }]
-        );
+        // Optionally, you can show an alert here instead of setting a modal
+        // Alert.alert(
+        //   'Error',
+        //   'Failed to start fight. Please try again later.',
+        //   [{ text: 'OK', onPress: () => router.navigate('/(protected)/(tabs)') }]
+        // );
       } finally {
         setIsLoading(false);
       }
@@ -656,6 +703,17 @@ export default function Game() {
 
   return (
     <>
+      {currentModal && (
+        <AlertModal
+          visible={currentModal.visible}
+          title={currentModal.title}
+          message={currentModal.message}
+          type={currentModal.type}
+          primaryButton={currentModal.primaryButton}
+          secondaryButton={currentModal.secondaryButton}
+          onClose={() => setCurrentModal(null)}
+        />
+      )}
       <CombosModal
         visible={showCombosModal}
         combos={combos}
