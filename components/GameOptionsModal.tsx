@@ -46,7 +46,7 @@ export const GameOptionsModal: React.FC<GameOptionsModalProps> = ({
     },
     {
       icon: stance === 'orthodox' ? 'walk' : 'walk-outline',
-      label: `Stance: ${stance === 'orthodox' ? 'Jab-Left' : 'Jab-Right'}`,
+      label: `Stance: ${stance === 'orthodox' ? 'Jab-Left (Orthodox)' : 'Jab-Right (Southpaw)'}`,
       onPress: onToggleStance,
     },
     {

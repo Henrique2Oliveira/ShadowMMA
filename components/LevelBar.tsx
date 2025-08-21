@@ -19,8 +19,8 @@ export const LevelBar: React.FC<LevelBarProps> = ({ xp }) => {
     Animated.spring(animatedWidth, {
       toValue: xpPercentage,
       useNativeDriver: false,
-      tension: 30,
-      friction: 7
+      tension: 20,
+      friction: 4
     }).start();
   }, [xpPercentage]);
 

@@ -15,6 +15,7 @@ interface MoveCardProps {
   isRestPeriod: boolean;
   isPaused: boolean;
   animationsEnabled: boolean;
+  isSouthPaw?: boolean;
 }
 
 export const MoveCard: React.FC<MoveCardProps> = ({
@@ -28,6 +29,7 @@ export const MoveCard: React.FC<MoveCardProps> = ({
   isRestPeriod,
   isPaused,
   animationsEnabled,
+  isSouthPaw = false,
 }) => {
   return (
     <Animated.View style={[
@@ -59,7 +61,7 @@ export const MoveCard: React.FC<MoveCardProps> = ({
         end={{ x: 0, y: 1 }}
       >
         <Text style={styles.text} numberOfLines={2} adjustsFontSizeToFit>
-          {isGameOver ? "FIGHT OVER!" : move || ""}
+          {isGameOver ? "FIGHT OVER!" : isSouthPaw ? move.replace(/LEFT/g, 'TEMP').replace(/RIGHT/g, 'LEFT').replace(/TEMP/g, 'RIGHT') : move || ""}
         </Text>
 
         {isRestPeriod && (
@@ -107,7 +109,7 @@ const styles = StyleSheet.create({
   },
   text: {
     color: Colors.text,
-    fontSize: 40,
+    fontSize: 44,
     textAlign: 'center',
     width: '100%',
     lineHeight: 48,

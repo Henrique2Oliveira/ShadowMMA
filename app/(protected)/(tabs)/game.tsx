@@ -261,7 +261,7 @@ export default function Game() {
         if (!user) throw new Error('No user');
         const idToken = await user.getIdToken();
 
-    const response = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/startFight', {
+        const response = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/startFight', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -692,6 +692,7 @@ export default function Game() {
           isRestPeriod={gameState.isRestPeriod}
           isPaused={gameState.isPaused}
           animationsEnabled={animationsEnabled}
+          isSouthPaw={stance === 'southpaw'}
         />
 
         {gameState.isGameOver && (
