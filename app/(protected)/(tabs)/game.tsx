@@ -11,6 +11,7 @@ import { app } from '@/FirebaseConfig';
 import { useGameAnimations } from '@/hooks/useGameAnimations';
 import { Colors } from '@/themes/theme';
 import { Combo, Move } from '@/types/game';
+import { loadGamePreferences, saveGamePreferences } from '@/utils/gamePreferences';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getAuth } from '@firebase/auth';
 import { useIsFocused } from '@react-navigation/native';
@@ -165,6 +166,21 @@ export default function Game() {
 
   const [speedMultiplier, setSpeedMultiplier] = React.useState(parseFloat(params.moveSpeed || '1'));
   const [animationsEnabled, setAnimationsEnabled] = React.useState(true);
+  // Load preferences from AsyncStorage on mount
+  React.useEffect(() => {
+    loadGamePreferences().then((prefs) => {
+      if (prefs) {
+        setIsMuted(prefs.isMuted);
+        setAnimationsEnabled(prefs.isAnimationsEnabled);
+        setStance(prefs.stance);
+      }
+    });
+  }, []);
+
+  // Save preferences to AsyncStorage when changed
+  React.useEffect(() => {
+    saveGamePreferences({ isMuted, isAnimationsEnabled: animationsEnabled, stance });
+  }, [isMuted, animationsEnabled, stance]);
 
   // Power-up: Speed Boost (random 25% chance to appear, lasts 45s)
   const BOOST_CHANCE = 0.25; // 25% chance per check
@@ -246,8 +262,7 @@ export default function Game() {
       isGameOver: false
     });
 
-    setSpeedMultiplier(parseFloat(params.moveSpeed || '1'));
-    setAnimationsEnabled(true);
+  setSpeedMultiplier(parseFloat(params.moveSpeed || '1'));
     // Reset Speed Boost state on new game
     setIsBoostActive(false);
     setBoostRemainingMs(0);
@@ -719,17 +734,17 @@ export default function Game() {
           visible={isOptionsModalVisible}
           onClose={() => setIsOptionsModalVisible(false)}
           isMuted={isMuted}
-          onMuteToggle={() => setIsMuted(!isMuted)}
+          onMuteToggle={() => setIsMuted((prev) => !prev)}
           speedMultiplier={speedMultiplier}
           onSpeedChange={handleSpeedChange}
           isAnimationsEnabled={animationsEnabled}
-          onAnimationsToggle={() => setAnimationsEnabled(!animationsEnabled)}
+          onAnimationsToggle={() => setAnimationsEnabled((prev) => !prev)}
           onShowCombos={() => {
             setIsOptionsModalVisible(false);
             setShowCombosModal(true);
           }}
           stance={stance}
-          onToggleStance={() => setStance(prev => prev === 'orthodox' ? 'southpaw' : 'orthodox')}
+          onToggleStance={() => setStance((prev) => prev === 'orthodox' ? 'southpaw' : 'orthodox')}
           onQuit={() => {
             setIsOptionsModalVisible(false);
             router.replace('/(protected)/(tabs)');
