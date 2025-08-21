@@ -182,10 +182,10 @@ export default function Game() {
     saveGamePreferences({ isMuted, isAnimationsEnabled: animationsEnabled, stance });
   }, [isMuted, animationsEnabled, stance]);
 
-  // Power-up: Speed Boost (random 25% chance to appear, lasts 45s)
+  // Power-up: Speed Boost (random 25% chance to appear, lasts 30s)
   const BOOST_CHANCE = 0.25; // 25% chance per check
   const BOOST_DURATION_MS = 30_000; // 30 seconds
-  const BOOST_MULTIPLIER = 1.5; // 1.5x speed (pause time reduced by ~33%)
+  const BOOST_MULTIPLIER = 1.4; // 1.4x speed (pause time reduced)
   const BOOST_CHECK_INTERVAL_MS = 20_000; // check every 20s while fighting
 
   const [isBoostActive, setIsBoostActive] = React.useState(false);
@@ -262,7 +262,7 @@ export default function Game() {
       isGameOver: false
     });
 
-  setSpeedMultiplier(parseFloat(params.moveSpeed || '1'));
+    setSpeedMultiplier(parseFloat(params.moveSpeed || '1'));
     // Reset Speed Boost state on new game
     setIsBoostActive(false);
     setBoostRemainingMs(0);
@@ -307,7 +307,7 @@ export default function Game() {
 
         if (data.combos && data.combos.length > 0) {
           // Extract all moves from the combos and track which combo they belong to
-          const allMoves = data.combos.reduce((acc: Move[], combo: any) => {
+          let allMoves = data.combos.reduce((acc: Move[], combo: any) => {
             // Add combo reference to each move
             const movesWithCombo = combo.moves.map((move: Move) => ({
               ...move,
@@ -315,6 +315,17 @@ export default function Game() {
             }));
             return [...acc, ...movesWithCombo];
           }, []);
+
+          // If only one move is present, add a 'Return' move ahead of it
+          if (allMoves.length === 1) {
+            const returnMove: Move = {
+              move: 'Base',
+              pauseTime: 1000,
+              direction: 'down',
+              tiltValue: 0.1
+            };
+            allMoves = [ ...allMoves, returnMove];
+          }
 
           // Store combos with their moves and show modal
           const comboData = data.combos.map((combo: any) => ({

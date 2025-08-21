@@ -146,7 +146,7 @@ export const combinationSets = [{
         "level": 1,
         "name": "LEFT Knee",
         "moves": [
-          { "move": "RIGHT\nKNEE", "pauseTime": 1100, "direction": "up", "tiltValue": 0.6 }
+          { "move": "LEFT\nKNEE", "pauseTime": 1100, "direction": "up", "tiltValue": 0.6 }
         ]
       },
       {
