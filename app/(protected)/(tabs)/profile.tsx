@@ -73,92 +73,92 @@ export default function Profile() {
       resizeMode="cover"
     >
       <ScrollView>
-      <View style={styles.container}>
-        <Text style={styles.screenTitle}>My Gym</Text>
-        <View style={styles.header}>
-          <View style={styles.avatarContainer}>
-            <MaterialCommunityIcons name="account-circle" size={100} color={Colors.text} />
+        <View style={styles.container}>
+          <Text style={styles.screenTitle}>My Gym</Text>
+          <View style={styles.header}>
+            <View style={styles.avatarContainer}>
+              <MaterialCommunityIcons name="account-circle" size={100} color={Colors.text} />
+            </View>
+            <Text style={styles.name}>{userData?.name || 'Anonymous'}</Text>
+            <Text style={styles.subtitle}>{userData?.plan === 'free' ? 'Free Member' : 'Premium Member'}</Text>
           </View>
-          <Text style={styles.name}>{userData?.name || 'Anonymous'}</Text>
-          <Text style={styles.subtitle}>{userData?.plan === 'free' ? 'Free Member' : 'Premium Member'}</Text>
-        </View>
 
-        <View style={styles.statsContainer}>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{userData?.moves || "-"}</Text>
-            <Text style={styles.statLabel}>Moves</Text>
+          <View style={styles.statsContainer}>
+            <View style={styles.statBox}>
+              <Text style={styles.statNumber}>{userData?.moves || "-"}</Text>
+              <Text style={styles.statLabel}>Moves</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={styles.statNumber}>{userData?.hours || "-"}</Text>
+              <Text style={styles.statLabel}>Hours</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={styles.statNumber}>{userData?.combos || "-"}</Text>
+              <Text style={styles.statLabel}>Combos</Text>
+            </View>
           </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{userData?.hours || "-"}</Text>
-            <Text style={styles.statLabel}>Hours</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{userData?.combos || "-"}</Text>
-            <Text style={styles.statLabel}>Combos</Text>
-          </View>
-        </View>
 
-        <View style={styles.statsRow}>
-          <View style={[styles.infoContainer, styles.fightsContainer]}>
-            <View style={styles.fightsRow}>
-              <MaterialCommunityIcons name="boxing-glove" style={{ transform: [{ rotate: '90deg' }] }} size={42} color={Colors.text} />
-              <View style={styles.fightsInfo}>
-                <Text style={styles.fightsTitle}>{userData?.plan === 'pro' ? 'Premium Status' : 'Fights Left Today'}</Text>
-                <Text style={styles.fightsNumber}>
-                  {userData?.plan === 'pro' ? '∞' : userData?.fightsLeft || 0}
-                </Text>
+          <View style={styles.statsRow}>
+            <View style={[styles.infoContainer, styles.fightsContainer]}>
+              <View style={styles.fightsRow}>
+                <MaterialCommunityIcons name="boxing-glove" style={{ transform: [{ rotate: '90deg' }] }} size={42} color={Colors.text} />
+                <View style={styles.fightsInfo}>
+                  <Text style={styles.fightsTitle}>{userData?.plan === 'pro' ? 'Premium Status' : 'Fights Left Today'}</Text>
+                  <Text style={styles.fightsNumber}>
+                    {userData?.plan === 'pro' ? '∞' : userData?.fightsLeft || 0}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={[styles.infoContainer, styles.levelContainer]}>
+              <View style={styles.infoRow}>
+                <MaterialCommunityIcons name="medal" size={24} color={Colors.text} />
+                <Text style={styles.infoText}>Level {userData?.xp ? Math.floor(userData.xp / 100) : 0}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <MaterialCommunityIcons name="fire" size={24} color={Colors.text} />
+                <Text style={styles.infoText}>XP: {userData?.xp || "-"}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <MaterialCommunityIcons name="target" size={24} color={Colors.text} />
+                <Text style={styles.infoText}>Streak: -</Text>
               </View>
             </View>
           </View>
+          <View style={styles.buttonList}>
+            <TouchableOpacity style={styles.button} onPress={() => router.push('/settings')}>
+              <MaterialCommunityIcons name="cog" size={24} color={Colors.text} />
+              <Text style={styles.buttonText}>Settings</Text>
+            </TouchableOpacity>
 
-          <View style={[styles.infoContainer, styles.levelContainer]}>
-            <View style={styles.infoRow}>
-              <MaterialCommunityIcons name="medal" size={24} color={Colors.text} />
-              <Text style={styles.infoText}>Level {userData?.xp ? Math.floor(userData.xp / 100) : 0}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <MaterialCommunityIcons name="fire" size={24} color={Colors.text} />
-              <Text style={styles.infoText}>XP: {userData?.xp || "-"}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <MaterialCommunityIcons name="target" size={24} color={Colors.text} />
-              <Text style={styles.infoText}>Streak: -</Text>
-            </View>
+            <TouchableOpacity style={styles.button} onPress={() => setShowPaywall(true)}>
+              <MaterialCommunityIcons name="star" size={24} color={Colors.text} />
+              <Text style={styles.buttonText}>Upgrade Plan</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => Linking.openURL('https://shadowmma.com/privacy-policy')}
+            >
+              <MaterialCommunityIcons name="shield-account" size={24} color={Colors.text} />
+              <Text style={styles.buttonText}>Privacy Policy</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => Linking.openURL('https://shadowmma.com/terms-of-service')}
+            >
+              <MaterialCommunityIcons name="file-document-outline" size={24} color={Colors.text} />
+              <Text style={styles.buttonText}>Terms of Service</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.button} onPress={handleLogout}>
+              <MaterialCommunityIcons name="logout" size={24} color={Colors.text} />
+              <Text style={styles.buttonText}>Logout</Text>
+            </TouchableOpacity>
           </View>
         </View>
-        <View style={styles.buttonList}>
-          <TouchableOpacity style={styles.button} onPress={() => router.push('/settings')}>
-            <MaterialCommunityIcons name="cog" size={24} color={Colors.text} />
-            <Text style={styles.buttonText}>Settings</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.button} onPress={() => setShowPaywall(true)}>
-            <MaterialCommunityIcons name="star" size={24} color={Colors.text} />
-            <Text style={styles.buttonText}>Upgrade Plan</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.button} 
-            onPress={() => Linking.openURL('https://shadowmma.com/privacy-policy')}
-          >
-            <MaterialCommunityIcons name="shield-account" size={24} color={Colors.text} />
-            <Text style={styles.buttonText}>Privacy Policy</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.button} 
-            onPress={() => Linking.openURL('https://shadowmma.com/terms-of-service')}
-          >
-            <MaterialCommunityIcons name="file-document-outline" size={24} color={Colors.text} />
-            <Text style={styles.buttonText}>Terms of Service</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.button} onPress={handleLogout}>
-            <MaterialCommunityIcons name="logout" size={24} color={Colors.text} />
-            <Text style={styles.buttonText}>Logout</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
       </ScrollView>
       <PlansModal
         visible={showPaywall}
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   },
   levelContainer: {
     flex: 4,
-    
+
   },
   infoRow: {
     flexDirection: 'row',

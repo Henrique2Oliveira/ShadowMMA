@@ -1,7 +1,7 @@
 import { Colors, Typography } from '@/themes/theme';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 interface DeleteAccountModalProps {
   visible: boolean;

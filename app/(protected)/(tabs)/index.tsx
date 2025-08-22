@@ -155,7 +155,7 @@ export default function Index() {
 
       {/* Header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', paddingHorizontal: 10, backgroundColor: Colors.background, paddingTop: 20 }}>
-        <View style={{ maxWidth: '70%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ maxWidth: '75%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
           <Text style={{
             color: Colors.text,
             fontSize: 25,
@@ -181,8 +181,9 @@ export default function Index() {
             </LinearGradient>
           </View>
 
-          <MaterialCommunityIcons name="boxing-glove" size={38} color="#ffb700ff" style={{ marginLeft: 6, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 3.84, elevation: 5, transform: [{ rotateZ: '90deg' }] }} />
+          <MaterialCommunityIcons name="boxing-glove" size={38} color="#ffa000" style={{ marginLeft: 6, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 3.84, elevation: 5, transform: [{ rotateZ: '90deg' }] }} />
         </View>
+
       </View>
 
       {/* Content */}
