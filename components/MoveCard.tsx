@@ -112,10 +112,11 @@ const styles = StyleSheet.create({
     fontSize: 44,
     textAlign: 'center',
     width: '100%',
-    lineHeight: 48,
+    lineHeight: 52, // Increased line height
     fontFamily: Typography.fontFamily,
     flexShrink: 1,
-    flexWrap: 'wrap'
+    flexWrap: 'wrap',
+    padding: 5 // Added padding
   },
   restTimeText: {
     fontFamily: Typography.fontFamily,
