@@ -22,7 +22,6 @@ const ComboCard = React.memo(({
   categoryName,
   isLocked,
   onPress,
-  comboId
 }: ComboCardProps) => {
   return (
     <TouchableOpacity

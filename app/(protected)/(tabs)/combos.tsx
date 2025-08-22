@@ -24,6 +24,8 @@ type ComboMeta = {
 
 const CACHE_KEY = 'combos_meta_cache_v3_cat0_asc';
 const CACHE_TTL_MS = 1000 * 60 * 10; // 10 minutes
+const RECENT_COMBOS_KEY = 'recent_combos';
+const MAX_RECENT_COMBOS = 2; // Maximum number of recent combos to store
 
 export default function Combos() {
   const { user } = useAuth();
@@ -59,10 +61,23 @@ export default function Combos() {
   };
 
   const [combos, setCombos] = useState<ComboMeta[] | null>(null);
+  const [recentComboIds, setRecentComboIds] = useState<(string | number)[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const clientAuth = useMemo(() => getClientAuth(firebaseApp), []);
+
+  // Load recent combos from AsyncStorage
+  const loadRecentCombos = useCallback(async () => {
+    try {
+      const recentCombosStr = await AsyncStorage.getItem(RECENT_COMBOS_KEY);
+      if (recentCombosStr) {
+        setRecentComboIds(JSON.parse(recentCombosStr));
+      }
+    } catch (error) {
+      console.error('Error loading recent combos:', error);
+    }
+  }, []);
 
   const loadFromCache = useCallback(async () => {
     try {
@@ -130,12 +145,35 @@ export default function Combos() {
 
   useEffect(() => {
     fetchCombos();
-  }, [fetchCombos]);
+    loadRecentCombos();
+  }, [fetchCombos, loadRecentCombos]);
 
   const getUserLevel = (xp: number) => {
     // Simple level calculation: every 100 XP is a new level, starting from level 1
     return Math.floor(xp / 100);
   };
+
+  const saveRecentCombo = useCallback(async (comboId: string | number) => {
+    try {
+      const recentCombosStr = await AsyncStorage.getItem(RECENT_COMBOS_KEY);
+      let recentCombos: (string | number)[] = recentCombosStr ? JSON.parse(recentCombosStr) : [];
+
+      // Remove the combo if it already exists
+      recentCombos = recentCombos.filter(id => id !== comboId);
+
+      // Add the combo to the start of the array
+      recentCombos.unshift(comboId);
+
+      // Keep only the most recent N combos
+      if (recentCombos.length > MAX_RECENT_COMBOS) {
+        recentCombos = recentCombos.slice(0, MAX_RECENT_COMBOS);
+      }
+
+      await AsyncStorage.setItem(RECENT_COMBOS_KEY, JSON.stringify(recentCombos));
+    } catch (error) {
+      console.error('Error saving recent combo:', error);
+    }
+  }, []);
 
   const handleComboPress = useCallback((item: ComboMeta, isLocked: boolean) => {
     if (!isLocked) {
@@ -148,8 +186,13 @@ export default function Combos() {
         category: "0",
         comboId: item.comboId,
       });
+
+      // Save this combo as recently used
+      if (item.comboId) {
+        saveRecentCombo(item.comboId);
+      }
     }
-  }, [setModalConfig]);
+  }, [setModalConfig, saveRecentCombo]);
 
   const renderItem = useCallback(({ item }: { item: ComboMeta }) => {
     const userLevel = getUserLevel(userData?.xp || 0);
@@ -179,7 +222,7 @@ export default function Combos() {
       </View>
 
       {loading && !combos && (
-        <View style={{ padding: 24, alignItems: 'center' }}>
+        <View style={{ padding: 24, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator color={Colors.text} />
           <Text style={{ color: Colors.text, marginTop: 8, fontFamily: Typography.fontFamily }}>Loading combos…</Text>
         </View>
@@ -199,7 +242,30 @@ export default function Combos() {
           data={combos}
           keyExtractor={keyExtractor}
           contentContainerStyle={styles.comboList}
-          renderItem={renderItem}
+          ListHeaderComponent={() => {
+            const recentCombos = combos.filter(combo => combo.comboId && recentComboIds.includes(combo.comboId));
+            if (recentCombos.length === 0) return null;
+
+            return (
+              <View style={styles.recentSection}>
+                <View style={styles.recentHeader}>
+                  <Text style={styles.recentHeaderText}>Most Recent</Text>
+                </View>
+                {recentCombos.slice(0, MAX_RECENT_COMBOS).map(combo => (
+                  <View key={combo.id} style={styles.recentComboContainer}>
+                    {renderItem({ item: combo })}
+                  </View>
+                ))}
+              </View>
+            );
+          }}
+          renderItem={({ item }) => {
+            // Don't render recent combos in the main list
+            if (item.comboId && recentComboIds.includes(item.comboId)) {
+              return null;
+            }
+            return renderItem({ item });
+          }}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={() => fetchCombos(true)} tintColor={Colors.text} />}
           maxToRenderPerBatch={10}
           windowSize={5}
@@ -244,6 +310,30 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  recentSection: {
+    marginBottom: 12,
+    paddingBottom: 16,
+    borderBottomWidth: 2,
+    borderBottomColor: 'rgba(255, 255, 255, 0.52)',
+  },
+  recentHeader: {
+    backgroundColor: '#ffffffff',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+    marginLeft: 16,
+  },
+  recentHeaderText: {
+    color: Colors.background,
+    fontFamily: Typography.fontFamily,
+    textAlign: "center",
+    fontSize: 16,
+  },
+  recentComboContainer: {
+
+  },
   lockedCard: {
     opacity: 0.5,
   },
@@ -252,7 +342,7 @@ const styles = StyleSheet.create({
   },
   lockIcon: {
     position: 'absolute',
-    right: '10%',
+    right: '30%',
     top: '10%',
     transform: [{ translateX: -12 }], // Half of the icon size (24/2)
     zIndex: 1,
