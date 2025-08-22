@@ -1,37 +1,8 @@
 import QuizScreen, { QuizData } from '@/components/QuizScreen';
+import { subscriptionPlans, type SubscriptionPlan } from '@/config/subscriptionPlans';
 import { Colors, Typography } from '@/themes/theme';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-
-type SubscriptionPlan = {
-  title: string;
-  price: string;
-  period: string;
-  features: string[];
-  popular?: boolean;
-};
-
-const subscriptionPlans: SubscriptionPlan[] = [
-  {
-    title: 'Free',
-    price: '$0',
-    period: 'forever',
-    features: ['3 Fights a day', 'Basic training programs', 'Essential techniques', 'Progress tracking', 'Community access']
-  },
-  {
-    title: 'Premium',
-    price: '$9.99',
-    period: 'month',
-    features: ['Unlimited Fights', 'All free features', 'Advanced techniques', 'Personalized training plans', 'Priority support'],
-    popular: true
-  },
-  {
-    title: 'Anual Premium',
-    price: '$69.99',
-    period: 'year',
-    features: ['Unlimited Fights', 'All premium features', 'Early access to new features', 'VIP support', 'Exclusive content']
-  }
-];
 
 // Update the type Props to include a new callback for plan selection
 type Props = {
@@ -63,7 +34,7 @@ export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Choose Your Plan</Text>
-      <Text style={styles.subtitle}>Personalized for {quizData?.gender}, {quizData?.age}</Text>
+      {/* <Text style={styles.subtitle}>Personalized for {quizData?.gender}, {quizData?.age}</Text> */}
 
       <ScrollView
         horizontal
@@ -98,7 +69,7 @@ export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
               onPress={() => handlePlanSelection(plan)}
             >
               <Text style={styles.buttonText}>
-                {plan.title === 'Free' ? 'Start Free' : 'Choose Plan'}
+                {plan.title === 'Free' ? 'Start Free' : 'Choose Plan'} 
               </Text>
             </Pressable>
           </View>

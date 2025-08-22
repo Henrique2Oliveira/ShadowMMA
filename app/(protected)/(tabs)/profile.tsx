@@ -1,9 +1,19 @@
+import PlansModal from '@/components/PlansModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ImageBackground, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ImageBackground, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+type SubscriptionPlan = {
+  title: string;
+  price: string;
+  period: string;
+  features: string[];
+  popular?: boolean;
+};
 
 type UserData = {
   name: string;
@@ -19,6 +29,7 @@ export default function Profile() {
   const { logout, user } = useAuth();
   const { userData, refreshUserData } = useUserData();
   const [loading, setLoading] = useState(true);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -37,7 +48,6 @@ export default function Profile() {
       setLoading(false);
     }
   }, [userData]);
-
 
   const handleLogout = async () => {
     try {
@@ -117,19 +127,30 @@ export default function Profile() {
           </View>
         </View>
         <View style={styles.buttonList}>
-          <TouchableOpacity style={styles.button} onPress={() => { }}>
+          <TouchableOpacity style={styles.button} onPress={() => router.push('/settings')}>
             <MaterialCommunityIcons name="cog" size={24} color={Colors.text} />
             <Text style={styles.buttonText}>Settings</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.button} onPress={() => { }}>
+          <TouchableOpacity style={styles.button} onPress={() => setShowPaywall(true)}>
             <MaterialCommunityIcons name="star" size={24} color={Colors.text} />
             <Text style={styles.buttonText}>Upgrade Plan</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.button} onPress={() => { }}>
-            <MaterialCommunityIcons name="file-document" size={24} color={Colors.text} />
-            <Text style={styles.buttonText}>Privacy Policy & Terms</Text>
+          <TouchableOpacity 
+            style={styles.button} 
+            onPress={() => Linking.openURL('https://shadowmma.com/privacy-policy')}
+          >
+            <MaterialCommunityIcons name="shield-account" size={24} color={Colors.text} />
+            <Text style={styles.buttonText}>Privacy Policy</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.button} 
+            onPress={() => Linking.openURL('https://shadowmma.com/terms-of-service')}
+          >
+            <MaterialCommunityIcons name="file-document-outline" size={24} color={Colors.text} />
+            <Text style={styles.buttonText}>Terms of Service</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.button} onPress={handleLogout}>
@@ -139,11 +160,24 @@ export default function Profile() {
         </View>
       </View>
       </ScrollView>
+      <PlansModal
+        visible={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        onSelectPlan={(plan: SubscriptionPlan) => {
+          // Handle plan selection here
+          console.log('Selected plan:', plan);
+          setShowPaywall(false);
+        }}
+      />
     </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
   bg: {
     flex: 1,
     width: '100%',

@@ -41,7 +41,7 @@ const ComboCard = React.memo(({
           {isLocked && (
             <MaterialCommunityIcons
               name="lock"
-              size={80}
+              size={35}
               color={Colors.text}
               style={styles.lockIcon}
             />
@@ -79,9 +79,8 @@ const styles = StyleSheet.create({
   },
   lockIcon: {
     position: 'absolute',
-    left: '5%',
-    top: '5%',
-    transform: [{ translateX: -12 }],
+    top: 26,
+    right: 5,
     zIndex: 5,
   },
   lockedLevelBadge: {

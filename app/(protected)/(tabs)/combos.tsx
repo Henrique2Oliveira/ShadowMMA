@@ -1,3 +1,4 @@
+import { AlertModal } from '@/components/AlertModal';
 import ComboCard from '@/components/ComboCard';
 import { FightModeModal } from '@/components/FightModeModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,7 +9,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAuth as getClientAuth } from 'firebase/auth';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 type ComboMeta = {
   id: string;
@@ -64,6 +65,7 @@ export default function Combos() {
   const [recentComboIds, setRecentComboIds] = useState<(string | number)[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const clientAuth = useMemo(() => getClientAuth(firebaseApp), []);
 
@@ -136,6 +138,7 @@ export default function Combos() {
         saveToCache(json.combos);
       } catch (e: any) {
         setError(e?.message || 'Failed to load combos');
+        setShowErrorModal(true);
       } finally {
         setLoading(false);
       }
@@ -229,12 +232,26 @@ export default function Combos() {
       )}
 
       {!!error && (
-        <View style={errStyles.errorBox}>
-          <Text style={errStyles.errorText}>Couldn’t load combos.</Text>
-          <TouchableOpacity onPress={() => fetchCombos(true)}>
-            <Text style={errStyles.retryText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
+        <AlertModal
+          visible={showErrorModal}
+          title="Error Loading Combos"
+          message={error || "Couldn't load combos. Please try again."}
+          type="error"
+          primaryButton={{
+            text: "Retry",
+            onPress: () => {
+              setShowErrorModal(false);
+              fetchCombos(true);
+            },
+          }}
+          secondaryButton={{
+            text: "Close",
+            onPress: () => {
+              setShowErrorModal(false);
+            },
+          }}
+          onClose={() => setShowErrorModal(false)}
+        />
       )}
 
       {combos && combos.length > 0 && (
@@ -311,10 +328,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   recentSection: {
-    marginBottom: 12,
-    paddingBottom: 16,
+    marginBottom: 8,
+    paddingBottom: 8,
     borderBottomWidth: 2,
-    borderBottomColor: 'rgba(255, 255, 255, 0.52)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.28)',
   },
   recentHeader: {
     backgroundColor: '#ffffffff',
