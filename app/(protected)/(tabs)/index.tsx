@@ -78,7 +78,7 @@ export default function Index() {
         numRounds: '3',
         restTime: '1',
         moveSpeed: '1',
-        movesMode: ['Punches', 'Defense'],
+        movesMode: ['Punches'],
         category: "0"
       })
     },

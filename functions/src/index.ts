@@ -59,6 +59,7 @@ export const getUserData = onRequest(async (req, res) => {
       combos: userData?.combos || 0,
       plan: userData?.plan || 'free',
       fightsLeft: userData?.fightsLeft || 3,
+      loginStreak: userData?.loginStreak || 0,
     };
 
     res.status(200).json({ success: true, data: safeUserData });
@@ -92,13 +93,55 @@ export const updateLastLogin = onRequest(async (req, res) => {
     const decodedToken = await auth.verifyIdToken(idToken);
     const uid = decodedToken.uid;
 
-    // Update last login timestamp
     const userRef = db.collection("users").doc(uid);
-    await userRef.update({
-      lastLoginAt: FieldValue.serverTimestamp()
-    });
+    const userDoc = await userRef.get();
+    
+    if (!userDoc.exists) {
+      res.status(404).send("User not found");
+      return;
+    }
 
-    res.status(200).json({ success: true });
+    const userData = userDoc.data();
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    let newStreak = 1;
+    let lastLoginStreak = userData?.loginStreak || 0;
+    let shouldUpdate = true;
+    
+    if (userData?.lastLoginAt) {
+      const lastLogin = userData.lastLoginAt.toDate();
+      const lastLoginDate = new Date(lastLogin.getFullYear(), lastLogin.getMonth(), lastLogin.getDate());
+      
+      // Calculate days difference
+      const daysDiff = Math.floor((today.getTime() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (daysDiff === 0) {
+        // Same day login - keep current streak, no need to update
+        newStreak = lastLoginStreak;
+        shouldUpdate = false; // Optimization: don't update database if same day
+      } else if (daysDiff === 1) {
+        // Next day login - increment streak
+        newStreak = lastLoginStreak + 1;
+      } else if (daysDiff > 1) {
+        // Missed days - reset streak to 1
+        newStreak = 1;
+      }
+    }
+
+    // Only update database if necessary
+    if (shouldUpdate) {
+      await userRef.update({
+        lastLoginAt: FieldValue.serverTimestamp(),
+        loginStreak: newStreak
+      });
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      loginStreak: newStreak,
+      updated: shouldUpdate // Let client know if we actually updated
+    });
   } catch (error: any) {
     logger.error("Error updating last login:", error);
     res.status(500).json({
@@ -499,6 +542,7 @@ export const createUser = onRequest(async (req, res) => {
       combos: 1,
       fightsLeft: 4,
       playing: false,
+      loginStreak: 1,
       createdAt: FieldValue.serverTimestamp(),
       lastLoginAt: FieldValue.serverTimestamp()
     });

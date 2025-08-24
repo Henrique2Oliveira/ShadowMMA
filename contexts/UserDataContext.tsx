@@ -9,6 +9,7 @@ export type UserData = {
   combos?: number;
   plan?: string;
   fightsLeft?: number;
+  loginStreak?: number;
 };
 
 type UserDataContextType = {

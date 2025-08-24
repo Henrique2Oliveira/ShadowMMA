@@ -23,6 +23,7 @@ type UserData = {
   plan: string;
   xp: number;
   fightsLeft: number;
+  loginStreak?: number;
 };
 
 export default function Profile() {
@@ -107,8 +108,8 @@ export default function Profile() {
               <Text style={styles.statLabel}>Moves</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{userData?.hours || "-"}</Text>
-              <Text style={styles.statLabel}>Hours</Text>
+              <Text style={styles.statNumber}>{userData?.loginStreak || "-"}</Text>
+              <Text style={styles.statLabel}>Days Streak</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNumber}>{userData?.combos || "-"}</Text>
@@ -140,7 +141,7 @@ export default function Profile() {
               </View>
               <View style={styles.infoRow}>
                 <MaterialCommunityIcons name="target" size={24} color={Colors.text} />
-                <Text style={styles.infoText}>Streak: -</Text>
+                <Text style={styles.infoText}>Hours: {userData?.hours || "-"}</Text>
               </View>
             </View>
           </View>

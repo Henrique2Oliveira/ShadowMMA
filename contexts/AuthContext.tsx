@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getApps, initializeApp } from 'firebase/app';
 import {
   getAuth,
@@ -7,7 +8,8 @@ import {
   signOut,
   User
 } from 'firebase/auth';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
 import { firebaseConfig } from '../FirebaseConfig.js';
 import { UserDataProvider } from './UserDataContext';
 
@@ -24,6 +26,7 @@ type AuthContextType = {
   resetPassword: (email: string) => Promise<{ success: boolean; error?: AuthError }>;
   logout: () => Promise<void>;
   loading: boolean;
+  loginStreak: number;
 };
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
@@ -34,14 +37,74 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loginStreak, setLoginStreak] = useState(0);
+  const appState = useRef(AppState.currentState);
+  const lastStreakUpdate = useRef<string | null>(null);
+
+  // Optimized streak update function
+  const updateLoginStreakOptimized = async (user: User) => {
+    try {
+      const today = new Date().toDateString(); // e.g., "Sat Aug 24 2025"
+      const storageKey = `lastStreakUpdate_${user.uid}`;
+      
+      // Check if we already updated today
+      const lastUpdate = await AsyncStorage.getItem(storageKey);
+      if (lastUpdate === today) {
+        return; // Already updated today, skip API call
+      }
+
+      const idToken = await user.getIdToken();
+      const response = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/updateLastLogin', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.loginStreak !== undefined) {
+          setLoginStreak(data.loginStreak);
+          // Cache that we updated today
+          await AsyncStorage.setItem(storageKey, today);
+          lastStreakUpdate.current = today;
+        }
+      } else {
+        console.warn('Failed to update login streak:', response.status);
+      }
+    } catch (error) {
+      console.warn('Error updating login streak:', error);
+    }
+  };
+
+  // Handle app state changes (foreground/background)
+  const handleAppStateChange = (nextAppState: AppStateStatus) => {
+    if (
+      appState.current.match(/inactive|background/) && 
+      nextAppState === 'active' && 
+      user
+    ) {
+      // App came to foreground, update streak if needed
+      updateLoginStreakOptimized(user);
+    }
+    appState.current = nextAppState;
+  };
 
   useEffect(() => {
     let mounted = true;
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (mounted) {
         setUser((prevUser) => {
           // Apenas atualize se o usuário mudou
           if (prevUser?.uid !== firebaseUser?.uid) {
+            if (firebaseUser) {
+              // New user logged in, update streak immediately
+              updateLoginStreakOptimized(firebaseUser);
+            } else {
+              // User logged out, reset streak
+              setLoginStreak(0);
+            }
             return firebaseUser;
           }
           return prevUser;
@@ -50,9 +113,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
+    // Subscribe to app state changes
+    const appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
+
     return () => {
       mounted = false;
       unsubscribe();
+      appStateSubscription?.remove();
     };
   }, []);
 
@@ -119,19 +186,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       attempts.delete(email); // Clear attempts on successful login
 
-      // Update last login through Cloud Function
-      const idToken = await userCredential.user.getIdToken();
-      const response = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/updateLastLoginn', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${idToken}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        console.error('Failed to update last login');
-      }
+      // Note: Login streak will be updated automatically via onAuthStateChanged -> updateLoginStreakOptimized
+      // No need to duplicate the API call here
 
       return { success: true };
     } catch (error: any) {
@@ -228,7 +284,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       register,
       resetPassword,
       logout,
-      loading
+      loading,
+      loginStreak
     }}>
       <UserDataProvider>
         {children}
