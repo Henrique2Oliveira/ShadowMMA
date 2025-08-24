@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Shadow MMA",
-    "slug": "Shadow MMA",
+    "slug": "ShadowMMA",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -17,7 +17,7 @@
         "backgroundColor": "#1A1A1A"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.belsonsan.ShadowMMA"
+      "package": "com.shadowmma.ShadowMMA"
     },
     "web": {
       "bundler": "metro",
@@ -26,11 +26,12 @@
     },
     "plugins": [
       "expo-router",
+      "expo-notifications",
       [
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
+          "imageWidth": 100,
           "resizeMode": "contain",
           "backgroundColor": "#1A1A1A"
         }

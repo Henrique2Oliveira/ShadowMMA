@@ -3,17 +3,23 @@ import { DeleteAccountModal } from '@/components/DeleteAccountModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/FirebaseConfig';
 import { Colors, Typography } from '@/themes/theme';
+import { cancelAllNotifications, registerForPushNotificationsAsync, scheduleDailyNotification } from '@/utils/notificationUtils';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { deleteUser, EmailAuthProvider, reauthenticateWithCredential } from '@firebase/auth';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
 import { deleteDoc, doc } from 'firebase/firestore';
 import React, { useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 
 export default function Settings() {
   const { user, resetPassword } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [notificationTime, setNotificationTime] = useState(new Date());
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [resetStatus, setResetStatus] = useState<{
     success?: boolean;
     message?: string;
@@ -117,13 +123,61 @@ export default function Settings() {
           <MaterialCommunityIcons name="chevron-right" size={24} color={Colors.text} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.option}>
+        <View style={styles.option}>
           <MaterialCommunityIcons name="bell" size={24} color={Colors.text} />
-          <Text style={styles.optionText}>Notifications</Text>
-          <MaterialCommunityIcons name="chevron-right" size={24} color={Colors.text} />
-        </TouchableOpacity>
+          <Text style={styles.optionText}>Daily Training Reminder</Text>
+          <Switch
+            value={notificationsEnabled}
+            onValueChange={async (value) => {
+              if (value) {
+                const hasPermission = await registerForPushNotificationsAsync();
+                if (hasPermission) {
+                  setNotificationsEnabled(true);
+                  setShowTimePicker(true);
+                } else {
+                  // Show error modal
+                  setShowNotificationModal(true);
+                }
+              } else {
+                await cancelAllNotifications();
+                setNotificationsEnabled(false);
+              }
+            }}
+          />
+        </View>
+        
+        {showTimePicker && Platform.OS === 'android' && (
+          <DateTimePicker
+            value={notificationTime}
+            mode="time"
+            is24Hour={true}
+            onChange={(event, selectedDate) => {
+              setShowTimePicker(false);
+              if (event.type === 'set' && selectedDate) {
+                setNotificationTime(selectedDate);
+                scheduleDailyNotification(
+                  selectedDate.getHours(),
+                  selectedDate.getMinutes()
+                );
+              }
+            }}
+          />
+        )}
+        
+        {notificationsEnabled && (
+          <TouchableOpacity 
+            style={[styles.option, styles.subOption]} 
+            onPress={() => setShowTimePicker(true)}
+          >
+            <MaterialCommunityIcons name="clock-outline" size={24} color={Colors.text} />
+            <Text style={styles.optionText}>
+              Reminder Time: {notificationTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </Text>
+            <MaterialCommunityIcons name="chevron-right" size={24} color={Colors.text} />
+          </TouchableOpacity>
+        )}
 
-        <TouchableOpacity style={styles.option}>
+        {/* <TouchableOpacity style={styles.option}>
           <MaterialCommunityIcons name="translate" size={24} color={Colors.text} />
           <Text style={styles.optionText}>Language</Text>
           <MaterialCommunityIcons name="chevron-right" size={24} color={Colors.text} />
@@ -133,7 +187,7 @@ export default function Settings() {
           <MaterialCommunityIcons name="theme-light-dark" size={24} color={Colors.text} />
           <Text style={styles.optionText}>Theme</Text>
           <MaterialCommunityIcons name="chevron-right" size={24} color={Colors.text} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity 
           style={[styles.option, styles.dangerOption]} 
@@ -205,6 +259,17 @@ export default function Settings() {
           setDeleteError(null);
         }}
       />
+
+      <AlertModal
+        visible={showNotificationModal}
+        title="Permission Required"
+        message="To receive training reminders, please enable notifications for Shadow MMA in your device settings."
+        type="info"
+        primaryButton={{
+          text: "OK",
+          onPress: () => setShowNotificationModal(false),
+        }}
+      />
     </View>
   );
 }
@@ -213,6 +278,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
+  },
+  subOption: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    marginLeft: 20,
+    marginTop: -5,
   },
   inputContainer: {
     width: '100%',
