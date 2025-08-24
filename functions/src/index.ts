@@ -1,32 +1,7 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * import {onCall} from "firebase-functions/v2/https";
- * impor    const { category = '0', comboId, moveTypes = 'Punches' } = req.method === "POST" ? req.body : req.query;
-    const categoryToUse = category.toString();
-    const moveTypesArray = (typeof moveTypes === 'string' ? moveTypes.split(',') : ['Punches']).slice(0, 3);
-    
-    if (!comboId && !categoryToUse) {
-      res.status(400).send("Bad Request: Missing category");
-      return;
-    }
-
-    // Busca dados do usuário
-    const userRef = db.collection("users").doc(uid);
-    const userDoc = await userRef.get();
-    if (!userDoc.exists) {
-      res.status(404).send("User not found");
-      return;
-    }
-
-    const userData = userDoc.data();n} from "firebase-functions/v2/firestore";
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
 
 import { initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
-import { getFirestore } from "firebase-admin/firestore";
+import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { setGlobalOptions } from "firebase-functions";
 import { onRequest } from "firebase-functions/https";
 import * as logger from "firebase-functions/logger";
@@ -43,13 +18,98 @@ import * as logger from "firebase-functions/logger";
 // functions should each use functions.runWith({ maxInstances: 10 }) instead.
 // In the v1 API, each function can only serve one request per container, so
 // this will be the maximum concurrent request count.
+
 setGlobalOptions({ maxInstances: 10 });
 
-//// Inicializa o Admin SDK
+//// Initialize Admin SDK
 initializeApp();
 
 const db = getFirestore();
 const auth = getAuth();
+
+// Cloud function to handle user login update
+export const getUserData = onRequest(async (req, res) => {
+  try {
+    // Verify authentication
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith("Bearer ")) {
+      res.status(401).send("Unauthorized: Missing or invalid token");
+      return;
+    }
+
+    const idToken = authHeader.split("Bearer ")[1];
+    const decodedToken = await auth.verifyIdToken(idToken);
+    const uid = decodedToken.uid;
+
+    const userRef = db.collection("users").doc(uid);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      res.status(404).json({ success: false, error: { code: 'not-found', message: 'User data not found' } });
+      return;
+    }
+
+    // Only return necessary data
+    const userData = userDoc.data();
+    const safeUserData = {
+      name: userData?.name || 'Warrior',
+      xp: userData?.xp || 120,
+      hours: userData?.hours || 0,
+      moves: userData?.moves || 0,
+      combos: userData?.combos || 0,
+      plan: userData?.plan || 'free',
+      fightsLeft: userData?.fightsLeft || 3,
+    };
+
+    res.status(200).json({ success: true, data: safeUserData });
+  } catch (error: any) {
+    logger.error("Error fetching user data:", error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: error.code || 'unknown',
+        message: error.message || 'An unknown error occurred'
+      }
+    });
+  }
+});
+
+export const updateLastLogin = onRequest(async (req, res) => {
+  if (req.method !== "POST") {
+    res.status(405).send("Method Not Allowed");
+    return;
+  }
+
+  try {
+    // Verify authentication
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith("Bearer ")) {
+      res.status(401).send("Unauthorized: Missing or invalid token");
+      return;
+    }
+
+    const idToken = authHeader.split("Bearer ")[1];
+    const decodedToken = await auth.verifyIdToken(idToken);
+    const uid = decodedToken.uid;
+
+    // Update last login timestamp
+    const userRef = db.collection("users").doc(uid);
+    await userRef.update({
+      lastLoginAt: FieldValue.serverTimestamp()
+    });
+
+    res.status(200).json({ success: true });
+  } catch (error: any) {
+    logger.error("Error updating last login:", error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: error.code || 'unknown',
+        message: error.message || 'An unknown error occurred.'
+      }
+    });
+  }
+});
 
 // Scheduled function to restore all users' lives to 3 every day at midnight UTC
 import { onSchedule } from "firebase-functions/v2/scheduler";
@@ -367,6 +427,92 @@ export const startFight = onRequest(async (req, res) => {
   } catch (error) {
     logger.error("Error in startFight:", error);
     res.status(500).send("Internal Server Error");
+  }
+});
+
+export const createUser = onRequest(async (req, res) => {
+  if (req.method !== "POST") {
+    res.status(405).send("Method Not Allowed");
+    return;
+  }
+
+  try {
+    const { email, password, name } = req.body;
+
+    // Input validation
+    if (!email || !password || !name) {
+      res.status(400).json({
+        success: false,
+        error: { code: 'auth/missing-fields', message: 'Email, password and name are required.' }
+      });
+      return;
+    }
+
+    if (!email.includes('@') || !email.includes('.')) {
+      res.status(400).json({
+        success: false,
+        error: { code: 'auth/invalid-email', message: 'Please enter a valid email address.' }
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      res.status(400).json({
+        success: false,
+        error: { code: 'auth/weak-password', message: 'Password should be at least 6 characters.' }
+      });
+      return;
+    }
+
+    if (name.trim().length < 2) {
+      res.status(400).json({
+        success: false,
+        error: { code: 'auth/name-too-short', message: 'Name must be at least 2 characters long.' }
+      });
+      return;
+    }
+
+    if (name.trim().length > 50) {
+      res.status(400).json({
+        success: false,
+        error: { code: 'auth/name-too-long', message: 'Name must not exceed 50 characters.' }
+      });
+      return;
+    }
+
+    // Create the user with Firebase Auth
+    const userRecord = await auth.createUser({
+      email,
+      password,
+      displayName: name
+    });
+
+    // Create user document in Firestore with default values
+    const userDocRef = db.collection('users').doc(userRecord.uid);
+    await userDocRef.set({
+      email: email,
+      name: name,
+      xp: 120,
+      plan: 'free',
+      hours: 0,
+      moves: 4,
+      combos: 1,
+      fightsLeft: 4,
+      playing: false,
+      createdAt: FieldValue.serverTimestamp(),
+      lastLoginAt: FieldValue.serverTimestamp()
+    });
+
+    res.status(200).json({ success: true });
+  } catch (error: any) {
+    logger.error('Error creating user:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: error.code || 'auth/unknown',
+        message: error.message || 'An unknown error occurred.'
+      }
+    });
   }
 });
 

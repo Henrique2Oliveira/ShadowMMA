@@ -1,5 +1,4 @@
-import { db } from '@/FirebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 import React, { createContext, useContext, useState } from 'react';
 
 export type UserData = {
@@ -23,15 +22,27 @@ const UserDataContext = createContext<UserDataContextType | undefined>(undefined
 
 export function UserDataProvider({ children }: { children: React.ReactNode }) {
   const [userData, setUserData] = useState<UserData | null>(null);
+  const auth = getAuth();
 
   const refreshUserData = async (userId: string) => {
-    if (!userId) return;
+    if (!userId || !auth.currentUser) return;
 
-    const userDocRef = doc(db, 'users', userId);
     try {
-      const docSnap = await getDoc(userDocRef);
-      if (docSnap.exists()) {
-        setUserData(docSnap.data() as UserData);
+      const idToken = await auth.currentUser.getIdToken();
+      const response = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/getUserData', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setUserData(result.data);
+      } else {
+        console.error('Error fetching user data:', result.error);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);

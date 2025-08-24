@@ -1,6 +1,5 @@
 import { getApps, initializeApp } from 'firebase/app';
 import {
-  createUserWithEmailAndPassword,
   getAuth,
   onAuthStateChanged,
   sendPasswordResetEmail,
@@ -8,9 +7,8 @@ import {
   signOut,
   User
 } from 'firebase/auth';
-import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { db, firebaseConfig } from '../FirebaseConfig.js';
+import { firebaseConfig } from '../FirebaseConfig.js';
 import { UserDataProvider } from './UserDataContext';
 
 type AuthError = {
@@ -121,11 +119,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       attempts.delete(email); // Clear attempts on successful login
 
-      // Update last login timestamp
-      const userDocRef = doc(db, 'users', userCredential.user.uid);
-      await setDoc(userDocRef, {
-        lastLoginAt: serverTimestamp()
-      }, { merge: true });
+      // Update last login through Cloud Function
+      const idToken = await userCredential.user.getIdToken();
+      const response = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/updateLastLoginn', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        console.error('Failed to update last login');
+      }
 
       return { success: true };
     } catch (error: any) {
@@ -142,68 +148,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (email: string, password: string, name?: string) => {
     try {
-      // Input validation
-      if (!email || !password) {
-        return {
-          success: false,
-          error: { code: 'auth/missing-fields', message: 'Email and password are required.' }
-        };
-      }
-
-      if (!name) {
-        return {
-          success: false,
-          error: { code: 'auth/missing-name', message: 'Name is required.' }
-        };
-      }
-
-      if (name.trim().length < 2) {
-        return {
-          success: false,
-          error: { code: 'auth/name-too-short', message: 'Name must be at least 2 characters long.' }
-        };
-      }
-
-      if (name.trim().length > 50) {
-        return {
-          success: false,
-          error: { code: 'auth/name-too-long', message: 'Name must not exceed 50 characters.' }
-        };
-      }
-
-      if (!email.includes('@') || !email.includes('.')) {
-        return {
-          success: false,
-          error: { code: 'auth/invalid-email', message: 'Please enter a valid email address.' }
-        };
-      }
-
-      if (password.length < 6) {
-        return {
-          success: false,
-          error: { code: 'auth/weak-password', message: 'Password should be at least 6 characters.' }
-        };
-      }
-
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-
-      // Create user document in Firestore with default values
-      const userDocRef = doc(db, 'users', userCredential.user.uid);
-      await setDoc(userDocRef, {
-        email: email,
-        name: name,
-        xp: 120,
-        plan: 'free',
-        hours: 0, // hours of training
-        moves: 4,
-        combos: 1,
-        fightsLeft: 3, 
-        playing: false, // Default playing status
-        // planExpiresAt: serverTimestamp(),
-        createdAt: serverTimestamp(),
-        lastLoginAt: serverTimestamp()
+      const response = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/createUser', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          name
+        })
       });
 
+      const data = await response.json();
+
+      if (!data.success) {
+        return {
+          success: false,
+          error: data.error
+        };
+      }
+
+      // Sign in the user after successful registration
+      await signInWithEmailAndPassword(auth, email, password);
       return { success: true };
     } catch (error: any) {
       return {
