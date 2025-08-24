@@ -181,7 +181,7 @@ export default function Index() {
             </LinearGradient>
           </View>
 
-          <MaterialCommunityIcons name="boxing-glove" size={38} color="#ffa000" style={{ marginLeft: 6, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 3.84, elevation: 5, transform: [{ rotateZ: '90deg' }] }} />
+          <MaterialCommunityIcons name="boxing-glove" size={38} color="#ffc400ff" style={{ marginLeft: 6, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 3.84, elevation: 5, transform: [{ rotateZ: '90deg' }] }} />
         </View>
 
       </View>
