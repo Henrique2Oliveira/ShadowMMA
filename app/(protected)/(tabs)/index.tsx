@@ -6,13 +6,23 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React, { useEffect } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
 
 export default function Index() {
   const { user } = useAuth();
   const { userData, refreshUserData } = useUserData();
+  const [refreshing, setRefreshing] = React.useState(false);
 
   const [isModalVisible, setIsModalVisible] = React.useState(false);
+
+  const onRefresh = React.useCallback(async () => {
+    if (user) {
+      setRefreshing(true);
+      await refreshUserData(user.uid);
+      setRefreshing(false);
+    }
+  }, [user, refreshUserData]);
 
   const [roundDuration, setRoundDuration] = React.useState('1');
   const [numRounds, setNumRounds] = React.useState('1');
@@ -151,7 +161,15 @@ export default function Index() {
 
   return (
     <ScrollView
-      contentContainerStyle={{ flexGrow: 1 }}>
+      contentContainerStyle={{ flexGrow: 1 }}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={Colors.background}
+          colors={[Colors.text]}
+        />
+      }>
 
       {/* Header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', paddingHorizontal: 10, backgroundColor: Colors.background, paddingTop: 20 }}>

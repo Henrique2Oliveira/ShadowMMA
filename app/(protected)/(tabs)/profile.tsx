@@ -5,7 +5,7 @@ import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ImageBackground, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ImageBackground, Linking, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type SubscriptionPlan = {
   title: string;
@@ -29,7 +29,16 @@ export default function Profile() {
   const { logout, user } = useAuth();
   const { userData, refreshUserData } = useUserData();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
+
+  const onRefresh = React.useCallback(async () => {
+    if (user) {
+      setRefreshing(true);
+      await refreshUserData(user.uid);
+      setRefreshing(false);
+    }
+  }, [user, refreshUserData]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -72,7 +81,16 @@ export default function Profile() {
       style={styles.bg}
       resizeMode="cover"
     >
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors.text}
+            colors={[Colors.text]}
+          />
+        }
+      >
         <View style={styles.container}>
           <Text style={styles.screenTitle}>My Gym</Text>
           <View style={styles.header}>
