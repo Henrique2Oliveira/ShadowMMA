@@ -104,15 +104,24 @@ export default function Profile() {
 
           <View style={styles.statsContainer}>
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{userData?.moves || "-"}</Text>
+              <View style={styles.statRow}>
+                <MaterialCommunityIcons name="karate" size={20} color={Colors.text} style={styles.statIcon} />
+                <Text style={styles.statNumber}>{userData?.moves || "-"}</Text>
+              </View>
               <Text style={styles.statLabel}>Moves</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{userData?.loginStreak || "-"}</Text>
+              <View style={styles.statRow}>
+                <MaterialCommunityIcons name="fire" size={30} color="#fd6100ff" style={styles.statIcon} />
+                <Text style={styles.statNumber}>{userData?.loginStreak || "-"}</Text>
+              </View>
               <Text style={styles.statLabel}>Days Streak</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{userData?.combos || "-"}</Text>
+              <View style={styles.statRow}>
+                <MaterialCommunityIcons name="boxing-glove" size={20} color={Colors.text} style={[styles.statIcon, { transform: [{ rotate: '90deg' }] }]} />
+                <Text style={styles.statNumber}>{userData?.combos || "-"}</Text>
+              </View>
               <Text style={styles.statLabel}>Combos</Text>
             </View>
           </View>
@@ -276,6 +285,14 @@ const styles = StyleSheet.create({
   },
   statBox: {
     alignItems: 'center',
+  },
+  statRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  statIcon: {
+    marginRight: 8,
   },
   statNumber: {
     color: Colors.text,

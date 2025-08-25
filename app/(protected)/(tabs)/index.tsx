@@ -2,7 +2,7 @@ import { FightModeModal } from '@/components/FightModeModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React, { useEffect } from 'react';
@@ -170,7 +170,7 @@ export default function Index() {
           colors={[Colors.text]}
         />
       }>
-
+        
       {/* Header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', paddingHorizontal: 10, backgroundColor: Colors.background, paddingTop: 20 }}>
         <View style={{ maxWidth: '75%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
@@ -186,7 +186,7 @@ export default function Index() {
             Lvl {userData?.xp ? Math.floor(userData.xp / 100) : 0}
           </Text>
 
-          <View style={{ width: "75%", height: 28, borderRadius: 8, backgroundColor: "#7b590aff", overflow: 'hidden', shadowOpacity: 0.3, shadowRadius: 4.65, elevation: 8 }}>
+          <View style={{ width: "75%", height: 28, borderRadius: 8, backgroundColor: "#7b590aff", overflow: 'hidden', shadowOpacity: 0.3, shadowRadius: 4.65, elevation: 4 }}>
             <LinearGradient
               colors={['#ffd700', '#ffa000']}
               start={{ x: 0, y: 1 }}
@@ -206,6 +206,7 @@ export default function Index() {
 
       {/* Content */}
       <View style={styles.container}>
+
         <LinearGradient colors={[Colors.green, Colors.darkGreen]} style={[styles.linearGradientButton, buttons[0].disabled && { opacity: 0.4 }]}>
           <TouchableOpacity onPress={buttons[0].onPress} disabled={buttons[0].disabled}>
             <Image source={require('@/assets/images/jab-icon.png')} style={styles.imageButton} />
@@ -220,42 +221,49 @@ export default function Index() {
           </TouchableOpacity>
         </LinearGradient>
 
-        <View style={styles.row}>
-          <TouchableOpacity
-            style={[styles.button, { zIndex: 5 }, buttons[1].disabled && { opacity: 0.4 }]}
-            onPress={buttons[1].onPress}
-            disabled={buttons[1].disabled}>
-            <MaterialCommunityIcons name="timer-outline" size={60} color={Colors.background} style={styles.buttonIcon} />
-            <Text style={[styles.textButton, { fontSize: 36 }]}>{buttons[1].title}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, buttons[2].disabled && { opacity: 0.4 }]}
-            onPress={buttons[2].onPress}
-            disabled={buttons[2].disabled}>
-            <MaterialCommunityIcons name="timer-sand" size={60} color={Colors.background} style={styles.buttonIcon} />
-            <Text style={[styles.textButton, { fontSize: 36 }]}>{buttons[2].title}</Text>
-          </TouchableOpacity>
+        {/* Streak Row */}
+        <View style={styles.streakContainer}>
+          <MaterialCommunityIcons
+            name="fire"
+            size={24}
+            color="#fdd700"
+            style={styles.streakIcon}
+          />
+          <Text style={styles.streakText}>
+            {userData?.loginStreak ? `${userData.loginStreak} day${userData.loginStreak !== 1 ? 's' : ''} streak` : '0 days streak'}
+          </Text>
         </View>
 
         <View style={styles.row}>
           <TouchableOpacity
-            style={[styles.button, buttons[3].disabled && { opacity: 0.4 }]}
-            onPress={buttons[3].onPress}
-            disabled={buttons[3].disabled}>
-            <View style={{ position: 'absolute', top: -40, transform: [{ rotate: '40deg' }], }}>
-              <Ionicons name="footsteps" size={78} color={Colors.background} style={styles.buttonIcon} />
-              <Ionicons name="footsteps" size={78} color={Colors.background} style={styles.buttonIcon} />
-            </View>
-            <View style={{ position: 'absolute', bottom: 12, left: 0, right: 0 }}>
-              <Text style={[styles.textButton]}>{buttons[3].title}</Text>
-            </View>
+            style={[styles.smallButton, buttons[1].disabled && { opacity: 0.4 }]}
+            onPress={buttons[1].onPress}
+            disabled={buttons[1].disabled}>
+            <MaterialCommunityIcons name="timer-outline" size={40} color={Colors.background} style={styles.smallButtonIcon} />
+            <Text style={[styles.smallTextButton]}>{buttons[1].title}</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.button, buttons[4].disabled && { opacity: 0.4 }]}
+            style={[styles.smallButton, buttons[2].disabled && { opacity: 0.4 }]}
+            onPress={buttons[2].onPress}
+            disabled={buttons[2].disabled}>
+            <MaterialCommunityIcons name="timer-sand" size={40} color={Colors.background} style={styles.smallButtonIcon} />
+            <Text style={[styles.smallTextButton]}>{buttons[2].title}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.smallButton, buttons[3].disabled && { opacity: 0.4 }]}
+            onPress={buttons[3].onPress}
+            disabled={buttons[3].disabled}>
+            <MaterialCommunityIcons name="karate" size={40} color={Colors.background} style={styles.smallButtonIcon} />
+
+            <Text style={[styles.smallTextButton]}>{buttons[3].title}</Text>
+
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.smallButton, buttons[4].disabled && { opacity: 0.4 }]}
             onPress={buttons[4].onPress}
             disabled={buttons[4].disabled}>
-            <MaterialCommunityIcons name="shield" size={75} color={Colors.background} style={styles.buttonIcon} />
-            <Text style={[styles.textButton, { fontSize: 32 }]}>{buttons[4].title}</Text>
+            <MaterialCommunityIcons name="shield" size={40} color={Colors.background} style={styles.smallButtonIcon} />
+            <Text style={[styles.smallTextButton]}>{buttons[4].title}</Text>
           </TouchableOpacity>
         </View>
 
@@ -268,7 +276,7 @@ export default function Index() {
           onPress={buttons[5].onPress}
           disabled={buttons[5].disabled}>
           <View style={styles.buttonWideContent}>
-            <MaterialCommunityIcons name="boxing-glove" size={160} color="#0808084e" style={[styles.buttonIcon, styles.buttonIconLarge]} />
+            <MaterialCommunityIcons name="boxing-glove" size={130} color="#0808084e" style={[styles.buttonIcon, styles.buttonIconLarge]} />
             <Text style={[styles.textButton, { flex: 1, textAlign: 'left', fontSize: 42 }]}>{buttons[5].title}</Text>
           </View>
         </TouchableOpacity>
@@ -281,7 +289,7 @@ export default function Index() {
           onPress={buttons[6].onPress}
           disabled={buttons[6].disabled}>
           <View style={styles.buttonWideContent}>
-            <MaterialCommunityIcons name="lock" size={160} color="#0808084e" style={[styles.buttonIcon, styles.buttonIconLarge]} />
+            <MaterialCommunityIcons name="lock" size={130} color="#0808084e" style={[styles.buttonIcon, styles.buttonIconLarge]} />
             <Text style={[styles.textButton, { flex: 1, textAlign: 'left' }]}>{buttons[6].title}</Text>
           </View>
         </TouchableOpacity>
@@ -294,7 +302,7 @@ export default function Index() {
           onPress={buttons[7].onPress}
           disabled={buttons[7].disabled}>
           <View style={styles.buttonWideContent}>
-            <MaterialCommunityIcons name="cog" size={160} color="#0808084e" style={[styles.buttonIcon, styles.buttonIconLarge]} />
+            <MaterialCommunityIcons name="cog" size={130} color="#0808084e" style={[styles.buttonIcon, styles.buttonIconLarge]} />
             <Text style={[styles.textButton, { flex: 1, textAlign: 'left', fontSize: 42 }]}>{buttons[7].title}</Text>
           </View>
         </TouchableOpacity>
@@ -308,7 +316,7 @@ export default function Index() {
           onPress={buttons[8].onPress}
           disabled={buttons[8].disabled}>
           <View style={styles.buttonWideContent}>
-            <MaterialCommunityIcons name="run" size={160} color="#0808084e" style={[styles.buttonIcon, styles.buttonIconLarge]} />
+            <MaterialCommunityIcons name="run" size={130} color="#0808084e" style={[styles.buttonIcon, styles.buttonIconLarge]} />
             <Text style={[styles.textButton, { flex: 1, textAlign: 'left', fontSize: 42 }]}>{buttons[8].title}</Text>
           </View>
         </TouchableOpacity>
@@ -335,6 +343,32 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
+  streakContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+    width: "100%",
+    height: 40,
+    paddingHorizontal: 8,
+    marginHorizontal: 'auto',
+    alignSelf: 'center',
+    marginVertical: 5,
+  },
+  streakIcon: {
+    marginRight: 4,
+    textShadowColor: "#000",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  streakText: {
+    color: Colors.text,
+    fontFamily: Typography.fontFamily,
+    fontSize: 14,
+    textShadowColor: "#000",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
   container: {
     flex: 1,
     paddingHorizontal: 25,
@@ -357,8 +391,8 @@ const styles = StyleSheet.create({
     maxWidth: 600,
     flexDirection: 'row',
     justifyContent: 'center',
-    marginVertical: 10,
-    gap: 20,
+    marginVertical: 25,
+    gap: 10,
   },
   buttonWide: {
     width: '100%',
@@ -379,10 +413,24 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     justifyContent: 'center',
     alignItems: 'center',
-
+  },
+  smallButton: {
+    flex: 1,
+    backgroundColor: Colors.button,
+    borderRadius: 10,
+    padding: 5,
+    aspectRatio: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    maxWidth: 80,
+    height: 80,
   },
   buttonIcon: {
     marginBottom: 10,
+    opacity: 0.9,
+  },
+  smallButtonIcon: {
+    marginBottom: 5,
     opacity: 0.9,
   },
   buttonIconLarge: {
@@ -408,6 +456,15 @@ const styles = StyleSheet.create({
     textShadowColor: "#000",
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 2,
+  },
+  smallTextButton: {
+    color: Colors.text,
+    textAlign: 'center',
+    fontFamily: Typography.fontFamily,
+    fontSize: 12,
+    textShadowColor: "#000",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
   },
   imageButton: {
     position: 'absolute',

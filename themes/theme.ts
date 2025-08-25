@@ -22,8 +22,12 @@ const palette = {
     },
     green: {
         light: '#3EB516',
+        medium: '#257625',
         dark: '#3F8531'
     },
+    blue: '#007AFF',
+    purple: '#FF00FF',
+    orange: '#FFA500',
     yellow: '#FCFFC9'
 } as const;
 
@@ -31,6 +35,7 @@ const palette = {
 export const Colors = {
     // Text colors
     text: palette.white,
+    darkText: palette.gray.dark,
     lightText: palette.gray.light,
     
     // Background colors

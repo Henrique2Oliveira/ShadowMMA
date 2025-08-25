@@ -1,6 +1,7 @@
 import { Colors, Typography } from '@/themes/theme';
 import { Move } from '@/types/game';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef } from 'react';
 import {
   Animated,
@@ -28,20 +29,71 @@ export const CombosModal: React.FC<CombosModalProps> = ({
   const slideAnims = useRef<AnimatedValue[]>(
     combos.map(() => new Animated.Value(300))
   ).current;
+  const rotateAnims = useRef<AnimatedValue[]>(
+    combos.map(() => new Animated.Value(0))
+  ).current;
+  const scaleAnims = useRef<AnimatedValue[]>(
+    combos.map(() => new Animated.Value(1))
+  ).current;
 
   useEffect(() => {
     if (visible) {
       // Reset animations when modal opens
       slideAnims.forEach((anim: AnimatedValue) => anim.setValue(300));
-      
-      // Create sequential animations
-      const animations = slideAnims.map((anim: AnimatedValue, index: number) => {
-        return Animated.timing(anim, {
-          toValue: 0,
-          duration: 500,
-          delay: index * 150, // Stagger the animations
-          useNativeDriver: true,
-        });
+      rotateAnims.forEach((anim: AnimatedValue) => anim.setValue(0));
+      scaleAnims.forEach((anim: AnimatedValue) => anim.setValue(1));
+
+      // Create sequential animations with bounce and rotation
+      const animations = slideAnims.map((slideAnim: AnimatedValue, index: number) => {
+        const rotateAnim = rotateAnims[index];
+        const scaleAnim = scaleAnims[index];
+
+        return Animated.sequence([
+          // Initial slide in with bounce
+          Animated.timing(slideAnim, {
+            toValue: -20, // Overshoot
+            duration: 400,
+            delay: index * 150,
+            useNativeDriver: true,
+          }),
+          // Bounce back with rotation and scale
+          Animated.parallel([
+            Animated.spring(slideAnim, {
+              toValue: 0,
+              tension: 100,
+              friction: 8,
+              useNativeDriver: true,
+            }),
+            Animated.sequence([
+              // Rotate and scale up
+              Animated.parallel([
+                Animated.timing(rotateAnim, {
+                  toValue: 1,
+                  duration: 200,
+                  useNativeDriver: true,
+                }),
+                Animated.timing(scaleAnim, {
+                  toValue: 1.05,
+                  duration: 200,
+                  useNativeDriver: true,
+                }),
+              ]),
+              // Return to normal
+              Animated.parallel([
+                Animated.timing(rotateAnim, {
+                  toValue: 0,
+                  duration: 300,
+                  useNativeDriver: true,
+                }),
+                Animated.timing(scaleAnim, {
+                  toValue: 1,
+                  duration: 300,
+                  useNativeDriver: true,
+                }),
+              ]),
+            ]),
+          ]),
+        ]);
       });
 
       // Start all animations
@@ -66,40 +118,71 @@ export const CombosModal: React.FC<CombosModalProps> = ({
           <Text style={styles.modalTitle}>Combos</Text>
           <ScrollView style={styles.optionsContainer}>
             {combos.map((combo, index) => (
-              <Animated.View 
-                key={index} 
+              <Animated.View
+                key={index}
                 style={[
                   styles.comboContainer,
                   {
-                    transform: [{ translateX: slideAnims[index] }]
+                    transform: [
+                      { translateX: slideAnims[index] },
+                      { 
+                        rotate: rotateAnims[index].interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ['0deg', '3deg'],
+                        })
+                      },
+                      { scale: scaleAnims[index] }
+                    ]
                   }
                 ]}
               >
-                <View style={styles.comboHeader}>
-                  <Text style={styles.comboName}>{combo.name}</Text>
-                  <View style={styles.levelBadge}>
-                    <Text style={styles.levelText}>Lvl {combo.level}</Text>
+                <LinearGradient
+                  colors={['#1a1a1aff', 'rgba(54, 15, 15, 1)']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0, y: 1 }}
+                  style={styles.comboGradient}
+                >
+                  <View style={styles.comboHeader}>
+                    <View style={styles.comboNameContainer}>
+                      <MaterialCommunityIcons 
+                        name="boxing-glove" 
+                        size={20} 
+                        color={Colors.text} 
+                        style={styles.comboIcon}
+                      />
+                      <Text style={styles.comboName}>{combo.name}</Text>
+                    </View>
+                    <View style={styles.levelBadge}>
+                      <Text style={styles.levelText}>Lvl {combo.level}</Text>
+                    </View>
                   </View>
-                </View>
-                <View style={styles.movesContainer}>
-                  <Text style={styles.moveText}>
-                    {combo.moves.map((move, moveIndex) => (
-                      <Text key={moveIndex}>
-                        {move.move.replace(/\n/g, ' ')}
-                        {moveIndex < combo.moves.length - 1 ? '   →   ' : ''}
-                      </Text>
-                    ))}
-                  </Text>
-                </View>
+                  <View style={styles.movesContainer}>
+                    <Text style={styles.moveText}>
+                      {combo.moves.map((move, moveIndex) => (
+                        <Text key={moveIndex}>
+                          {move.move.replace(/\n/g, ' ')}
+                          {moveIndex < combo.moves.length - 1 ? '   →   ' : ''}
+                        </Text>
+                      ))}
+                    </Text>
+                  </View>
+                </LinearGradient>
               </Animated.View>
             ))}
           </ScrollView>
-            <TouchableOpacity
-              style={styles.startButton}
-              onPress={onClose}
+          <TouchableOpacity
+            style={styles.startButton}
+            onPress={onClose}
+          >
+            <LinearGradient
+              colors={['#5a1515', '#3e1010']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={styles.startButtonGradient}
             >
-              <Text style={styles.startButtonText}>Next</Text>
-            </TouchableOpacity>
+              <Text style={styles.startButtonText}>Fight!</Text>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
       </View>
     </Modal>
@@ -113,7 +196,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: "#2a2a2a",
+    backgroundColor: "#000000ff",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
@@ -136,19 +219,30 @@ const styles = StyleSheet.create({
   },
   comboContainer: {
     marginBottom: 15,
-    backgroundColor: '#444444',
     borderRadius: 10,
-    padding: 15,
     marginHorizontal: 10,
+    borderBottomWidth: 6,
+    borderWidth: 2,
+    borderColor: '#edededff',
+    overflow: 'hidden',
+  },
+  comboGradient: {
+    padding: 15,
     paddingBottom: 17,
-    borderBottomWidth: 4,
-    borderBottomColor: "#2b2b2bff",
   },
   comboHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+  },
+  comboNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  comboIcon: {
+    marginRight: 8,
   },
   comboName: {
     color: Colors.text,
@@ -161,11 +255,14 @@ const styles = StyleSheet.create({
     right: -5,
     top: -5,
     zIndex: 1,
-    backgroundColor: Colors.grayLevelBar,
+    backgroundColor: "#6c1818fd",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
     marginLeft: 10,
+    borderColor: '#b82929ff',
+    borderWidth: 2,
+    borderBottomWidth: 4,
   },
   levelText: {
     color: Colors.text,
@@ -176,12 +273,12 @@ const styles = StyleSheet.create({
   movesContainer: {
     flexDirection: 'column',
     padding: 3,
-    
+
     alignItems: 'flex-start', //maybe remove this if not needed
   },
   moveText: {
     color: "white",
-    backgroundColor: '#363636ff',
+    backgroundColor: '#fafafa25',
     padding: 10,
     borderRadius: 10,
     fontSize: 16,
@@ -196,15 +293,26 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   startButton: {
-    backgroundColor: Colors.darkGreen,
-    paddingVertical: 15,
+    width: '50%',
+    alignSelf: 'center',
     borderRadius: 10,
     marginTop: 20,
+    marginHorizontal: 10,
+    borderBottomWidth: 6,
+    borderWidth: 2,
+    borderColor: '#ff3636ff',
+    overflow: 'hidden',
+  },
+  startButtonGradient: {
+    paddingVertical: 15,
+    padding: 15,
+    paddingBottom: 17,
   },
   startButtonText: {
     color: Colors.text,
-    fontSize: 19,
+    fontSize: 28,
     fontFamily: Typography.fontFamily,
     textAlign: 'center',
+
   },
 });
