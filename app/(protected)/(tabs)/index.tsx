@@ -74,8 +74,8 @@ export default function Index() {
       title: 'START FIGHT',
       disabled: false,
       onPress: () => setModalConfig({
-        roundDuration: '3',
-        numRounds: '3',
+        roundDuration: '1',
+        numRounds: '1',
         restTime: '1',
         moveSpeed: '1',
         movesMode: ['Punches'],
@@ -202,7 +202,12 @@ export default function Index() {
             Lvl {userData?.xp ? Math.floor(userData.xp / 100) : 0}
           </Text>
 
-          <View style={{ width: "75%", height: 28, borderRadius: 8, backgroundColor: "#7b590aff", overflow: 'hidden', shadowOpacity: 0.3, shadowRadius: 4.65, elevation: 4 }}>
+          <View style={{
+            width: "75%", height: 28, borderRadius: 8, backgroundColor: "#7b590aff", overflow: 'hidden', shadowOpacity: 0.3, shadowRadius: 4.65, elevation: 4,
+            borderWidth: 1,
+            borderColor: '#473407ff',
+            borderBottomWidth: 3,
+          }}>
             <LinearGradient
               colors={['#ffd700', '#ffa000']}
               start={{ x: 0, y: 1 }}
@@ -212,6 +217,18 @@ export default function Index() {
                 height: '100%',
                 borderRadius: 4
               }}>
+              <View
+                style={{
+                  position: "absolute",
+                  top: 5,
+                  left: 15,
+                  backgroundColor: "#ffffff70",
+                  width: `${((userData?.xp ?? 0) % 100) - 15 || 15}%`,
+                  height: '15%',
+                  borderRadius: 10,
+                  zIndex: 10,
+                }}>
+              </View>
             </LinearGradient>
           </View>
 
@@ -224,7 +241,7 @@ export default function Index() {
       <View style={styles.container}>
 
         <LinearGradient colors={[Colors.green, Colors.darkGreen]} style={[styles.linearGradientButton, buttons[0].disabled && { opacity: 0.4 }]}>
-          <TouchableOpacity onPress={buttons[0].onPress} disabled={buttons[0].disabled}>
+          <TouchableOpacity onPress={buttons[0].onPress} disabled={buttons[0].disabled} style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} >
             <Image source={require('@/assets/images/jab-icon.png')} style={styles.imageButton} />
             <Text style={[styles.textButton, { textAlign: 'left', fontSize: 44, lineHeight: 55 }]}>
               {buttons[0].title.split(' ').map((word, index) => (
@@ -350,7 +367,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 10,
     width: "100%",
     height: 35,
     paddingHorizontal: 8,
@@ -408,27 +424,37 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingVertical: 20,
     paddingHorizontal: 20,
+    overflow: "hidden",
     marginVertical: 10,
-  },
-  button: {
-    flex: 1,
-    backgroundColor: Colors.button,
-    borderRadius: 10,
-    padding: 5,
-    aspectRatio: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 8,
+    borderWidth: 2,
+    borderColor: '#0e641fff',
+    borderBottomWidth: 6,
   },
   smallButton: {
     flex: 1,
     backgroundColor: Colors.button,
+    overflow: "hidden",
     borderRadius: 10,
     padding: 5,
     aspectRatio: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    maxWidth: 80,
+    maxWidth: 100,
     height: 80,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 6,
+    borderWidth: 2,
+    borderColor: '#6d6d6dff',
+    borderBottomWidth: 4,
+
   },
   buttonIcon: {
     marginBottom: 10,
@@ -484,12 +510,13 @@ const styles = StyleSheet.create({
   linearGradientButton: {
     width: '100%',
     maxWidth: 600,
-    height: 170,
+    height: 130,
     backgroundColor: 'transparent',
     borderRadius: 10,
     marginBottom: 10,
-    paddingVertical: 20,
+    paddingVertical: 10,
     paddingHorizontal: 20,
     marginVertical: 10,
+    overflow: "hidden"
   },
 });

@@ -201,7 +201,7 @@ export default function Game() {
   // Power-up: Speed Boost (random 25% chance to appear, lasts 30s)
   const BOOST_CHANCE = 0.25; // 25% chance per check
   const BOOST_DURATION_MS = 30_000; // 30 seconds
-  const BOOST_MULTIPLIER = 1.4; // 1.4x speed (pause time reduced)
+  const BOOST_MULTIPLIER = 1.3; // 1.3x speed (pause time reduced)
   const BOOST_CHECK_INTERVAL_MS = 20_000; // check every 20s while fighting
 
   const [isBoostActive, setIsBoostActive] = React.useState(false);
