@@ -1,7 +1,7 @@
 import { Colors, Typography } from '@/themes/theme';
 import { formatTime } from '@/utils/time';
 import { LinearGradient } from 'expo-linear-gradient';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 
 interface MoveCardProps {
@@ -14,7 +14,7 @@ interface MoveCardProps {
   isGameOver: boolean;
   isRestPeriod: boolean;
   isPaused: boolean;
-  animationsEnabled: boolean;
+  animationMode: 'none' | 'old' | 'new';
   isSouthPaw?: boolean;
 }
 
@@ -28,14 +28,81 @@ export const MoveCard: React.FC<MoveCardProps> = ({
   isGameOver,
   isRestPeriod,
   isPaused,
-  animationsEnabled,
+  animationMode,
   isSouthPaw = false,
 }) => {
+  // Enhanced animation values for move transitions (new mode)
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const prevMove = useRef(move);
+
+  // Trigger enhanced animation when move changes (new mode)
+  useEffect(() => {
+    if (animationMode === 'new' && move !== prevMove.current && move && !isGameOver && !isRestPeriod) {
+      prevMove.current = move;
+      
+      // Reset animation values
+      slideAnim.setValue(300);
+      rotateAnim.setValue(0);
+      scaleAnim.setValue(1);
+
+      // Create the enhanced animation sequence
+      const animation = Animated.sequence([
+        // Initial slide in with overshoot
+        Animated.timing(slideAnim, {
+          toValue: -20, // Overshoot
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        // Bounce back with rotation and scale
+        Animated.parallel([
+          Animated.spring(slideAnim, {
+            toValue: 0,
+            tension: 100,
+            friction: 8,
+            useNativeDriver: true,
+          }),
+          Animated.sequence([
+            // Rotate and scale up
+            Animated.parallel([
+              Animated.timing(rotateAnim, {
+                toValue: 1,
+                duration: 150,
+                useNativeDriver: true,
+              }),
+              Animated.timing(scaleAnim, {
+                toValue: 1.05,
+                duration: 150,
+                useNativeDriver: true,
+              }),
+            ]),
+            // Return to normal
+            Animated.parallel([
+              Animated.timing(rotateAnim, {
+                toValue: 0,
+                duration: 250,
+                useNativeDriver: true,
+              }),
+              Animated.timing(scaleAnim, {
+                toValue: 1,
+                duration: 250,
+                useNativeDriver: true,
+              }),
+            ]),
+          ]),
+        ]),
+      ]);
+
+      animation.start();
+    }
+  }, [move, animationMode, isGameOver, isRestPeriod]);
   return (
     <Animated.View style={[
       styles.card,
       {
-        transform: animationsEnabled ? [
+        transform: animationMode !== 'none' ? [
+          ...(animationMode === 'new' ? [{ translateX: slideAnim }] : []),
           {
             rotateX: tiltX.interpolate({
               inputRange: [-0.4, 0, 0.4],
@@ -48,8 +115,14 @@ export const MoveCard: React.FC<MoveCardProps> = ({
               outputRange: ['-40deg', '0deg', '40deg']
             })
           },
+          ...(animationMode === 'new' ? [{
+            rotateZ: rotateAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: ['0deg', '2deg'],
+            })
+          }] : []),
           {
-            scale: scale
+            scale: animationMode === 'new' ? Animated.multiply(scale, scaleAnim) : scale
           }
         ] : []
       }

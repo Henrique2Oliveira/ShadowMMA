@@ -10,8 +10,8 @@ interface GameOptionsModalProps {
   isMuted: boolean;
   onSpeedChange: () => void;
   speedMultiplier: number;
-  onAnimationsToggle: () => void;
-  isAnimationsEnabled: boolean;
+  onAnimationModeChange: () => void;
+  animationMode: 'none' | 'old' | 'new';
   onShowCombos: () => void;
   onQuit: () => void;
   // Stance controls
@@ -26,13 +26,31 @@ export const GameOptionsModal: React.FC<GameOptionsModalProps> = ({
   isMuted,
   onSpeedChange,
   speedMultiplier,
-  onAnimationsToggle,
-  isAnimationsEnabled,
+  onAnimationModeChange,
+  animationMode,
   onShowCombos,
   onQuit,
   stance,
   onToggleStance,
 }) => {
+  const getAnimationModeLabel = (mode: 'none' | 'old' | 'new') => {
+    switch (mode) {
+      case 'none': return 'Animations: None';
+      case 'old': return 'Animations: Old';
+      case 'new': return 'Animations: New (Slide)';
+      default: return 'Animations: Old';
+    }
+  };
+
+  const getAnimationModeIcon = (mode: 'none' | 'old' | 'new') => {
+    switch (mode) {
+      case 'none': return 'square-outline';
+      case 'old': return 'cube-outline';
+      case 'new': return 'cube';
+      default: return 'cube-outline';
+    }
+  };
+
   const options = [
     {
       icon: isMuted ? 'volume-off' : 'volume-high',
@@ -50,9 +68,9 @@ export const GameOptionsModal: React.FC<GameOptionsModalProps> = ({
       onPress: onToggleStance,
     },
     {
-      icon: isAnimationsEnabled ? 'cube-outline' : 'cube',
-      label: isAnimationsEnabled ? 'Disable Animations' : 'Enable Animations',
-      onPress: onAnimationsToggle,
+      icon: getAnimationModeIcon(animationMode),
+      label: getAnimationModeLabel(animationMode),
+      onPress: onAnimationModeChange,
     },
     {
       icon: 'list',

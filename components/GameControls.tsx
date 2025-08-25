@@ -7,7 +7,7 @@ import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native
 interface GameControlsProps {
   isPaused: boolean;
   isMuted: boolean;
-  isAnimationsEnabled: boolean;
+  animationMode: 'none' | 'old' | 'new';
   speedMultiplier: number;
   sideButtonsOpacity: Animated.Value;
   onPauseToggle: () => void;
@@ -20,7 +20,7 @@ interface GameControlsProps {
 export const GameControls: React.FC<GameControlsProps> = ({
   isPaused,
   isMuted,
-  isAnimationsEnabled,
+  animationMode,
   speedMultiplier,
   sideButtonsOpacity,
   onPauseToggle,

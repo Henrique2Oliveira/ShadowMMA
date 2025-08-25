@@ -181,13 +181,13 @@ export default function Game() {
 
 
   const [speedMultiplier, setSpeedMultiplier] = React.useState(parseFloat(params.moveSpeed || '1'));
-  const [animationsEnabled, setAnimationsEnabled] = React.useState(true);
+  const [animationMode, setAnimationMode] = React.useState<'none' | 'old' | 'new'>('new');
   // Load preferences from AsyncStorage on mount
   React.useEffect(() => {
     loadGamePreferences().then((prefs) => {
       if (prefs) {
         setIsMuted(prefs.isMuted);
-        setAnimationsEnabled(prefs.isAnimationsEnabled);
+        setAnimationMode(prefs.animationMode || 'new');
         setStance(prefs.stance);
       }
     });
@@ -195,8 +195,8 @@ export default function Game() {
 
   // Save preferences to AsyncStorage when changed
   React.useEffect(() => {
-    saveGamePreferences({ isMuted, isAnimationsEnabled: animationsEnabled, stance });
-  }, [isMuted, animationsEnabled, stance]);
+    saveGamePreferences({ isMuted, animationMode, stance });
+  }, [isMuted, animationMode, stance]);
 
   // Power-up: Speed Boost (random 25% chance to appear, lasts 30s)
   const BOOST_CHANCE = 0.25; // 25% chance per check
@@ -594,6 +594,15 @@ export default function Game() {
     });
   }, [gameState.isPaused]);
 
+  const handleAnimationModeChange = React.useCallback(() => {
+    if (!gameState.isPaused) return;
+    setAnimationMode(current => {
+      const modes: ('none' | 'old' | 'new')[] = ['none', 'old', 'new'];
+      const currentIndex = modes.indexOf(current);
+      return modes[(currentIndex + 1) % modes.length];
+    });
+  }, [gameState.isPaused]);
+
   const updateMoveProg = React.useCallback(() => {
     if (currentMove) {
       return updateMoveProgress(currentMove.pauseTime, effectiveSpeedMultiplier);
@@ -798,7 +807,7 @@ export default function Game() {
           isGameOver={gameState.isGameOver}
           isRestPeriod={gameState.isRestPeriod}
           isPaused={gameState.isPaused}
-          animationsEnabled={animationsEnabled}
+          animationMode={animationMode}
           isSouthPaw={stance === 'southpaw'}
         />
 
@@ -812,7 +821,7 @@ export default function Game() {
         <GameControls
           isPaused={gameState.isPaused}
           isMuted={isMuted}
-          isAnimationsEnabled={animationsEnabled}
+          animationMode={animationMode}
           speedMultiplier={speedMultiplier}
           sideButtonsOpacity={sideButtonsOpacity}
           onPauseToggle={handlePress}
@@ -829,8 +838,8 @@ export default function Game() {
           onMuteToggle={() => setIsMuted((prev) => !prev)}
           speedMultiplier={speedMultiplier}
           onSpeedChange={handleSpeedChange}
-          isAnimationsEnabled={animationsEnabled}
-          onAnimationsToggle={() => setAnimationsEnabled((prev) => !prev)}
+          animationMode={animationMode}
+          onAnimationModeChange={handleAnimationModeChange}
           onShowCombos={() => {
             setIsOptionsModalVisible(false);
             setShowCombosModal(true);

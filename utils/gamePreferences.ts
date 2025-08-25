@@ -4,7 +4,7 @@ export const GAME_PREFS_KEY = 'shadowmma_game_preferences';
 
 export interface GamePreferences {
   isMuted: boolean;
-  isAnimationsEnabled: boolean;
+  animationMode: 'none' | 'old' | 'new';
   stance: 'orthodox' | 'southpaw';
 }
 

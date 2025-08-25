@@ -161,7 +161,7 @@ export default function Index() {
 
   return (
     <ScrollView
-      contentContainerStyle={{ flexGrow: 1 }}
+      contentContainerStyle={{ flexGrow: 1, backgroundColor: Colors.background }}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -170,9 +170,25 @@ export default function Index() {
           colors={[Colors.text]}
         />
       }>
-        
+
+      {/* Streak Row */}
+      <View style={styles.streakContainer}>
+        <Text style={[styles.streakText, { fontSize: 18 }]}>
+          {userData?.loginStreak ? userData.loginStreak : '0'}
+        </Text>
+        <MaterialCommunityIcons
+          name="fire"
+          size={24}
+          color="#fdd700"
+          style={styles.streakIcon}
+        />
+        <Text style={styles.streakText}>
+          {userData?.loginStreak ? `Day${userData.loginStreak !== 1 ? 's' : ''} streak` : 'days streak'}
+        </Text>
+      </View>
+
       {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', paddingHorizontal: 10, backgroundColor: Colors.background, paddingTop: 20 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', paddingHorizontal: 10, backgroundColor: Colors.background, paddingTop: 10 }}>
         <View style={{ maxWidth: '75%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
           <Text style={{
             color: Colors.text,
@@ -220,19 +236,6 @@ export default function Index() {
             </Text>
           </TouchableOpacity>
         </LinearGradient>
-
-        {/* Streak Row */}
-        <View style={styles.streakContainer}>
-          <MaterialCommunityIcons
-            name="fire"
-            size={24}
-            color="#fdd700"
-            style={styles.streakIcon}
-          />
-          <Text style={styles.streakText}>
-            {userData?.loginStreak ? `${userData.loginStreak} day${userData.loginStreak !== 1 ? 's' : ''} streak` : '0 days streak'}
-          </Text>
-        </View>
 
         <View style={styles.row}>
           <TouchableOpacity
@@ -349,11 +352,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 10,
     width: "100%",
-    height: 40,
+    height: 35,
     paddingHorizontal: 8,
     marginHorizontal: 'auto',
     alignSelf: 'center',
     marginVertical: 5,
+    backgroundColor: '#dbdbdb1c',
+
   },
   streakIcon: {
     marginRight: 4,
