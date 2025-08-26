@@ -8,11 +8,11 @@ import { Colors, Typography } from '@/themes/theme';
 import { checkMissedLoginAndScheduleComeback, recordLoginAndScheduleNotifications, registerForPushNotificationsAsync } from '@/utils/notificationUtils';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function Index() {
   const { user } = useAuth();
@@ -21,19 +21,86 @@ export default function Index() {
 
   const [isModalVisible, setIsModalVisible] = React.useState(false);
 
+  // Animation refs
+  const mainButtonSlideAnims = useRef([
+    new Animated.Value(300), // Start Fight Button
+    new Animated.Value(300), // Combos Button
+    new Animated.Value(300), // Unlock Button
+    new Animated.Value(300), // Custom Fights Button
+    new Animated.Value(300), // Warmup Button
+  ]).current;
+
+  const mainButtonRotateAnims = useRef([
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+  ]).current;
+
+  const mainButtonScaleAnims = useRef([
+    new Animated.Value(1),
+    new Animated.Value(1),
+    new Animated.Value(1),
+    new Animated.Value(1),
+    new Animated.Value(1),
+  ]).current;
+
+  const smallButtonSlideAnims = useRef([
+    new Animated.Value(50), // 5 Min
+    new Animated.Value(50), // 15 Min
+    new Animated.Value(50), // Kicks
+    new Animated.Value(50), // Defense
+  ]).current;
+
+  const smallButtonRotateAnims = useRef([
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+  ]).current;
+
+  const smallButtonScaleAnims = useRef([
+    new Animated.Value(1),
+    new Animated.Value(1),
+    new Animated.Value(1),
+    new Animated.Value(1),
+  ]).current;
+
+  const mainButtonOpacityAnims = useRef([
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+  ]).current;
+
+  const smallButtonOpacityAnims = useRef([
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+  ]).current;
+
+  // Notification card animations
+  const notificationSlideAnim = useRef(new Animated.Value(300)).current;
+  const notificationRotateAnim = useRef(new Animated.Value(0)).current;
+  const notificationScaleAnim = useRef(new Animated.Value(1)).current;
+  const notificationOpacityAnim = useRef(new Animated.Value(0)).current;
+
   // Random notification messages
   const notificationMessages = [
     'Enable Fight Notifications 🔥',
     'Activate Streak Alerts 🔥',
     'Turn On Training Reminders 🔥',
-    'Get Daily Fight Alerts 🔥', 
+    'Get Daily Fight Alerts 🔥',
     'Stay Fight Ready 🔥',
     'Never Miss Your Streak 🔥',
     'Keep Your Fire Burning 🔥',
     'Protect Your Progress 🔥'
   ];
 
-  const [notificationMessage, setNotificationMessage] = React.useState(() => 
+  const [notificationMessage, setNotificationMessage] = React.useState(() =>
     notificationMessages[Math.floor(Math.random() * notificationMessages.length)]
   );
 
@@ -49,6 +116,8 @@ export default function Index() {
       setRefreshing(true);
       await refreshUserData(user.uid);
       setRefreshing(false);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
     }
   }, [user, refreshUserData]);
 
@@ -80,7 +149,215 @@ export default function Index() {
     }
     // Set a new random notification message every time user enters the screen
     setNotificationMessage(notificationMessages[Math.floor(Math.random() * notificationMessages.length)]);
+
+    // Trigger animations when component mounts
+    triggerAnimations();
   }, [user]);
+
+  const triggerAnimations = () => {
+    // Reset all animations
+    mainButtonSlideAnims.forEach((anim: Animated.Value) => anim.setValue(300));
+    mainButtonRotateAnims.forEach((anim: Animated.Value) => anim.setValue(0));
+    mainButtonScaleAnims.forEach((anim: Animated.Value) => anim.setValue(1));
+    mainButtonOpacityAnims.forEach((anim: Animated.Value) => anim.setValue(0));
+    smallButtonSlideAnims.forEach((anim: Animated.Value) => anim.setValue(50));
+    smallButtonRotateAnims.forEach((anim: Animated.Value) => anim.setValue(0));
+    smallButtonScaleAnims.forEach((anim: Animated.Value) => anim.setValue(1));
+    smallButtonOpacityAnims.forEach((anim: Animated.Value) => anim.setValue(0));
+
+    // Reset notification card animations
+    notificationSlideAnim.setValue(300);
+    notificationRotateAnim.setValue(0);
+    notificationScaleAnim.setValue(1);
+    notificationOpacityAnim.setValue(0);
+
+    // Animate small buttons (from bottom) - Start after main buttons
+    const smallButtonAnimations = smallButtonSlideAnims.map((slideAnim: Animated.Value, index: number) => {
+      const rotateAnim = smallButtonRotateAnims[index];
+      const scaleAnim = smallButtonScaleAnims[index];
+      const opacityAnim = smallButtonOpacityAnims[index];
+
+      return Animated.sequence([
+        // Fade in and slide up with overshoot
+        Animated.parallel([
+          Animated.timing(opacityAnim, {
+            toValue: 1,
+            duration: 200,
+            delay: 1250 + index * 100, // Start after main buttons (5 buttons * 150ms + 500ms buffer)
+            useNativeDriver: true,
+          }),
+          Animated.timing(slideAnim, {
+            toValue: -10,
+            duration: 300,
+            delay: 1250 + index * 100, // Start after main buttons
+            useNativeDriver: true,
+          }),
+        ]),
+        // Bounce back with rotation and scale
+        Animated.parallel([
+          Animated.spring(slideAnim, {
+            toValue: 0,
+            tension: 120,
+            friction: 8,
+            useNativeDriver: true,
+          }),
+          Animated.sequence([
+            // Rotate and scale up
+            Animated.parallel([
+              Animated.timing(rotateAnim, {
+                toValue: 1,
+                duration: 150,
+                useNativeDriver: true,
+              }),
+              Animated.timing(scaleAnim, {
+                toValue: 1.05,
+                duration: 150,
+                useNativeDriver: true,
+              }),
+            ]),
+            // Return to normal
+            Animated.parallel([
+              Animated.timing(rotateAnim, {
+                toValue: 0,
+                duration: 200,
+                useNativeDriver: true,
+              }),
+              Animated.timing(scaleAnim, {
+                toValue: 1,
+                duration: 200,
+                useNativeDriver: true,
+              }),
+            ]),
+          ]),
+        ]),
+      ]);
+    });
+
+    // Animate main buttons (from right) - Start first
+    const mainButtonAnimations = mainButtonSlideAnims.map((slideAnim: Animated.Value, index: number) => {
+      const rotateAnim = mainButtonRotateAnims[index];
+      const scaleAnim = mainButtonScaleAnims[index];
+      const opacityAnim = mainButtonOpacityAnims[index];
+
+      return Animated.sequence([
+        // Fade in and slide in with overshoot
+        Animated.parallel([
+          Animated.timing(opacityAnim, {
+            toValue: 1,
+            duration: 300,
+            delay: index * 150, // Start immediately with delays between each
+            useNativeDriver: true,
+          }),
+          Animated.timing(slideAnim, {
+            toValue: -20,
+            duration: 400,
+            delay: index * 150, // Start immediately with delays between each
+            useNativeDriver: true,
+          }),
+        ]),
+        // Bounce back with rotation and scale
+        Animated.parallel([
+          Animated.spring(slideAnim, {
+            toValue: 0,
+            tension: 100,
+            friction: 8,
+            useNativeDriver: true,
+          }),
+          Animated.sequence([
+            // Rotate and scale up
+            Animated.parallel([
+              Animated.timing(rotateAnim, {
+                toValue: 1,
+                duration: 200,
+                useNativeDriver: true,
+              }),
+              Animated.timing(scaleAnim, {
+                toValue: 1.02,
+                duration: 200,
+                useNativeDriver: true,
+              }),
+            ]),
+            // Return to normal
+            Animated.parallel([
+              Animated.timing(rotateAnim, {
+                toValue: 0,
+                duration: 300,
+                useNativeDriver: true,
+              }),
+              Animated.timing(scaleAnim, {
+                toValue: 1,
+                duration: 300,
+                useNativeDriver: true,
+              }),
+            ]),
+          ]),
+        ]),
+      ]);
+    });
+
+    // Animate notification card (from right, between main buttons and small buttons)
+    const notificationAnimation = Animated.sequence([
+      // Fade in and slide in with overshoot
+      Animated.parallel([
+        Animated.timing(notificationOpacityAnim, {
+          toValue: 1,
+          duration: 300,
+          delay: 750, // Start after main buttons
+          useNativeDriver: true,
+        }),
+        Animated.timing(notificationSlideAnim, {
+          toValue: -15,
+          duration: 400,
+          delay: 750, // Start after main buttons
+          useNativeDriver: true,
+        }),
+      ]),
+      // Bounce back with rotation and scale
+      Animated.parallel([
+        Animated.spring(notificationSlideAnim, {
+          toValue: 0,
+          tension: 100,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+        Animated.sequence([
+          // Rotate and scale up
+          Animated.parallel([
+            Animated.timing(notificationRotateAnim, {
+              toValue: 1,
+              duration: 200,
+              useNativeDriver: true,
+            }),
+            Animated.timing(notificationScaleAnim, {
+              toValue: 1.02,
+              duration: 200,
+              useNativeDriver: true,
+            }),
+          ]),
+          // Return to normal
+          Animated.parallel([
+            Animated.timing(notificationRotateAnim, {
+              toValue: 0,
+              duration: 300,
+              useNativeDriver: true,
+            }),
+            Animated.timing(notificationScaleAnim, {
+              toValue: 1,
+              duration: 300,
+              useNativeDriver: true,
+            }),
+          ]),
+        ]),
+      ]),
+    ]);
+
+    // Start all animations
+    Animated.parallel([
+      ...mainButtonAnimations,
+      notificationAnimation,
+      ...smallButtonAnimations,
+    ]).start();
+  };
 
   // Load enhanced notifications setting
   useEffect(() => {
@@ -102,7 +379,7 @@ export default function Index() {
         if (userData?.loginStreak !== undefined && enhancedNotificationsEnabled) {
           // Record login and schedule comprehensive notifications
           await recordLoginAndScheduleNotifications(userData.loginStreak);
-          
+
           // Check for missed logins and schedule comeback notifications
           await checkMissedLoginAndScheduleComeback();
         }
@@ -125,7 +402,7 @@ export default function Index() {
       if (hasPermission) {
         setEnhancedNotificationsEnabled(true);
         await AsyncStorage.setItem('enhancedNotificationsEnabled', 'true');
-        
+
         // Schedule enhanced notifications if userData is available
         if (userData?.loginStreak !== undefined) {
           await recordLoginAndScheduleNotifications(userData.loginStreak);
@@ -163,89 +440,116 @@ export default function Index() {
     {
       title: 'START FIGHT',
       disabled: false,
-      onPress: () => setModalConfig({
-        roundDuration: '1',
-        numRounds: '1',
-        restTime: '1',
-        moveSpeed: '1',
-        movesMode: ['Punches'],
-        category: "0"
-      })
+      onPress: () => {
+        setModalConfig({
+          roundDuration: '1',
+          numRounds: '1',
+          restTime: '1',
+          moveSpeed: '1',
+          movesMode: ['Punches'],
+          category: "0"
+        });
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
     },
     {
       title: '5 Min',
       disabled: false,
-      onPress: () => setModalConfig({
-        roundDuration: '5',
-        numRounds: '1',
-        restTime: '1',
-        moveSpeed: '1',
-        movesMode: ['Punches', 'Defense'],
-        category: '0'
-      })
+      onPress: () => {
+        setModalConfig({
+          roundDuration: '5',
+          numRounds: '1',
+          restTime: '1',
+          moveSpeed: '1',
+          movesMode: ['Punches', 'Defense'],
+          category: '0'
+        });
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
     },
     {
       title: '15 Min',
       disabled: false,
-      onPress: () => setModalConfig({
-        roundDuration: '5',
-        numRounds: '3',
-        restTime: '1',
-        moveSpeed: '1',
-        movesMode: ['Punches', 'Defense'],
-        category: '0'
-      })
+      onPress: () => {
+        setModalConfig({
+          roundDuration: '5',
+          numRounds: '3',
+          restTime: '1',
+          moveSpeed: '1',
+          movesMode: ['Punches', 'Defense'],
+          category: '0'
+        });
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
     },
     {
       title: 'Kicks',
       disabled: false,
-      onPress: () => setModalConfig({
-        roundDuration: '3',
-        numRounds: '3',
-        restTime: '1',
-        moveSpeed: '1',
-        movesMode: ['Kicks'],
-        category: '0'
-      })
+      onPress: () => {
+        setModalConfig({
+          roundDuration: '3',
+          numRounds: '3',
+          restTime: '1',
+          moveSpeed: '1',
+          movesMode: ['Kicks'],
+          category: '0'
+        });
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
     },
     {
       title: 'Defense',
       disabled: false,
-      onPress: () => setModalConfig({
-        roundDuration: '3',
-        numRounds: '5',
-        restTime: '0.5',
-        moveSpeed: '1',
-        movesMode: ['Defense'],
-        category: '0'
-      })
+      onPress: () => {
+        setModalConfig({
+          roundDuration: '3',
+          numRounds: '5',
+          restTime: '0.5',
+          moveSpeed: '1',
+          movesMode: ['Defense'],
+          category: '0'
+        });
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
     },
     {
       title: 'Combos',
       disabled: false,
-      onPress: () => router.push('/combos')
+      onPress: () => {
+        router.push('/combos');
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
     },
     {
       title: 'Unlock Your Next Move',
       disabled: true,
-      onPress: () => setModalConfig({})
+      onPress: () => {
+        setModalConfig({});
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
     },
     {
       title: 'Custom Fights',
       disabled: true,
-      onPress: () => setModalConfig({}) // Uses default values
+      onPress: () => {
+        setModalConfig({}); // Uses default values
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
     },
     {
       title: 'Warmup Session',
       disabled: true,
-      onPress: () => setModalConfig({
-        roundDuration: '5',
-        numRounds: '1',
-        restTime: '1',
-        moveSpeed: '0.8',
-        movesMode: ['Punches', 'Kicks', 'Defense'], // All moves for warmup make a new collection and and make new levels just for warmup exercises
-        category: '0'
-      })
+      onPress: () => {
+        setModalConfig({
+          roundDuration: '5',
+          numRounds: '1',
+          restTime: '1',
+          moveSpeed: '0.8',
+          movesMode: ['Punches', 'Kicks', 'Defense'], // All moves for warmup make a new collection and and make new levels just for warmup exercises
+          category: '0'
+        });
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
     },
   ];
 
@@ -340,11 +644,29 @@ export default function Index() {
       {/* Content */}
       <View style={styles.container}>
 
-        <StartFightButton
-          title={buttons[0].title}
-          disabled={buttons[0].disabled}
-          onPress={buttons[0].onPress}
-        />
+        <Animated.View
+          style={{
+            width: '100%',
+            maxWidth: 600,
+            opacity: mainButtonOpacityAnims[0],
+            transform: [
+              { translateX: mainButtonSlideAnims[0] },
+              {
+                rotate: mainButtonRotateAnims[0].interpolate({
+                  inputRange: [0, 1],
+                  outputRange: ['0deg', '2deg'],
+                })
+              },
+              { scale: mainButtonScaleAnims[0] }
+            ]
+          }}
+        >
+          <StartFightButton
+            title={buttons[0].title}
+            disabled={buttons[0].disabled}
+            onPress={buttons[0].onPress}
+          />
+        </Animated.View>
 
         {/* Timer Row */}
         <View style={styles.row}>
@@ -353,78 +675,183 @@ export default function Index() {
             { buttonIndex: 2, iconName: "timer-sand" },
             { buttonIndex: 3, iconName: "karate" },
             { buttonIndex: 4, iconName: "shield" }
-          ].map(({ buttonIndex, iconName }) => {
+          ].map(({ buttonIndex, iconName }, index) => {
             const button = buttons[buttonIndex];
-            const isDefenseButton = buttonIndex === 4;
-
             return (
-              <TouchableOpacity
+              <Animated.View
                 key={buttonIndex}
                 style={[
-                  styles.smallButton
+                  styles.smallButton,
+                  {
+                    opacity: smallButtonOpacityAnims[index],
+                    transform: [
+                      { translateY: smallButtonSlideAnims[index] },
+                      {
+                        rotate: smallButtonRotateAnims[index].interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ['0deg', '2deg'],
+                        })
+                      },
+                      { scale: smallButtonScaleAnims[index] }
+                    ]
+                  }
                 ]}
-                onPress={button.onPress}
-                disabled={button.disabled}>
-                <MaterialCommunityIcons
-                  name={iconName as any}
-                  size={32}
-                  color={"#fff"}
-                  style={styles.smallButtonIcon}
-                />
-                <Text style={[styles.smallTextButton]}>{button.title}</Text>
-              </TouchableOpacity>
+              >
+                <TouchableOpacity
+                  style={styles.smallButtonTouch}
+                  onPress={button.onPress}
+                  disabled={button.disabled}>
+                  <MaterialCommunityIcons
+                    name={iconName as any}
+                    size={32}
+                    color={"#fff"}
+                    style={styles.smallButtonIcon}
+                  />
+                  <Text style={[styles.smallTextButton]}>{button.title}</Text>
+                </TouchableOpacity>
+              </Animated.View>
             );
           })}
-          
+
         </View>
-        
-      {/* Notification Card - Only show if enhanced notifications are disabled */}
-      {!enhancedNotificationsEnabled && (
-        <TouchableOpacity 
-          style={styles.notificationCard} 
-          onPress={handleNotificationCardClick}
+
+        {/* Notification Card - Only show if enhanced notifications are disabled */}
+        {!enhancedNotificationsEnabled && (
+          <Animated.View
+            style={{
+              width: '100%',
+              maxWidth: 600,
+              opacity: notificationOpacityAnim,
+              transform: [
+                { translateX: notificationSlideAnim },
+                {
+                  rotate: notificationRotateAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0deg', '1deg'],
+                  })
+                },
+                { scale: notificationScaleAnim }
+              ]
+            }}
+          >
+            <TouchableOpacity
+              style={styles.notificationCard}
+              onPress={handleNotificationCardClick}
+            >
+              <MaterialCommunityIcons name="bell" size={24} color={Colors.text} />
+              <Text style={styles.notificationText}>{notificationMessage}</Text>
+              <MaterialCommunityIcons name="chevron-right" size={24} color={Colors.text} />
+            </TouchableOpacity>
+          </Animated.View>
+        )}
+
+        <Animated.View
+          style={{
+            width: '100%',
+            maxWidth: 600,
+            opacity: mainButtonOpacityAnims[1],
+            transform: [
+              { translateX: mainButtonSlideAnims[1] },
+              {
+                rotate: mainButtonRotateAnims[1].interpolate({
+                  inputRange: [0, 1],
+                  outputRange: ['0deg', '2deg'],
+                })
+              },
+              { scale: mainButtonScaleAnims[1] }
+            ]
+          }}
         >
-          <MaterialCommunityIcons name="bell" size={24} color={Colors.text} />
-          <Text style={styles.notificationText}>{notificationMessage}</Text>
-          <MaterialCommunityIcons name="chevron-right" size={24} color={Colors.text} />
-        </TouchableOpacity>
-      )}
+          <GradientButton
+            title={buttons[5].title}
+            iconName="boxing-glove"
+            iconSize={130}
+            fontSize={42}
+            disabled={buttons[5].disabled}
+            onPress={buttons[5].onPress}
+          />
+        </Animated.View>
 
-        <GradientButton
-          title={buttons[5].title}
-          iconName="boxing-glove"
-          iconSize={130}
-          fontSize={42}
-          disabled={buttons[5].disabled}
-          onPress={buttons[5].onPress}
-        />
+        <Animated.View
+          style={{
+            width: '100%',
+            maxWidth: 600,
+            opacity: mainButtonOpacityAnims[2],
+            transform: [
+              { translateX: mainButtonSlideAnims[2] },
+              {
+                rotate: mainButtonRotateAnims[2].interpolate({
+                  inputRange: [0, 1],
+                  outputRange: ['0deg', '2deg'],
+                })
+              },
+              { scale: mainButtonScaleAnims[2] }
+            ]
+          }}
+        >
+          <GradientButton
+            title={buttons[6].title}
+            iconName="lock"
+            iconSize={130}
+            fontSize={32}
+            disabled={buttons[6].disabled}
+            onPress={buttons[6].onPress}
+          />
+        </Animated.View>
 
-        <GradientButton
-          title={buttons[6].title}
-          iconName="lock"
-          iconSize={130}
-          fontSize={32}
-          disabled={buttons[6].disabled}
-          onPress={buttons[6].onPress}
-        />
+        <Animated.View
+          style={{
+            width: '100%',
+            maxWidth: 600,
+            opacity: mainButtonOpacityAnims[3],
+            transform: [
+              { translateX: mainButtonSlideAnims[3] },
+              {
+                rotate: mainButtonRotateAnims[3].interpolate({
+                  inputRange: [0, 1],
+                  outputRange: ['0deg', '2deg'],
+                })
+              },
+              { scale: mainButtonScaleAnims[3] }
+            ]
+          }}
+        >
+          <GradientButton
+            title={buttons[7].title}
+            iconName="cog"
+            iconSize={130}
+            fontSize={42}
+            disabled={buttons[7].disabled}
+            onPress={buttons[7].onPress}
+          />
+        </Animated.View>
 
-        <GradientButton
-          title={buttons[7].title}
-          iconName="cog"
-          iconSize={130}
-          fontSize={42}
-          disabled={buttons[7].disabled}
-          onPress={buttons[7].onPress}
-        />
-
-        <GradientButton
-          title={buttons[8].title}
-          iconName="run"
-          iconSize={130}
-          fontSize={42}
-          disabled={buttons[8].disabled}
-          onPress={buttons[8].onPress}
-        />
+        <Animated.View
+          style={{
+            width: '100%',
+            maxWidth: 600,
+            opacity: mainButtonOpacityAnims[4],
+            transform: [
+              { translateX: mainButtonSlideAnims[4] },
+              {
+                rotate: mainButtonRotateAnims[4].interpolate({
+                  inputRange: [0, 1],
+                  outputRange: ['0deg', '2deg'],
+                })
+              },
+              { scale: mainButtonScaleAnims[4] }
+            ]
+          }}
+        >
+          <GradientButton
+            title={buttons[8].title}
+            iconName="run"
+            iconSize={130}
+            fontSize={42}
+            disabled={buttons[8].disabled}
+            onPress={buttons[8].onPress}
+          />
+        </Animated.View>
       </View>
 
       <FightModeModal
@@ -476,13 +903,13 @@ const styles = StyleSheet.create({
     marginHorizontal: 'auto',
     alignSelf: 'center',
     marginVertical: 5,
-    backgroundColor: '#dbdbdb1c',
+    backgroundColor: 'rgba(21, 21, 21, 1)',
 
   },
   notificationCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0000009f',
+    backgroundColor: '#1b1b1bff',
     padding: 8,
     paddingHorizontal: 15,
     borderRadius: 10,
@@ -547,8 +974,8 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   buttonWide: {
-    width: '100%',
     maxWidth: 600,
+    width: '100%',
     height: 130,
     backgroundColor: 'transparent',
     borderRadius: 10,
@@ -576,6 +1003,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderBottomWidth: 4,
     borderColor: '#c5c5c593',
+  },
+  smallButtonTouch: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   smallButtonIcon: {
     marginBottom: 1,

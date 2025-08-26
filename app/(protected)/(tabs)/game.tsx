@@ -17,6 +17,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getAuth } from '@firebase/auth';
 import { useIsFocused } from '@react-navigation/native';
 import { Audio } from 'expo-av';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
@@ -534,7 +535,7 @@ export default function Game() {
               isGameOver: true,
             }));
             playBellSound();
-            
+
             // Show completion modal
             setCurrentModal({
               visible: true,
@@ -743,7 +744,10 @@ export default function Game() {
       <CombosModal
         visible={showCombosModal}
         combos={combos}
-        onClose={() => setShowCombosModal(false)}
+        onClose={() => {
+          setShowCombosModal(false);
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        }}
       />
 
       <LinearGradient

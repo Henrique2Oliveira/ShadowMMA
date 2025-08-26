@@ -1,6 +1,7 @@
 import { Colors, Typography } from '@/themes/theme';
 import { Move } from '@/types/game';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef } from 'react';
 import {
@@ -47,6 +48,8 @@ export const CombosModal: React.FC<CombosModalProps> = ({
       const animations = slideAnims.map((slideAnim: AnimatedValue, index: number) => {
         const rotateAnim = rotateAnims[index];
         const scaleAnim = scaleAnims[index];
+        // Add haptic feedback when fight button is pressed
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
         return Animated.sequence([
           // Initial slide in with bounce
@@ -125,7 +128,7 @@ export const CombosModal: React.FC<CombosModalProps> = ({
                   {
                     transform: [
                       { translateX: slideAnims[index] },
-                      { 
+                      {
                         rotate: rotateAnims[index].interpolate({
                           inputRange: [0, 1],
                           outputRange: ['0deg', '3deg'],
@@ -144,10 +147,10 @@ export const CombosModal: React.FC<CombosModalProps> = ({
                 >
                   <View style={styles.comboHeader}>
                     <View style={styles.comboNameContainer}>
-                      <MaterialCommunityIcons 
-                        name="boxing-glove" 
-                        size={20} 
-                        color={Colors.text} 
+                      <MaterialCommunityIcons
+                        name="boxing-glove"
+                        size={20}
+                        color={Colors.text}
                         style={styles.comboIcon}
                       />
                       <Text style={styles.comboName}>{combo.name}</Text>

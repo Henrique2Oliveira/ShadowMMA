@@ -4,6 +4,7 @@ import Slider from '@react-native-community/slider';
 import { router } from 'expo-router';
 import React from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
 
 interface FightModeModalProps {
   isVisible: boolean;
@@ -89,6 +90,9 @@ export function FightModeModal({
   onStartFight,
 }: FightModeModalProps) {
   const handleStartFight = () => {
+    // Add haptic feedback when fight button is pressed
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    
     onStartFight();
     router.push({
       pathname: '/(protected)/(tabs)/game',
@@ -144,8 +148,8 @@ export function FightModeModal({
                 />
                 <View style={styles.sliderLabels}>
                   {FIGHT_OPTIONS.roundDurations.map((duration, index) => (
-                    <Text 
-                      key={duration.value} 
+                    <Text
+                      key={duration.value}
                       style={[
                         styles.sliderLabel,
                         roundDuration === duration.value && styles.sliderLabelActive
@@ -174,8 +178,8 @@ export function FightModeModal({
                 />
                 <View style={styles.sliderLabels}>
                   {FIGHT_OPTIONS.numberOfRounds.map((round, index) => (
-                    <Text 
-                      key={round.value} 
+                    <Text
+                      key={round.value}
                       style={[
                         styles.sliderLabel,
                         numRounds === round.value && styles.sliderLabelActive
@@ -204,8 +208,8 @@ export function FightModeModal({
                 />
                 <View style={styles.sliderLabels}>
                   {FIGHT_OPTIONS.restTimes.map((time, index) => (
-                    <Text 
-                      key={time.value} 
+                    <Text
+                      key={time.value}
                       style={[
                         styles.sliderLabel,
                         restTime === time.value && styles.sliderLabelActive
@@ -233,21 +237,21 @@ export function FightModeModal({
                       ]}
                       onPress={() => {
                         const newMovesMode = movesMode.includes(move.value)
-                          ? movesMode.length > 1 
+                          ? movesMode.length > 1
                             ? movesMode.filter(m => m !== move.value)
                             : movesMode // Don't remove if it's the last selected option
                           : [...movesMode, move.value];
                         setMovesMode(newMovesMode);
                       }}
                     >
-                      <MaterialCommunityIcons 
+                      <MaterialCommunityIcons
                         name={
                           move.value === 'Punches' ? 'hand-back-right' :
-                          move.value === 'Kicks' ? 'foot-print' :
-                          'shield'
-                        } 
-                        size={24} 
-                        color={movesMode.includes(move.value) ? '#FFFFFF' : '#FFFFFF80'} 
+                            move.value === 'Kicks' ? 'foot-print' :
+                              'shield'
+                        }
+                        size={24}
+                        color={movesMode.includes(move.value) ? '#FFFFFF' : '#FFFFFF80'}
                       />
                       <Text style={[
                         styles.moveModeButtonText,
@@ -277,8 +281,8 @@ export function FightModeModal({
                 />
                 <View style={styles.sliderLabels}>
                   {FIGHT_OPTIONS.moveSpeeds.map((speed, index) => (
-                    <Text 
-                      key={speed.value} 
+                    <Text
+                      key={speed.value}
                       style={[
                         styles.sliderLabel,
                         moveSpeed === speed.value && styles.sliderLabelActive
@@ -319,6 +323,14 @@ const styles = StyleSheet.create({
   },
   moveModeButtonActive: {
     backgroundColor: Colors.darkGreen,
+    borderWidth: 1,
+    borderColor: '#1a610c9c',
+    borderBottomWidth: 4,
+    shadowColor: '#000',
+    elevation: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   moveModeButtonText: {
     color: '#FFFFFF80',
@@ -390,12 +402,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
+
   },
   optionLabel: {
     color: 'white',
     fontSize: 18,
     fontFamily: Typography.fontFamily,
     flex: 1,
+
   },
 
   startButton: {
@@ -403,12 +417,26 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderRadius: 10,
     marginTop: 20,
+    borderWidth: 1,
+    borderColor: '#1a610cff',
+    borderBottomWidth: 4,
+    shadowColor: '#000',
+    elevation: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   startButtonText: {
     color: 'white',
     fontSize: 20,
     fontFamily: Typography.fontFamily,
     textAlign: 'center',
-    fontWeight: 'bold',
+    shadowColor: '#000',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 3,
+    elevation: 5,
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+
   },
 });
