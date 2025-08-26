@@ -11,8 +11,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function Index() {
   const { user } = useAuth();
@@ -20,25 +20,6 @@ export default function Index() {
   const [refreshing, setRefreshing] = React.useState(false);
 
   const [isModalVisible, setIsModalVisible] = React.useState(false);
-
-  // Optimized Animation refs - Reduced complexity for better performance
-  const mainButtonAnims = useRef([
-    new Animated.Value(0), // Combined slide and opacity
-    new Animated.Value(0),
-    new Animated.Value(0),
-    new Animated.Value(0),
-    new Animated.Value(0),
-  ]).current;
-
-  const smallButtonAnims = useRef([
-    new Animated.Value(0), // Combined slide and opacity
-    new Animated.Value(0),
-    new Animated.Value(0),
-    new Animated.Value(0),
-  ]).current;
-
-  // Notification card animation - simplified
-  const notificationAnim = useRef(new Animated.Value(0)).current;
 
   // Random notification messages
   const notificationMessages = [
@@ -95,62 +76,13 @@ export default function Index() {
     };
   }, []);
 
-  // Performance optimization - prevent unnecessary re-animations
-  const hasAnimated = useRef(false);
-
   useEffect(() => {
     if (user) {
       refreshUserData(user.uid);
     }
     // Set a new random notification message every time user enters the screen
     setNotificationMessage(notificationMessages[Math.floor(Math.random() * notificationMessages.length)]);
-
-    // Trigger animations only once per mount for better performance
-    if (!hasAnimated.current) {
-      triggerAnimations();
-      hasAnimated.current = true;
-    }
   }, [user]);
-
-  const triggerAnimations = useCallback(() => {
-    // Reset all animations to starting position
-    mainButtonAnims.forEach((anim: Animated.Value) => anim.setValue(0));
-    smallButtonAnims.forEach((anim: Animated.Value) => anim.setValue(0));
-    notificationAnim.setValue(0);
-
-    // Create simplified staggered animations for better performance
-    const mainButtonAnimations = mainButtonAnims.map((anim: Animated.Value, index: number) => 
-      Animated.timing(anim, {
-        toValue: 1,
-        duration: 400,
-        delay: index * 80, // Reduced delay for faster feel
-        useNativeDriver: true,
-      })
-    );
-
-    const smallButtonAnimations = smallButtonAnims.map((anim: Animated.Value, index: number) => 
-      Animated.timing(anim, {
-        toValue: 1,
-        duration: 300,
-        delay: 600 + index * 60, // Start after main buttons with reduced delay
-        useNativeDriver: true,
-      })
-    );
-
-    const notificationAnimation = Animated.timing(notificationAnim, {
-      toValue: 1,
-      duration: 350,
-      delay: 450, // Start with main buttons
-      useNativeDriver: true,
-    });
-
-    // Start all animations in parallel for better performance
-    Animated.parallel([
-      ...mainButtonAnimations,
-      ...smallButtonAnimations,
-      notificationAnimation,
-    ]).start();
-  }, [mainButtonAnims, smallButtonAnims, notificationAnim]);
 
   // Load enhanced notifications setting
   useEffect(() => {
@@ -382,19 +314,10 @@ export default function Index() {
       {/* Content */}
       <View style={styles.container}>
 
-        <Animated.View
+        <View
           style={{
             width: '100%',
             maxWidth: 600,
-            opacity: mainButtonAnims[0],
-            transform: [
-              { 
-                translateX: mainButtonAnims[0].interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [100, 0],
-                })
-              }
-            ]
           }}
         >
           <StartFightButton
@@ -402,7 +325,7 @@ export default function Index() {
             disabled={buttons[0].disabled}
             onPress={buttons[0].onPress}
           />
-        </Animated.View>
+        </View>
 
         {/* Timer Row */}
         <View style={styles.row}>
@@ -414,21 +337,10 @@ export default function Index() {
           ].map(({ buttonIndex, iconName }, index) => {
             const button = buttons[buttonIndex];
             return (
-              <Animated.View
+              <View
                 key={buttonIndex}
                 style={[
                   styles.smallButton,
-                  {
-                    opacity: smallButtonAnims[index],
-                    transform: [
-                      { 
-                        translateY: smallButtonAnims[index].interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [30, 0],
-                        })
-                      }
-                    ]
-                  }
                 ]}
               >
                 <TouchableOpacity
@@ -443,7 +355,7 @@ export default function Index() {
                   />
                   <Text style={[styles.smallTextButton]}>{button.title}</Text>
                 </TouchableOpacity>
-              </Animated.View>
+              </View>
             );
           })}
 
@@ -451,19 +363,10 @@ export default function Index() {
 
         {/* Notification Card - Only show if enhanced notifications are disabled */}
         {!enhancedNotificationsEnabled && (
-          <Animated.View
+          <View
             style={{
               width: '100%',
               maxWidth: 600,
-              opacity: notificationAnim,
-              transform: [
-                { 
-                  translateX: notificationAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [100, 0],
-                  })
-                }
-              ]
             }}
           >
             <TouchableOpacity
@@ -474,22 +377,13 @@ export default function Index() {
               <Text style={styles.notificationText}>{notificationMessage}</Text>
               <MaterialCommunityIcons name="chevron-right" size={24} color={Colors.text} />
             </TouchableOpacity>
-          </Animated.View>
+          </View>
         )}
 
-        <Animated.View
+        <View
           style={{
             width: '100%',
             maxWidth: 600,
-            opacity: mainButtonAnims[1],
-            transform: [
-              { 
-                translateX: mainButtonAnims[1].interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [100, 0],
-                })
-              }
-            ]
           }}
         >
           <GradientButton
@@ -500,21 +394,12 @@ export default function Index() {
             disabled={buttons[5].disabled}
             onPress={buttons[5].onPress}
           />
-        </Animated.View>
+        </View>
 
-        <Animated.View
+        <View
           style={{
             width: '100%',
             maxWidth: 600,
-            opacity: mainButtonAnims[2],
-            transform: [
-              { 
-                translateX: mainButtonAnims[2].interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [100, 0],
-                })
-              }
-            ]
           }}
         >
           <GradientButton
@@ -525,21 +410,12 @@ export default function Index() {
             disabled={buttons[6].disabled}
             onPress={buttons[6].onPress}
           />
-        </Animated.View>
+        </View>
 
-        <Animated.View
+        <View
           style={{
             width: '100%',
             maxWidth: 600,
-            opacity: mainButtonAnims[3],
-            transform: [
-              { 
-                translateX: mainButtonAnims[3].interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [100, 0],
-                })
-              }
-            ]
           }}
         >
           <GradientButton
@@ -550,21 +426,12 @@ export default function Index() {
             disabled={buttons[7].disabled}
             onPress={buttons[7].onPress}
           />
-        </Animated.View>
+        </View>
 
-        <Animated.View
+        <View
           style={{
             width: '100%',
             maxWidth: 600,
-            opacity: mainButtonAnims[4],
-            transform: [
-              { 
-                translateX: mainButtonAnims[4].interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [100, 0],
-                })
-              }
-            ]
           }}
         >
           <GradientButton
@@ -575,7 +442,7 @@ export default function Index() {
             disabled={buttons[8].disabled}
             onPress={buttons[8].onPress}
           />
-        </Animated.View>
+        </View>
       </View>
 
       <FightModeModal
