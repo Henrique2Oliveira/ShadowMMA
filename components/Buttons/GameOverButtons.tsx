@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import { LevelBar } from './LevelBar';
+import { LevelBar } from '../LevelBar';
 
 export const GameOverButtons: React.FC = () => {
   const { userData } = useUserData();

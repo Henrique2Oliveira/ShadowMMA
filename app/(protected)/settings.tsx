@@ -1,5 +1,5 @@
-import { DeleteAccountModal } from '@/components/DeleteAccountModal';
-import { AlertModal } from '@/compon@/components/Modals/DeleteAccountModal
+import { AlertModal } from '@/components/Modals/AlertModal';
+import { DeleteAccountModal } from '@/components/Modals/DeleteAccountModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/FirebaseConfig';
 import { Colors, Typography } from '@/themes/theme';
@@ -11,6 +11,7 @@ import { router } from 'expo-router';
 import { deleteDoc, doc } from 'firebase/firestore';
 import React, { useState } from 'react';
 import { Platform, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+;
 
 export default function Settings() {
   const { user, resetPassword } = useAuth();
