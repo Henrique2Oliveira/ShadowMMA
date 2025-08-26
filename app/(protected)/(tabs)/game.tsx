@@ -227,7 +227,7 @@ export default function Game() {
     if (userData?.xp !== undefined && userData?.xp !== null) {
       const currentLevel = Math.floor(userData.xp / 100) || 0;
       const currentXpPercentage = Math.max(0, Math.min(100, userData.xp % 100));
-      
+
       // Animate the XP bar with safety bounds
       Animated.spring(xpBarAnimatedWidth, {
         toValue: currentXpPercentage,
@@ -235,7 +235,7 @@ export default function Game() {
         tension: 20,
         friction: 4
       }).start();
-      
+
       // Check for level up
       if (currentLevel > previousLevel && previousLevel > 0) {
         setShowNewCombo(true);
@@ -810,50 +810,51 @@ export default function Game() {
         end={{ x: 0, y: 1 }}
       >
         {/* Level Bar - Always visible at top */}
-        <View style={styles.topLevelBarContainer}>
-          {/* Custom Animated Level Bar for Game Screen */}
-          <View style={styles.gameLevelBarContainer}>
-            <View style={styles.gameLevelBarRow}>
-              <Text style={styles.gameLevelText}>
-                <Text style={styles.gameLevelPrefix}>Lv.</Text>
-                <Text style={styles.gameLevelNumber}> {userData?.xp ? Math.floor(userData.xp / 100) : 0}</Text>
-              </Text>
+        {gameState.isGameOver && (
+          <View style={styles.topLevelBarContainer}>
+            {/* Custom Animated Level Bar for Game Screen */}
+            <View style={styles.gameLevelBarContainer}>
+              <View style={styles.gameLevelBarRow}>
+                <Text style={styles.gameLevelText}>
+                  <Text style={styles.gameLevelPrefix}>Lv.</Text>
+                  <Text style={styles.gameLevelNumber}> {userData?.xp ? Math.floor(userData.xp / 100) : 0}</Text>
+                </Text>
 
-              <View style={styles.gameProgressBarContainer}>
-                <Animated.View style={{
-                  width: getAnimatedWidth(),
-                  height: '100%',
-                }}>
-                  <LinearGradient
-                    colors={['#ffd700', '#ffa000']}
-                    start={{ x: 0, y: 1 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.gameProgressBarFill}>
-                    <Animated.View style={[
-                      styles.gameProgressBarHighlight,
-                      { 
-                        width: getAnimatedHighlightWidth()
-                      }
-                    ]} />
-                  </LinearGradient>
-                </Animated.View>
+                <View style={styles.gameProgressBarContainer}>
+                  <Animated.View style={{
+                    width: getAnimatedWidth(),
+                    height: '100%',
+                  }}>
+                    <LinearGradient
+                      colors={['#ffd700', '#ffa000']}
+                      start={{ x: 0, y: 1 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.gameProgressBarFill}>
+                      <Animated.View style={[
+                        styles.gameProgressBarHighlight,
+                        {
+                          width: getAnimatedHighlightWidth()
+                        }
+                      ]} />
+                    </LinearGradient>
+                  </Animated.View>
+                </View>
+
+                <MaterialCommunityIcons
+                  name="boxing-glove"
+                  size={32}
+                  color="#ffc400ff"
+                  style={styles.gameBoxingGloveIcon}
+                />
               </View>
-
-              <MaterialCommunityIcons 
-                name="boxing-glove" 
-                size={32} 
-                color="#ffc400ff" 
-                style={styles.gameBoxingGloveIcon} 
-              />
             </View>
-          </View>
-        </View>
+          </View>)}
 
         {/* New Combo Unlocked Message - Below level bar */}
         {showNewCombo && (
           <View style={styles.newComboMessageContainer}>
             <Text style={styles.newComboMessageText}>
-              New Combo Unlocked!
+              🔥 New Combo Unlocked! 
             </Text>
           </View>
         )}
@@ -981,24 +982,22 @@ const styles = StyleSheet.create({
     top: 40,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    borderRadius: 15,
+    width: '100%',
+    backgroundColor: Colors.background,
     paddingHorizontal: 20,
     paddingVertical: 5,
-    marginHorizontal: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.5,
     shadowRadius: 4,
     elevation: 5,
-    zIndex: 10,
+    zIndex: 20,
   },
   newComboMessageContainer: {
     position: 'absolute',
-    top: 110,
-    left: 20,
-    right: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    top: 120,
+
+    backgroundColor: 'rgba(134, 33, 33, 1)',
     borderRadius: 10,
     padding: 12,
     shadowColor: '#000',
