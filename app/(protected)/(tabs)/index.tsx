@@ -11,7 +11,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function Index() {
@@ -21,72 +21,24 @@ export default function Index() {
 
   const [isModalVisible, setIsModalVisible] = React.useState(false);
 
-  // Animation refs
-  const mainButtonSlideAnims = useRef([
-    new Animated.Value(300), // Start Fight Button
-    new Animated.Value(300), // Combos Button
-    new Animated.Value(300), // Unlock Button
-    new Animated.Value(300), // Custom Fights Button
-    new Animated.Value(300), // Warmup Button
-  ]).current;
-
-  const mainButtonRotateAnims = useRef([
-    new Animated.Value(0),
+  // Optimized Animation refs - Reduced complexity for better performance
+  const mainButtonAnims = useRef([
+    new Animated.Value(0), // Combined slide and opacity
     new Animated.Value(0),
     new Animated.Value(0),
     new Animated.Value(0),
     new Animated.Value(0),
   ]).current;
 
-  const mainButtonScaleAnims = useRef([
-    new Animated.Value(1),
-    new Animated.Value(1),
-    new Animated.Value(1),
-    new Animated.Value(1),
-    new Animated.Value(1),
-  ]).current;
-
-  const smallButtonSlideAnims = useRef([
-    new Animated.Value(50), // 5 Min
-    new Animated.Value(50), // 15 Min
-    new Animated.Value(50), // Kicks
-    new Animated.Value(50), // Defense
-  ]).current;
-
-  const smallButtonRotateAnims = useRef([
-    new Animated.Value(0),
+  const smallButtonAnims = useRef([
+    new Animated.Value(0), // Combined slide and opacity
     new Animated.Value(0),
     new Animated.Value(0),
     new Animated.Value(0),
   ]).current;
 
-  const smallButtonScaleAnims = useRef([
-    new Animated.Value(1),
-    new Animated.Value(1),
-    new Animated.Value(1),
-    new Animated.Value(1),
-  ]).current;
-
-  const mainButtonOpacityAnims = useRef([
-    new Animated.Value(0),
-    new Animated.Value(0),
-    new Animated.Value(0),
-    new Animated.Value(0),
-    new Animated.Value(0),
-  ]).current;
-
-  const smallButtonOpacityAnims = useRef([
-    new Animated.Value(0),
-    new Animated.Value(0),
-    new Animated.Value(0),
-    new Animated.Value(0),
-  ]).current;
-
-  // Notification card animations
-  const notificationSlideAnim = useRef(new Animated.Value(300)).current;
-  const notificationRotateAnim = useRef(new Animated.Value(0)).current;
-  const notificationScaleAnim = useRef(new Animated.Value(1)).current;
-  const notificationOpacityAnim = useRef(new Animated.Value(0)).current;
+  // Notification card animation - simplified
+  const notificationAnim = useRef(new Animated.Value(0)).current;
 
   // Random notification messages
   const notificationMessages = [
@@ -143,6 +95,9 @@ export default function Index() {
     };
   }, []);
 
+  // Performance optimization - prevent unnecessary re-animations
+  const hasAnimated = useRef(false);
+
   useEffect(() => {
     if (user) {
       refreshUserData(user.uid);
@@ -150,214 +105,52 @@ export default function Index() {
     // Set a new random notification message every time user enters the screen
     setNotificationMessage(notificationMessages[Math.floor(Math.random() * notificationMessages.length)]);
 
-    // Trigger animations when component mounts
-    triggerAnimations();
+    // Trigger animations only once per mount for better performance
+    if (!hasAnimated.current) {
+      triggerAnimations();
+      hasAnimated.current = true;
+    }
   }, [user]);
 
-  const triggerAnimations = () => {
-    // Reset all animations
-    mainButtonSlideAnims.forEach((anim: Animated.Value) => anim.setValue(300));
-    mainButtonRotateAnims.forEach((anim: Animated.Value) => anim.setValue(0));
-    mainButtonScaleAnims.forEach((anim: Animated.Value) => anim.setValue(1));
-    mainButtonOpacityAnims.forEach((anim: Animated.Value) => anim.setValue(0));
-    smallButtonSlideAnims.forEach((anim: Animated.Value) => anim.setValue(50));
-    smallButtonRotateAnims.forEach((anim: Animated.Value) => anim.setValue(0));
-    smallButtonScaleAnims.forEach((anim: Animated.Value) => anim.setValue(1));
-    smallButtonOpacityAnims.forEach((anim: Animated.Value) => anim.setValue(0));
+  const triggerAnimations = useCallback(() => {
+    // Reset all animations to starting position
+    mainButtonAnims.forEach((anim: Animated.Value) => anim.setValue(0));
+    smallButtonAnims.forEach((anim: Animated.Value) => anim.setValue(0));
+    notificationAnim.setValue(0);
 
-    // Reset notification card animations
-    notificationSlideAnim.setValue(300);
-    notificationRotateAnim.setValue(0);
-    notificationScaleAnim.setValue(1);
-    notificationOpacityAnim.setValue(0);
+    // Create simplified staggered animations for better performance
+    const mainButtonAnimations = mainButtonAnims.map((anim: Animated.Value, index: number) => 
+      Animated.timing(anim, {
+        toValue: 1,
+        duration: 400,
+        delay: index * 80, // Reduced delay for faster feel
+        useNativeDriver: true,
+      })
+    );
 
-    // Animate small buttons (from bottom) - Start after main buttons
-    const smallButtonAnimations = smallButtonSlideAnims.map((slideAnim: Animated.Value, index: number) => {
-      const rotateAnim = smallButtonRotateAnims[index];
-      const scaleAnim = smallButtonScaleAnims[index];
-      const opacityAnim = smallButtonOpacityAnims[index];
+    const smallButtonAnimations = smallButtonAnims.map((anim: Animated.Value, index: number) => 
+      Animated.timing(anim, {
+        toValue: 1,
+        duration: 300,
+        delay: 600 + index * 60, // Start after main buttons with reduced delay
+        useNativeDriver: true,
+      })
+    );
 
-      return Animated.sequence([
-        // Fade in and slide up with overshoot
-        Animated.parallel([
-          Animated.timing(opacityAnim, {
-            toValue: 1,
-            duration: 200,
-            delay: 1250 + index * 100, // Start after main buttons (5 buttons * 150ms + 500ms buffer)
-            useNativeDriver: true,
-          }),
-          Animated.timing(slideAnim, {
-            toValue: -10,
-            duration: 300,
-            delay: 1250 + index * 100, // Start after main buttons
-            useNativeDriver: true,
-          }),
-        ]),
-        // Bounce back with rotation and scale
-        Animated.parallel([
-          Animated.spring(slideAnim, {
-            toValue: 0,
-            tension: 120,
-            friction: 8,
-            useNativeDriver: true,
-          }),
-          Animated.sequence([
-            // Rotate and scale up
-            Animated.parallel([
-              Animated.timing(rotateAnim, {
-                toValue: 1,
-                duration: 150,
-                useNativeDriver: true,
-              }),
-              Animated.timing(scaleAnim, {
-                toValue: 1.05,
-                duration: 150,
-                useNativeDriver: true,
-              }),
-            ]),
-            // Return to normal
-            Animated.parallel([
-              Animated.timing(rotateAnim, {
-                toValue: 0,
-                duration: 200,
-                useNativeDriver: true,
-              }),
-              Animated.timing(scaleAnim, {
-                toValue: 1,
-                duration: 200,
-                useNativeDriver: true,
-              }),
-            ]),
-          ]),
-        ]),
-      ]);
+    const notificationAnimation = Animated.timing(notificationAnim, {
+      toValue: 1,
+      duration: 350,
+      delay: 450, // Start with main buttons
+      useNativeDriver: true,
     });
 
-    // Animate main buttons (from right) - Start first
-    const mainButtonAnimations = mainButtonSlideAnims.map((slideAnim: Animated.Value, index: number) => {
-      const rotateAnim = mainButtonRotateAnims[index];
-      const scaleAnim = mainButtonScaleAnims[index];
-      const opacityAnim = mainButtonOpacityAnims[index];
-
-      return Animated.sequence([
-        // Fade in and slide in with overshoot
-        Animated.parallel([
-          Animated.timing(opacityAnim, {
-            toValue: 1,
-            duration: 300,
-            delay: index * 150, // Start immediately with delays between each
-            useNativeDriver: true,
-          }),
-          Animated.timing(slideAnim, {
-            toValue: -20,
-            duration: 400,
-            delay: index * 150, // Start immediately with delays between each
-            useNativeDriver: true,
-          }),
-        ]),
-        // Bounce back with rotation and scale
-        Animated.parallel([
-          Animated.spring(slideAnim, {
-            toValue: 0,
-            tension: 100,
-            friction: 8,
-            useNativeDriver: true,
-          }),
-          Animated.sequence([
-            // Rotate and scale up
-            Animated.parallel([
-              Animated.timing(rotateAnim, {
-                toValue: 1,
-                duration: 200,
-                useNativeDriver: true,
-              }),
-              Animated.timing(scaleAnim, {
-                toValue: 1.02,
-                duration: 200,
-                useNativeDriver: true,
-              }),
-            ]),
-            // Return to normal
-            Animated.parallel([
-              Animated.timing(rotateAnim, {
-                toValue: 0,
-                duration: 300,
-                useNativeDriver: true,
-              }),
-              Animated.timing(scaleAnim, {
-                toValue: 1,
-                duration: 300,
-                useNativeDriver: true,
-              }),
-            ]),
-          ]),
-        ]),
-      ]);
-    });
-
-    // Animate notification card (from right, between main buttons and small buttons)
-    const notificationAnimation = Animated.sequence([
-      // Fade in and slide in with overshoot
-      Animated.parallel([
-        Animated.timing(notificationOpacityAnim, {
-          toValue: 1,
-          duration: 300,
-          delay: 750, // Start after main buttons
-          useNativeDriver: true,
-        }),
-        Animated.timing(notificationSlideAnim, {
-          toValue: -15,
-          duration: 400,
-          delay: 750, // Start after main buttons
-          useNativeDriver: true,
-        }),
-      ]),
-      // Bounce back with rotation and scale
-      Animated.parallel([
-        Animated.spring(notificationSlideAnim, {
-          toValue: 0,
-          tension: 100,
-          friction: 8,
-          useNativeDriver: true,
-        }),
-        Animated.sequence([
-          // Rotate and scale up
-          Animated.parallel([
-            Animated.timing(notificationRotateAnim, {
-              toValue: 1,
-              duration: 200,
-              useNativeDriver: true,
-            }),
-            Animated.timing(notificationScaleAnim, {
-              toValue: 1.02,
-              duration: 200,
-              useNativeDriver: true,
-            }),
-          ]),
-          // Return to normal
-          Animated.parallel([
-            Animated.timing(notificationRotateAnim, {
-              toValue: 0,
-              duration: 300,
-              useNativeDriver: true,
-            }),
-            Animated.timing(notificationScaleAnim, {
-              toValue: 1,
-              duration: 300,
-              useNativeDriver: true,
-            }),
-          ]),
-        ]),
-      ]),
-    ]);
-
-    // Start all animations
+    // Start all animations in parallel for better performance
     Animated.parallel([
       ...mainButtonAnimations,
-      notificationAnimation,
       ...smallButtonAnimations,
+      notificationAnimation,
     ]).start();
-  };
+  }, [mainButtonAnims, smallButtonAnims, notificationAnim]);
 
   // Load enhanced notifications setting
   useEffect(() => {
@@ -593,16 +386,14 @@ export default function Index() {
           style={{
             width: '100%',
             maxWidth: 600,
-            opacity: mainButtonOpacityAnims[0],
+            opacity: mainButtonAnims[0],
             transform: [
-              { translateX: mainButtonSlideAnims[0] },
-              {
-                rotate: mainButtonRotateAnims[0].interpolate({
+              { 
+                translateX: mainButtonAnims[0].interpolate({
                   inputRange: [0, 1],
-                  outputRange: ['0deg', '2deg'],
+                  outputRange: [100, 0],
                 })
-              },
-              { scale: mainButtonScaleAnims[0] }
+              }
             ]
           }}
         >
@@ -628,16 +419,14 @@ export default function Index() {
                 style={[
                   styles.smallButton,
                   {
-                    opacity: smallButtonOpacityAnims[index],
+                    opacity: smallButtonAnims[index],
                     transform: [
-                      { translateY: smallButtonSlideAnims[index] },
-                      {
-                        rotate: smallButtonRotateAnims[index].interpolate({
+                      { 
+                        translateY: smallButtonAnims[index].interpolate({
                           inputRange: [0, 1],
-                          outputRange: ['0deg', '2deg'],
+                          outputRange: [30, 0],
                         })
-                      },
-                      { scale: smallButtonScaleAnims[index] }
+                      }
                     ]
                   }
                 ]}
@@ -666,16 +455,14 @@ export default function Index() {
             style={{
               width: '100%',
               maxWidth: 600,
-              opacity: notificationOpacityAnim,
+              opacity: notificationAnim,
               transform: [
-                { translateX: notificationSlideAnim },
-                {
-                  rotate: notificationRotateAnim.interpolate({
+                { 
+                  translateX: notificationAnim.interpolate({
                     inputRange: [0, 1],
-                    outputRange: ['0deg', '1deg'],
+                    outputRange: [100, 0],
                   })
-                },
-                { scale: notificationScaleAnim }
+                }
               ]
             }}
           >
@@ -694,16 +481,14 @@ export default function Index() {
           style={{
             width: '100%',
             maxWidth: 600,
-            opacity: mainButtonOpacityAnims[1],
+            opacity: mainButtonAnims[1],
             transform: [
-              { translateX: mainButtonSlideAnims[1] },
-              {
-                rotate: mainButtonRotateAnims[1].interpolate({
+              { 
+                translateX: mainButtonAnims[1].interpolate({
                   inputRange: [0, 1],
-                  outputRange: ['0deg', '2deg'],
+                  outputRange: [100, 0],
                 })
-              },
-              { scale: mainButtonScaleAnims[1] }
+              }
             ]
           }}
         >
@@ -721,16 +506,14 @@ export default function Index() {
           style={{
             width: '100%',
             maxWidth: 600,
-            opacity: mainButtonOpacityAnims[2],
+            opacity: mainButtonAnims[2],
             transform: [
-              { translateX: mainButtonSlideAnims[2] },
-              {
-                rotate: mainButtonRotateAnims[2].interpolate({
+              { 
+                translateX: mainButtonAnims[2].interpolate({
                   inputRange: [0, 1],
-                  outputRange: ['0deg', '2deg'],
+                  outputRange: [100, 0],
                 })
-              },
-              { scale: mainButtonScaleAnims[2] }
+              }
             ]
           }}
         >
@@ -748,16 +531,14 @@ export default function Index() {
           style={{
             width: '100%',
             maxWidth: 600,
-            opacity: mainButtonOpacityAnims[3],
+            opacity: mainButtonAnims[3],
             transform: [
-              { translateX: mainButtonSlideAnims[3] },
-              {
-                rotate: mainButtonRotateAnims[3].interpolate({
+              { 
+                translateX: mainButtonAnims[3].interpolate({
                   inputRange: [0, 1],
-                  outputRange: ['0deg', '2deg'],
+                  outputRange: [100, 0],
                 })
-              },
-              { scale: mainButtonScaleAnims[3] }
+              }
             ]
           }}
         >
@@ -775,16 +556,14 @@ export default function Index() {
           style={{
             width: '100%',
             maxWidth: 600,
-            opacity: mainButtonOpacityAnims[4],
+            opacity: mainButtonAnims[4],
             transform: [
-              { translateX: mainButtonSlideAnims[4] },
-              {
-                rotate: mainButtonRotateAnims[4].interpolate({
+              { 
+                translateX: mainButtonAnims[4].interpolate({
                   inputRange: [0, 1],
-                  outputRange: ['0deg', '2deg'],
+                  outputRange: [100, 0],
                 })
-              },
-              { scale: mainButtonScaleAnims[4] }
+              }
             ]
           }}
         >

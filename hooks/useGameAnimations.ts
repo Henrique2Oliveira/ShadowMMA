@@ -10,20 +10,21 @@ export const useGameAnimations = () => {
   const moveProgress = useRef(new Animated.Value(0)).current;
 
   const resetAnimations = useCallback(() => {
+    // Faster reset animations for better performance
     Animated.parallel([
       Animated.timing(tiltX, {
         toValue: 0,
-        duration: 100,
+        duration: 80, // Reduced duration
         useNativeDriver: true
       }),
       Animated.timing(tiltY, {
         toValue: 0,
-        duration: 100,
+        duration: 80, // Reduced duration
         useNativeDriver: true
       }),
       Animated.timing(scale, {
         toValue: 1,
-        duration: 100,
+        duration: 80, // Reduced duration
         useNativeDriver: true
       })
     ]).start();
@@ -38,20 +39,21 @@ export const useGameAnimations = () => {
   }, [moveProgress]);
 
   const animateRestPeriod = useCallback(() => {
+    // Optimized rest period animation for better performance
     Animated.parallel([
       Animated.timing(tiltX, {
         toValue: 3.65,
-        duration: 800,
+        duration: 600, // Reduced duration
         useNativeDriver: true
       }),
       Animated.timing(tiltY, {
         toValue: 0,
-        duration: 200,
+        duration: 150, // Reduced duration
         useNativeDriver: true
       }),
       Animated.timing(scale, {
-        toValue: 1.1,
-        duration: 1500,
+        toValue: 1.05, // Reduced scale change
+        duration: 1000, // Reduced duration
         useNativeDriver: true
       })
     ]).start();
