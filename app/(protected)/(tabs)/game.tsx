@@ -1,10 +1,10 @@
-import { AlertModal } from '@/components/AlertModal';
-import { CombosModal } from '@/components/CombosModal';
+import { GameOverButtons } from '@/components/Buttons/GameOverButtons';
 import { GameControls } from '@/components/GameControls';
-import { GameOptionsModal } from '@/components/GameOptionsModal';
-import { GameOverButtons } from '@/components/GameOverButtons';
 import { LevelBar } from '@/components/LevelBar';
 import { LoadingScreen } from '@/components/LoadingScreen';
+import { AlertModal } from '@/components/Modals/AlertModal';
+import { CombosModal } from '@/components/Modals/CombosModal';
+import { GameOptionsModal } from '@/components/Modals/GameOptionsModal';
 import { MoveCard } from '@/components/MoveCard';
 import { TimerDisplay } from '@/components/TimerDisplay';
 import { useUserData } from '@/contexts/UserDataContext';
@@ -405,12 +405,6 @@ export default function Game() {
           }
         });
         console.error("Error fetching moves:", error);
-        // Optionally, you can show an alert here instead of setting a modal
-        // Alert.alert(
-        //   'Error',
-        //   'Failed to start fight. Please try again later.',
-        //   [{ text: 'OK', onPress: () => router.navigate('/(protected)/(tabs)') }]
-        // );
       } finally {
         setIsLoading(false);
       }

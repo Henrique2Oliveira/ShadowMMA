@@ -1,6 +1,6 @@
-import { FightModeModal } from '@/components/FightModeModal';
-import { GradientButton } from '@/components/GradientButton';
-import { StartFightButton } from '@/components/StartFightButton';
+import { GradientButton } from '@/components/Buttons/GradientButton';
+import { StartFightButton } from '@/components/Buttons/StartFightButton';
+import { FightModeModal } from '@/components/Modals/FightModeModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';

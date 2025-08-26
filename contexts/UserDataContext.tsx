@@ -1,6 +1,6 @@
 import { getAuth } from 'firebase/auth';
 import React, { createContext, useContext, useState } from 'react';
-import { AlertModal } from '../components/AlertModal';
+import { AlertModal } from '../components/Modals/AlertModal';
 
 export type UserData = {
   name?: string;

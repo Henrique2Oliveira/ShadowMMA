@@ -1,6 +1,6 @@
-import { AlertModal } from '@/components/AlertModal';
 import ComboCard from '@/components/ComboCard';
 import { FightModeModal } from '@/components/FightModeModal';
+import { AlertModal } from '@/co@/components/Modals/FightModeModal;
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { app as firebaseApp } from '@/FirebaseConfig.js';

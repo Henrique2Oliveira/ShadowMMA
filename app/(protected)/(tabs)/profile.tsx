@@ -1,4 +1,4 @@
-import PlansModal from '@/components/PlansModal';
+import PlansModal from '@/components/Modals/PlansModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';

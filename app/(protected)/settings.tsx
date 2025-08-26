@@ -1,5 +1,5 @@
-import { AlertModal } from '@/components/AlertModal';
 import { DeleteAccountModal } from '@/components/DeleteAccountModal';
+import { AlertModal } from '@/compon@/components/Modals/DeleteAccountModal
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/FirebaseConfig';
 import { Colors, Typography } from '@/themes/theme';
