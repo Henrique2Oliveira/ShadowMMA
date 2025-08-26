@@ -23,7 +23,7 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
   disabled = false,
   onPress,
   colors = ["#205428ff", "#57f83bff"],
-  shadowColor = "#ffffffff"
+  shadowColor = "#5ce248ff"
 }) => {
   return (
     <LinearGradient 

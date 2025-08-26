@@ -1,23 +1,27 @@
 import { AlertModal } from '@/components/Modals/AlertModal';
 import { DeleteAccountModal } from '@/components/Modals/DeleteAccountModal';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserData } from '@/contexts/UserDataContext';
 import { db } from '@/FirebaseConfig';
 import { Colors, Typography } from '@/themes/theme';
-import { cancelAllNotifications, registerForPushNotificationsAsync, scheduleDailyNotification } from '@/utils/notificationUtils';
+import { cancelAllNotifications, recordLoginAndScheduleNotifications, registerForPushNotificationsAsync, scheduleDailyNotification } from '@/utils/notificationUtils';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { deleteUser, EmailAuthProvider, reauthenticateWithCredential } from '@firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
 import { deleteDoc, doc } from 'firebase/firestore';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Platform, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 ;
 
 export default function Settings() {
   const { user, resetPassword } = useAuth();
+  const { userData } = useUserData();
   const [isLoading, setIsLoading] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [enhancedNotificationsEnabled, setEnhancedNotificationsEnabled] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [notificationTime, setNotificationTime] = useState(new Date());
   const [showNotificationModal, setShowNotificationModal] = useState(false);
@@ -30,6 +34,23 @@ export default function Settings() {
   const [password, setPassword] = useState('');
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
+  // Enhanced notification error handling
+  const [showNotificationError, setShowNotificationError] = useState(false);
+  const [notificationErrorMessage, setNotificationErrorMessage] = useState('');
+
+  // Load enhanced notifications setting on component mount
+  useEffect(() => {
+    const loadNotificationSettings = async () => {
+      try {
+        const enhancedEnabled = await AsyncStorage.getItem('enhancedNotificationsEnabled');
+        setEnhancedNotificationsEnabled(enhancedEnabled === 'true');
+      } catch (error) {
+        console.log('Error loading notification settings:', error);
+      }
+    };
+    loadNotificationSettings();
+  }, []);
 
   const handleChangePassword = async () => {
     if (user?.email) {
@@ -178,6 +199,55 @@ export default function Settings() {
           </TouchableOpacity>
         )}
 
+        <View style={styles.option}>
+          <MaterialCommunityIcons name="rocket-launch" size={24} color={Colors.text} />
+          <Text style={styles.optionText}>Enhanced Fight Alerts</Text>
+          <Switch
+            value={enhancedNotificationsEnabled}
+            onValueChange={async (value) => {
+              try {
+                if (value) {
+                  const hasPermission = await registerForPushNotificationsAsync();
+                  if (hasPermission) {
+                    setEnhancedNotificationsEnabled(true);
+                    await AsyncStorage.setItem('enhancedNotificationsEnabled', 'true');
+                    
+                    // Schedule enhanced notifications if userData is available
+                    if (userData?.loginStreak !== undefined) {
+                      await recordLoginAndScheduleNotifications(userData.loginStreak);
+                    }
+                  } else {
+                    setNotificationErrorMessage('Notification permissions are required. Please enable notifications in your device settings to receive fight alerts.');
+                    setShowNotificationError(true);
+                  }
+                } else {
+                  try {
+                    await cancelAllNotifications();
+                    setEnhancedNotificationsEnabled(false);
+                    await AsyncStorage.setItem('enhancedNotificationsEnabled', 'false');
+                  } catch (error) {
+                    setNotificationErrorMessage('Failed to disable notifications. Some alerts may still be active.');
+                    setShowNotificationError(true);
+                  }
+                }
+              } catch (error) {
+                console.log('Error toggling enhanced notifications:', error);
+                setNotificationErrorMessage('Unable to update notification settings. Please try again.');
+                setShowNotificationError(true);
+              }
+            }}
+          />
+        </View>
+
+        {enhancedNotificationsEnabled && (
+          <TouchableOpacity style={[styles.option, styles.subOption]}>
+            <MaterialCommunityIcons name="information-outline" size={24} color={Colors.text} />
+            <Text style={[styles.optionText, { fontSize: 14 }]}>
+              Includes streak reminders, daily motivations, and comeback alerts
+            </Text>
+          </TouchableOpacity>
+        )}
+
         {/* <TouchableOpacity style={styles.option}>
           <MaterialCommunityIcons name="translate" size={24} color={Colors.text} />
           <Text style={styles.optionText}>Language</Text>
@@ -269,6 +339,17 @@ export default function Settings() {
         primaryButton={{
           text: "OK",
           onPress: () => setShowNotificationModal(false),
+        }}
+      />
+
+      <AlertModal
+        visible={showNotificationError}
+        title="Notification Error"
+        message={notificationErrorMessage}
+        type="error"
+        primaryButton={{
+          text: "OK",
+          onPress: () => setShowNotificationError(false),
         }}
       />
     </View>

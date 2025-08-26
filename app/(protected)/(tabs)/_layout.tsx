@@ -1,4 +1,4 @@
-import { Colors, Typography } from '@/themes/theme';
+import { Colors } from '@/themes/theme';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
 import { Tabs, useRouter } from 'expo-router';
@@ -97,12 +97,20 @@ export default function TabsLayout() {
                 paddingHorizontal: 5,
                 justifyContent: 'center',
                 alignItems: 'center',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.25,
+                shadowRadius: 3.84,
+                elevation: 5,
               }}>
               <Text style={{
                 color: "#000000",
                 fontSize: 28,
                 lineHeight: 34,
-                fontFamily: Typography.fontFamily,
+                shadowColor: "#000",
+                textShadowOffset: { width: 0, height: 2 },
+                textShadowRadius: 2,
+                fontFamily: fontsLoaded ? 'CalSans' : undefined,
                 transform: [{ rotateZ: '-5deg' }],
               }}>Fight</Text>
             </TouchableOpacity>

@@ -73,10 +73,10 @@ const styles = StyleSheet.create({
   },
   imageButton: {
     position: 'absolute',
-    opacity: 0.75,
-    bottom: -10,
+    bottom: -20,
     right: -10,
-    width: 120,
-    height: 120,
+    width: 150,
+    height: 150,
+    tintColor: '#de3232e2',
   },
 });

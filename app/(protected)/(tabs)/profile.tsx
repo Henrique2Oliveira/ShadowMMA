@@ -119,7 +119,7 @@ export default function Profile() {
             </View>
             <View style={styles.statBox}>
               <View style={styles.statRow}>
-                <MaterialCommunityIcons name="boxing-glove" size={20} color={Colors.text} style={[styles.statIcon, { transform: [{ rotate: '90deg' }] }]} />
+                <MaterialCommunityIcons name="boxing-glove" size={20} color={Colors.text} style={styles.statIcon} />
                 <Text style={styles.statNumber}>{userData?.combos || "-"}</Text>
               </View>
               <Text style={styles.statLabel}>Combos</Text>
@@ -129,7 +129,7 @@ export default function Profile() {
           <View style={styles.statsRow}>
             <View style={[styles.infoContainer, styles.fightsContainer]}>
               <View style={styles.fightsRow}>
-                <MaterialCommunityIcons name="boxing-glove" style={{ transform: [{ rotate: '90deg' }] }} size={42} color={Colors.text} />
+                <MaterialCommunityIcons name="boxing-glove" style={{ transform: [{ rotate: '90deg' }] }} size={38} color={Colors.text} />
                 <View style={styles.fightsInfo}>
                   <Text style={styles.fightsTitle}>{userData?.plan === 'pro' ? 'Premium Status' : 'Fights Left Today'}</Text>
                   <Text style={styles.fightsNumber}>

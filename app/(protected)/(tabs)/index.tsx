@@ -1,13 +1,16 @@
 import { GradientButton } from '@/components/Buttons/GradientButton';
 import { StartFightButton } from '@/components/Buttons/StartFightButton';
+import { AlertModal } from '@/components/Modals/AlertModal';
 import { FightModeModal } from '@/components/Modals/FightModeModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
+import { checkMissedLoginAndScheduleComeback, recordLoginAndScheduleNotifications, registerForPushNotificationsAsync } from '@/utils/notificationUtils';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 
@@ -17,6 +20,29 @@ export default function Index() {
   const [refreshing, setRefreshing] = React.useState(false);
 
   const [isModalVisible, setIsModalVisible] = React.useState(false);
+
+  // Random notification messages
+  const notificationMessages = [
+    'Enable Fight Notifications 🔥',
+    'Activate Streak Alerts 🔥',
+    'Turn On Training Reminders 🔥',
+    'Get Daily Fight Alerts 🔥', 
+    'Stay Fight Ready 🔥',
+    'Never Miss Your Streak 🔥',
+    'Keep Your Fire Burning 🔥',
+    'Protect Your Progress 🔥'
+  ];
+
+  const [notificationMessage, setNotificationMessage] = React.useState(() => 
+    notificationMessages[Math.floor(Math.random() * notificationMessages.length)]
+  );
+
+  // State to track if enhanced notifications are enabled
+  const [enhancedNotificationsEnabled, setEnhancedNotificationsEnabled] = useState(false);
+
+  // Error handling state
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const onRefresh = React.useCallback(async () => {
     if (user) {
@@ -52,7 +78,69 @@ export default function Index() {
     if (user) {
       refreshUserData(user.uid);
     }
+    // Set a new random notification message every time user enters the screen
+    setNotificationMessage(notificationMessages[Math.floor(Math.random() * notificationMessages.length)]);
   }, [user]);
+
+  // Load enhanced notifications setting
+  useEffect(() => {
+    const loadNotificationSetting = async () => {
+      try {
+        const enabled = await AsyncStorage.getItem('enhancedNotificationsEnabled');
+        setEnhancedNotificationsEnabled(enabled === 'true');
+      } catch (error) {
+        console.log('Error loading notification setting:', error);
+      }
+    };
+    loadNotificationSetting();
+  }, []);
+
+  // Enhanced notification system - run when userData is available
+  useEffect(() => {
+    const initializeNotifications = async () => {
+      try {
+        if (userData?.loginStreak !== undefined && enhancedNotificationsEnabled) {
+          // Record login and schedule comprehensive notifications
+          await recordLoginAndScheduleNotifications(userData.loginStreak);
+          
+          // Check for missed logins and schedule comeback notifications
+          await checkMissedLoginAndScheduleComeback();
+        }
+      } catch (error) {
+        console.log('Error initializing notifications:', error);
+        setErrorMessage('Failed to set up notifications. Your alerts may not work properly.');
+        setShowErrorModal(true);
+      }
+    };
+
+    if (userData && enhancedNotificationsEnabled) {
+      initializeNotifications();
+    }
+  }, [userData, enhancedNotificationsEnabled]);
+
+  // Handle notification card click - enable enhanced notifications
+  const handleNotificationCardClick = async () => {
+    try {
+      const hasPermission = await registerForPushNotificationsAsync();
+      if (hasPermission) {
+        setEnhancedNotificationsEnabled(true);
+        await AsyncStorage.setItem('enhancedNotificationsEnabled', 'true');
+        
+        // Schedule enhanced notifications if userData is available
+        if (userData?.loginStreak !== undefined) {
+          await recordLoginAndScheduleNotifications(userData.loginStreak);
+        }
+      } else {
+        // Show permission error
+        setErrorMessage('Notification permissions are required to enable fight alerts. Please allow notifications in your device settings.');
+        setShowErrorModal(true);
+      }
+    } catch (error) {
+      console.log('Error enabling notifications:', error);
+      setErrorMessage('Unable to enable notifications. Please check your device settings and try again.');
+      setShowErrorModal(true);
+    }
+  };
 
   const setModalConfig = (config: {
     roundDuration?: string;
@@ -287,7 +375,20 @@ export default function Index() {
               </TouchableOpacity>
             );
           })}
+          
         </View>
+        
+      {/* Notification Card - Only show if enhanced notifications are disabled */}
+      {!enhancedNotificationsEnabled && (
+        <TouchableOpacity 
+          style={styles.notificationCard} 
+          onPress={handleNotificationCardClick}
+        >
+          <MaterialCommunityIcons name="bell" size={24} color={Colors.text} />
+          <Text style={styles.notificationText}>{notificationMessage}</Text>
+          <MaterialCommunityIcons name="chevron-right" size={24} color={Colors.text} />
+        </TouchableOpacity>
+      )}
 
         <GradientButton
           title={buttons[5].title}
@@ -342,6 +443,24 @@ export default function Index() {
         category={category}
         onStartFight={() => setIsModalVisible(false)}
       />
+
+      <AlertModal
+        visible={showErrorModal}
+        title="Notification Error"
+        message={errorMessage}
+        type="error"
+        primaryButton={{
+          text: "OK",
+          onPress: () => setShowErrorModal(false),
+        }}
+        secondaryButton={{
+          text: "Open Settings",
+          onPress: () => {
+            setShowErrorModal(false);
+            router.push('/settings');
+          },
+        }}
+      />
     </ScrollView >
   );
 }
@@ -359,6 +478,32 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     backgroundColor: '#dbdbdb1c',
 
+  },
+  notificationCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0000009f',
+    padding: 8,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    marginHorizontal: 5,
+    marginVertical: 5,
+    width: '100%',
+    maxWidth: 600,
+    borderWidth: 1,
+    borderColor: '#c5c5c593',
+    borderBottomWidth: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  notificationText: {
+    color: Colors.text,
+    fontSize: 14,
+    fontFamily: Typography.fontFamily,
+    flex: 1,
+    marginLeft: 15,
   },
   streakIcon: {
     marginRight: 4,
