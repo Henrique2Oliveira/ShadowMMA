@@ -1,5 +1,6 @@
 import { GradientButton } from '@/components/Buttons/GradientButton';
 import { StartFightButton } from '@/components/Buttons/StartFightButton';
+import { LevelBar } from '@/components/LevelBar';
 import { AlertModal } from '@/components/Modals/AlertModal';
 import { FightModeModal } from '@/components/Modals/FightModeModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,7 +10,6 @@ import { checkMissedLoginAndScheduleComeback, recordLoginAndScheduleNotification
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -582,63 +582,8 @@ export default function Index() {
       </View>
 
       {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', paddingHorizontal: 25, backgroundColor: Colors.background, paddingTop: 10, maxWidth: 600 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-          <Text style={{
-            color: Colors.text,
-            fontSize: 25,
-            fontFamily: Typography.fontFamily,
-            marginRight: 8,
-            textShadowColor: "#000",
-            textShadowOffset: { width: 1, height: 1 },
-            textShadowRadius: 3,
-          }}>
-            <Text style={{ fontSize: 18 }}>
-              Lv.
-            </Text>
-            <Text style={{ fontSize: 25 }}> {userData?.xp ? Math.floor(userData.xp / 100) : 0}</Text>
-          </Text>
-
-          <View style={{
-            flex: 3,
-            height: 28,
-            borderRadius: 8,
-            backgroundColor: "#7b590aff",
-            overflow: 'hidden',
-            shadowOpacity: 0.3,
-            shadowRadius: 4.65,
-            elevation: 4,
-            borderWidth: 1,
-            borderColor: '#473407ff',
-            borderBottomWidth: 3,
-          }}>
-            <LinearGradient
-              colors={['#ffd700', '#ffa000']}
-              start={{ x: 0, y: 1 }}
-              end={{ x: 1, y: 0 }}
-              style={{
-                width: `${((userData?.xp ?? 0) % 100) || 20}%`,
-                height: '100%',
-                borderRadius: 4
-              }}>
-              <View
-                style={{
-                  position: "absolute",
-                  top: 5,
-                  left: 15,
-                  backgroundColor: "#ffffff70",
-                  width: `${((userData?.xp ?? 0) % 100) - 5 || 15}%`,
-                  height: '15%',
-                  borderRadius: 10,
-                  zIndex: 10,
-                }}>
-              </View>
-            </LinearGradient>
-          </View>
-
-          <MaterialCommunityIcons name="boxing-glove" size={32} color="#ffc400ff" style={{ marginLeft: 6, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 3.84, elevation: 5, transform: [{ rotateZ: '90deg' }] }} />
-        </View>
-
+      <View style={{ backgroundColor: Colors.background, paddingTop: 10, maxWidth: 600 }}>
+        <LevelBar xp={userData?.xp || 0} />
       </View>
 
       {/* Content */}
