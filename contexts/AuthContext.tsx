@@ -1,12 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getApps, initializeApp } from 'firebase/app';
 import {
-  getAuth,
-  onAuthStateChanged,
-  sendPasswordResetEmail,
-  signInWithEmailAndPassword,
-  signOut,
-  User
+    getAuth,
+    onAuthStateChanged,
+    sendPasswordResetEmail,
+    signInWithEmailAndPassword,
+    signOut,
+    User
 } from 'firebase/auth';
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
@@ -27,6 +27,8 @@ type AuthContextType = {
   logout: () => Promise<void>;
   loading: boolean;
   loginStreak: number;
+  onStreakUpdate?: (newStreak: number, previousStreak: number) => void;
+  setStreakUpdateCallback: (callback: (newStreak: number, previousStreak: number) => void) => void;
 };
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
@@ -38,6 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [loginStreak, setLoginStreak] = useState(0);
+  const [streakUpdateCallback, setStreakUpdateCallback] = useState<((newStreak: number, previousStreak: number) => void) | null>(null);
   const appState = useRef(AppState.currentState);
   const lastStreakUpdate = useRef<string | null>(null);
 
@@ -65,7 +68,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.loginStreak !== undefined) {
+          const previousStreak = loginStreak;
           setLoginStreak(data.loginStreak);
+          
+          // Trigger streak update callback if there's an increase and it's not day 0
+          if (streakUpdateCallback && data.loginStreak > previousStreak && data.loginStreak > 0) {
+            streakUpdateCallback(data.loginStreak, previousStreak);
+          }
+          
           // Cache that we updated today
           await AsyncStorage.setItem(storageKey, today);
           lastStreakUpdate.current = today;
@@ -276,6 +286,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const setStreakUpdateCallbackHandler = (callback: (newStreak: number, previousStreak: number) => void) => {
+    setStreakUpdateCallback(() => callback);
+  };
+
   return (
     <AuthContext.Provider value={{
       isAuthenticated: !!user,
@@ -285,7 +299,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       resetPassword,
       logout,
       loading,
-      loginStreak
+      loginStreak,
+      setStreakUpdateCallback: setStreakUpdateCallbackHandler
     }}>
       <UserDataProvider>
         {children}

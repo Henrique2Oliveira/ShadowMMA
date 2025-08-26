@@ -216,9 +216,22 @@ export const handleGameOver = onRequest(async (req, res) => {
       return;
     }
 
-    // Calculate new XP
+    // Calculate new XP based on current level (progressive difficulty)
     const oldXp = userData.xp || 0;
-    const newXp = oldXp + Math.floor(Math.random() * (65 - 42 + 1)) + 33;
+    const currentLevel = Math.floor(oldXp / 100);
+    
+    // Base XP formula: starts high for early levels, decreases as level increases
+    // Formula: baseXP = max(20, 120 - (level * 4))
+    // This gives: Level 0-4: 120-104 XP, Level 10: 80 XP, Level 20: 40 XP, Level 25+: 20 XP minimum
+    const baseXP = Math.max(20, 120 - (currentLevel * 4));
+    
+    // Add random variation (±25% of base XP)
+    const variation = Math.floor(baseXP * 0.25);
+    const randomXP = Math.floor(Math.random() * (variation * 2 + 1)) - variation;
+    
+    // Final XP calculation with minimum guarantee
+    const xpGained = Math.max(15, baseXP + randomXP);
+    const newXp = oldXp + xpGained;
 
     // Update user data
     await userRef.update({
@@ -229,7 +242,10 @@ export const handleGameOver = onRequest(async (req, res) => {
     // Return old and new values for animation
     res.status(200).json({
       oldXp,
-      newXp
+      newXp,
+      xpGained,
+      currentLevel: Math.floor(oldXp / 100),
+      newLevel: Math.floor(newXp / 100)
     });
 
   } catch (error) {
@@ -371,7 +387,7 @@ export const startFight = onRequest(async (req, res) => {
 
   // Get the user's level from XP
   const xp = typeof userData.xp === 'number' ? userData.xp : 0;
-  const currentUserLevel = Math.floor(xp / 100) + 1;
+  const currentUserLevel = Math.floor(xp / 100);
 
   // Build pools per selected move type and filter by user level
   type ComboT = any;

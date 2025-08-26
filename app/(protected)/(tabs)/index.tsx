@@ -3,6 +3,7 @@ import { StartFightButton } from '@/components/Buttons/StartFightButton';
 import { LevelBar } from '@/components/LevelBar';
 import { AlertModal } from '@/components/Modals/AlertModal';
 import { FightModeModal } from '@/components/Modals/FightModeModal';
+import { StreakCongratulationsModal } from '@/components/Modals/StreakCongratulationsModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
@@ -15,11 +16,15 @@ import React, { useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function Index() {
-  const { user } = useAuth();
+  const { user, setStreakUpdateCallback } = useAuth();
   const { userData, refreshUserData } = useUserData();
   const [refreshing, setRefreshing] = React.useState(false);
 
   const [isModalVisible, setIsModalVisible] = React.useState(false);
+
+  // Streak congratulations modal state
+  const [showStreakModal, setShowStreakModal] = React.useState(false);
+  const [streakCount, setStreakCount] = React.useState(0);
 
   // Random notification messages
   const notificationMessages = [
@@ -83,6 +88,21 @@ export default function Index() {
     // Set a new random notification message every time user enters the screen
     setNotificationMessage(notificationMessages[Math.floor(Math.random() * notificationMessages.length)]);
   }, [user]);
+
+  // Set up streak update callback
+  useEffect(() => {
+    const handleStreakUpdate = (newStreak: number, previousStreak: number) => {
+      // Show congratulations modal for any increase beyond day 0
+      if (newStreak > previousStreak && newStreak > 0) {
+        setStreakCount(newStreak);
+        setShowStreakModal(true);
+        // Add haptic feedback for streak achievement
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    };
+
+    setStreakUpdateCallback(handleStreakUpdate);
+  }, [setStreakUpdateCallback]);
 
   // Load enhanced notifications setting
   useEffect(() => {
@@ -479,6 +499,12 @@ export default function Index() {
           },
         }}
       />
+
+      <StreakCongratulationsModal
+        visible={showStreakModal}
+        streakCount={streakCount}
+        onClose={() => setShowStreakModal(false)}
+      />
     </ScrollView >
   );
 }
@@ -504,8 +530,8 @@ const styles = StyleSheet.create({
     padding: 8,
     paddingHorizontal: 15,
     borderRadius: 10,
-    marginHorizontal: 5,
-    marginVertical: 5,
+
+    marginVertical: 8,
     width: '100%',
     maxWidth: 600,
     borderWidth: 1,
