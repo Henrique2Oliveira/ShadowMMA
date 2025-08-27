@@ -1,5 +1,6 @@
 import { AlertModal } from '@/components/Modals/AlertModal';
 import { DeleteAccountModal } from '@/components/Modals/DeleteAccountModal';
+import { SelectionModal } from '@/components/Modals/SelectionModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { db } from '@/FirebaseConfig';
@@ -39,14 +40,52 @@ export default function Settings() {
   const [showNotificationError, setShowNotificationError] = useState(false);
   const [notificationErrorMessage, setNotificationErrorMessage] = useState('');
 
+  // Weekly Mission settings
+  const [weeklyMissionRounds, setWeeklyMissionRounds] = useState(20);
+  const [weeklyMissionTime, setWeeklyMissionTime] = useState(60);
+  const [showMissionRoundsModal, setShowMissionRoundsModal] = useState(false);
+  const [showMissionTimeModal, setShowMissionTimeModal] = useState(false);
+
+  // Options for Weekly Mission selections
+  const roundsOptions = [
+    { label: '5 Rounds', value: 5, description: 'Light training - Perfect for beginners' },
+    { label: '10 Rounds', value: 10, description: 'Moderate training - Good for consistency' },
+    { label: '15 Rounds', value: 15, description: 'Regular training - Building endurance' },
+    { label: '20 Rounds', value: 20, description: 'Standard goal - Balanced challenge' },
+    { label: '25 Rounds', value: 25, description: 'Advanced training - Serious commitment' },
+    { label: '30 Rounds', value: 30, description: 'Intense training - High performance' },
+    { label: '35 Rounds', value: 35, description: 'Elite training - Professional level' },
+    { label: '40 Rounds', value: 40, description: 'Extreme training - Championship level' },
+    { label: '50 Rounds', value: 50, description: 'Master level - Ultimate challenge' },
+  ];
+
+  const timeOptions = [
+    { label: '15 Minutes', value: 15, description: 'Quick sessions - Easy to maintain' },
+    { label: '30 Minutes', value: 30, description: 'Short workouts - Good for busy schedules' },
+    { label: '45 Minutes', value: 45, description: 'Moderate sessions - Solid training time' },
+    { label: '60 Minutes', value: 60, description: 'Standard goal - One hour per week' },
+    { label: '90 Minutes', value: 90, description: 'Extended training - Serious dedication' },
+    { label: '120 Minutes', value: 120, description: 'Intensive training - Two hours weekly' },
+    { label: '150 Minutes', value: 150, description: 'Advanced commitment - High performance' },
+    { label: '180 Minutes', value: 180, description: 'Elite training - Three hours weekly' },
+    { label: '240 Minutes', value: 240, description: 'Master level - Four hours weekly' },
+  ];
+
   // Load enhanced notifications setting on component mount
   useEffect(() => {
     const loadNotificationSettings = async () => {
       try {
         const enhancedEnabled = await AsyncStorage.getItem('enhancedNotificationsEnabled');
         setEnhancedNotificationsEnabled(enhancedEnabled === 'true');
+        
+        // Load weekly mission settings
+        const savedRounds = await AsyncStorage.getItem('weeklyMissionRounds');
+        const savedTime = await AsyncStorage.getItem('weeklyMissionTime');
+        
+        if (savedRounds) setWeeklyMissionRounds(parseInt(savedRounds));
+        if (savedTime) setWeeklyMissionTime(parseInt(savedTime));
       } catch (error) {
-        console.log('Error loading notification settings:', error);
+        console.log('Error loading settings:', error);
       }
     };
     loadNotificationSettings();
@@ -120,6 +159,24 @@ export default function Settings() {
           ? 'Incorrect password'
           : 'Failed to delete account. Please try again.'
       );
+    }
+  };
+
+  const handleUpdateMissionRounds = async (newValue: number) => {
+    try {
+      setWeeklyMissionRounds(newValue);
+      await AsyncStorage.setItem('weeklyMissionRounds', newValue.toString());
+    } catch (error) {
+      console.log('Error saving mission rounds:', error);
+    }
+  };
+
+  const handleUpdateMissionTime = async (newValue: number) => {
+    try {
+      setWeeklyMissionTime(newValue);
+      await AsyncStorage.setItem('weeklyMissionTime', newValue.toString());
+    } catch (error) {
+      console.log('Error saving mission time:', error);
     }
   };
 
@@ -248,6 +305,32 @@ export default function Settings() {
           </TouchableOpacity>
         )}
 
+        {/* Weekly Mission Settings */}
+        <View style={styles.sectionHeader}>
+          <MaterialCommunityIcons name="trophy" size={20} color="#fdd700" />
+          <Text style={styles.sectionTitle}>Weekly Mission</Text>
+        </View>
+
+        <TouchableOpacity 
+          style={styles.option}
+          onPress={() => setShowMissionRoundsModal(true)}
+        >
+          <MaterialCommunityIcons name="boxing-glove" size={24} color={Colors.text} />
+          <Text style={styles.optionText}>Target Rounds</Text>
+          <Text style={styles.optionValue}>{weeklyMissionRounds}</Text>
+          <MaterialCommunityIcons name="chevron-right" size={24} color={Colors.text} />
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.option}
+          onPress={() => setShowMissionTimeModal(true)}
+        >
+          <MaterialCommunityIcons name="timer" size={24} color={Colors.text} />
+          <Text style={styles.optionText}>Target Time (minutes)</Text>
+          <Text style={styles.optionValue}>{weeklyMissionTime}</Text>
+          <MaterialCommunityIcons name="chevron-right" size={24} color={Colors.text} />
+        </TouchableOpacity>
+
         {/* <TouchableOpacity style={styles.option}>
           <MaterialCommunityIcons name="translate" size={24} color={Colors.text} />
           <Text style={styles.optionText}>Language</Text>
@@ -352,6 +435,24 @@ export default function Settings() {
           onPress: () => setShowNotificationError(false),
         }}
       />
+
+      <SelectionModal
+        visible={showMissionRoundsModal}
+        title="Weekly Mission - Target Rounds"
+        options={roundsOptions}
+        currentValue={weeklyMissionRounds}
+        onSelect={handleUpdateMissionRounds}
+        onClose={() => setShowMissionRoundsModal(false)}
+      />
+
+      <SelectionModal
+        visible={showMissionTimeModal}
+        title="Weekly Mission - Target Time"
+        options={timeOptions}
+        currentValue={weeklyMissionTime}
+        onSelect={handleUpdateMissionTime}
+        onClose={() => setShowMissionTimeModal(false)}
+      />
     </View>
   );
 }
@@ -411,6 +512,27 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily,
     flex: 1,
     marginLeft: 15,
+  },
+  optionValue: {
+    color: Colors.text,
+    fontSize: 16,
+    fontFamily: Typography.fontFamily,
+    fontWeight: '600',
+    marginRight: 10,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 10,
+    paddingHorizontal: 5,
+  },
+  sectionTitle: {
+    color: Colors.text,
+    fontSize: 18,
+    fontFamily: Typography.fontFamily,
+    fontWeight: '600',
+    marginLeft: 8,
   },
   dangerOption: {
     marginTop: 20,

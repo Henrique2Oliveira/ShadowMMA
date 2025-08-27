@@ -4,6 +4,7 @@ import { LevelBar } from '@/components/LevelBar';
 import { AlertModal } from '@/components/Modals/AlertModal';
 import { FightModeModal } from '@/components/Modals/FightModeModal';
 import { StreakCongratulationsModal } from '@/components/Modals/StreakCongratulationsModal';
+import { WeeklyMission } from '@/components/WeeklyMission';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
@@ -45,19 +46,42 @@ export default function Index() {
   // State to track if enhanced notifications are enabled
   const [enhancedNotificationsEnabled, setEnhancedNotificationsEnabled] = useState(false);
 
+  // Weekly Mission state
+  const [weeklyMissionRounds, setWeeklyMissionRounds] = useState(20);
+  const [weeklyMissionTime, setWeeklyMissionTime] = useState(60);
+
   // Error handling state
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Function to load mission settings
+  const loadMissionSettings = useCallback(async () => {
+    try {
+      const savedRounds = await AsyncStorage.getItem('weeklyMissionRounds');
+      const savedTime = await AsyncStorage.getItem('weeklyMissionTime');
+      
+      if (savedRounds) setWeeklyMissionRounds(parseInt(savedRounds));
+      if (savedTime) setWeeklyMissionTime(parseInt(savedTime));
+    } catch (error) {
+      console.log('Error loading mission settings:', error);
+    }
+  }, []);
+
+  // Function to handle navigation to settings
+  const handleNavigateToSettings = useCallback(() => {
+    router.push('/settings');
+  }, []);
 
   const onRefresh = React.useCallback(async () => {
     if (user) {
       setRefreshing(true);
       await refreshUserData(user.uid);
+      await loadMissionSettings(); // Reload mission settings on refresh
       setRefreshing(false);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     }
-  }, [user, refreshUserData]);
+  }, [user, refreshUserData, loadMissionSettings]);
 
   const [roundDuration, setRoundDuration] = React.useState('1');
   const [numRounds, setNumRounds] = React.useState('1');
@@ -87,7 +111,9 @@ export default function Index() {
     }
     // Set a new random notification message every time user enters the screen
     setNotificationMessage(notificationMessages[Math.floor(Math.random() * notificationMessages.length)]);
-  }, [user]);
+    // Also refresh mission settings when screen loads
+    loadMissionSettings();
+  }, [user, loadMissionSettings]);
 
   // Set up streak update callback
   const handleStreakUpdate = useCallback((newStreak: number, previousStreak: number) => {
@@ -118,6 +144,13 @@ export default function Index() {
     };
     loadNotificationSetting();
   }, []);
+
+  // Load mission settings on mount
+  useEffect(() => {
+    loadMissionSettings();
+  }, [loadMissionSettings]);
+
+  // Add mission settings reload to the existing refresh mechanism
 
   // Enhanced notification system - run when userData is available
   useEffect(() => {
@@ -381,6 +414,22 @@ export default function Index() {
             );
           })}
 
+        </View>
+
+        {/* Weekly Mission */}
+        <View
+          style={{
+            width: '100%',
+            maxWidth: 600,
+          }}
+        >
+          <WeeklyMission
+            completedRounds={5}
+            totalRounds={weeklyMissionRounds}
+            completedTime={12}
+            totalTime={weeklyMissionTime}
+            onPress={handleNavigateToSettings}
+          />
         </View>
 
         {/* Notification Card - Only show if enhanced notifications are disabled */}
