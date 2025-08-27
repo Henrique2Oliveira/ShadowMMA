@@ -15,17 +15,43 @@ export const LevelBar: React.FC<LevelBarProps> = ({
 }) => {
   // Calculate level and XP percentage
   const level = Math.floor(xp / 100) || 0; // Level starts at 0
-  const xpPercentage = xp % 100;
-  const animatedWidth = useRef(new Animated.Value(0)).current;
+  const xpPercentage = Math.max(0, Math.min(100, xp % 100));
+  const xpBarAnimatedWidth = useRef(new Animated.Value(0)).current;
+
+  // Helper function to safely get animated width
+  const getAnimatedWidth = React.useCallback(() => {
+    return xpBarAnimatedWidth.interpolate({
+      inputRange: [0, 100],
+      outputRange: ['0%', '100%'],
+      extrapolate: 'clamp'
+    });
+  }, [xpBarAnimatedWidth]);
+
+  // Helper function to safely get animated highlight width
+  const getAnimatedHighlightWidth = React.useCallback(() => {
+    return xpBarAnimatedWidth.interpolate({
+      inputRange: [0, 100],
+      outputRange: ['0%', '95%'],
+      extrapolate: 'clamp'
+    });
+  }, [xpBarAnimatedWidth]);
 
   useEffect(() => {
-    Animated.spring(animatedWidth, {
-      toValue: xpPercentage,
-      useNativeDriver: false,
-      tension: 20,
-      friction: 4
-    }).start();
-  }, [xpPercentage]);
+    if (xp !== undefined && xp !== null) {
+      const currentXpPercentage = Math.max(0, Math.min(100, xp % 100));
+
+      // Animate the XP bar with safety bounds
+      Animated.spring(xpBarAnimatedWidth, {
+        toValue: currentXpPercentage,
+        useNativeDriver: false,
+        tension: 20,
+        friction: 4
+      }).start();
+    } else {
+      // Default to 0 if no XP data
+      xpBarAnimatedWidth.setValue(0);
+    }
+  }, [xp, xpBarAnimatedWidth]);
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -36,23 +62,22 @@ export const LevelBar: React.FC<LevelBarProps> = ({
         </Text>
 
         <View style={styles.progressBarContainer}>
-          <LinearGradient
-            colors={['#ffd700', '#ffa000']}
-            start={{ x: 0, y: 1 }}
-            end={{ x: 1, y: 0 }}
-            style={[
-              styles.progressBarFill,
-              { width: `${xpPercentage || 20}%` }
-            ]}>
-            <View style={[
-              styles.progressBarHighlight,
-              { width: `${(xpPercentage - 5) || 15}%` }
-            ]} />
-          </LinearGradient>
+          <Animated.View style={{ width: getAnimatedWidth(), height: '100%' }}>
+            <LinearGradient
+              colors={['#ffd700', '#ffa000']}
+              start={{ x: 0, y: 1 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.progressBarFill}>
+              <Animated.View style={[
+                styles.progressBarHighlight,
+                { width: getAnimatedHighlightWidth() }
+              ]} />
+            </LinearGradient>
+          </Animated.View>
         </View>
 
         <MaterialCommunityIcons 
-          name="boxing-glove" 
+          name="trophy" 
           size={32} 
           color="#ffc400ff" 
           style={styles.boxingGloveIcon} 
@@ -125,6 +150,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 3.84,
     elevation: 5,
-    transform: [{ rotateZ: '90deg' }],
   },
 });

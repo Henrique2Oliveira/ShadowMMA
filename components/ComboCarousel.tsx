@@ -1,7 +1,6 @@
-import { Colors, Typography } from '@/themes/theme';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Typography } from '@/themes/theme';
 import React from 'react';
-import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 
 interface ComboCarouselProps {
   combo: any | null;
@@ -14,64 +13,12 @@ export const ComboCarousel: React.FC<ComboCarouselProps> = ({
   currentMoveIndex,
   isRestPeriod,
 }) => {
-  const scrollViewRef = React.useRef<ScrollView>(null);
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
   const slideAnim = React.useRef(new Animated.Value(0)).current;
-  
-  // Create scale animations for all possible moves upfront
-  const scaleAnims = React.useRef<Animated.Value[]>([]).current;
-  
-  // Initialize scale animations for all moves
-  React.useEffect(() => {
-    if (combo && combo.moves) {
-      // Ensure we have enough scale animations for all moves
-      while (scaleAnims.length < combo.moves.length) {
-        scaleAnims.push(new Animated.Value(1));
-      }
-      // Remove excess animations if combo has fewer moves
-      if (scaleAnims.length > combo.moves.length) {
-        scaleAnims.splice(combo.moves.length);
-      }
-    }
-  }, [combo, scaleAnims]);
-
-  // Auto-scroll to current move with smooth animation
-  React.useEffect(() => {
-    if (combo && combo.moves && scrollViewRef.current && currentMoveIndex >= 0) {
-      // Calculate the position to scroll to (each move item is approximately 74 pixels wide including margins)
-      const itemWidth = 74;
-      const scrollPosition = Math.max(0, currentMoveIndex * itemWidth - 100); // Center the current item
-      
-      // Add a small delay to ensure the component is rendered
-      setTimeout(() => {
-        scrollViewRef.current?.scrollTo({
-          x: scrollPosition,
-          animated: true,
-        });
-      }, 100);
-    }
-  }, [currentMoveIndex, combo]);
-
-  // Update scale animations based on current move
-  React.useEffect(() => {
-    if (combo && combo.moves && scaleAnims.length >= combo.moves.length) {
-      combo.moves.forEach((_: any, index: number) => {
-        const isCurrentMove = index === currentMoveIndex;
-        Animated.spring(scaleAnims[index], {
-          toValue: isCurrentMove ? 1.1 : 1,
-          useNativeDriver: true,
-          tension: 150,
-          friction: 8,
-        }).start();
-      });
-    }
-  }, [currentMoveIndex, combo, scaleAnims]);
 
   // Smooth fade and slide animation when combo changes
   React.useEffect(() => {
     if (combo && combo.moves) {
-      slideAnim.setValue(-50);
-      
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -92,6 +39,26 @@ export const ComboCarousel: React.FC<ComboCarouselProps> = ({
     return null;
   }
 
+  // Create the combo display with highlighted current move
+  const renderCombo = () => {
+    return combo.moves.map((move: any, index: number) => {
+      const moveText = move.move.replace(/\n/g, ' ');
+      const isCurrentMove = index === currentMoveIndex;
+      
+      return (
+        <React.Fragment key={index}>
+          {index > 0 && <Text style={styles.arrow}>   →   </Text>}
+          <Text style={[
+            styles.moveText,
+            isCurrentMove && styles.currentMoveText
+          ]}>
+            {isCurrentMove ? `${moveText}` : moveText}
+          </Text>
+        </React.Fragment>
+      );
+    });
+  };
+
   return (
     <Animated.View 
       style={[
@@ -102,61 +69,12 @@ export const ComboCarousel: React.FC<ComboCarouselProps> = ({
         }
       ]}
     >
-      <ScrollView
-        ref={scrollViewRef}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        style={styles.scrollView}
-      >
-        {combo.moves.map((move: any, index: number) => {
-          const isCurrentMove = index === currentMoveIndex;
-          const isPastMove = index < currentMoveIndex;
-          const scale = scaleAnims[index] || new Animated.Value(1);
-          
-          return (
-            <Animated.View
-              key={index}
-              style={[
-                styles.moveItem,
-                { transform: [{ scale }] }
-              ]}
-            >
-              <LinearGradient
-                colors={isCurrentMove ? ['#ffffff', '#e0e0e0'] : isPastMove ? ['#000000ff', '#000000ff'] : ['#171717ff', '#1a1a1aff']}
-                style={styles.gradientBackground}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-              >
-                <Text
-                  style={[
-                    styles.moveText,
-                    isCurrentMove && styles.currentMoveText,
-                    isPastMove && styles.pastMoveText
-                  ]}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                >
-                  {move.move}
-                </Text>
-              </LinearGradient>
-            </Animated.View>
-          );
-        })}
-      </ScrollView>
-      
-      {/* Progress indicators */}
-      <View style={styles.progressContainer}>
-        {combo.moves.map((_: any, index: number) => (
-          <View
-            key={index}
-            style={[
-              styles.progressDot,
-              index === currentMoveIndex && styles.currentProgressDot,
-              index < currentMoveIndex && styles.completedProgressDot
-            ]}
-          />
-        ))}
+      <View style={styles.comboContainer}>
+        <View style={styles.comboGradient}>
+          <View style={styles.comboDisplay}>
+            {renderCombo()}
+          </View>
+        </View>
       </View>
     </Animated.View>
   );
@@ -168,64 +86,54 @@ const styles = StyleSheet.create({
     top: 118,
     width: '100%',
     alignItems: 'center',
-    paddingHorizontal: 10,
+    paddingHorizontal: 0,
   },
-  scrollView: {
-    maxHeight: 35,
-  },
-  scrollContent: {
-    alignItems: 'center',
-    paddingHorizontal: 10,
-  },
-  moveItem: {
-
-    minWidth: 70,
-    height: 25,
-    alignItems: 'center',
-    justifyContent: 'center',
+  comboContainer: {
+    width: '100%',
+    borderRadius: 0,
     overflow: 'hidden',
   },
-  gradientBackground: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
+  comboGradient: {
+    padding: 15,
+    paddingVertical: 12,
     alignItems: 'center',
-    paddingHorizontal: 6,
+  },
+  comboDisplay: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#22222265',
+    padding: 12,
+    borderRadius: 30,
+    width: '100%',
   },
   moveText: {
-    color: Colors.text,
-    fontSize: 12,
+    color: "white",
+    fontSize: 18,
     fontFamily: Typography.fontFamily,
+    lineHeight: 24,
     textAlign: 'center',
   },
   currentMoveText: {
-    color: '#000',
-    fontSize: 14,
+    color: 'rgba(255, 255, 255, 1)', // Orange/red color for current move
+    fontSize: 22,
   },
-  pastMoveText: {
-    color: '#cccccc',
-    fontSize: 8,
+  arrow: {
+    color: "rgba(255, 255, 255, 0.7)",
+    fontSize: 18,
+    fontFamily: Typography.fontFamily,
+    lineHeight: 24,
   },
-  progressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 6,
-    paddingHorizontal: 20,
-  },
-  progressDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    marginHorizontal: 2,
-  },
-  currentProgressDot: {
-    backgroundColor: '#ffffff',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  completedProgressDot: {
-    backgroundColor: '#e4e4e4ff',
+  comboText: {
+    color: "white",
+    backgroundColor: '#fafafac5',
+    padding: 12,
+    borderRadius: 10,
+    fontSize: 18,
+    fontFamily: Typography.fontFamily,
+    lineHeight: 24,
+    textAlign: 'center',
+    width: '100%',
   },
 });

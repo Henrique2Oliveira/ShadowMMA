@@ -1,8 +1,9 @@
+import { VerticalSpeedSlider } from '@/components/VerticalSpeedSlider';
 import { Colors, Typography } from '@/themes/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
-import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface GameControlsProps {
   isPaused: boolean;
@@ -13,6 +14,7 @@ interface GameControlsProps {
   onPauseToggle: () => void;
   onMuteToggle: () => void;
   onSpeedChange: () => void;
+  onSpeedSliderChange: (newSpeed: number) => void;
   onOptionsPress: () => void;
   isGameOver: boolean;
 }
@@ -26,6 +28,7 @@ export const GameControls: React.FC<GameControlsProps> = ({
   onPauseToggle,
   onMuteToggle,
   onSpeedChange,
+  onSpeedSliderChange,
   onOptionsPress,
   isGameOver,
 }) => {
@@ -66,13 +69,13 @@ export const GameControls: React.FC<GameControlsProps> = ({
       )}
 
       <Animated.View style={{ opacity: sideButtonsOpacity }}>
-        {/* Speed Button */}
-        <TouchableOpacity
-          style={[styles.sideButton, !isPaused && styles.disabledButton]}
-          onPress={onSpeedChange}
-        >
-          <Text style={styles.speedText}>x{speedMultiplier}</Text>
-        </TouchableOpacity>
+        {/* Speed Slider */}
+        <VerticalSpeedSlider
+          speedMultiplier={speedMultiplier}
+          onSpeedChange={onSpeedSliderChange}
+          isPaused={isPaused}
+          opacity={sideButtonsOpacity}
+        />
         {/* Options Button */}
         <TouchableOpacity
           style={[styles.sideButton, !isPaused && styles.disabledButton]}
@@ -102,9 +105,12 @@ const styles = StyleSheet.create({
     height: 45,
     marginVertical: 10,
     borderRadius: 25,
+    borderWidth: 2,
+    borderColor: Colors.background,
+    borderBottomWidth: 5,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 5,
+    elevation: 8,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -118,9 +124,12 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
+    borderWidth: 2,
+    borderColor: Colors.background,
+    borderBottomWidth: 5,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 5,
+    elevation: 8,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,

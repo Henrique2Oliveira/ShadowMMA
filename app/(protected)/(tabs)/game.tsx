@@ -245,7 +245,7 @@ export default function Game() {
         // Hide the message after 3 seconds
         const timer = setTimeout(() => {
           setShowNewCombo(false);
-        }, 3000);
+        }, 5000);
         return () => clearTimeout(timer);
       }
       setPreviousLevel(currentLevel);
@@ -332,7 +332,7 @@ export default function Game() {
       isRestPeriod: false,
       timeLeft: roundDurationMs,
       isPaused: true,
-      isGameOver: false
+      isGameOver: false,
     });
 
     setSpeedMultiplier(parseFloat(params.moveSpeed || '1'));
@@ -652,6 +652,11 @@ export default function Game() {
     });
   }, [gameState.isPaused]);
 
+  const handleSpeedSliderChange = React.useCallback((newSpeed: number) => {
+    if (!gameState.isPaused) return;
+    setSpeedMultiplier(newSpeed);
+  }, [gameState.isPaused]);
+
   const handleAnimationModeChange = React.useCallback(() => {
     if (!gameState.isPaused) return;
     setAnimationMode(current => {
@@ -948,6 +953,7 @@ export default function Game() {
           onPauseToggle={handlePress}
           onMuteToggle={() => gameState.isPaused && setIsMuted(!isMuted)}
           onSpeedChange={handleSpeedChange}
+          onSpeedSliderChange={handleSpeedSliderChange}
           onOptionsPress={() => gameState.isPaused && setIsOptionsModalVisible(true)}
           isGameOver={gameState.isGameOver}
         />
