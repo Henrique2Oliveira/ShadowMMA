@@ -90,7 +90,6 @@ const styles = StyleSheet.create({
   },
   comboContainer: {
     width: '100%',
-    borderRadius: 0,
     overflow: 'hidden',
   },
   comboGradient: {
@@ -107,6 +106,10 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 30,
     width: '100%',
+    borderWidth: 1,
+    borderBottomWidth: 4,
+    borderColor: '#0000005b',
+
   },
   moveText: {
     color: "white",

@@ -209,6 +209,7 @@ export default function Game() {
 
   const [speedMultiplier, setSpeedMultiplier] = React.useState(parseFloat(params.moveSpeed || '1'));
   const [animationMode, setAnimationMode] = React.useState<'none' | 'old' | 'new'>('new');
+  const [showComboCarousel, setShowComboCarousel] = React.useState(true); // Default to true
   // Load preferences from AsyncStorage on mount
   React.useEffect(() => {
     loadGamePreferences().then((prefs) => {
@@ -216,14 +217,15 @@ export default function Game() {
         setIsMuted(prefs.isMuted);
         setAnimationMode(prefs.animationMode || 'new');
         setStance(prefs.stance);
+        setShowComboCarousel(prefs.showComboCarousel !== undefined ? prefs.showComboCarousel : true);
       }
     });
   }, []);
 
   // Save preferences to AsyncStorage when changed
   React.useEffect(() => {
-    saveGamePreferences({ isMuted, animationMode, stance });
-  }, [isMuted, animationMode, stance]);
+    saveGamePreferences({ isMuted, animationMode, stance, showComboCarousel });
+  }, [isMuted, animationMode, stance, showComboCarousel]);
 
   // Handle new combo unlock detection and XP bar animation
   React.useEffect(() => {
@@ -889,7 +891,7 @@ export default function Game() {
         )}
 
         {/* Combo Carousel Display */}
-        {!gameState.isGameOver && (
+        {!gameState.isGameOver && showComboCarousel && (
           <ComboCarousel
             combo={currentCombo}
             currentMoveIndex={currentComboMoveIndex}
@@ -973,6 +975,8 @@ export default function Game() {
           }}
           stance={stance}
           onToggleStance={() => setStance((prev) => prev === 'orthodox' ? 'southpaw' : 'orthodox')}
+          showComboCarousel={showComboCarousel}
+          onToggleComboCarousel={() => setShowComboCarousel((prev) => !prev)}
           onQuit={() => {
             setIsOptionsModalVisible(false);
             setCurrentModal({
@@ -1127,9 +1131,9 @@ const styles = StyleSheet.create({
   },
   boostBubble: {
     position: 'absolute',
-    top: 180, // below the combo carousel (which sits at top: 100 and has height ~60)
+    bottom: 190, 
     alignSelf: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
     borderRadius: 20,
     paddingHorizontal: 18,
     paddingVertical: 6,
@@ -1140,15 +1144,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
-    elevation: 4,
+    elevation: 8,
   },
   boostText: {
     color: '#ffffffff',
-    fontWeight: '700',
   },
   boostTime: {
     color: '#ffffffff',
-    fontWeight: '600',
     marginLeft: 6,
   },
 });

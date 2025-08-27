@@ -1,4 +1,4 @@
-import { Colors } from '@/themes/theme';
+import { Colors, Typography } from '@/themes/theme';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -17,6 +17,9 @@ interface GameOptionsModalProps {
   // Stance controls
   stance: 'orthodox' | 'southpaw';
   onToggleStance: () => void;
+  // Combo carousel toggle
+  showComboCarousel: boolean;
+  onToggleComboCarousel: () => void;
 }
 
 export const GameOptionsModal: React.FC<GameOptionsModalProps> = ({
@@ -32,6 +35,8 @@ export const GameOptionsModal: React.FC<GameOptionsModalProps> = ({
   onQuit,
   stance,
   onToggleStance,
+  showComboCarousel,
+  onToggleComboCarousel,
 }) => {
   const getAnimationModeLabel = (mode: 'none' | 'old' | 'new') => {
     switch (mode) {
@@ -71,6 +76,11 @@ export const GameOptionsModal: React.FC<GameOptionsModalProps> = ({
       icon: getAnimationModeIcon(animationMode),
       label: getAnimationModeLabel(animationMode),
       onPress: onAnimationModeChange,
+    },
+    {
+      icon: showComboCarousel ? 'eye' : 'eye-off',
+      label: showComboCarousel ? 'Hide Combo Display' : 'Show Combo Display',
+      onPress: onToggleComboCarousel,
     },
     {
       icon: 'list',
@@ -171,7 +181,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   optionText: {
-    fontFamily: 'CalSans',
+    fontFamily: Typography.fontFamily,
     fontSize: 16,
     color: Colors.text,
   },
