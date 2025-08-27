@@ -1,4 +1,5 @@
 import { GameOverButtons } from '@/components/Buttons/GameOverButtons';
+import { ComboCarousel } from '@/components/ComboCarousel';
 import { GameControls } from '@/components/GameControls';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { AlertModal } from '@/components/Modals/AlertModal';
@@ -177,6 +178,8 @@ export default function Game() {
   const [showCombosModal, setShowCombosModal] = React.useState(false);
   const [combos, setCombos] = React.useState<Combo[]>([]);
   const [currentComboName, setCurrentComboName] = React.useState<string>("");
+  const [currentCombo, setCurrentCombo] = React.useState<Combo | null>(null);
+  const [currentComboMoveIndex, setCurrentComboMoveIndex] = React.useState<number>(0);
   const [stance, setStance] = React.useState<'orthodox' | 'southpaw'>('orthodox');
 
   // New combo unlock state
@@ -361,6 +364,8 @@ export default function Game() {
         // Reset animations when new game starts
         resetAnimations();
         setCurrentComboName("")
+        setCurrentCombo(null);
+        setCurrentComboMoveIndex(0);
         if (!response.ok) {
           if (response.status === 403) {
             setCurrentModal({
@@ -393,11 +398,14 @@ export default function Game() {
 
         if (data.combos && data.combos.length > 0) {
           // Extract all moves from the combos and track which combo they belong to
-          let allMoves = data.combos.reduce((acc: Move[], combo: any) => {
-            // Add combo reference to each move
-            const movesWithCombo = combo.moves.map((move: Move) => ({
+          let allMoves = data.combos.reduce((acc: Move[], combo: any, comboIndex: number) => {
+            // Add combo reference to each move with move index
+            const movesWithCombo = combo.moves.map((move: Move, moveIndex: number) => ({
               ...move,
-              comboName: combo.name // Add the combo name to each move
+              comboName: combo.name, // Add the combo name to each move
+              comboIndex: comboIndex, // Track which combo this move belongs to
+              moveIndex: moveIndex, // Track position within the combo
+              comboData: combo // Store the full combo data
             }));
             return [...acc, ...movesWithCombo];
           }, []);
@@ -529,6 +537,8 @@ export default function Game() {
               tiltValue: 1
             });
             setCurrentComboName("");
+            setCurrentCombo(null);
+            setCurrentComboMoveIndex(0);
             Animated.timing(tiltX, {
               toValue: 3.65,
               duration: 800,
@@ -697,7 +707,12 @@ export default function Game() {
         // Update current combo name for regular moves
         if (isCountdownComplete && nextMove.comboName) {
           setCurrentComboName(nextMove.comboName);
-
+          
+          // Update combo tracking if this move belongs to a combo
+          if (nextMove.comboData && nextMove.moveIndex !== undefined) {
+            setCurrentCombo(nextMove.comboData);
+            setCurrentComboMoveIndex(nextMove.moveIndex);
+          }
         }
         const adjusted = (stance === 'southpaw' && (nextMove.direction === 'left' || nextMove.direction === 'right'))
           ? { ...nextMove, tiltValue: -nextMove.tiltValue }
@@ -864,7 +879,15 @@ export default function Game() {
             currentRound={gameState.currentRound}
             totalRounds={totalRounds}
             timeLeft={gameState.timeLeft}
-            comboName={currentComboName}
+            isRestPeriod={gameState.isRestPeriod}
+          />
+        )}
+
+        {/* Combo Carousel Display */}
+        {!gameState.isGameOver && (
+          <ComboCarousel
+            combo={currentCombo}
+            currentMoveIndex={currentComboMoveIndex}
             isRestPeriod={gameState.isRestPeriod}
           />
         )}
@@ -1083,7 +1106,6 @@ const styles = StyleSheet.create({
     transform: [{ rotateZ: '90deg' }],
   },
   levelBarContainer: {
-
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
     borderRadius: 15,
     paddingHorizontal: 20,
@@ -1099,7 +1121,7 @@ const styles = StyleSheet.create({
   },
   boostBubble: {
     position: 'absolute',
-    top: 140, // below the combo name (which sits at top: 100)
+    top: 180, // below the combo carousel (which sits at top: 100 and has height ~60)
     alignSelf: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.9)',
     borderRadius: 20,

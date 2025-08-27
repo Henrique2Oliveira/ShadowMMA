@@ -7,7 +7,6 @@ interface TimerDisplayProps {
   currentRound: number;
   totalRounds: number;
   timeLeft: number;
-  comboName?: string;
   isRestPeriod: boolean;
 }
 
@@ -15,25 +14,17 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
   currentRound,
   totalRounds,
   timeLeft,
-  comboName,
   isRestPeriod,
 }) => {
   return (
-    <>
-      <View style={styles.timerContainer}>
-        <Text style={styles.roundText}>Round {currentRound}/{totalRounds}</Text>
-        {!isRestPeriod && (
-          <Text style={styles.timerText}>
-            {formatTime(timeLeft)}
-          </Text>
-        )}
-      </View>
-
-      {/* Combo Name Display */}
-      {comboName && !isRestPeriod && (
-        <Text style={styles.comboNameDisplay}>{comboName}</Text>
+    <View style={styles.timerContainer}>
+      <Text style={styles.roundText}>Round {currentRound}/{totalRounds}</Text>
+      {!isRestPeriod && (
+        <Text style={styles.timerText}>
+          {formatTime(timeLeft)}
+        </Text>
       )}
-    </>
+    </View>
   );
 };
 
@@ -54,15 +45,5 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontSize: 24,
     marginBottom: 5,
-  },
-  comboNameDisplay: {
-    color: Colors.text,
-    fontSize: 24,
-    fontFamily: Typography.fontFamily,
-    textAlign: 'center',
-    marginBottom: 20,
-    position: 'absolute',
-    width: '100%',
-    top: 100,
   },
 });

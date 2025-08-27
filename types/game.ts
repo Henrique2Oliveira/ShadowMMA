@@ -4,6 +4,9 @@ export interface Move {
   direction: "left" | "right" | "up" | "down";
   tiltValue: number;
   comboName?: string;
+  comboIndex?: number;
+  moveIndex?: number;
+  comboData?: Combo;
 }
 
 export interface Combo {

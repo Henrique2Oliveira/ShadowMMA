@@ -12,7 +12,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function Index() {
@@ -90,19 +90,21 @@ export default function Index() {
   }, [user]);
 
   // Set up streak update callback
-  useEffect(() => {
-    const handleStreakUpdate = (newStreak: number, previousStreak: number) => {
-      // Show congratulations modal for any increase beyond day 0
-      if (newStreak > previousStreak && newStreak > 0) {
-        setStreakCount(newStreak);
-        setShowStreakModal(true);
-        // Add haptic feedback for streak achievement
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-    };
+  const handleStreakUpdate = useCallback((newStreak: number, previousStreak: number) => {
+    // Show congratulations modal for any increase beyond day 0
+    if (newStreak > previousStreak && newStreak > 0) {
+      setStreakCount(newStreak);
+      setShowStreakModal(true);
+      // Add haptic feedback for streak achievement
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+  }, []);
 
-    setStreakUpdateCallback(handleStreakUpdate);
-  }, [setStreakUpdateCallback]);
+  useEffect(() => {
+    if (setStreakUpdateCallback) {
+      setStreakUpdateCallback(handleStreakUpdate);
+    }
+  }, [handleStreakUpdate]); // Only depend on handleStreakUpdate since it's memoized
 
   // Load enhanced notifications setting
   useEffect(() => {

@@ -1,14 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getApps, initializeApp } from 'firebase/app';
 import {
-    getAuth,
-    onAuthStateChanged,
-    sendPasswordResetEmail,
-    signInWithEmailAndPassword,
-    signOut,
-    User
+  getAuth,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signOut,
+  User
 } from 'firebase/auth';
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import { firebaseConfig } from '../FirebaseConfig.js';
 import { UserDataProvider } from './UserDataContext';
@@ -286,9 +286,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const setStreakUpdateCallbackHandler = (callback: (newStreak: number, previousStreak: number) => void) => {
+  const setStreakUpdateCallbackHandler = useCallback((callback: (newStreak: number, previousStreak: number) => void) => {
     setStreakUpdateCallback(() => callback);
-  };
+  }, []);
 
   return (
     <AuthContext.Provider value={{
