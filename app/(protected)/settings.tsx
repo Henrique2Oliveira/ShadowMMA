@@ -13,7 +13,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
 import { deleteDoc, doc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
-import { Platform, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 ;
 
 export default function Settings() {
@@ -181,7 +181,7 @@ export default function Settings() {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton} 
@@ -453,7 +453,7 @@ export default function Settings() {
         onSelect={handleUpdateMissionTime}
         onClose={() => setShowMissionTimeModal(false)}
       />
-    </View>
+    </ScrollView>
   );
 }
 
@@ -461,6 +461,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
+
   },
   subOption: {
     backgroundColor: 'rgba(0, 0, 0, 0.5)',

@@ -117,8 +117,10 @@ export default function Index() {
 
   // Set up streak update callback
   const handleStreakUpdate = useCallback((newStreak: number, previousStreak: number) => {
+    console.log(`Streak callback triggered: ${previousStreak} -> ${newStreak}`);
     // Show congratulations modal for any increase beyond day 0
     if (newStreak > previousStreak && newStreak > 0) {
+      console.log(`Showing streak modal for streak ${newStreak}`);
       setStreakCount(newStreak);
       setShowStreakModal(true);
       // Add haptic feedback for streak achievement
@@ -126,11 +128,53 @@ export default function Index() {
     }
   }, []);
 
+  // Set up streak callback immediately when component mounts
   useEffect(() => {
     if (setStreakUpdateCallback) {
       setStreakUpdateCallback(handleStreakUpdate);
     }
-  }, [handleStreakUpdate]); // Only depend on handleStreakUpdate since it's memoized
+  }, [setStreakUpdateCallback, handleStreakUpdate]);
+
+  // Initialize streak count from userData when available
+  useEffect(() => {
+    if (userData?.loginStreak && userData.loginStreak > 0) {
+      setStreakCount(userData.loginStreak);
+    }
+  }, [userData?.loginStreak]);
+
+  // Check for streak achievement when component mounts or userData changes
+  useEffect(() => {
+    const checkStreakAchievement = async () => {
+      if (user && userData?.loginStreak) {
+        const today = new Date().toDateString();
+        const storageKey = `streakModalShown_${user.uid}_${today}`;
+        const modalAlreadyShown = await AsyncStorage.getItem(storageKey);
+        
+        // If we haven't shown the modal today and the user has a streak
+        if (!modalAlreadyShown && userData.loginStreak > 0) {
+          // Check if this is a new day login by comparing with yesterday's stored streak
+          const yesterdayStreakKey = `previousStreak_${user.uid}`;
+          const yesterdayStreak = await AsyncStorage.getItem(yesterdayStreakKey);
+          const prevStreak = yesterdayStreak ? parseInt(yesterdayStreak) : 0;
+          
+          // If streak increased, show modal
+          if (userData.loginStreak > prevStreak) {
+            console.log(`Showing streak modal on mount: ${prevStreak} -> ${userData.loginStreak}`);
+            setStreakCount(userData.loginStreak);
+            setShowStreakModal(true);
+            // Mark modal as shown today
+            await AsyncStorage.setItem(storageKey, 'true');
+            // Store current streak for tomorrow's comparison
+            await AsyncStorage.setItem(yesterdayStreakKey, userData.loginStreak.toString());
+          }
+        }
+      }
+    };
+    
+    if (userData?.loginStreak !== undefined) {
+      checkStreakAchievement();
+    }
+  }, [user, userData?.loginStreak]);
 
   // Load enhanced notifications setting
   useEffect(() => {
@@ -554,7 +598,15 @@ export default function Index() {
       <StreakCongratulationsModal
         visible={showStreakModal}
         streakCount={streakCount}
-        onClose={() => setShowStreakModal(false)}
+        onClose={async () => {
+          setShowStreakModal(false);
+          // Mark modal as shown today when manually closed
+          if (user) {
+            const today = new Date().toDateString();
+            const storageKey = `streakModalShown_${user.uid}_${today}`;
+            await AsyncStorage.setItem(storageKey, 'true');
+          }
+        }}
       />
     </ScrollView >
   );

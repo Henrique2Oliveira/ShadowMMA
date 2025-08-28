@@ -1,12 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getApps, initializeApp } from 'firebase/app';
 import {
-  getAuth,
-  onAuthStateChanged,
-  sendPasswordResetEmail,
-  signInWithEmailAndPassword,
-  signOut,
-  User
+    getAuth,
+    onAuthStateChanged,
+    sendPasswordResetEmail,
+    signInWithEmailAndPassword,
+    signOut,
+    User
 } from 'firebase/auth';
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
@@ -44,6 +44,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const appState = useRef(AppState.currentState);
   const lastStreakUpdate = useRef<string | null>(null);
 
+  // Function to fetch current streak from server
+  const fetchCurrentStreak = async (user: User) => {
+    try {
+      const idToken = await user.getIdToken();
+      const response = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/getUserData', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.userData?.loginStreak !== undefined) {
+          setLoginStreak(data.userData.loginStreak);
+          return data.userData.loginStreak;
+        }
+      }
+    } catch (error) {
+      console.warn('Error fetching current streak:', error);
+    }
+    return 0;
+  };
+
   // Optimized streak update function
   const updateLoginStreakOptimized = async (user: User) => {
     try {
@@ -72,7 +97,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setLoginStreak(data.loginStreak);
           
           // Trigger streak update callback if there's an increase and it's not day 0
+          // Also trigger on first day (previousStreak 0 -> newStreak 1)
           if (streakUpdateCallback && data.loginStreak > previousStreak && data.loginStreak > 0) {
+            console.log(`Streak updated: ${previousStreak} -> ${data.loginStreak}`);
             streakUpdateCallback(data.loginStreak, previousStreak);
           }
           
@@ -109,8 +136,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Apenas atualize se o usuário mudou
           if (prevUser?.uid !== firebaseUser?.uid) {
             if (firebaseUser) {
-              // New user logged in, update streak immediately
-              updateLoginStreakOptimized(firebaseUser);
+              // New user logged in, fetch current streak first, then update
+              fetchCurrentStreak(firebaseUser).then(() => {
+                updateLoginStreakOptimized(firebaseUser);
+              });
             } else {
               // User logged out, reset streak
               setLoginStreak(0);
@@ -131,7 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       unsubscribe();
       appStateSubscription?.remove();
     };
-  }, []);
+  }, [streakUpdateCallback]); // Include streakUpdateCallback in dependencies
 
   // Track failed attempts
   const attempts = new Map<string, { count: number; lastAttempt: number }>();
