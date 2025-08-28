@@ -99,7 +99,7 @@ export default function Profile() {
               <MaterialCommunityIcons name="account-circle" size={100} color={Colors.text} />
             </View>
             <Text style={styles.name}>{userData?.name || 'Anonymous'}</Text>
-            <Text style={styles.subtitle}>{userData?.plan === 'free' ? 'Free Member' : 'Premium Member'}</Text>
+            <Text style={styles.subtitle}>{userData?.plan !== 'free' ? 'Premium Member' : 'Free Member'}</Text>
           </View>
 
           <View style={styles.statsContainer}>
@@ -131,9 +131,9 @@ export default function Profile() {
               <View style={styles.fightsRow}>
                 <MaterialCommunityIcons name="boxing-glove" style={{ transform: [{ rotate: '90deg' }] }} size={38} color={Colors.text} />
                 <View style={styles.fightsInfo}>
-                  <Text style={styles.fightsTitle}>{userData?.plan === 'pro' ? 'Premium Status' : 'Fights Left Today'}</Text>
+                  <Text style={styles.fightsTitle}>{userData?.plan !== 'free' ? 'Premium Status' : 'Fights Left Today'}</Text>
                   <Text style={styles.fightsNumber}>
-                    {userData?.plan === 'pro' ? '∞' : userData?.fightsLeft || 0}
+                    {userData?.plan !== 'free' ? userData?.fightsLeft : '∞'}
                   </Text>
                 </View>
               </View>

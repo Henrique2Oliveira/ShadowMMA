@@ -117,10 +117,8 @@ export default function Index() {
 
   // Set up streak update callback
   const handleStreakUpdate = useCallback((newStreak: number, previousStreak: number) => {
-    console.log(`Streak callback triggered: ${previousStreak} -> ${newStreak}`);
     // Show congratulations modal for any increase beyond day 0
     if (newStreak > previousStreak && newStreak > 0) {
-      console.log(`Showing streak modal for streak ${newStreak}`);
       setStreakCount(newStreak);
       setShowStreakModal(true);
       // Add haptic feedback for streak achievement
@@ -345,10 +343,10 @@ export default function Index() {
       }
     },
     {
-      title: 'Unlock Your Next Move',
-      disabled: true,
+      title: 'Upgrade Plan',
+      disabled: false,
       onPress: () => {
-        setModalConfig({});
+        router.push('/(protected)/plans');
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
     },
@@ -519,9 +517,9 @@ export default function Index() {
         >
           <GradientButton
             title={buttons[6].title}
-            iconName="lock"
-            iconSize={130}
-            fontSize={32}
+            iconName="arrow-up-bold-circle"
+            iconSize={120}
+            fontSize={35}
             disabled={buttons[6].disabled}
             onPress={buttons[6].onPress}
           />

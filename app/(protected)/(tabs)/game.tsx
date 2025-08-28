@@ -380,7 +380,7 @@ export default function Game() {
                 onPress: () => {
                   setCurrentModal(null);
                   // Add your upgrade navigation logic here
-                  router.navigate('/(protected)/(tabs)');
+                  router.navigate('/(protected)/plans');
                 }
               },
               secondaryButton: {

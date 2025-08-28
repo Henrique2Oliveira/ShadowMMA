@@ -181,7 +181,12 @@ export default function Settings() {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView 
+      style={styles.container} 
+      contentContainerStyle={styles.contentContainer}
+      showsVerticalScrollIndicator={false}
+      bounces={true}
+    >
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton} 
@@ -193,6 +198,15 @@ export default function Settings() {
       </View>
 
       <View style={styles.content}>
+        <TouchableOpacity 
+          style={styles.option} 
+          onPress={() => router.push('/(protected)/plans')}
+        >
+          <MaterialCommunityIcons name="crown" size={24} color="#fdd700" />
+          <Text style={styles.optionText}>Subscription Plans</Text>
+          <MaterialCommunityIcons name="chevron-right" size={24} color={Colors.text} />
+        </TouchableOpacity>
+
         <TouchableOpacity 
           style={styles.option} 
           onPress={handleChangePassword}
@@ -461,7 +475,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
-
+  },
+  contentContainer: {
+    paddingBottom: 140,
   },
   subOption: {
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
