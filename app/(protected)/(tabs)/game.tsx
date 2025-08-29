@@ -1,6 +1,7 @@
 import { GameOverButtons } from '@/components/Buttons/GameOverButtons';
 import { ComboCarousel } from '@/components/ComboCarousel';
 import { GameControls } from '@/components/GameControls';
+import { LevelBar } from '@/components/LevelBar';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { AlertModal } from '@/components/Modals/AlertModal';
 import { CombosModal } from '@/components/Modals/CombosModal';
@@ -185,27 +186,7 @@ export default function Game() {
   // New combo unlock state
   const [previousLevel, setPreviousLevel] = React.useState(0);
   const [showNewCombo, setShowNewCombo] = React.useState(false);
-
-  // XP bar animation state for game screen
-  const xpBarAnimatedWidth = React.useRef(new Animated.Value(0)).current;
-
-  // Helper function to safely get animated width
-  const getAnimatedWidth = React.useCallback(() => {
-    return xpBarAnimatedWidth.interpolate({
-      inputRange: [0, 100],
-      outputRange: ['0%', '100%'],
-      extrapolate: 'clamp'
-    });
-  }, [xpBarAnimatedWidth]);
-
-  // Helper function to safely get animated highlight width
-  const getAnimatedHighlightWidth = React.useCallback(() => {
-    return xpBarAnimatedWidth.interpolate({
-      inputRange: [0, 100],
-      outputRange: ['0%', '95%'],
-      extrapolate: 'clamp'
-    });
-  }, [xpBarAnimatedWidth]);
+  // LevelBar animations handled internally by shared component (DRY)
 
   const [speedMultiplier, setSpeedMultiplier] = React.useState(parseFloat(params.moveSpeed || '1'));
   const [animationMode, setAnimationMode] = React.useState<'none' | 'old' | 'new'>('new');
@@ -231,35 +212,18 @@ export default function Game() {
     saveGamePreferences({ isMuted, animationMode, stance, showComboCarousel, speedMultiplier });
   }, [isMuted, animationMode, stance, showComboCarousel, speedMultiplier]);
 
-  // Handle new combo unlock detection and XP bar animation
+  // Handle new combo unlock detection (XP bar animation handled in LevelBar component)
   React.useEffect(() => {
     if (userData?.xp !== undefined && userData?.xp !== null) {
       const currentLevel = Math.floor(userData.xp / 100) || 0;
-      const currentXpPercentage = Math.max(0, Math.min(100, userData.xp % 100));
-
-      // Animate the XP bar with safety bounds
-      Animated.spring(xpBarAnimatedWidth, {
-        toValue: currentXpPercentage,
-        useNativeDriver: false,
-        tension: 20,
-        friction: 4
-      }).start();
-
-      // Check for level up
       if (currentLevel > previousLevel && previousLevel > 0) {
         setShowNewCombo(true);
-        // Hide the message after 3 seconds
-        const timer = setTimeout(() => {
-          setShowNewCombo(false);
-        }, 5000);
+        const timer = setTimeout(() => setShowNewCombo(false), 5000);
         return () => clearTimeout(timer);
       }
       setPreviousLevel(currentLevel);
-    } else {
-      // Default to 0 if no XP data
-      xpBarAnimatedWidth.setValue(0);
     }
-  }, [userData?.xp, previousLevel, xpBarAnimatedWidth]);
+  }, [userData?.xp, previousLevel]);
 
   // Power-up: Speed Boost (random 25% chance to appear, lasts 30s)
   const BOOST_CHANCE = 0.25; // 25% chance per check
@@ -819,46 +783,12 @@ export default function Game() {
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
       >
-        {/* Level Bar - Always visible at top */}
+        {/* Level Bar - reuse shared component (shows only on game over to mirror original logic) */}
         {gameState.isGameOver && (
           <View style={styles.topLevelBarContainer}>
-            {/* Custom Animated Level Bar for Game Screen */}
-            <View style={styles.gameLevelBarContainer}>
-              <View style={styles.gameLevelBarRow}>
-                <Text style={styles.gameLevelText}>
-                  <Text style={styles.gameLevelPrefix}>Lv.</Text>
-                  <Text style={styles.gameLevelNumber}> {userData?.xp ? Math.floor(userData.xp / 100) : 0}</Text>
-                </Text>
-
-                <View style={styles.gameProgressBarContainer}>
-                  <Animated.View style={{
-                    width: getAnimatedWidth(),
-                    height: '100%',
-                  }}>
-                    <LinearGradient
-                      colors={['#ffd700', '#ffa000']}
-                      start={{ x: 0, y: 1 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.gameProgressBarFill}>
-                      <Animated.View style={[
-                        styles.gameProgressBarHighlight,
-                        {
-                          width: getAnimatedHighlightWidth()
-                        }
-                      ]} />
-                    </LinearGradient>
-                  </Animated.View>
-                </View>
-
-                <MaterialCommunityIcons
-                  name="trophy"
-                  size={32}
-                  color="#ffc400ff"
-                  style={styles.gameBoxingGloveIcon}
-                />
-              </View>
-            </View>
-          </View>)}
+            <LevelBar xp={userData?.xp || 0} />
+          </View>
+        )}
 
         {/* New Combo Unlocked Message - Below level bar */}
         {showNewCombo && (
@@ -1043,71 +973,6 @@ const styles = StyleSheet.create({
     textShadowColor: "#000",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
-  },
-  gameLevelBarContainer: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    maxWidth: 600,
-    paddingVertical: 10,
-  },
-  gameLevelBarRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingHorizontal: 25,
-    width: '100%',
-  },
-  gameLevelText: {
-    color: Colors.text,
-    fontSize: 25,
-    fontFamily: Typography.fontFamily,
-    marginRight: 8,
-    textShadowColor: "#000",
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
-  },
-  gameLevelPrefix: {
-    fontSize: 18,
-  },
-  gameLevelNumber: {
-    fontSize: 25,
-  },
-  gameProgressBarContainer: {
-    flex: 3,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: "#7b590aff",
-    overflow: 'hidden',
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: '#473407ff',
-    borderBottomWidth: 3,
-  },
-  gameProgressBarFill: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 4,
-  },
-  gameProgressBarHighlight: {
-    position: "absolute",
-    top: 5,
-    left: 15,
-    backgroundColor: "#ffffff70",
-    height: '15%',
-    borderRadius: 10,
-    zIndex: 10,
-  },
-  gameBoxingGloveIcon: {
-    marginLeft: 6,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   levelBarContainer: {
     backgroundColor: 'rgba(0, 0, 0, 0.8)',

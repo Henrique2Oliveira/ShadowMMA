@@ -1,5 +1,7 @@
 import React from 'react';
-import { Alert } from 'react-native';
+// Removed native Alert in favor of unified modal UI
+import { ErrorModalState } from '../hooks/useErrorHandler';
+import { ErrorModal } from './Modals/ErrorModal';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -33,18 +35,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     
     // Call the onError callback if provided
     this.props.onError?.(error, errorInfo);
-
-    // Show a native alert as fallback
-    Alert.alert(
-      'Something went wrong',
-      'An unexpected error occurred. The app will try to recover.',
-      [
-        {
-          text: 'OK',
-          onPress: () => this.resetError()
-        }
-      ]
-    );
+  // No UI action here; rendering will show our custom modal
   }
 
   resetError = () => {
@@ -58,9 +49,19 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
         const FallbackComponent = this.props.fallback;
         return <FallbackComponent error={this.state.error} resetError={this.resetError} />;
       }
-
-      // Default fallback - return null to show nothing (alert will be shown)
-      return null;
+      // Default fallback - show unified ErrorModal
+      const modalState: ErrorModalState = {
+        visible: true,
+        title: 'Something went wrong',
+        message: 'An unexpected error occurred. The app will try to recover.\n\n' + (this.state.error.message || ''),
+        type: 'error'
+      };
+      return (
+        <ErrorModal
+          errorModal={modalState}
+          onClear={this.resetError}
+        />
+      );
     }
 
     return this.props.children;
@@ -79,11 +80,7 @@ export const useErrorBoundary = () => {
 
   const handleError = (error: Error) => {
     console.error('Error caught by useErrorBoundary:', error);
-    Alert.alert(
-      'Error',
-      error.message || 'An unexpected error occurred.',
-      [{ text: 'OK' }]
-    );
+  // Intentionally left as console log; hook users should adopt the central useErrorHandler() pattern instead of native Alert
   };
 
   return {
