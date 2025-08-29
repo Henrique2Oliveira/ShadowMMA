@@ -143,13 +143,13 @@ export default function Profile() {
               </View>
               <Text style={styles.statLabel}>Total Rounds</Text>
             </View>
-            <View style={styles.statBox}>
+            {/* <View style={styles.statBox}>
               <View style={styles.statRow}>
                 <MaterialCommunityIcons name="fire" size={30} color="#fd6100ff" style={styles.statIcon} />
                 <Text style={styles.statNumber}>{userData?.loginStreak || "-"}</Text>
               </View>
               <Text style={styles.statLabel}>Days Streak</Text>
-            </View>
+            </View> */}
             <View style={styles.statBox}>
               <View style={styles.statRow}>
                 <MaterialCommunityIcons name="timer" size={20} color={Colors.text} style={styles.statIcon} />
@@ -183,12 +183,13 @@ export default function Profile() {
               </View>
               <View style={styles.infoRow}>
                 <MaterialCommunityIcons name="star" size={26} color={Colors.text} />
-                <Text style={styles.infoText}>XP: {userData?.xp || "-"}</Text>
+                <Text style={styles.infoText}>XP: {userData?.xp != null ? formatNumber(userData.xp) : "-"}</Text>
               </View>
-              {/* <View style={styles.infoRow}>
-                <MaterialCommunityIcons name="target" size={24} color={Colors.text} />
-                <Text style={styles.infoText}>Hours: {userData?.hours || "-"}</Text>
-              </View> */}
+              <View style={styles.infoRow}>
+                <MaterialCommunityIcons name="fire" size={30} color="#fd6100ff" />
+                <Text style={styles.statNumber}> {userData?.loginStreak || "-"}</Text>
+                <Text style={styles.infoText}>Days</Text>
+              </View>
             </View>
           </View>
           <View style={styles.buttonList}>
@@ -234,7 +235,7 @@ export default function Profile() {
           setShowPaywall(false);
         }}
       />
-    </ImageBackground>
+    </ImageBackground >
   );
 }
 
@@ -371,7 +372,7 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontSize: 16,
     fontFamily: Typography.fontFamily,
-    marginLeft: 15,
+    marginLeft: 12,
   },
   fightsContainer: {
     justifyContent: 'center',

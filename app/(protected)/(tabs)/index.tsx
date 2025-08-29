@@ -1,5 +1,6 @@
 import { GradientButton } from '@/components/Buttons/GradientButton';
 import { StartFightButton } from '@/components/Buttons/StartFightButton';
+import { ComboOfTheDay } from '@/components/ComboOfTheDay';
 import { LevelBar } from '@/components/LevelBar';
 import { AlertModal } from '@/components/Modals/AlertModal';
 import { FightModeModal } from '@/components/Modals/FightModeModal';
@@ -7,6 +8,7 @@ import { StreakCongratulationsModal } from '@/components/Modals/StreakCongratula
 import { WeeklyMission } from '@/components/WeeklyMission';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
+import { useComboOfTheDay } from '@/hooks/useComboOfTheDay';
 import { Colors, Typography } from '@/themes/theme';
 import { checkMissedLoginAndScheduleComeback, recordLoginAndScheduleNotifications, registerForPushNotificationsAsync } from '@/utils/notificationUtils';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -19,6 +21,12 @@ import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } 
 export default function Index() {
   const { user, setStreakUpdateCallback } = useAuth();
   const { userData, refreshUserData } = useUserData();
+  const { 
+    combo: comboOfTheDay,
+    loading: comboLoading,
+    error: comboError,
+    refreshComboOfTheDay
+  } = useComboOfTheDay();
   const [refreshing, setRefreshing] = React.useState(false);
 
   const [isModalVisible, setIsModalVisible] = React.useState(false);
@@ -75,13 +83,15 @@ export default function Index() {
   const onRefresh = React.useCallback(async () => {
     if (user) {
       setRefreshing(true);
-      await refreshUserData(user.uid);
-      await loadMissionSettings(); // Reload mission settings on refresh
+      await Promise.all([
+        refreshUserData(user.uid),
+        loadMissionSettings(),
+        refreshComboOfTheDay()
+      ]);
       setRefreshing(false);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
     }
-  }, [user, refreshUserData, loadMissionSettings]);
+  }, [user, refreshUserData, loadMissionSettings, refreshComboOfTheDay]);
 
   const [roundDuration, setRoundDuration] = React.useState('1');
   const [numRounds, setNumRounds] = React.useState('1');
@@ -474,6 +484,20 @@ export default function Index() {
           />
         </View>
 
+        {/* Combo of the Day */}
+        <View
+          style={{
+            width: '100%',
+            maxWidth: 600,
+          }}
+        >
+          <ComboOfTheDay
+            combo={comboOfTheDay || undefined}
+            loading={comboLoading}
+            onPress={undefined}
+          />
+        </View>
+
         {/* Notification Card - Only show if enhanced notifications are disabled */}
         {!enhancedNotificationsEnabled && (
           <View
@@ -560,7 +584,9 @@ export default function Index() {
 
       <FightModeModal
         isVisible={isModalVisible}
-        onClose={() => setIsModalVisible(false)}
+        onClose={() => {
+          setIsModalVisible(false);
+        }}
         roundDuration={roundDuration}
         setRoundDuration={setRoundDuration}
         numRounds={numRounds}
@@ -572,7 +598,9 @@ export default function Index() {
         movesMode={movesMode}
         setMovesMode={setMovesMode}
         category={category}
-        onStartFight={() => setIsModalVisible(false)}
+        onStartFight={() => {
+          setIsModalVisible(false);
+        }}
       />
 
       <AlertModal
