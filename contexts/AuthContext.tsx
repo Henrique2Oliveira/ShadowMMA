@@ -1,21 +1,29 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getApps, initializeApp } from 'firebase/app';
 import {
-    getAuth,
-    onAuthStateChanged,
-    sendPasswordResetEmail,
-    signInWithEmailAndPassword,
-    signOut,
-    User
+  getAuth,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signOut,
+  User
 } from 'firebase/auth';
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
+import { AlertModal } from '../components/Modals/AlertModal';
 import { firebaseConfig } from '../FirebaseConfig.js';
 import { UserDataProvider } from './UserDataContext';
 
 type AuthError = {
   code: string;
   message: string;
+};
+
+type AuthModalError = {
+  visible: boolean;
+  title: string;
+  message: string;
+  type: 'error' | 'warning' | 'success' | 'info';
 };
 
 type AuthContextType = {
@@ -29,6 +37,8 @@ type AuthContextType = {
   loginStreak: number;
   onStreakUpdate?: (newStreak: number, previousStreak: number) => void;
   setStreakUpdateCallback: (callback: (newStreak: number, previousStreak: number) => void) => void;
+  showErrorModal: (title: string, message: string, type?: 'error' | 'warning' | 'success' | 'info') => void;
+  clearErrorModal: () => void;
 };
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
@@ -41,6 +51,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [loginStreak, setLoginStreak] = useState(0);
   const [streakUpdateCallback, setStreakUpdateCallback] = useState<((newStreak: number, previousStreak: number) => void) | null>(null);
+  const [authModalError, setAuthModalError] = useState<AuthModalError>({ 
+    visible: false, 
+    title: '', 
+    message: '', 
+    type: 'error' 
+  });
   const appState = useRef(AppState.currentState);
   const lastStreakUpdate = useRef<string | null>(null);
 
@@ -62,9 +78,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setLoginStreak(data.userData.loginStreak);
           return data.userData.loginStreak;
         }
+      } else {
+        console.warn('Failed to fetch current streak:', response.status);
+        if (response.status >= 500) {
+          showErrorModal(
+            'Server Error',
+            'Unable to sync your streak data. Please try again later.',
+            'warning'
+          );
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.warn('Error fetching current streak:', error);
+      if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        showErrorModal(
+          'Connection Error',
+          'Unable to connect to server. Please check your internet connection.',
+          'error'
+        );
+      }
     }
     return 0;
   };
@@ -99,7 +131,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Trigger streak update callback if there's an increase and it's not day 0
           // Also trigger on first day (previousStreak 0 -> newStreak 1)
           if (streakUpdateCallback && data.loginStreak > previousStreak && data.loginStreak > 0) {
-            console.log(`Streak updated: ${previousStreak} -> ${data.loginStreak}`);
             streakUpdateCallback(data.loginStreak, previousStreak);
           }
           
@@ -109,9 +140,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } else {
         console.warn('Failed to update login streak:', response.status);
+        if (response.status >= 500) {
+          showErrorModal(
+            'Server Error',
+            'Unable to update your login streak. Your progress is still saved locally.',
+            'warning'
+          );
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.warn('Error updating login streak:', error);
+      if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        showErrorModal(
+          'Connection Error',
+          'Unable to update your streak. Please check your internet connection.',
+          'warning'
+        );
+      }
     }
   };
 
@@ -191,33 +236,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Input validation
       if (!email || !password) {
+        const errorMessage = 'Email and password are required.';
+        showErrorModal('Missing Information', errorMessage, 'warning');
         return {
           success: false,
-          error: { code: 'auth/missing-fields', message: 'Email and password are required.' }
+          error: { code: 'auth/missing-fields', message: errorMessage }
         };
       }
 
       if (!email.includes('@') || !email.includes('.')) {
+        const errorMessage = 'Please enter a valid email address.';
+        showErrorModal('Invalid Email', errorMessage, 'warning');
         return {
           success: false,
-          error: { code: 'auth/invalid-email', message: 'Please enter a valid email address.' }
+          error: { code: 'auth/invalid-email', message: errorMessage }
         };
       }
 
       if (password.length < 6) {
+        const errorMessage = 'Password should be at least 6 characters.';
+        showErrorModal('Weak Password', errorMessage, 'warning');
         return {
           success: false,
-          error: { code: 'auth/weak-password', message: 'Password should be at least 6 characters.' }
+          error: { code: 'auth/weak-password', message: errorMessage }
         };
       }
 
       // Rate limiting check
       if (isRateLimited(email)) {
+        const errorMessage = 'Too many login attempts. Please try again later.';
+        showErrorModal('Too Many Attempts', errorMessage, 'error');
         return {
           success: false,
           error: {
             code: 'auth/too-many-requests',
-            message: 'Too many login attempts. Please try again later.'
+            message: errorMessage
           }
         };
       }
@@ -231,11 +284,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: true };
     } catch (error: any) {
       recordAttempt(email);
+      
+      let errorMessage = 'An unknown error occurred.';
+      
+      // Handle specific Firebase Auth error codes
+      switch (error.code) {
+        case 'auth/user-not-found':
+          errorMessage = 'No account found with this email address.';
+          break;
+        case 'auth/wrong-password':
+          errorMessage = 'Incorrect password. Please try again.';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'Please enter a valid email address.';
+          break;
+        case 'auth/user-disabled':
+          errorMessage = 'This account has been disabled.';
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = 'Too many failed attempts. Please try again later.';
+          break;
+        case 'auth/network-request-failed':
+          errorMessage = 'Network error. Please check your internet connection.';
+          break;
+        default:
+          errorMessage = error.message || 'Login failed. Please try again.';
+      }
+      
+      showErrorModal('Login Error', errorMessage, 'error');
       return {
         success: false,
         error: {
           code: error.code || 'auth/unknown',
-          message: error.message || 'An unknown error occurred.'
+          message: errorMessage
         }
       };
     }
@@ -258,6 +339,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
 
       if (!data.success) {
+        // Show error modal for registration failures
+        const errorMessage = data.error?.message || 'Registration failed. Please try again.';
+        showErrorModal('Registration Error', errorMessage, 'error');
         return {
           success: false,
           error: data.error
@@ -265,14 +349,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Sign in the user after successful registration
-      await signInWithEmailAndPassword(auth, email, password);
+      const loginResult = await signInWithEmailAndPassword(auth, email, password);
+      if (loginResult.user) {
+        showErrorModal('Welcome!', 'Your account has been created successfully!', 'success');
+      }
       return { success: true };
     } catch (error: any) {
+      const errorMessage = error.message || 'An unknown error occurred during registration.';
+      showErrorModal('Registration Error', errorMessage, 'error');
       return {
         success: false,
         error: {
           code: error.code || 'auth/unknown',
-          message: error.message || 'An unknown error occurred.'
+          message: errorMessage
         }
       };
     }
@@ -281,35 +370,67 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await signOut(auth);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Logout error:', error);
+      showErrorModal(
+        'Logout Error',
+        'There was an issue signing you out. Please try again.',
+        'error'
+      );
     }
   };
 
   const resetPassword = async (email: string) => {
     try {
       if (!email) {
+        const errorMessage = 'Email is required.';
+        showErrorModal('Missing Email', errorMessage, 'warning');
         return {
           success: false,
-          error: { code: 'auth/missing-email', message: 'Email is required.' }
+          error: { code: 'auth/missing-email', message: errorMessage }
         };
       }
 
       if (!email.includes('@') || !email.includes('.')) {
+        const errorMessage = 'Please enter a valid email address.';
+        showErrorModal('Invalid Email', errorMessage, 'warning');
         return {
           success: false,
-          error: { code: 'auth/invalid-email', message: 'Please enter a valid email address.' }
+          error: { code: 'auth/invalid-email', message: errorMessage }
         };
       }
 
       await sendPasswordResetEmail(auth, email);
+      showErrorModal(
+        'Reset Email Sent',
+        'A password reset link has been sent to your email address.',
+        'success'
+      );
       return { success: true };
     } catch (error: any) {
+      let errorMessage = 'An unknown error occurred.';
+      
+      // Handle specific Firebase Auth error codes
+      switch (error.code) {
+        case 'auth/user-not-found':
+          errorMessage = 'No account found with this email address.';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'Please enter a valid email address.';
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = 'Too many requests. Please try again later.';
+          break;
+        default:
+          errorMessage = error.message || 'Failed to send reset email.';
+      }
+      
+      showErrorModal('Password Reset Error', errorMessage, 'error');
       return {
         success: false,
         error: {
           code: error.code || 'auth/unknown',
-          message: error.message || 'An unknown error occurred.'
+          message: errorMessage
         }
       };
     }
@@ -318,6 +439,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setStreakUpdateCallbackHandler = useCallback((callback: (newStreak: number, previousStreak: number) => void) => {
     setStreakUpdateCallback(() => callback);
   }, []);
+
+  // Error modal functions
+  const showErrorModal = (title: string, message: string, type: 'error' | 'warning' | 'success' | 'info' = 'error') => {
+    setAuthModalError({
+      visible: true,
+      title,
+      message,
+      type
+    });
+  };
+
+  const clearErrorModal = () => {
+    setAuthModalError({
+      visible: false,
+      title: '',
+      message: '',
+      type: 'error'
+    });
+  };
 
   return (
     <AuthContext.Provider value={{
@@ -329,11 +469,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout,
       loading,
       loginStreak,
-      setStreakUpdateCallback: setStreakUpdateCallbackHandler
+      setStreakUpdateCallback: setStreakUpdateCallbackHandler,
+      showErrorModal,
+      clearErrorModal
     }}>
       <UserDataProvider>
         {children}
       </UserDataProvider>
+      <AlertModal
+        visible={authModalError.visible}
+        title={authModalError.title}
+        message={authModalError.message}
+        type={authModalError.type}
+        primaryButton={{
+          text: "OK",
+          onPress: clearErrorModal
+        }}
+        onClose={clearErrorModal}
+      />
     </AuthContext.Provider>
   );
 }

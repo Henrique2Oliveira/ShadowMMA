@@ -1,3 +1,4 @@
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { Colors } from '@/themes/theme';
 import { Stack, usePathname } from 'expo-router';
@@ -24,13 +25,20 @@ export default function RootLayout() {
     }
   };
   return (
-    <AuthProvider>
-      <SafeAreaProvider>
-        <SafeAreaView style={{ flex: 1, backgroundColor: getBackgroundColor() }}>
-          <Stack screenOptions={{ headerShown: false }} />
-        </SafeAreaView>
-      </SafeAreaProvider>
-    </AuthProvider>
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        // Here you could log to a crash reporting service like Sentry
+        console.error('App Error Boundary:', error, errorInfo);
+      }}
+    >
+      <AuthProvider>
+        <SafeAreaProvider>
+          <SafeAreaView style={{ flex: 1, backgroundColor: getBackgroundColor() }}>
+            <Stack screenOptions={{ headerShown: false }} />
+          </SafeAreaView>
+        </SafeAreaProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 
