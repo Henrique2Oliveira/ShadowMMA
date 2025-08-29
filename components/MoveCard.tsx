@@ -1,4 +1,5 @@
 import { Colors, Typography } from '@/themes/theme';
+import { transformMoveForStance } from '@/utils/stance';
 import { formatTime } from '@/utils/time';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef } from 'react';
@@ -15,7 +16,8 @@ interface MoveCardProps {
   isRestPeriod: boolean;
   isPaused: boolean;
   animationMode: 'none' | 'old' | 'new';
-  isSouthPaw?: boolean;
+  isSouthPaw?: boolean; // backward compat; prefer stance prop below
+  stance?: 'orthodox' | 'southpaw';
 }
 
 export const MoveCard: React.FC<MoveCardProps> = ({
@@ -30,6 +32,7 @@ export const MoveCard: React.FC<MoveCardProps> = ({
   isPaused,
   animationMode,
   isSouthPaw = false,
+  stance,
 }) => {
   // Enhanced animation values for move transitions (new and old modes)
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -217,7 +220,9 @@ export const MoveCard: React.FC<MoveCardProps> = ({
         end={{ x: 0, y: 1 }}
       >
         <Text style={styles.text} numberOfLines={2} adjustsFontSizeToFit>
-          {isGameOver ? "FIGHT OVER!" : isSouthPaw ? move.replace(/LEFT/g, 'TEMP').replace(/RIGHT/g, 'LEFT').replace(/TEMP/g, 'RIGHT') : move || ""}
+          {isGameOver
+            ? 'FIGHT OVER!'
+            : transformMoveForStance(move || '', (stance || (isSouthPaw ? 'southpaw' : 'orthodox')))}
         </Text>
 
         {isRestPeriod && (

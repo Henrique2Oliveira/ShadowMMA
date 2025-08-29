@@ -6,12 +6,18 @@ interface ComboCarouselProps {
   combo: any | null;
   currentMoveIndex: number;
   isRestPeriod: boolean;
+  stance?: 'orthodox' | 'southpaw';
+  isSouthPaw?: boolean; // backward compat
 }
+
+import { transformMoveForStance } from '@/utils/stance';
 
 export const ComboCarousel: React.FC<ComboCarouselProps> = ({
   combo,
   currentMoveIndex,
   isRestPeriod,
+  stance,
+  isSouthPaw,
 }) => {
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
   const slideAnim = React.useRef(new Animated.Value(0)).current;
@@ -42,7 +48,9 @@ export const ComboCarousel: React.FC<ComboCarouselProps> = ({
   // Create the combo display with highlighted current move
   const renderCombo = () => {
     return combo.moves.map((move: any, index: number) => {
-      const moveText = move.move.replace(/\n/g, ' ');
+  const baseText = move.move.replace(/\n/g, ' ');
+  const effectiveStance = stance || (isSouthPaw ? 'southpaw' : 'orthodox');
+  const moveText = transformMoveForStance(baseText, effectiveStance);
       const isCurrentMove = index === currentMoveIndex;
       
       return (

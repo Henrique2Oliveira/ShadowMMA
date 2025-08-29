@@ -814,6 +814,7 @@ export default function Game() {
             combo={currentCombo}
             currentMoveIndex={currentComboMoveIndex}
             isRestPeriod={gameState.isRestPeriod}
+            stance={stance}
           />
         )}
 
