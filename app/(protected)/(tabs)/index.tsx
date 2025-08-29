@@ -1,6 +1,5 @@
 import { GradientButton } from '@/components/Buttons/GradientButton';
 import { StartFightButton } from '@/components/Buttons/StartFightButton';
-import { ComboOfTheDay } from '@/components/ComboOfTheDay';
 import { LevelBar } from '@/components/LevelBar';
 import { AlertModal } from '@/components/Modals/AlertModal';
 import { FightModeModal } from '@/components/Modals/FightModeModal';
@@ -8,7 +7,6 @@ import { StreakCongratulationsModal } from '@/components/Modals/StreakCongratula
 import { WeeklyMission } from '@/components/WeeklyMission';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
-import { useComboOfTheDay } from '@/hooks/useComboOfTheDay';
 import { Colors, Typography } from '@/themes/theme';
 import { checkMissedLoginAndScheduleComeback, recordLoginAndScheduleNotifications, registerForPushNotificationsAsync } from '@/utils/notificationUtils';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -21,12 +19,7 @@ import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } 
 export default function Index() {
   const { user, setStreakUpdateCallback } = useAuth();
   const { userData, refreshUserData } = useUserData();
-  const { 
-    combo: comboOfTheDay,
-    loading: comboLoading,
-    error: comboError,
-    refreshComboOfTheDay
-  } = useComboOfTheDay();
+
   const [refreshing, setRefreshing] = React.useState(false);
 
   const [isModalVisible, setIsModalVisible] = React.useState(false);
@@ -86,12 +79,11 @@ export default function Index() {
       await Promise.all([
         refreshUserData(user.uid),
         loadMissionSettings(),
-        refreshComboOfTheDay()
       ]);
       setRefreshing(false);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-  }, [user, refreshUserData, loadMissionSettings, refreshComboOfTheDay]);
+  }, [user, refreshUserData, loadMissionSettings]);
 
   const [roundDuration, setRoundDuration] = React.useState('1');
   const [numRounds, setNumRounds] = React.useState('1');
@@ -484,19 +476,6 @@ export default function Index() {
           />
         </View>
 
-        {/* Combo of the Day */}
-        <View
-          style={{
-            width: '100%',
-            maxWidth: 600,
-          }}
-        >
-          <ComboOfTheDay
-            combo={comboOfTheDay || undefined}
-            loading={comboLoading}
-            onPress={undefined}
-          />
-        </View>
 
         {/* Notification Card - Only show if enhanced notifications are disabled */}
         {!enhancedNotificationsEnabled && (
@@ -516,7 +495,7 @@ export default function Index() {
             </TouchableOpacity>
           </View>
         )}
-
+      
         <View
           style={{
             width: '100%',
@@ -659,8 +638,8 @@ const styles = StyleSheet.create({
     padding: 8,
     paddingHorizontal: 15,
     borderRadius: 10,
-
     marginVertical: 8,
+    marginBottom: 15,
     width: '100%',
     maxWidth: 600,
     borderWidth: 1,

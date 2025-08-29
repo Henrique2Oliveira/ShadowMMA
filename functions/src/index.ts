@@ -647,69 +647,6 @@ export const createUser = onRequest(async (req, res) => {
   }
 });
 
-// Helper: minimal fallback combo (only essential fields)
-const getBasicFallbackCombo = () => ({
-  comboId: "basic-1",
-  name: "Basic Jab",
-  level: 1,
-  type: "Punches",
-  moves: ["Jab"],
-});
-
-export const getComboOfTheDay = onRequest(async (req, res) => {
-  try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith("Bearer ")) {
-      res.status(200).json({ success: true, combo: getBasicFallbackCombo() });
-      return;
-    }
-    const idToken = authHeader.split("Bearer ")[1];
-    const decodedToken = await auth.verifyIdToken(idToken);
-    const uid = decodedToken.uid;
-
-    const userDoc = await db.collection("users").doc(uid).get();
-    if (!userDoc.exists) { res.status(200).json({ success: true, combo: getBasicFallbackCombo() }); return; }
-    const xp = typeof userDoc.data()?.xp === 'number' ? userDoc.data()!.xp : 0;
-    const level = Math.floor(xp / 100);
-
-    const combosDoc = await db.collection("combos").doc("0").get();
-    if (!combosDoc.exists) { res.status(200).json({ success: true, combo: getBasicFallbackCombo() }); return; }
-    const raw = combosDoc.data();
-    if (!raw?.levels || typeof raw.levels !== 'object') { res.status(200).json({ success: true, combo: getBasicFallbackCombo() }); return; }
-
-    // Collect eligible combos for level across types
-    const pool: any[] = [];
-    ['Punches','Kicks','Defense'].forEach(t => {
-      const arr = (raw.levels?.[t] || []).filter((c: any) => typeof c?.level === 'number' && c.level <= level);
-      arr.forEach((c: any) => pool.push({ ...c, type: t }));
-    });
-    if (!pool.length) { res.status(200).json({ success: true, combo: getBasicFallbackCombo() }); return; }
-
-    // Stable daily selection per user
-    const today = new Date();
-    const seed = uid + `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
-    let hash = 0; for (let i=0;i<seed.length;i++){ hash = ((hash<<5)-hash)+seed.charCodeAt(i); hash|=0; }
-    const idx = Math.abs(hash) % pool.length;
-    const selected = pool[idx];
-
-    // Sanitize to only needed fields
-    const minimal = {
-      comboId: selected.comboId ?? idx,
-      name: selected.name || selected.title || `Combo ${idx+1}`,
-      level: selected.level || 0,
-      type: selected.type || 'Punches',
-      moves: selected.moves || [],
-      description: selected.description || undefined,
-    };
-  res.status(200).json({ success: true, combo: minimal });
-  return;
-  } catch (e) {
-    logger.error('getComboOfTheDay error', e);
-  res.status(200).json({ success: true, combo: getBasicFallbackCombo() });
-  return;
-  }
-});
-
 export const getCombosMeta = onRequest(async (req, res) => {
   try {
     // Enforce GET (or allow POST with same behavior)
