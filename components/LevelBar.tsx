@@ -16,32 +16,41 @@ export const LevelBar: React.FC<LevelBarProps> = ({
   // Calculate level and XP percentage
   const level = Math.floor(xp / 100) || 0; // Level starts at 0
   const xpPercentage = Math.max(0, Math.min(100, xp % 100));
-  const xpBarAnimatedWidth = useRef(new Animated.Value(0)).current;
+  // Use a ref container (xpAnim) instead of exposing a long property name that
+  // might accidentally be accessed as a (missing) prop key somewhere else and
+  // trigger the dev warning: "Property 'xpBarAnimatedWidth' doesn't exist".
+  // Renaming + scoping through .current reduces chances of an extraneous
+  // spread or style object key referencing it incorrectly.
+  const xpAnimRef = useRef(new Animated.Value(0));
+  const xpAnim = xpAnimRef.current;
 
   // Helper function to safely get animated width
   const getAnimatedWidth = React.useCallback(() => {
-    return xpBarAnimatedWidth.interpolate({
+    // Defensive: if interpolate is unavailable, fallback to 0%
+    if (!xpAnim || typeof (xpAnim as any).interpolate !== 'function') return '0%';
+    return xpAnim.interpolate({
       inputRange: [0, 100],
       outputRange: ['0%', '100%'],
       extrapolate: 'clamp'
     });
-  }, [xpBarAnimatedWidth]);
+  }, [xpAnim]);
 
   // Helper function to safely get animated highlight width
   const getAnimatedHighlightWidth = React.useCallback(() => {
-    return xpBarAnimatedWidth.interpolate({
+    if (!xpAnim || typeof (xpAnim as any).interpolate !== 'function') return '0%';
+    return xpAnim.interpolate({
       inputRange: [0, 100],
       outputRange: ['0%', '95%'],
       extrapolate: 'clamp'
     });
-  }, [xpBarAnimatedWidth]);
+  }, [xpAnim]);
 
   useEffect(() => {
     if (xp !== undefined && xp !== null) {
       const currentXpPercentage = Math.max(0, Math.min(100, xp % 100));
 
       // Animate the XP bar with safety bounds
-      Animated.spring(xpBarAnimatedWidth, {
+    Animated.spring(xpAnim, {
         toValue: currentXpPercentage,
         useNativeDriver: false,
         tension: 20,
@@ -49,9 +58,9 @@ export const LevelBar: React.FC<LevelBarProps> = ({
       }).start();
     } else {
       // Default to 0 if no XP data
-      xpBarAnimatedWidth.setValue(0);
+    xpAnim.setValue(0);
     }
-  }, [xp, xpBarAnimatedWidth]);
+  }, [xp, xpAnim]);
 
   return (
     <View style={[styles.container, containerStyle]}>
