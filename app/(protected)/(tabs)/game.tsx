@@ -21,7 +21,7 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
-import { Animated, AppState, StyleSheet, Text, View } from 'react-native';
+import { Animated, AppState, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type ModalConfig = {
   visible: boolean;
@@ -438,14 +438,13 @@ export default function Game() {
           setCombos(comboData);
           setShowCombosModal(true);
 
-          // Add countdown cards at the beginning
-          const tiltValueForCountdown = animationMode === 'new' ? 0 : 3.65;
+
           const countdownMoves: Move[] = [
-            { move: "Ready?", pauseTime: 800, direction: "down" as const, tiltValue: tiltValueForCountdown },
-            { move: "3", pauseTime: 1000, direction: "down" as const, tiltValue: tiltValueForCountdown },
-            { move: "2", pauseTime: 1000, direction: "down" as const, tiltValue: tiltValueForCountdown },
-            { move: "1", pauseTime: 1000, direction: "down" as const, tiltValue: tiltValueForCountdown },
-            { move: "Fight!", pauseTime: 1600, direction: "up" as const, tiltValue: tiltValueForCountdown },
+            { move: "Ready?", pauseTime: 800, direction: "down" as const, tiltValue: 0 },
+            { move: "3", pauseTime: 1000, direction: "down" as const, tiltValue: 0 },
+            { move: "2", pauseTime: 1000, direction: "down" as const, tiltValue: 0 },
+            { move: "1", pauseTime: 1000, direction: "down" as const, tiltValue: 0 },
+            { move: "Fight!", pauseTime: 1800, direction: "up" as const, tiltValue: 0 },
           ];
 
           setMoves([...countdownMoves, ...allMoves]);
@@ -497,160 +496,113 @@ export default function Game() {
   } = useGameAnimations();
   const sideButtonsOpacity = React.useRef(new Animated.Value(0)).current;
 
-  // Handle app state changes to pause the game
+  // Countdown effect (rounds & rest) - delta based so external timeLeft changes (e.g., skip rest) persist
+  const lastTickRef = React.useRef<number | null>(null);
   React.useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
+    if (gameState.isPaused || gameState.isGameOver) {
+      lastTickRef.current = null;
+      return;
+    }
 
-    if (!gameState.isPaused && !gameState.isGameOver) {
-      const startTime = Date.now();
-      const initialTimeLeft = gameState.timeLeft;
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const last = lastTickRef.current ?? now;
+      const delta = now - last;
+      lastTickRef.current = now;
 
-      interval = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        const newTimeLeft = Math.max(initialTimeLeft - elapsed, 0);
+      setGameState(prev => {
+        if (prev.isPaused || prev.isGameOver) return prev; // safeguard
+        const newTimeLeft = Math.max(prev.timeLeft - delta, 0);
+        if (newTimeLeft > 0) {
+          return { ...prev, timeLeft: newTimeLeft };
+        }
 
-        if (newTimeLeft === 0) {
-          clearInterval(interval);
-
-          // Handle period transitions 
-          if (gameState.isRestPeriod) {
-            // End of rest period - start next round
-
-            setGameState(prev => ({
+        // Time reached 0 -> handle transitions
+        if (prev.isRestPeriod) {
+          // Start next round
+            playBellSound();
+            setCurrentMove(moves[5]);
+            return {
               ...prev,
               isRestPeriod: false,
               timeLeft: roundDurationMs,
-            }));
-            setCurrentMove(moves[5]); // Set to the first move of the next round
-            // Play bell sound if not muted
-            playBellSound();
-
-          } else if (gameState.currentRound + 2 <= totalRounds) {
-            // End of round - start rest period
-
-            // Play bell sound if not muted
-            playBellSound();
-
-            setGameState(prev => ({
-              ...prev,
-              isRestPeriod: true,
-              isPaused: false,
-              timeLeft: restTimeMs,
-              currentRound: prev.currentRound + 1,
-            }));
-            setCurrentMove({
-              move: `Rest Time`,
-              pauseTime: restTimeMs,
-              direction: 'up',
-              tiltValue: 1
-            });
-            setCurrentComboName("");
-            setCurrentCombo(null);
-            setCurrentComboMoveIndex(0);
-            Animated.timing(tiltX, {
-              toValue: 3.65,
-              duration: 800,
-              useNativeDriver: true
-            }).start();
-            Animated.timing(tiltY, {
-              toValue: 0,
-              duration: 200,
-              useNativeDriver: true
-            }).start();
-            Animated.timing(scale, {
-              toValue: 1.1,
-              duration: 1500,
-              useNativeDriver: true
-            }).start();
-          } else {
-            // End of final round - game over
-            // Update XP and level on game over
-            const auth = getAuth(app);
-            const user = auth.currentUser;
-            if (user) {
-              user.getIdToken().then(idToken => {
-                fetch('https://us-central1-shadow-mma.cloudfunctions.net/handleGameOver', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${idToken}`,
-                  }
-                })
-                  .then(response => response.json())
-                  .then(data => {
-                    // Update the context with new XP and level
-                    updateUserData({
-                      xp: data.newXp,
-                    });
-                  })
-                  .catch(error => {
-                    console.error('Error updating XP:', error);
-                    setCurrentModal({
-                      visible: true,
-                      title: 'XP Update Error',
-                      message: 'Failed to update your XP. Your progress may not be saved.',
-                      type: 'error',
-                      primaryButton: {
-                        text: 'OK',
-                        onPress: () => setCurrentModal(null)
-                      }
-                    });
-                  });
-              });
-            }
-
-            // Play bell sound if not muted
-            setGameState(prev => ({
-              ...prev,
-              isPaused: true,
-              isGameOver: true,
-            }));
-            playBellSound();
-
-            // Show completion modal
-            setCurrentModal({
-              visible: true,
-              title: 'Workout Complete! 🎉',
-              message: `Great job! You've completed all ${totalRounds} rounds. Keep up the good work!`,
-              type: 'success',
-              primaryButton: {
-                text: 'Close',
-                onPress: () => setCurrentModal(null)
-              }
-            });
-            Animated.parallel([
-              Animated.timing(tiltX, {
-                toValue: 0,
-                duration: 100,
-                useNativeDriver: true
-              }),
-              Animated.timing(tiltY, {
-                toValue: 0,
-                duration: 100,
-                useNativeDriver: true
-              }),
-              Animated.timing(scale, {
-                toValue: 1,
-                duration: 100,
-                useNativeDriver: true
-              })
-            ]).start();
-
-          }
-        } else {
-          setGameState(prev => ({
-            ...prev,
-            timeLeft: newTimeLeft
-          }));
+            };
         }
-      }, 100);
-    }
+        // End of a fighting round (not final)
+        if (prev.currentRound + 2 <= totalRounds) {
+          playBellSound();
+          setCurrentMove({
+            move: 'Rest Time',
+            pauseTime: restTimeMs,
+            direction: 'up',
+            tiltValue: 1
+          });
+          setCurrentComboName("");
+          setCurrentCombo(null);
+          setCurrentComboMoveIndex(0);
+          Animated.timing(tiltX, { toValue: 3.65, duration: 800, useNativeDriver: true }).start();
+          Animated.timing(tiltY, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+          Animated.timing(scale, { toValue: 1.1, duration: 1500, useNativeDriver: true }).start();
+          return {
+            ...prev,
+            isRestPeriod: true,
+            isPaused: false,
+            timeLeft: restTimeMs,
+            currentRound: prev.currentRound + 1,
+          };
+        }
 
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [gameState.isPaused, gameState.isGameOver, gameState.isRestPeriod,
-    totalRounds]);
+        // Final round over -> game over
+        const auth = getAuth(app);
+        const user = auth.currentUser;
+        if (user) {
+          user.getIdToken().then(idToken => {
+            fetch('https://us-central1-shadow-mma.cloudfunctions.net/handleGameOver', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${idToken}`,
+              }
+            })
+              .then(response => response.json())
+              .then(data => {
+                updateUserData({ xp: data.newXp });
+              })
+              .catch(error => {
+                console.error('Error updating XP:', error);
+                setCurrentModal({
+                  visible: true,
+                  title: 'XP Update Error',
+                  message: 'Failed to update your XP. Your progress may not be saved.',
+                  type: 'error',
+                  primaryButton: { text: 'OK', onPress: () => setCurrentModal(null) }
+                });
+              });
+          });
+        }
+        playBellSound();
+        setCurrentModal({
+          visible: true,
+            title: 'Workout Complete! 🎉',
+            message: `Great job! You've completed all ${totalRounds} rounds. Keep up the good work!`,
+            type: 'success',
+            primaryButton: { text: 'Close', onPress: () => setCurrentModal(null) }
+        });
+        Animated.parallel([
+          Animated.timing(tiltX, { toValue: 0, duration: 100, useNativeDriver: true }),
+          Animated.timing(tiltY, { toValue: 0, duration: 100, useNativeDriver: true }),
+          Animated.timing(scale, { toValue: 1, duration: 100, useNativeDriver: true })
+        ]).start();
+        return {
+          ...prev,
+          isPaused: true,
+          isGameOver: true,
+          timeLeft: 0,
+        };
+      });
+    }, 100);
+    return () => clearInterval(interval);
+  }, [gameState.isPaused, gameState.isGameOver, gameState.isRestPeriod, roundDurationMs, restTimeMs, totalRounds, moves, playBellSound, tiltX, tiltY, scale, updateUserData]);
   const handleSpeedChange = React.useCallback(() => {
     if (!gameState.isPaused) return;
     setSpeedMultiplier(current => {
@@ -720,7 +672,6 @@ export default function Game() {
         // Update current combo name for regular moves
         if (isCountdownComplete && nextMove.comboName) {
           setCurrentComboName(nextMove.comboName);
-          
           // Update combo tracking if this move belongs to a combo
           if (nextMove.comboData && nextMove.moveIndex !== undefined) {
             setCurrentCombo(nextMove.comboData);
@@ -805,6 +756,37 @@ export default function Game() {
     }).start();
   };
 
+  // Skip (shorten) the current rest period to a fixed 3s quick rest
+  // Shown only during an active rest (see Skip button visibility). Pressing it trims the remaining
+  // rest to 3000ms (or keeps it if already <= 3000). Keeps isRestPeriod=true and resumes immediately.
+  const handleSkipToRest = React.useCallback(() => {
+    if (!gameState.isRestPeriod || gameState.isGameOver) return; // Only act during an active rest
+
+    const SHORT_REST_MS = 3000;
+    // If more than SHORT_REST_MS remains, cut it down; otherwise do nothing.
+    if (gameState.timeLeft > SHORT_REST_MS) {
+      playBellSound();
+      setGameState(prev => ({
+        ...prev,
+        isRestPeriod: true,
+        isPaused: false,
+        timeLeft: SHORT_REST_MS,
+      }));
+      setCurrentMove({
+        move: 'Rest Time',
+        pauseTime: SHORT_REST_MS,
+        direction: 'up',
+        tiltValue: 1
+      });
+      setCurrentComboName("");
+      setCurrentCombo(null);
+      setCurrentComboMoveIndex(0);
+      Animated.timing(tiltX, { toValue: 3.65, duration: 800, useNativeDriver: true }).start();
+      Animated.timing(tiltY, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+      Animated.timing(scale, { toValue: 1.1, duration: 1500, useNativeDriver: true }).start();
+    }
+  }, [gameState.isRestPeriod, gameState.isGameOver, gameState.timeLeft, playBellSound, tiltX, tiltY, scale]);
+
   if (isLoading) {
     return <LoadingScreen />;
   }
@@ -882,7 +864,7 @@ export default function Game() {
         {showNewCombo && (
           <View style={styles.newComboMessageContainer}>
             <Text style={styles.newComboMessageText}>
-              🔥 New Combo Unlocked! 
+              🔥 New Combo Unlocked!
             </Text>
           </View>
         )}
@@ -947,6 +929,13 @@ export default function Game() {
           animationMode={animationMode}
           isSouthPaw={stance === 'southpaw'}
         />
+
+        {/* Skip button (visible only when paused) */}
+        {gameState.isRestPeriod && !gameState.isPaused && !gameState.isGameOver && (
+          <TouchableOpacity onPress={handleSkipToRest} style={styles.skipButton} activeOpacity={0.8}>
+            <Text style={styles.skipButtonText}>Skip</Text>
+          </TouchableOpacity>
+        )}
 
         {gameState.isGameOver && (
           <GameOverButtons />
@@ -1119,7 +1108,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 3.84,
     elevation: 5,
-    transform: [{ rotateZ: '90deg' }],
   },
   levelBarContainer: {
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -1137,7 +1125,7 @@ const styles = StyleSheet.create({
   },
   boostBubble: {
     position: 'absolute',
-    bottom: 190, 
+    bottom: 190,
     alignSelf: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.85)',
     borderRadius: 20,
@@ -1154,9 +1142,35 @@ const styles = StyleSheet.create({
   },
   boostText: {
     color: '#ffffffff',
+    fontFamily: Typography.fontFamily,
   },
   boostTime: {
     color: '#ffffffff',
     marginLeft: 6,
+    fontFamily: Typography.fontFamily,
+  },
+  skipButton: {
+    position: 'absolute',
+    bottom: 180, // moved higher on screen
+    alignSelf: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 1)',
+    paddingVertical: 10,
+    paddingHorizontal: 26,
+    borderRadius: 30,
+    borderWidth: 2,
+    borderBottomWidth: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    borderColor: '#000000ff',
+    zIndex: 100,
+    elevation: 8,
+  },
+  skipButtonText: {
+    color: '#000000ff',
+    fontSize: 24,
+    fontFamily: Typography.fontFamily,
+    letterSpacing: 1,
   },
 });
