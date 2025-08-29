@@ -1,5 +1,6 @@
 import { AlertModal } from '@/components/Modals/AlertModal';
 import { getPlanFeatures, subscriptionPlans, type SubscriptionPlan } from '@/config/subscriptionPlans';
+import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -8,7 +9,8 @@ import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function Plans() {
-  const { userData } = useUserData();
+  const { user } = useAuth();
+  const { userData, refreshUserData } = useUserData();
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showDowngradeModal, setShowDowngradeModal] = useState(false);
@@ -23,7 +25,7 @@ export default function Plans() {
     if (planTitle.toLowerCase() === userPlan) {
       return 'Current Plan';
     }
-    if (userPlan === 'annual' || userPlan === 'premium') {
+    if (userPlan === 'annual' || userPlan === 'pro') {
       return planTitle.toLowerCase() === 'free' ? 'Downgrade' : 'Switch Plan';
     }
     return 'Upgrade';
@@ -45,24 +47,35 @@ export default function Plans() {
       return; // Already current plan
     }
 
-    if (plan.title.toLowerCase() === 'free' && (userPlan === 'premium' || userPlan === 'annual')) {
+    if (plan.title.toLowerCase() === 'free' && (userPlan === 'pro' || userPlan === 'annual')) {
       setShowDowngradeModal(true);
     } else {
       setShowUpgradeModal(true);
     }
   };
 
-  const handleConfirmUpgrade = () => {
+  const handleConfirmUpgrade = async () => {
     // Here you would implement the actual upgrade logic
     console.log('Upgrading to:', selectedPlan?.title);
     setShowUpgradeModal(false);
+    
+    // Refresh user data to get updated plan information
+    if (user) {
+      await refreshUserData(user.uid);
+    }
+    
     // You could navigate to a payment screen or call an API
   };
 
-  const handleConfirmDowngrade = () => {
+  const handleConfirmDowngrade = async () => {
     // Here you would implement the actual downgrade logic
     console.log('Downgrading to:', selectedPlan?.title);
     setShowDowngradeModal(false);
+    
+    // Refresh user data to get updated plan information
+    if (user) {
+      await refreshUserData(user.uid);
+    }
   };
 
   const currentPlan = getCurrentPlan();
@@ -182,7 +195,7 @@ export default function Plans() {
             <MaterialCommunityIcons name="star" size={32} color="#fdd700" />
             <Text style={styles.benefitTitle}>Advanced Techniques</Text>
             <Text style={styles.benefitDescription}>
-              Access to premium combat techniques and combinations
+              Access to Pro combat techniques and combinations
             </Text>
           </View>
           
@@ -216,7 +229,7 @@ export default function Plans() {
       <AlertModal
         visible={showDowngradeModal}
         title="Downgrade Plan"
-        message={`Are you sure you want to downgrade to ${selectedPlan?.title}? You will lose access to premium features.`}
+        message={`Are you sure you want to downgrade to ${selectedPlan?.title}? You will lose access to Pro features.`}
         type="warning"
         primaryButton={{
           text: "Confirm Downgrade",
@@ -344,7 +357,7 @@ const styles = StyleSheet.create({
   },
   activeBadge: {
     position: 'absolute',
-    top: 15,
+    top: 55,
     right: 15,
     backgroundColor: '#4ade80',
     paddingHorizontal: 12,

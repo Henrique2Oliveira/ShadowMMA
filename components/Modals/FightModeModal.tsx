@@ -106,6 +106,9 @@ export function FightModeModal({
         movesMode: comboId ? moveType || 'Punches' : movesMode.join(','),
         category,
         comboId: comboId !== undefined && comboId !== null ? String(comboId) : undefined,
+        // Send fight configuration for tracking
+        fightRounds: numRounds,
+        fightTimePerRound: roundDuration,
         timestamp: Date.now().toString()
       }
     });

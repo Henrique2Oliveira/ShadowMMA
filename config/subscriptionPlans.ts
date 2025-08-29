@@ -20,7 +20,7 @@ export const subscriptionPlans: SubscriptionPlan[] = [
     ]
   },
   {
-    title: 'Premium',
+    title: 'Pro',
     price: '$9.99',
     period: 'month',
     features: [
@@ -34,14 +34,16 @@ export const subscriptionPlans: SubscriptionPlan[] = [
   },
   {
     title: 'Annual',
-    price: '$39.99', // monthly equivalent: $3.33
+    price: '$39.99',
     period: 'year',
     features: [
-      'All premium features',
-      'Early access to features',
       'Monthly equivalent = $3.33',
-      'Exclusive content',
-      'VIP support',
+      'All premium features',
+      'Unlimited Fights',
+      'Advanced techniques',
+      'Personalized training plans',
+      'Priority support',
+      'All free features'
     ]
   }
 ];

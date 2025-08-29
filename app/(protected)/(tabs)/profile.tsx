@@ -1,4 +1,5 @@
 import PlansModal from '@/components/Modals/PlansModal';
+import { SubscriptionPlan } from '@/config/subscriptionPlans';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
@@ -6,14 +7,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ImageBackground, Linking, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
-type SubscriptionPlan = {
-  title: string;
-  price: string;
-  period: string;
-  features: string[];
-  popular?: boolean;
-};
 
 type UserData = {
   name: string;
@@ -24,6 +17,12 @@ type UserData = {
   xp: number;
   fightsLeft: number;
   loginStreak?: number;
+  currentFightRound?: number;
+  currentFightTime?: number;
+  totalFightRounds?: number;
+  totalFightTime?: number;
+  lifetimeFightRounds?: number;
+  lifetimeFightTime?: number;
 };
 
 export default function Profile() {
@@ -32,6 +31,38 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
+
+  // Helper function to format large numbers
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toString();
+  };
+
+  // Helper function to format time and convert to appropriate units
+  const formatTime = (minutes: number): { value: string; unit: string } => {
+    if (minutes >= 1440) { // 24 hours or more
+      const days = minutes / 1440;
+      return {
+        value: days >= 10 ? Math.round(days).toString() : days.toFixed(1),
+        unit: days >= 2 ? 'Days' : 'Day'
+      };
+    } else if (minutes >= 60) { // 1 hour or more
+      const hours = minutes / 60;
+      return {
+        value: hours >= 10 ? Math.round(hours).toString() : hours.toFixed(1),
+        unit: hours >= 2 ? 'Hours' : 'Hour'
+      };
+    } else {
+      return {
+        value: Math.round(minutes).toString(),
+        unit: minutes >= 2 ? 'Minutes' : 'Minute'
+      };
+    }
+  };
 
   const onRefresh = React.useCallback(async () => {
     if (user) {
@@ -99,16 +130,18 @@ export default function Profile() {
               <MaterialCommunityIcons name="account-circle" size={100} color={Colors.text} />
             </View>
             <Text style={styles.name}>{userData?.name || 'Anonymous'}</Text>
-            <Text style={styles.subtitle}>{userData?.plan !== 'free' ? 'Premium Member' : 'Free Member'}</Text>
+            <Text style={styles.subtitle}>{userData?.plan !== 'free' ? 'Pro Member' : 'Free Member'}</Text>
           </View>
 
           <View style={styles.statsContainer}>
             <View style={styles.statBox}>
               <View style={styles.statRow}>
-                <MaterialCommunityIcons name="karate" size={20} color={Colors.text} style={styles.statIcon} />
-                <Text style={styles.statNumber}>{userData?.moves || "-"}</Text>
+                <MaterialCommunityIcons name="boxing-glove" size={20} color={Colors.text} style={styles.statIcon} />
+                <Text style={styles.statNumber}>
+                  {userData?.lifetimeFightRounds ? formatNumber(userData.lifetimeFightRounds) : "-"}
+                </Text>
               </View>
-              <Text style={styles.statLabel}>Moves</Text>
+              <Text style={styles.statLabel}>Total Rounds</Text>
             </View>
             <View style={styles.statBox}>
               <View style={styles.statRow}>
@@ -119,10 +152,14 @@ export default function Profile() {
             </View>
             <View style={styles.statBox}>
               <View style={styles.statRow}>
-                <MaterialCommunityIcons name="boxing-glove" size={20} color={Colors.text} style={styles.statIcon} />
-                <Text style={styles.statNumber}>{userData?.combos || "-"}</Text>
+                <MaterialCommunityIcons name="timer" size={20} color={Colors.text} style={styles.statIcon} />
+                <Text style={styles.statNumber}>
+                  {userData?.lifetimeFightTime ? formatTime(userData.lifetimeFightTime).value : "-"}
+                </Text>
               </View>
-              <Text style={styles.statLabel}>Combos</Text>
+              <Text style={styles.statLabel}>
+                {userData?.lifetimeFightTime ? formatTime(userData.lifetimeFightTime).unit : "Total Time"}
+              </Text>
             </View>
           </View>
 
@@ -131,9 +168,9 @@ export default function Profile() {
               <View style={styles.fightsRow}>
                 <MaterialCommunityIcons name="boxing-glove" style={{ transform: [{ rotate: '90deg' }] }} size={38} color={Colors.text} />
                 <View style={styles.fightsInfo}>
-                  <Text style={styles.fightsTitle}>{userData?.plan !== 'free' ? 'Premium Status' : 'Fights Left Today'}</Text>
+                  <Text style={styles.fightsTitle}>{userData?.plan !== 'free' ? 'Pro Status' : 'Fights Left Today'}</Text>
                   <Text style={styles.fightsNumber}>
-                    {userData?.plan !== 'free' ? userData?.fightsLeft : '∞'}
+                    {userData?.plan === 'free' ? userData?.fightsLeft : '∞'}
                   </Text>
                 </View>
               </View>
@@ -141,17 +178,17 @@ export default function Profile() {
 
             <View style={[styles.infoContainer, styles.levelContainer]}>
               <View style={styles.infoRow}>
-                <MaterialCommunityIcons name="medal" size={24} color={Colors.text} />
+                <MaterialCommunityIcons name="trophy" size={26} color={Colors.text} />
                 <Text style={styles.infoText}>Level {userData?.xp ? Math.floor(userData.xp / 100) : 0}</Text>
               </View>
               <View style={styles.infoRow}>
-                <MaterialCommunityIcons name="fire" size={24} color={Colors.text} />
+                <MaterialCommunityIcons name="star" size={26} color={Colors.text} />
                 <Text style={styles.infoText}>XP: {userData?.xp || "-"}</Text>
               </View>
-              <View style={styles.infoRow}>
+              {/* <View style={styles.infoRow}>
                 <MaterialCommunityIcons name="target" size={24} color={Colors.text} />
                 <Text style={styles.infoText}>Hours: {userData?.hours || "-"}</Text>
-              </View>
+              </View> */}
             </View>
           </View>
           <View style={styles.buttonList}>
@@ -328,7 +365,7 @@ const styles = StyleSheet.create({
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 15,
   },
   infoText: {
     color: Colors.text,

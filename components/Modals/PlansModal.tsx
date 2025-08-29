@@ -19,7 +19,7 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
     if (planTitle.toLowerCase() === userPlan) {
       return 'Current Plan';
     }
-    if (userPlan === 'pro' || userPlan === 'premium') {
+    if (userPlan === 'pro' || userPlan === 'annual') {
       return planTitle.toLowerCase() === 'free' ? 'Downgrade' : 'Switch Plan';
     }
     return 'Select Plan';

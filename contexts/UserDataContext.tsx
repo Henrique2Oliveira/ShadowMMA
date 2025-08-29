@@ -11,6 +11,12 @@ export type UserData = {
   plan?: string;
   fightsLeft?: number;
   loginStreak?: number;
+  currentFightRound?: number;
+  currentFightTime?: number;
+  totalFightRounds?: number;
+  totalFightTime?: number;
+  lifetimeFightRounds?: number;
+  lifetimeFightTime?: number;
 };
 
 export type NetworkError = {

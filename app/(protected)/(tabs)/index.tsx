@@ -466,9 +466,9 @@ export default function Index() {
           }}
         >
           <WeeklyMission
-            completedRounds={5}
+            completedRounds={userData?.totalFightRounds || 0}
             totalRounds={weeklyMissionRounds}
-            completedTime={12}
+            completedTime={Math.round(userData?.totalFightTime || 0)}
             totalTime={weeklyMissionTime}
             onPress={handleNavigateToSettings}
           />

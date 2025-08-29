@@ -60,6 +60,12 @@ export const getUserData = onRequest(async (req, res) => {
       plan: userData?.plan || 'free',
       fightsLeft: userData?.fightsLeft || 3,
       loginStreak: userData?.loginStreak || 0,
+      currentFightRound: userData?.currentFightRound || 0,
+      currentFightTime: userData?.currentFightTime || 0,
+      totalFightRounds: userData?.totalFightRounds || 0,
+      totalFightTime: userData?.totalFightTime || 0,
+      lifetimeFightRounds: userData?.lifetimeFightRounds || 0,
+      lifetimeFightTime: userData?.lifetimeFightTime || 0,
     };
 
     res.status(200).json({ success: true, data: safeUserData });
@@ -176,6 +182,40 @@ export const restoreUserLivesDaily = onSchedule({
   }
 });
 
+// Scheduled function to reset weekly mission progress every Monday at midnight UTC
+export const resetWeeklyMissionProgress = onSchedule({
+  schedule: "0 0 * * 1", // Every Monday at midnight UTC (start of week)
+  timeZone: "UTC",
+}, async (event) => {
+  try {
+    const usersSnapshot = await db.collection("users").get();
+    const batch = db.batch();
+    let updateCount = 0;
+    
+    usersSnapshot.forEach((doc) => {
+      const userData = doc.data();
+      // Only update users who have progress to reset
+      if ((userData?.totalFightRounds && userData.totalFightRounds > 0) || 
+          (userData?.totalFightTime && userData.totalFightTime > 0)) {
+        batch.update(doc.ref, { 
+          totalFightRounds: 0,
+          totalFightTime: 0
+        });
+        updateCount++;
+      }
+    });
+    
+    if (updateCount > 0) {
+      await batch.commit();
+      logger.log(`Weekly mission progress reset for ${updateCount} users.`);
+    } else {
+      logger.log("No users needed weekly mission progress reset.");
+    }
+  } catch (error) {
+    logger.error("Error resetting weekly mission progress:", error);
+  }
+});
+
 
 
 export const handleGameOver = onRequest(async (req, res) => {
@@ -233,10 +273,24 @@ export const handleGameOver = onRequest(async (req, res) => {
     const xpGained = Math.max(15, baseXP + randomXP);
     const newXp = oldXp + xpGained;
 
-    // Update user data
+    // Get current fight stats to add to totals
+    const currentFightRounds = userData?.currentFightRound || 0;
+    const currentFightTime = userData?.currentFightTime || 0;
+    const totalFightRounds = (userData?.totalFightRounds || 0) + currentFightRounds;
+    const totalFightTime = (userData?.totalFightTime || 0) + currentFightTime;
+    const lifetimeFightRounds = (userData?.lifetimeFightRounds || 0) + currentFightRounds;
+    const lifetimeFightTime = (userData?.lifetimeFightTime || 0) + currentFightTime;
+
+    // Update user data - add current fight stats to totals and reset current values
     await userRef.update({
       xp: newXp,
-      playing: false
+      playing: false,
+      totalFightRounds: totalFightRounds,
+      totalFightTime: totalFightTime,
+      lifetimeFightRounds: lifetimeFightRounds,
+      lifetimeFightTime: lifetimeFightTime,
+      currentFightRound: 0, // Reset current fight stats
+      currentFightTime: 0
     });
 
     // Return old and new values for animation
@@ -276,6 +330,10 @@ export const startFight = onRequest(async (req, res) => {
     const comboId = bodyOrQuery?.comboId as string | number | undefined;
     const categoryToUse = category.toString();
     
+    // Get fight configuration values
+    const fightRounds = parseInt(bodyOrQuery?.fightRounds || bodyOrQuery?.numRounds || '1');
+    const fightTimePerRound = parseFloat(bodyOrQuery?.fightTimePerRound || bodyOrQuery?.roundDuration || '3');
+    
     // Process moveTypes for both combo selection and specific comboId
     const moveTypesArray = (() => {
       const moveTypesRaw = (bodyOrQuery?.moveTypes ?? bodyOrQuery?.movesMode ?? 'Punches') as string | string[];
@@ -304,7 +362,7 @@ export const startFight = onRequest(async (req, res) => {
     const userData = userDoc.data();
  
     // If user is not pro, check fights left
-    if (userData?.plan !== 'pro') {
+    if (userData?.plan === 'free') {
       if (!userData?.fightsLeft || userData.fightsLeft <= 0) {
         res.status(403).json({
           error: "No fights left",
@@ -365,7 +423,7 @@ export const startFight = onRequest(async (req, res) => {
         return;
       }
       const userData = userDoc.data();
-      if (userData?.plan !== 'pro') {
+      if (userData?.plan === 'free') {
         if (!userData?.fightsLeft || userData.fightsLeft <= 0) {
           res.status(403).json({ error: "No fights left", fightsLeft: userData?.fightsLeft || 0 });
           return;
@@ -373,6 +431,11 @@ export const startFight = onRequest(async (req, res) => {
         updatedFightsLeft = (userData.fightsLeft || 0) - 1;
         updates.fightsLeft = updatedFightsLeft;
       }
+      
+      // Save current fight configuration
+      updates.currentFightRound = fightRounds;
+      updates.currentFightTime = fightTimePerRound * fightRounds; // Total time for this fight
+      
       await userRef.update(updates);
 
       res.status(200).json({ combos: [found], fightsLeft: updatedFightsLeft });
@@ -386,7 +449,7 @@ export const startFight = onRequest(async (req, res) => {
     }
 
   // Get the user's level from XP
-  const xp = typeof userData.xp === 'number' ? userData.xp : 0;
+  const xp = typeof userData?.xp === 'number' ? userData.xp : 0;
   const currentUserLevel = Math.floor(xp / 100);
 
   // Build pools per selected move type and filter by user level
@@ -464,16 +527,20 @@ export const startFight = onRequest(async (req, res) => {
     }
   }
 
-    let updatedFightsLeft = userData.fightsLeft;
+    let updatedFightsLeft = userData?.fightsLeft;
     
     // Update the user's playing status and fightsLeft
     const updates: any = { playing: true };
     
     // Only update fightsLeft for free users
-    if (userData.plan !== 'pro') {
-      updatedFightsLeft = userData.fightsLeft - 1;
+    if (userData?.plan === 'free') {
+      updatedFightsLeft = (userData?.fightsLeft || 0) - 1;
       updates.fightsLeft = updatedFightsLeft;
     }
+    
+    // Save current fight configuration
+    updates.currentFightRound = fightRounds;
+    updates.currentFightTime = fightTimePerRound * fightRounds; // Total time for this fight
     
     // Update the user's playing status
     await userRef.update(updates);
@@ -551,19 +618,23 @@ export const createUser = onRequest(async (req, res) => {
     await userDocRef.set({
       email: email,
       name: name,
-      xp: 120,
-      plan: 'free',
+      xp: 120, // Start at level 1 (100 XP) plus some buffer for visual progress
+      plan: 'free', // Default plan, can be 'free' or 'pro' or 'annual'
       hours: 0,
       moves: 4,
       combos: 1,
-      fightsLeft: 4,
+      fightsLeft: 4, // Start with 4 fights to allow immediate play
       playing: false,
-      loginStreak: 1,
+      loginStreak: 0, // New field to track login streak count
+      currentFightRound: 0, // New field to track current fight round
+      currentFightTime: 0, // New field to track current fight time
+      totalFightRounds: 0, // New field to track total fight rounds (weekly mission - resets)
+      totalFightTime: 0, // New field to track total fight time (weekly mission - resets)
+      lifetimeFightRounds: 0, // New field to track lifetime total fight rounds (never resets)
+      lifetimeFightTime: 0, // New field to track lifetime total fight time (never resets)
       createdAt: FieldValue.serverTimestamp(),
       lastLoginAt: FieldValue.serverTimestamp()
-    });
-
-    res.status(200).json({ success: true });
+    });    res.status(200).json({ success: true });
   } catch (error: any) {
     logger.error('Error creating user:', error);
     res.status(500).json({
