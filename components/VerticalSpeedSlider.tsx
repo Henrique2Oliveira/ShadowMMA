@@ -16,7 +16,7 @@ export const VerticalSpeedSlider: React.FC<VerticalSpeedSliderProps> = ({
   opacity,
 }) => {
   const SLIDER_HEIGHT = 120;
-  const THUMB_SIZE = -10;
+  const THUMB_SIZE = -17;
   const MIN_SPEED = 1;
   const MAX_SPEED = 2.5;
   
@@ -117,7 +117,7 @@ export const VerticalSpeedSlider: React.FC<VerticalSpeedSliderProps> = ({
             style={[
               styles.thumb,
               {
-                top: speedToPosition(speedMultiplier) - THUMB_SIZE / 2,
+                top: speedToPosition(speedMultiplier) - THUMB_SIZE / 1,
               },
             ]}
             {...panResponder.panHandlers}
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.9)',
     borderRadius: 15,
     paddingVertical: 12,
-    paddingTop: 15,
+    paddingTop: 25,
     paddingHorizontal: 10,
 
   },

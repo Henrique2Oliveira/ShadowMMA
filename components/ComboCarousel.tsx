@@ -52,7 +52,7 @@ export const ComboCarousel: React.FC<ComboCarouselProps> = ({
             styles.moveText,
             isCurrentMove && styles.currentMoveText
           ]}>
-            {isCurrentMove ? `${moveText}` : moveText}
+            {isCurrentMove ? `[${moveText}]` : moveText}
           </Text>
         </React.Fragment>
       );
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
 
   },
   moveText: {
-    color: "white",
+    color: 'rgba(255, 255, 255, 0.67)',
     fontSize: 18,
     fontFamily: Typography.fontFamily,
     lineHeight: 24,
@@ -120,23 +120,11 @@ const styles = StyleSheet.create({
   },
   currentMoveText: {
     color: 'rgba(255, 255, 255, 1)', // Orange/red color for current move
-    fontSize: 22,
   },
   arrow: {
     color: "rgba(255, 255, 255, 0.7)",
     fontSize: 18,
     fontFamily: Typography.fontFamily,
     lineHeight: 24,
-  },
-  comboText: {
-    color: "white",
-    backgroundColor: '#fafafac5',
-    padding: 12,
-    borderRadius: 10,
-    fontSize: 18,
-    fontFamily: Typography.fontFamily,
-    lineHeight: 24,
-    textAlign: 'center',
-    width: '100%',
-  },
+  }
 });

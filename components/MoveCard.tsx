@@ -31,10 +31,12 @@ export const MoveCard: React.FC<MoveCardProps> = ({
   animationMode,
   isSouthPaw = false,
 }) => {
-  // Enhanced animation values for move transitions (new mode)
+  // Enhanced animation values for move transitions (new and old modes)
   const slideAnim = useRef(new Animated.Value(0)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const oldRotateAnim = useRef(new Animated.Value(0)).current;
+  const oldScaleAnim = useRef(new Animated.Value(1)).current;
   const prevMove = useRef(move);
 
   // Trigger enhanced animation when move changes (new mode)
@@ -97,36 +99,117 @@ export const MoveCard: React.FC<MoveCardProps> = ({
       animation.start();
     }
   }, [move, animationMode, isGameOver, isRestPeriod]);
+
+  // Trigger fluid animation for old mode
+  useEffect(() => {
+    if (animationMode === 'old' && move !== prevMove.current && move && !isGameOver && !isRestPeriod) {
+      prevMove.current = move;
+      
+      // Reset old animation values
+      oldRotateAnim.setValue(0);
+      oldScaleAnim.setValue(1);
+
+      // Create a bouncy, fluid animation for old mode
+      const oldAnimation = Animated.parallel([
+        // Bouncy rotation sequence
+        Animated.sequence([
+          // Initial quick rotation with spring
+          Animated.spring(oldRotateAnim, {
+            toValue: 1,
+            tension: 120,
+            friction: 6,
+            useNativeDriver: true,
+          }),
+          // Bounce back with overshoot
+          Animated.spring(oldRotateAnim, {
+            toValue: -0.4,
+            tension: 100,
+            friction: 7,
+            useNativeDriver: true,
+          }),
+          // Final settle with gentle bounce
+          Animated.spring(oldRotateAnim, {
+            toValue: 0,
+            tension: 80,
+            friction: 8,
+            useNativeDriver: true,
+          }),
+        ]),
+        // Scale animation for extra fluidity
+        Animated.sequence([
+          // Quick scale up
+          Animated.spring(oldScaleAnim, {
+            toValue: 1.04,
+            tension: 150,
+            friction: 6,
+            useNativeDriver: true,
+          }),
+          // Gentle bounce back
+          Animated.spring(oldScaleAnim, {
+            toValue: 1,
+            tension: 90,
+            friction: 8,
+            useNativeDriver: true,
+          }),
+        ]),
+      ]);
+
+      oldAnimation.start();
+    }
+  }, [move, animationMode, isGameOver, isRestPeriod]);
+
   return (
-    <Animated.View style={[
-      styles.card,
-      {
-        transform: animationMode !== 'none' ? [
-          ...(animationMode === 'new' ? [{ translateX: slideAnim }] : []),
-          {
-            rotateX: tiltX.interpolate({
-              inputRange: [-0.4, 0, 0.4],
-              outputRange: ['-40deg', '0deg', '40deg']
-            })
-          },
-          {
-            rotateY: tiltY.interpolate({
-              inputRange: [-0.4, 0, 0.4],
-              outputRange: ['-40deg', '0deg', '40deg']
-            })
-          },
-          ...(animationMode === 'new' ? [{
-            rotateZ: rotateAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: ['0deg', '2deg'],
-            })
-          }] : []),
-          {
-            scale: animationMode === 'new' ? Animated.multiply(scale, scaleAnim) : scale
-          }
-        ] : []
-      }
-    ]}>
+    <Animated.View
+      style={[
+        styles.card,
+        {
+          transform: animationMode !== 'none'
+            ? [
+                ...(animationMode === 'new' ? [{ translateX: slideAnim }] : []),
+                {
+                  rotateX: tiltX.interpolate({
+                    inputRange: [-0.4, 0, 0.4],
+                    outputRange: ['-40deg', '0deg', '40deg'],
+                  }),
+                },
+                {
+                  rotateY: tiltY.interpolate({
+                    inputRange: [-0.4, 0, 0.4],
+                    outputRange: ['-40deg', '0deg', '40deg'],
+                  }),
+                },
+                ...(animationMode === 'new'
+                  ? [
+                      {
+                        rotateZ: rotateAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ['0deg', '2deg'],
+                        }),
+                      },
+                    ]
+                  : []),
+                ...(animationMode === 'old'
+                  ? [
+                      {
+                        rotateZ: oldRotateAnim.interpolate({
+                          inputRange: [-1, 0, 1],
+                          outputRange: ['-2.5deg', '0deg', '2.5deg'],
+                        }),
+                      },
+                    ]
+                  : []),
+                {
+                  scale: animationMode === 'new'
+                    ? Animated.multiply(scale, scaleAnim)
+                    : animationMode === 'old'
+                    ? Animated.multiply(scale, oldScaleAnim)
+                    : scale,
+                },
+              ]
+            : [],
+        },
+      ]}
+    >
       <LinearGradient
         colors={['#171717ff', '#1a1a1aff']}
         style={styles.gradientBackground}

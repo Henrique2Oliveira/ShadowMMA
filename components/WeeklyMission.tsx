@@ -1,7 +1,7 @@
 import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface WeeklyMissionProps {
   completedRounds?: number;
@@ -9,15 +9,39 @@ interface WeeklyMissionProps {
   completedTime?: number;
   totalTime?: number;
   onPress?: () => void;
+  isLoading?: boolean;
 }
 
 export const WeeklyMission: React.FC<WeeklyMissionProps> = ({
-  completedRounds = 5,
-  totalRounds = 20,
-  completedTime = 12,
-  totalTime = 60,
+  completedRounds,
+  totalRounds,
+  completedTime,
+  totalTime,
   onPress,
+  isLoading = false,
 }) => {
+  // Show loading state if data is not available
+  if (isLoading || completedRounds === undefined || totalRounds === undefined || 
+      completedTime === undefined || totalTime === undefined) {
+    return (
+      <TouchableOpacity style={styles.container} onPress={onPress} disabled={isLoading}>
+        <View style={styles.header}>
+          <MaterialCommunityIcons
+            name="trophy"
+            size={24}
+            color="#fdd700"
+          />
+          <Text style={styles.title}>Weekly Mission</Text>
+          <MaterialCommunityIcons name="chevron-right" size={24} color={Colors.text} />
+        </View>
+
+        <View style={styles.loadingContent}>
+          <ActivityIndicator size="large" color="#fdd700" />
+          <Text style={styles.loadingText}>Loading your progress...</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  }
   const roundsProgress = (completedRounds / totalRounds) * 100;
   const timeProgress = (completedTime / totalTime) * 100;
 
@@ -141,6 +165,17 @@ const styles = StyleSheet.create({
   },
   content: {
     gap: 10,
+  },
+  loadingContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+    gap: 12,
+  },
+  loadingText: {
+    color: Colors.text,
+    fontSize: 14,
+    fontFamily: Typography.fontFamily,
   },
   missionItem: {
     gap: 6,

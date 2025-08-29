@@ -64,7 +64,7 @@ export const GameOptionsModal: React.FC<GameOptionsModalProps> = ({
     },
     {
       icon: 'flash-outline',
-      label: `Speed: ${speedMultiplier}x`,
+      label: `Speed: ${speedMultiplier.toFixed(1)}x`,
       onPress: onSpeedChange,
     },
     {

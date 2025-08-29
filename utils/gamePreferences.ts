@@ -7,6 +7,7 @@ export interface GamePreferences {
   animationMode: 'none' | 'old' | 'new';
   stance: 'orthodox' | 'southpaw';
   showComboCarousel: boolean;
+  speedMultiplier: number;
 }
 
 export async function saveGamePreferences(prefs: GamePreferences) {

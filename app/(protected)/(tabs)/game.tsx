@@ -218,14 +218,18 @@ export default function Game() {
         setAnimationMode(prefs.animationMode || 'new');
         setStance(prefs.stance);
         setShowComboCarousel(prefs.showComboCarousel !== undefined ? prefs.showComboCarousel : true);
+        // Load saved speed multiplier, fallback to route param or default to 1
+        if (prefs.speedMultiplier !== undefined) {
+          setSpeedMultiplier(prefs.speedMultiplier);
+        }
       }
     });
   }, []);
 
   // Save preferences to AsyncStorage when changed
   React.useEffect(() => {
-    saveGamePreferences({ isMuted, animationMode, stance, showComboCarousel });
-  }, [isMuted, animationMode, stance, showComboCarousel]);
+    saveGamePreferences({ isMuted, animationMode, stance, showComboCarousel, speedMultiplier });
+  }, [isMuted, animationMode, stance, showComboCarousel, speedMultiplier]);
 
   // Handle new combo unlock detection and XP bar animation
   React.useEffect(() => {
@@ -337,7 +341,8 @@ export default function Game() {
       isGameOver: false,
     });
 
-    setSpeedMultiplier(parseFloat(params.moveSpeed || '1'));
+    // Don't reset speed multiplier - preserve user's saved preference
+    // setSpeedMultiplier(parseFloat(params.moveSpeed || '1'));
     // Reset Speed Boost state on new game
     setIsBoostActive(false);
     setBoostRemainingMs(0);
@@ -434,12 +439,13 @@ export default function Game() {
           setShowCombosModal(true);
 
           // Add countdown cards at the beginning
+          const tiltValueForCountdown = animationMode === 'new' ? 0 : 3.65;
           const countdownMoves: Move[] = [
-            { move: "Ready?", pauseTime: 800, direction: "down" as const, tiltValue: 3.65 },
-            { move: "3", pauseTime: 1000, direction: "down" as const, tiltValue: 3.65 },
-            { move: "2", pauseTime: 1000, direction: "down" as const, tiltValue: 3.65 },
-            { move: "1", pauseTime: 1000, direction: "down" as const, tiltValue: 3.65 },
-            { move: "Fight!", pauseTime: 1600, direction: "up" as const, tiltValue: 3.65 },
+            { move: "Ready?", pauseTime: 800, direction: "down" as const, tiltValue: tiltValueForCountdown },
+            { move: "3", pauseTime: 1000, direction: "down" as const, tiltValue: tiltValueForCountdown },
+            { move: "2", pauseTime: 1000, direction: "down" as const, tiltValue: tiltValueForCountdown },
+            { move: "1", pauseTime: 1000, direction: "down" as const, tiltValue: tiltValueForCountdown },
+            { move: "Fight!", pauseTime: 1600, direction: "up" as const, tiltValue: tiltValueForCountdown },
           ];
 
           setMoves([...countdownMoves, ...allMoves]);
@@ -648,7 +654,7 @@ export default function Game() {
   const handleSpeedChange = React.useCallback(() => {
     if (!gameState.isPaused) return;
     setSpeedMultiplier(current => {
-      const speeds = [1, 1.5, 2, 2.5];  // Matches the values from FightModeModal
+      const speeds = [1, 1.25, 1.5, 1.75, 2, 2.25, 2.5];  // More speed options for better control
       const currentIndex = speeds.indexOf(current);
       return speeds[(currentIndex + 1) % speeds.length];
     });
@@ -863,7 +869,7 @@ export default function Game() {
                 </View>
 
                 <MaterialCommunityIcons
-                  name="boxing-glove"
+                  name="trophy"
                   size={32}
                   color="#ffc400ff"
                   style={styles.gameBoxingGloveIcon}

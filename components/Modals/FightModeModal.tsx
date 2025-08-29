@@ -34,7 +34,6 @@ export const FIGHT_OPTIONS: {
   roundDurations: FightOption[];
   numberOfRounds: FightOption[];
   restTimes: FightOption[];
-  moveSpeeds: FightOption[];
   movesMode: FightOption[];
 } = {
   roundDurations: [
@@ -57,12 +56,6 @@ export const FIGHT_OPTIONS: {
     { value: '1.5', label: '1.5m' },
     { value: '2', label: '2m' },
     { value: '3', label: '3m' },
-  ],
-  moveSpeeds: [
-    { value: '1', label: '1x' },
-    { value: '1.5', label: '1.5x' },
-    { value: '2', label: '2x' },
-    { value: '2.5', label: '2.5x' },
   ],
   movesMode: [
     { value: 'Punches', label: 'Strikes' },
@@ -267,36 +260,6 @@ export function FightModeModal({
                 </View>
               </View>
             )}
-
-            <View style={styles.optionRow}>
-              <Text style={styles.optionLabel}>Move Speed:</Text>
-              <View style={styles.sliderContainer}>
-                <Slider
-                  style={styles.slider}
-                  minimumValue={0}
-                  maximumValue={4}
-                  step={1}
-                  value={FIGHT_OPTIONS.moveSpeeds.findIndex(s => s.value === moveSpeed)}
-                  onValueChange={(value) => setMoveSpeed(FIGHT_OPTIONS.moveSpeeds[value].value)}
-                  minimumTrackTintColor="#FFFFFF"
-                  maximumTrackTintColor="#FFFFFF40"
-                  thumbTintColor="#FFFFFF"
-                />
-                <View style={styles.sliderLabels}>
-                  {FIGHT_OPTIONS.moveSpeeds.map((speed, index) => (
-                    <Text
-                      key={speed.value}
-                      style={[
-                        styles.sliderLabel,
-                        moveSpeed === speed.value && styles.sliderLabelActive
-                      ]}
-                    >
-                      {speed.label}
-                    </Text>
-                  ))}
-                </View>
-              </View>
-            </View>
 
             <TouchableOpacity style={styles.startButton} onPress={handleStartFight}>
               <Text style={styles.startButtonText}>Start Fight</Text>

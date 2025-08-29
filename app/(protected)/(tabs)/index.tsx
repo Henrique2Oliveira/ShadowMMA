@@ -426,8 +426,9 @@ export default function Index() {
           />
         </View>
 
-        {/* Timer Row */}
+        {/* Timer Row - Small Buttons*/}
         <View style={styles.row}>
+          {/* Map through buttons 1-4 for small buttons */}
           {[
             { buttonIndex: 1, iconName: "timer-outline" },
             { buttonIndex: 2, iconName: "timer-sand" },
@@ -695,7 +696,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
     maxWidth: 600,
-    marginVertical: 15,
+    marginTop: 5,
+    marginBottom: 18,
     gap: 10,
   },
   buttonWide: {

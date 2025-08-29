@@ -34,20 +34,22 @@ export const animate3DMove = (
   }).start();
 };
 export const addRandomMovement = (scale: Animated.Value) => {
-  const randomDelay = 2000; // Reduced delay for better responsiveness
+  const randomDelay = 3000; // Increased delay for more relaxed timing
 
   return new Promise<void>((resolve) => {
     setTimeout(() => {
-      // Simplified animation with better performance
+      // Fluid spring animation for smoother, more natural movement
       Animated.sequence([
-        Animated.timing(scale, {
-          toValue: 1.03, // Reduced scale change
-          duration: 150, // Faster animation
+        Animated.spring(scale, {
+          toValue: 1.02, // Slightly reduced scale change for subtlety
+          tension: 40, // Lower tension for slower, more fluid motion
+          friction: 8, // Higher friction for smoother movement
           useNativeDriver: true,
         }),
-        Animated.timing(scale, {
+        Animated.spring(scale, {
           toValue: 1,
-          duration: 150,
+          tension: 50, // Slightly higher tension for gentle return
+          friction: 9, // Higher friction for smooth settling
           useNativeDriver: true,
         })
       ]).start(() => resolve());
