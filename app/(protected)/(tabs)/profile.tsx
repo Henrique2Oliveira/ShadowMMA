@@ -232,19 +232,37 @@ export default function Profile() {
             </View>
           </View>
           <View style={styles.buttonList}>
-            {earnedBadges.length > 0 && (
-              <View style={styles.badgesContainer}>
-                <Text style={styles.badgesTitle}>Streak Badges</Text>
+            <View style={styles.badgesContainer}>
+              <Text style={styles.badgesTitle}>Badges</Text>
+              {earnedBadges.length === 0 ? (
+                <View style={styles.noBadgesBox}>
+                  <MaterialCommunityIcons name="fire" size={38} color={Colors.text} style={{ marginBottom: 10 }} />
+                  <Text style={styles.noBadgesTitle}>Start Your Streak</Text>
+                  <Text style={styles.noBadgesText}>
+                    Log in on 3 different days to earn your first badge. Come back tomorrow and begin building your legacy.
+                  </Text>
+                  <View style={styles.nextBadgeRow}>
+                    <View style={styles.badgePreviewWrapper}>
+                      <View style={styles.badgeBgDim}>
+                        <Image source={badgeImages[3]} style={[styles.badgeImage, { opacity: 0.35 }]} />
+                      </View>
+                      <Text style={styles.nextBadgeLabel}>First badge at 3 days</Text>
+                    </View>
+                  </View>
+                </View>
+              ) : (
                 <View style={[styles.badgesRow, earnedBadges.length === 1 && styles.badgesRowSingle]}>
                   {earnedBadges.map(days => (
                     <View key={days} style={styles.badgeWrapper}>
-                      <Image source={badgeImages[days]} style={styles.badgeImage} resizeMode="contain" />
+                      <View style={styles.badgeBg}>
+                        <Image source={badgeImages[days]} style={styles.badgeImage} resizeMode="contain" />
+                      </View>
                       <Text style={styles.badgeLabel}>{days} {days === 1 ? 'day' : 'days'}</Text>
                     </View>
                   ))}
                 </View>
-              </View>
-            )}
+              )}
+            </View>
             <TouchableOpacity style={styles.button} onPress={() => router.push('/settings')}>
               <MaterialCommunityIcons name="cog" size={24} color={Colors.text} />
               <Text style={styles.buttonText}>Settings</Text>
@@ -356,8 +374,9 @@ const styles = StyleSheet.create({
   },
   badgesTitle: {
     color: Colors.text,
-    fontSize: 18,
+    fontSize: 22,
     fontFamily: Typography.fontFamily,
+    textAlign: 'center',
     marginBottom: 10,
   },
   badgesRow: {
@@ -376,15 +395,77 @@ const styles = StyleSheet.create({
   marginHorizontal: 10,
   marginBottom: 12,
   },
+  badgeBg: {
+    width: 60,
+    height: 60,
+    borderRadius: 14,
+    backgroundColor: '#1a1a1acc',
+    borderWidth: 1,
+    borderColor: '#ffffff33',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 5,
+    elevation: 5,
+  },
   badgeImage: {
-    width: 50,
-    height: 50,
+    width: 44,
+    height: 44,
   },
   badgeLabel: {
     color: Colors.text,
     fontSize: 12,
     marginTop: 4,
     fontFamily: Typography.fontFamily,
+  },
+  noBadgesBox: {
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+  },
+  noBadgesTitle: {
+    color: Colors.text,
+    fontSize: 18,
+    fontFamily: Typography.fontFamily,
+    marginBottom: 6,
+  },
+  noBadgesText: {
+    color: Colors.text,
+    opacity: 0.85,
+    fontSize: 14,
+    fontFamily: Typography.fontFamily,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 14,
+    paddingHorizontal: 10,
+  },
+  nextBadgeRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  badgePreviewWrapper: {
+    alignItems: 'center',
+    maxWidth: 160,
+  },
+  badgeBgDim: {
+    width: 60,
+    height: 60,
+    borderRadius: 14,
+    backgroundColor: '#1a1a1a55',
+    borderWidth: 1,
+    borderColor: '#ffffff22',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  nextBadgeLabel: {
+    color: Colors.text,
+    fontSize: 12,
+    opacity: 0.8,
+    fontFamily: Typography.fontFamily,
+    textAlign: 'center',
   },
   button: {
     flexDirection: 'row',
