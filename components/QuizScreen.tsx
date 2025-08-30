@@ -10,23 +10,24 @@ export type QuizData = {
   gender: string;
   experience: string;
   goal: string;
+  stance: 'orthodox' | 'southpaw';
   notificationsEnabled: boolean;
   weeklyMissionRounds: number;
   weeklyMissionTime: number; // minutes
 };
-
 type Props = {
   onComplete: (data: QuizData) => void;
 };
 
 export default function QuizScreen({ onComplete }: Props) {
-  const [step, setStep] = useState(0); // 0..6
-  const totalSteps = 7;
+  const [step, setStep] = useState(0); // 0..7
+  const totalSteps = 8;
   const [answers, setAnswers] = useState<QuizData>({
     age: '',
     gender: '',
     experience: '',
     goal: '',
+    stance: 'orthodox',
     notificationsEnabled: false,
     weeklyMissionRounds: 20,
     weeklyMissionTime: 60,
@@ -43,16 +44,37 @@ export default function QuizScreen({ onComplete }: Props) {
     if (step < totalSteps - 1) {
       setStep(s => s + 1);
     } else {
-      // Persist weekly mission & notification prefs
       try {
         await AsyncStorage.setItem('weeklyMissionRounds', newAnswers.weeklyMissionRounds.toString());
         await AsyncStorage.setItem('weeklyMissionTime', newAnswers.weeklyMissionTime.toString());
         await AsyncStorage.setItem('enhancedNotificationsEnabled', newAnswers.notificationsEnabled ? 'true' : 'false');
+        // Persist stance into game preferences
+        try {
+          const raw = await AsyncStorage.getItem('shadowmma_game_preferences');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            parsed.stance = newAnswers.stance;
+            await AsyncStorage.setItem('shadowmma_game_preferences', JSON.stringify(parsed));
+          } else {
+            await AsyncStorage.setItem('shadowmma_game_preferences', JSON.stringify({
+              isMuted: false,
+              animationMode: 'new',
+              stance: newAnswers.stance,
+              showComboCarousel: true,
+              speedMultiplier: 1.3,
+            }));
+          }
+        } catch {}
       } catch (e) {
         // silent
       }
       onComplete(newAnswers);
     }
+  };
+
+  const goBack = () => {
+    if (isRequestingPermission) return;
+    setStep(s => (s > 0 ? s - 1 : s));
   };
 
   const handleBasicAnswer = (key: keyof QuizData, value: any) => {
@@ -126,8 +148,42 @@ export default function QuizScreen({ onComplete }: Props) {
       case 4:
         return (
           <View style={styles.sectionContainer}>
+            <Text style={styles.question}>Choose your stance</Text>
+            <Text style={styles.stanceIntro}>This decides which side leads. Pick what feels natural. You can change later.</Text>
+            <View style={styles.stanceRow}>
+              <Pressable
+                style={[styles.stanceOption, answers.stance === 'orthodox' && styles.stanceOptionSelected]}
+                onPress={() => handleBasicAnswer('stance', 'orthodox')}
+              >
+                <MaterialCommunityIcons name="hand-back-left" size={34} color={Colors.text} />
+                <Text style={styles.stanceTitle}>Orthodox {answers.stance === 'orthodox' && '✓'}</Text>
+                <View style={styles.recommendRow}>
+                  <Text style={styles.stanceDesc}>Left side leads. Best if right‑handed.</Text>
+                  <Text style={[
+                    styles.recommendPill,
+                    answers.stance === 'orthodox' && styles.recommendPillActive
+                  ]}>RECOMMENDED</Text>
+                </View>
+              </Pressable>
+              <Pressable
+                style={[styles.stanceOption, answers.stance === 'southpaw' && styles.stanceOptionSelected]}
+                onPress={() => handleBasicAnswer('stance', 'southpaw')}
+              >
+                <MaterialCommunityIcons name="hand-back-right" size={34} color={Colors.text} />
+                <Text style={styles.stanceTitle}>Southpaw {answers.stance === 'southpaw' && '✓'}</Text>
+                <Text style={styles.stanceDesc}>Right side leads. Good for left‑handed.</Text>
+              </Pressable>
+            </View>
+            <Text style={styles.jabNote}>Example: The jab is the quick straight punch from your lead hand. In Orthodox it's your LEFT hand; in Southpaw it's your RIGHT hand.</Text>
+            <Text style={styles.stanceNoteBottom}>You can switch later in Game Options.</Text>
+          </View>
+        );
+      case 5:
+        return (
+          <View style={styles.sectionContainer}>
             <Text style={styles.question}>Enable smart notifications?</Text>
             <Text style={styles.helperText}>Get streak reminders, motivation, and comeback alerts.</Text>
+            <Text style={styles.helperTextSecondary}>You can change this later anytime in Settings.</Text>
             <View style={styles.inlineOptions}>
               <Pressable
                 style={[styles.bigOptionButton, answers.notificationsEnabled && styles.selectedBigOption]}
@@ -155,7 +211,7 @@ export default function QuizScreen({ onComplete }: Props) {
             {permissionError && <Text style={styles.errorText}>{permissionError}</Text>}
           </View>
         );
-      case 5:
+  case 6:
         return (
           <NumberSelect
             title="Choose your weekly target rounds"
@@ -166,7 +222,7 @@ export default function QuizScreen({ onComplete }: Props) {
             onSelect={(v) => goNext({ weeklyMissionRounds: v })}
           />
         );
-      case 6:
+  case 7:
         return (
           <NumberSelect
             title="Choose your weekly training time"
@@ -199,6 +255,17 @@ export default function QuizScreen({ onComplete }: Props) {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {renderStep()}
       </ScrollView>
+      {step > 0 && (
+        <Pressable
+          style={styles.backFloatingButton}
+          onPress={goBack}
+          disabled={isRequestingPermission}
+          accessibilityLabel="Go back to previous question"
+        >
+          <MaterialCommunityIcons name="arrow-left" size={20} color={Colors.text} />
+          <Text style={styles.backFloatingText}>Back</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -217,6 +284,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     marginBottom: 40,
+  },
+  backFloatingButton: {
+    position: 'absolute',
+    left: 16,
+    bottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+  },
+  backFloatingText: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 14,
+    color: Colors.text,
+    fontWeight: '600',
   },
   progressDot: {
     width: 10,
@@ -249,6 +336,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 25,
   },
+  helperTextSecondary: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 12,
+    color: Colors.lightText ?? '#aaa',
+    textAlign: 'center',
+    marginTop: -15,
+    marginBottom: 25,
+  },
   optionsContainer: {
     gap: 15,
   },
@@ -271,7 +366,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   selectedOptionText: {
-    fontWeight: 'bold',
+    color: Colors.text,
   },
   sectionContainer: {
     flex: 1,
@@ -305,6 +400,165 @@ const styles = StyleSheet.create({
     color: Colors.text,
     textAlign: 'center',
     fontWeight: '600',
+  },
+  stanceNote: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 12,
+    color: Colors.lightText ?? '#ccc',
+    textAlign: 'center',
+    opacity: 0.8,
+  },
+  // New stance selection styles
+  stanceIntro: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 14,
+    color: Colors.text,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  stanceRow: {
+    flexDirection: 'row',
+    gap: 18,
+  },
+  stanceOption: {
+    flex: 1,
+    backgroundColor: Colors.cardColor,
+    paddingVertical: 28,
+    paddingHorizontal: 16,
+    borderRadius: 18,
+    alignItems: 'center',
+    gap: 14,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  stanceOptionSelected: {
+    borderColor: Colors.green,
+    backgroundColor: Colors.green,
+  },
+  stanceTitle: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.text,
+  },
+  stanceDesc: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 13,
+    color: Colors.text,
+    textAlign: 'center',
+    lineHeight: 18,
+    opacity: 0.95,
+  },
+  stanceNoteBottom: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 12,
+    color: Colors.text,
+    textAlign: 'center',
+    marginTop: 22,
+    opacity: 0.85,
+  },
+  jabNote: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 12,
+    color: Colors.text,
+    textAlign: 'center',
+    marginTop: 18,
+    lineHeight: 18,
+    opacity: 0.85,
+  },
+  recommendRow: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  recommendPill: {
+    marginTop: 6,
+    backgroundColor: Colors.green,
+    color: Colors.text,
+    fontFamily: Typography.fontFamily,
+    fontSize: 10,
+    fontWeight: '700',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 16,
+    letterSpacing: 0.5,
+  },
+  recommendPillActive: {
+    borderWidth: 1,
+    borderColor: '#ffffff',
+    shadowColor: '#ffffff',
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  recommendMiniPill: {
+    marginTop: 10,
+    backgroundColor: Colors.green,
+    color: Colors.text,
+    fontFamily: Typography.fontFamily,
+    fontSize: 10,
+    fontWeight: '700',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 14,
+    letterSpacing: 0.5,
+  },
+  recommendMiniPillActive: {
+    borderWidth: 1,
+    borderColor: '#ffffff',
+    shadowColor: '#ffffff',
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  jabExampleContainer: {
+    marginTop: 28,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+  jabExampleTitle: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text,
+    marginBottom: 14,
+    textAlign: 'center',
+  },
+  jabExamplesRow: {
+    flexDirection: 'row',
+    gap: 14,
+  },
+  jabExampleCard: {
+    flex: 1,
+    backgroundColor: Colors.darkText,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  jabExampleLabel: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.text,
+  },
+  jabImage: {
+    width: 54,
+    height: 54,
+    resizeMode: 'contain',
+
+  },
+  jabExampleHand: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 12,
+    color: Colors.text,
+    opacity: 0.85,
   },
   errorText: {
     color: '#ff5555',
@@ -357,6 +611,7 @@ const NumberSelect = ({ title, description, options, unit, selected, onSelect }:
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
         {options.map(opt => {
           const isSelected = selected === opt;
+          const isRecommended = (title.toLowerCase().includes('rounds') && opt === 20) || (title.toLowerCase().includes('training time') && opt === 60);
           return (
             <Pressable
               key={opt}
@@ -369,6 +624,7 @@ const NumberSelect = ({ title, description, options, unit, selected, onSelect }:
                 alignItems: 'center',
                 borderWidth: 1,
                 borderColor: isSelected ? Colors.green : Colors.button,
+                position: 'relative'
               }}
               onPress={() => onSelect(opt)}
             >
@@ -376,8 +632,13 @@ const NumberSelect = ({ title, description, options, unit, selected, onSelect }:
                 fontFamily: Typography.fontFamily,
                 fontSize: 16,
                 color: Colors.text,
-                fontWeight: '600'
               }}>{opt} {unit}</Text>
+              {isRecommended && (
+                <Text style={[
+                  styles.recommendMiniPill,
+                  isSelected && styles.recommendMiniPillActive
+                ]}>RECOMMENDED</Text>
+              )}
             </Pressable>
           );
         })}

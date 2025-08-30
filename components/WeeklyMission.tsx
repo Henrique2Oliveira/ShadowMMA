@@ -65,6 +65,7 @@ export const WeeklyMission: React.FC<WeeklyMissionProps> = ({
       </View>
 
       <View style={styles.content}>
+  <Text style={styles.smallNote}>You can adjust your weekly targets anytime in Settings.</Text>
         <View style={styles.missionItem}>
           <View style={styles.missionInfo}>
             <MaterialCommunityIcons
@@ -165,6 +166,12 @@ const styles = StyleSheet.create({
   },
   content: {
     gap: 10,
+  },
+  smallNote: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 12,
+    fontFamily: Typography.fontFamily,
+    marginBottom: 4,
   },
   loadingContent: {
     alignItems: 'center',

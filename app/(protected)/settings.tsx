@@ -318,12 +318,16 @@ export default function Settings() {
             </Text>
           </TouchableOpacity>
         )}
+        {(notificationsEnabled || enhancedNotificationsEnabled) && (
+          <Text style={styles.helperInline}>You can fine‑tune or disable these notifications anytime.</Text>
+        )}
 
         {/* Weekly Mission Settings */}
         <View style={styles.sectionHeader}>
           <MaterialCommunityIcons name="trophy" size={20} color="#fdd700" />
           <Text style={styles.sectionTitle}>Weekly Mission</Text>
         </View>
+  <Text style={styles.helperInline}>Adjust these goals whenever you want to keep progress realistic.</Text>
 
         <TouchableOpacity 
           style={styles.option}
@@ -556,5 +560,12 @@ const styles = StyleSheet.create({
   },
   dangerText: {
     color: '#ff4444',
+  },
+  helperInline: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 12,
+    fontFamily: Typography.fontFamily,
+    marginBottom: 12,
+    paddingHorizontal: 5,
   },
 });

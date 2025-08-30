@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily,
     fontSize: 20,
     letterSpacing: 1,
-    fontWeight: '700',
+
     color: Colors.text,
     opacity: 0.85,
     marginBottom: 36,
@@ -66,7 +66,6 @@ const styles = StyleSheet.create({
     fontSize: 40,
     lineHeight: 48,
     color: Colors.text,
-    fontWeight: '800',
     marginBottom: 24,
   },
   subHeadline: {
@@ -79,6 +78,7 @@ const styles = StyleSheet.create({
   startButton: {
     borderRadius: 14,
     overflow: 'hidden',
+
   },
   gradient: {
     paddingVertical: 18,
@@ -87,8 +87,8 @@ const styles = StyleSheet.create({
   },
   startText: {
     fontFamily: Typography.fontFamily,
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 22,
+
     letterSpacing: 1,
     color: Colors.text,
   },
