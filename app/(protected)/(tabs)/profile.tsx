@@ -4,9 +4,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ImageBackground, Linking, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, ImageBackground, Linking, Modal, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type UserData = {
   name: string;
@@ -31,6 +32,44 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [newBadge, setNewBadge] = useState<{ id: number; days: number } | null>(null);
+  const [badgeModalVisible, setBadgeModalVisible] = useState(false);
+
+  // Define badge thresholds and mapping to images
+  const badgeThresholds = [3, 7, 14, 30];
+  const badgeImages: Record<number, any> = {
+    3: require('@/assets/images/badges/badge-3.png'),
+    7: require('@/assets/images/badges/badge-7.png'),
+    14: require('@/assets/images/badges/badge-14.png'),
+    30: require('@/assets/images/badges/badge-30.png'),
+  };
+
+  // Determine earned badges based on maxLoginStreak
+  const maxStreak = (userData as any)?.maxLoginStreak || userData?.loginStreak || 0;
+  const earnedBadges = badgeThresholds.filter(d => maxStreak >= d);
+
+  useEffect(() => {
+    // Check if a new badge was earned this session
+    const checkNewBadge = async () => {
+      if (!user || !userData) return;
+      const storageKey = `shownBadges_${user.uid}`;
+      try {
+        const shownRaw = await AsyncStorage.getItem(storageKey);
+        const shown: number[] = shownRaw ? JSON.parse(shownRaw) : [];
+        const unseen = earnedBadges.filter(b => !shown.includes(b)).sort((a,b)=>a-b);
+        if (unseen.length > 0) {
+          const newest = unseen[unseen.length - 1];
+          setNewBadge({ id: newest, days: newest });
+          setBadgeModalVisible(true);
+          const updated = Array.from(new Set([...shown, ...unseen]));
+          await AsyncStorage.setItem(storageKey, JSON.stringify(updated));
+        }
+      } catch (e) {
+        console.warn('Badge storage error', e);
+      }
+    };
+    checkNewBadge();
+  }, [userData, user]);
 
   // Helper function to format large numbers
   const formatNumber = (num: number): string => {
@@ -193,6 +232,19 @@ export default function Profile() {
             </View>
           </View>
           <View style={styles.buttonList}>
+            {earnedBadges.length > 0 && (
+              <View style={styles.badgesContainer}>
+                <Text style={styles.badgesTitle}>Streak Badges</Text>
+                <View style={[styles.badgesRow, earnedBadges.length === 1 && styles.badgesRowSingle]}>
+                  {earnedBadges.map(days => (
+                    <View key={days} style={styles.badgeWrapper}>
+                      <Image source={badgeImages[days]} style={styles.badgeImage} resizeMode="contain" />
+                      <Text style={styles.badgeLabel}>{days} {days === 1 ? 'day' : 'days'}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
             <TouchableOpacity style={styles.button} onPress={() => router.push('/settings')}>
               <MaterialCommunityIcons name="cog" size={24} color={Colors.text} />
               <Text style={styles.buttonText}>Settings</Text>
@@ -235,6 +287,25 @@ export default function Profile() {
           setShowPaywall(false);
         }}
       />
+      <Modal visible={badgeModalVisible} transparent animationType="fade" onRequestClose={()=>setBadgeModalVisible(false)}>
+        <View style={styles.badgeModalOverlay}>
+          <View style={styles.badgeModalContent}>
+            <TouchableOpacity style={styles.badgeModalClose} onPress={()=>setBadgeModalVisible(false)}>
+              <MaterialCommunityIcons name="close" size={24} color={Colors.text} />
+            </TouchableOpacity>
+            {newBadge && (
+              <>
+                <Image source={badgeImages[newBadge.days]} style={styles.badgeModalImage} resizeMode="contain" />
+                <Text style={styles.badgeModalTitle}>New Badge!</Text>
+                <Text style={styles.badgeModalText}>You reached a {newBadge.days}-day streak. Keep going!</Text>
+                <TouchableOpacity style={styles.badgeModalButton} onPress={()=>setBadgeModalVisible(false)}>
+                  <Text style={styles.badgeModalButtonText}>Awesome!</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </ImageBackground >
   );
 }
@@ -276,6 +347,44 @@ const styles = StyleSheet.create({
   },
   buttonList: {
     marginTop: 30,
+  },
+  badgesContainer: {
+    marginBottom: 20,
+    backgroundColor: '#0000009f',
+    padding: 15,
+    borderRadius: 12,
+  },
+  badgesTitle: {
+    color: Colors.text,
+    fontSize: 18,
+    fontFamily: Typography.fontFamily,
+    marginBottom: 10,
+  },
+  badgesRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  justifyContent: 'center',
+  alignItems: 'center',
+  },
+  badgesRowSingle: {
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+  },
+  badgeWrapper: {
+    width: 70,
+    alignItems: 'center',
+  marginHorizontal: 10,
+  marginBottom: 12,
+  },
+  badgeImage: {
+    width: 50,
+    height: 50,
+  },
+  badgeLabel: {
+    color: Colors.text,
+    fontSize: 12,
+    marginTop: 4,
+    fontFamily: Typography.fontFamily,
   },
   button: {
     flexDirection: 'row',
@@ -401,5 +510,58 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 2,
   },
+  badgeModalOverlay: {
+    flex:1,
+    backgroundColor:'rgba(0,0,0,0.8)',
+    justifyContent:'center',
+    alignItems:'center'
+  },
+  badgeModalContent: {
+    width: '80%',
+    maxWidth: 360,
+    backgroundColor:'#111',
+    borderRadius:20,
+    padding:25,
+    alignItems:'center',
+    borderWidth:2,
+    borderColor: Colors.text
+  },
+  badgeModalClose: {
+    position:'absolute',
+    top:10,
+    right:10,
+    padding:4
+  },
+  badgeModalImage: {
+    width:120,
+    height:120,
+    marginBottom:15
+  },
+  badgeModalTitle: {
+    color: Colors.text,
+    fontSize:26,
+    fontFamily: Typography.fontFamily,
+    marginBottom:8
+  },
+  badgeModalText: {
+    color: Colors.text,
+    fontSize:16,
+    textAlign:'center',
+    marginBottom:20,
+    fontFamily: Typography.fontFamily,
+  },
+  badgeModalButton: {
+    backgroundColor:'#ffffff22',
+    paddingVertical:12,
+    paddingHorizontal:30,
+    borderRadius:25,
+    borderWidth:1,
+    borderColor: Colors.text
+  },
+  badgeModalButtonText: {
+    color: Colors.text,
+    fontSize:16,
+    fontFamily: Typography.fontFamily,
+  }
 });
 

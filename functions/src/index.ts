@@ -84,6 +84,8 @@ export const getUserData = onRequest(async (req, res) => {
       plan: userData?.plan || 'free',
       fightsLeft: userData?.fightsLeft || 3,
       loginStreak: userData?.loginStreak || 0,
+  // Highest login streak ever achieved (used for badge display)
+  maxLoginStreak: userData?.maxLoginStreak || userData?.loginStreak || 0,
       currentFightRound: userData?.currentFightRound || 0,
       currentFightTime: userData?.currentFightTime || 0,
       totalFightRounds: userData?.totalFightRounds || 0,
@@ -174,17 +176,26 @@ export const updateLastLogin = onRequest(async (req, res) => {
       }
     }
 
-    // Only update database if necessary
+    // Determine if maxLoginStreak should be updated
+    let maxLoginStreak = userData?.maxLoginStreak || lastLoginStreak || 0;
+    if (newStreak > maxLoginStreak) {
+      maxLoginStreak = newStreak;
+      shouldUpdate = true; // ensure update if surpassed
+    }
+
+    // Only update database if necessary (streak changed or new max)
     if (shouldUpdate) {
       await userRef.update({
         lastLoginAt: FieldValue.serverTimestamp(),
-        loginStreak: newStreak
+        loginStreak: newStreak,
+        maxLoginStreak
       });
     }
 
     res.status(200).json({ 
       success: true, 
       loginStreak: newStreak,
+      maxLoginStreak,
       updated: shouldUpdate // Let client know if we actually updated
     });
   } catch (error: any) {
@@ -661,6 +672,7 @@ export const createUser = onRequest(async (req, res) => {
       fightsLeft: 4, // Start with 4 fights to allow immediate play
       playing: false,
       loginStreak: 1, // New field to track login streak count
+  maxLoginStreak: 1, // Track highest streak ever
       currentFightRound: 0, // New field to track current fight round
       currentFightTime: 0, // New field to track current fight time
       totalFightRounds: 0, // New field to track total fight rounds (weekly mission - resets)
