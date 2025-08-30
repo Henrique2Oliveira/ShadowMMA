@@ -188,6 +188,7 @@ export default function Game() {
   const [showNewCombo, setShowNewCombo] = React.useState(false);
   // LevelBar animations handled internally by shared component (DRY)
 
+  // Speed multiplier: default param OR 1.0, but we will bump first-time users to 1.3x below
   const [speedMultiplier, setSpeedMultiplier] = React.useState(parseFloat(params.moveSpeed || '1'));
   const [animationMode, setAnimationMode] = React.useState<'none' | 'old' | 'new'>('new');
   const [showComboCarousel, setShowComboCarousel] = React.useState(true); // Default to true
@@ -199,10 +200,19 @@ export default function Game() {
         setAnimationMode(prefs.animationMode || 'new');
         setStance(prefs.stance);
         setShowComboCarousel(prefs.showComboCarousel !== undefined ? prefs.showComboCarousel : true);
-        // Load saved speed multiplier, fallback to route param or default to 1
         if (prefs.speedMultiplier !== undefined) {
           setSpeedMultiplier(prefs.speedMultiplier);
         }
+      } else {
+        // First time: set a friendlier slightly faster pace (1.3x) and persist
+        setSpeedMultiplier(1.3);
+        saveGamePreferences({
+          isMuted: false,
+            animationMode: 'new',
+            stance: 'orthodox',
+            showComboCarousel: true,
+            speedMultiplier: 1.3,
+        });
       }
     });
   }, []);
@@ -952,7 +962,7 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: Colors.background,
     paddingHorizontal: 20,
-    paddingVertical: 5,
+    paddingVertical: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.5,

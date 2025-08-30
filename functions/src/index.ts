@@ -658,12 +658,9 @@ export const createUser = onRequest(async (req, res) => {
       name: name,
       xp: 120, // Start at level 1 (100 XP) plus some buffer for visual progress
       plan: 'free', // Default plan, can be 'free' or 'pro' or 'annual'
-      hours: 0,
-      moves: 4,
-      combos: 1,
       fightsLeft: 4, // Start with 4 fights to allow immediate play
       playing: false,
-      loginStreak: 0, // New field to track login streak count
+      loginStreak: 1, // New field to track login streak count
       currentFightRound: 0, // New field to track current fight round
       currentFightTime: 0, // New field to track current fight time
       totalFightRounds: 0, // New field to track total fight rounds (weekly mission - resets)

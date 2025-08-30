@@ -11,6 +11,7 @@ import { Colors, Typography } from '@/themes/theme';
 import { checkMissedLoginAndScheduleComeback, recordLoginAndScheduleNotifications, registerForPushNotificationsAsync } from '@/utils/notificationUtils';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -91,6 +92,16 @@ export default function Index() {
   const [moveSpeed, setMoveSpeed] = React.useState('1');
   const [movesMode, setMovesMode] = React.useState<string[]>(['Punches']);
   const [category, setCategory] = React.useState('0');
+
+  // Refresh user data (including updated rounds/time) whenever this tab gains focus after a fight
+  useFocusEffect(
+    React.useCallback(() => {
+      if (user) {
+        refreshUserData(user.uid); // fetch latest totals (rounds, time, xp, etc.)
+        loadMissionSettings();     // ensure mission settings are current
+      }
+    }, [user, refreshUserData, loadMissionSettings])
+  );
 
   // Expose the show modal function globally
   React.useEffect(() => {
