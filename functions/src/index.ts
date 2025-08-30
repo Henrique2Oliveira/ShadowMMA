@@ -1,4 +1,5 @@
 
+import * as crypto from 'crypto';
 import { initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
@@ -28,10 +29,16 @@ initializeApp();
 const db = getFirestore();
 const auth = getAuth();
 
-// Cloud function to handle user login update
+// --- Simple in-memory cache (persists per warm Cloud Function instance) ---
+// Reduces Firestore reads if the same user requests data repeatedly in a short window.
+// NOTE: This does NOT eliminate function invocation cost, but saves reads + latency.
+interface CachedUserData { data: any; etag: string; fetchedAt: number; }
+const userDataCache: Record<string, CachedUserData> = {};
+const USER_CACHE_TTL_MS = 15_000; // 15s server-side TTL (tune as needed)
+
+// Cloud function to handle user login update with caching + ETag conditional response
 export const getUserData = onRequest(async (req, res) => {
   try {
-    // Verify authentication
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith("Bearer ")) {
       res.status(401).send("Unauthorized: Missing or invalid token");
@@ -42,15 +49,31 @@ export const getUserData = onRequest(async (req, res) => {
     const decodedToken = await auth.verifyIdToken(idToken);
     const uid = decodedToken.uid;
 
+    const ifNoneMatch = req.headers['if-none-match'];
+
+    // 1. Serve fresh cache (still valid) instantly without Firestore read
+    const cached = userDataCache[uid];
+    if (cached && (Date.now() - cached.fetchedAt) < USER_CACHE_TTL_MS) {
+      // If client already has the same ETag -> 304
+      if (ifNoneMatch && ifNoneMatch === cached.etag) {
+        res.setHeader('ETag', cached.etag);
+        res.status(304).end();
+        return;
+      }
+      res.setHeader('ETag', cached.etag);
+      res.setHeader('Cache-Control', 'private, max-age=10'); // client hint (short)
+      res.status(200).json({ success: true, data: cached.data, cached: true });
+      return;
+    }
+
+    // 2. Fetch from Firestore (or refresh if cache stale)
     const userRef = db.collection("users").doc(uid);
     const userDoc = await userRef.get();
-
     if (!userDoc.exists) {
       res.status(404).json({ success: false, error: { code: 'not-found', message: 'User data not found' } });
       return;
     }
 
-    // Only return necessary data
     const userData = userDoc.data();
     const safeUserData = {
       name: userData?.name || 'Warrior',
@@ -69,7 +92,22 @@ export const getUserData = onRequest(async (req, res) => {
       lifetimeFightTime: userData?.lifetimeFightTime || 0,
     };
 
-    res.status(200).json({ success: true, data: safeUserData });
+    // 3. Generate ETag hash of response (fast, stable)
+    const etag = crypto.createHash('sha1').update(JSON.stringify(safeUserData)).digest('hex');
+
+    // 4. If client's version matches new hash -> 304 (no body)
+    if (ifNoneMatch && ifNoneMatch === etag) {
+      userDataCache[uid] = { data: safeUserData, etag, fetchedAt: Date.now() }; // refresh cache timestamp
+      res.setHeader('ETag', etag);
+      res.status(304).end();
+      return;
+    }
+
+    // 5. Store/refresh cache then respond
+    userDataCache[uid] = { data: safeUserData, etag, fetchedAt: Date.now() };
+    res.setHeader('ETag', etag);
+    res.setHeader('Cache-Control', 'private, max-age=10');
+    res.status(200).json({ success: true, data: safeUserData, cached: false });
   } catch (error: any) {
     logger.error("Error fetching user data:", error);
     res.status(500).json({

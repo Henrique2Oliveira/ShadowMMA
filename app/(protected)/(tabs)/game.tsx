@@ -304,6 +304,8 @@ export default function Game() {
       isPaused: true,
       isGameOver: false,
     });
+  // Reset countdown completion so round timer waits until after full countdown (incl. 'Fight!')
+  setIsCountdownComplete(false);
 
     // Don't reset speed multiplier - preserve user's saved preference
     // setSpeedMultiplier(parseFloat(params.moveSpeed || '1'));
@@ -460,6 +462,10 @@ export default function Game() {
   } = useGameAnimations();
   const sideButtonsOpacity = React.useRef(new Animated.Value(0)).current;
 
+  // Countdown state must be declared BEFORE any effects that reference it
+  const [isCountdownComplete, setIsCountdownComplete] = React.useState(false);
+  const countdownLength = 5; // Ready?, 3, 2, 1, Fight!
+
   // Countdown effect (rounds & rest) - delta based so external timeLeft changes (e.g., skip rest) persist
   const lastTickRef = React.useRef<number | null>(null);
   React.useEffect(() => {
@@ -476,7 +482,10 @@ export default function Game() {
 
       setGameState(prev => {
         if (prev.isPaused || prev.isGameOver) return prev; // safeguard
-        const newTimeLeft = Math.max(prev.timeLeft - delta, 0);
+        // During initial countdown (before isCountdownComplete) we DO NOT decrement the fight round timer.
+        // We still decrement during rest periods, or after countdown completes.
+        const shouldDecrement = prev.isRestPeriod || isCountdownComplete;
+        const newTimeLeft = shouldDecrement ? Math.max(prev.timeLeft - delta, 0) : prev.timeLeft;
         if (newTimeLeft > 0) {
           return { ...prev, timeLeft: newTimeLeft };
         }
@@ -566,7 +575,7 @@ export default function Game() {
       });
     }, 100);
     return () => clearInterval(interval);
-  }, [gameState.isPaused, gameState.isGameOver, gameState.isRestPeriod, roundDurationMs, restTimeMs, totalRounds, moves, playBellSound, tiltX, tiltY, scale, updateUserData]);
+  }, [gameState.isPaused, gameState.isGameOver, gameState.isRestPeriod, roundDurationMs, restTimeMs, totalRounds, moves, playBellSound, tiltX, tiltY, scale, updateUserData, isCountdownComplete]);
   const handleSpeedChange = React.useCallback(() => {
     if (!gameState.isPaused) return;
     setSpeedMultiplier(current => {
@@ -605,8 +614,7 @@ export default function Game() {
     return () => animation?.stop();
   }, [gameState.isPaused, updateMoveProg,]);
 
-  const [isCountdownComplete, setIsCountdownComplete] = React.useState(false);
-  const countdownLength = 5; // Length of countdown sequence (Ready?, 3, 2, 1, Fight!)
+  // (moved isCountdownComplete state above for correct ordering)
 
   const updateMove = React.useCallback(() => {
     if (!gameState.isPaused && !gameState.isRestPeriod && currentMove && moves.length > 0) {
@@ -614,20 +622,20 @@ export default function Game() {
 
       // Check if we're still in the countdown sequence
       if (!isCountdownComplete && currentIndex < countdownLength - 1) {
-        // Continue with countdown
+        // Continue with countdown (including 'Fight!') without starting round timer yet
         const nextMove = moves[currentIndex + 1];
         setCurrentMove(nextMove);
         const adjusted = (stance === 'southpaw' && (nextMove.direction === 'left' || nextMove.direction === 'right'))
           ? { ...nextMove, tiltValue: -nextMove.tiltValue }
           : nextMove;
         animateMove(adjusted);
-
-        // If this is the last countdown move
-        if (currentIndex === countdownLength - 2) {
-          setIsCountdownComplete(true);
-        }
       } else {
         // For regular moves, start from after the countdown sequence
+        // If just finished the final countdown card ('Fight!'), mark countdown complete now
+        if (!isCountdownComplete && currentIndex === countdownLength - 1) {
+          setIsCountdownComplete(true); // Round timer will begin ticking after this move transitions
+
+        }
         const effectiveIndex = isCountdownComplete ? currentIndex : countdownLength - 1;
         const nextIndex = (effectiveIndex + 1 - countdownLength) % (moves.length - countdownLength) + countdownLength;
         const nextMove = moves[nextIndex];
@@ -726,7 +734,7 @@ export default function Game() {
   const handleSkipToRest = React.useCallback(() => {
     if (!gameState.isRestPeriod || gameState.isGameOver) return; // Only act during an active rest
 
-    const SHORT_REST_MS = 3000;
+    const SHORT_REST_MS = 2000;
     // If more than SHORT_REST_MS remains, cut it down; otherwise do nothing.
     if (gameState.timeLeft > SHORT_REST_MS) {
       playBellSound();

@@ -1,5 +1,5 @@
 import { getAuth } from 'firebase/auth';
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useRef, useState } from 'react';
 import { AlertModal } from '../components/Modals/AlertModal';
 
 export type UserData = {
@@ -45,53 +45,83 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
     setNetworkError({ visible: false, message: '', code: '' });
   };
 
+  // Simple in-memory (per session) throttle + ETag cache
+  const lastFetchRef = useRef<number>(0);
+  const etagRef = useRef<string | null>(null);
+  const IN_FLIGHT: { promise: Promise<void> | null } = useRef<{ promise: Promise<void> | null }>({ promise: null }).current;
+  const MIN_INTERVAL_MS = 5000; // avoid spamming same function within 5s
+
   const refreshUserData = async (userId: string) => {
     if (!userId || !auth.currentUser) return;
 
-    try {
-      const idToken = await auth.currentUser.getIdToken();
-      const response = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/getUserData', {
-        method: 'GET',
-        headers: {
+    const now = Date.now();
+    if (now - lastFetchRef.current < MIN_INTERVAL_MS && userData) {
+      // Too soon; skip to preserve quota. (Return silently)
+      return;
+    }
+
+    // Reuse in-flight request to collapse concurrent callers
+    if (IN_FLIGHT.promise) {
+      await IN_FLIGHT.promise;
+      return;
+    }
+
+    const run = async () => {
+      try {
+        const idToken = await auth.currentUser!.getIdToken();
+        const headers: Record<string, string> = {
           'Authorization': `Bearer ${idToken}`,
           'Content-Type': 'application/json'
-        }
-      });
+        };
+        if (etagRef.current) headers['If-None-Match'] = etagRef.current;
 
-      const result = await response.json();
-      
-      if (result.success) {
-        setUserData(result.data);
-        clearNetworkError(); // Clear any previous errors on success
-      } else {
-        console.error('Error fetching user data:', result.error);
-        setNetworkError({
-          visible: true,
-          message: 'Failed to load user data. Please check your internet connection and try again.',
-          code: result.error?.code || 'unknown'
+        const response = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/getUserData', {
+          method: 'GET',
+          headers
         });
+
+        if (response.status === 304) {
+          // Not modified; keep existing userData
+          clearNetworkError();
+          lastFetchRef.current = now;
+          return;
+        }
+
+        const newEtag = response.headers.get('ETag');
+        if (newEtag) etagRef.current = newEtag;
+
+        const result = await response.json();
+        if (result.success) {
+          setUserData(result.data);
+          clearNetworkError();
+          lastFetchRef.current = now;
+        } else {
+          console.error('Error fetching user data:', result.error);
+          setNetworkError({
+            visible: true,
+            message: 'Failed to load user data. Please check your internet connection and try again.',
+            code: result.error?.code || 'unknown'
+          });
+        }
+      } catch (error: any) {
+        console.error('Error fetching user data:', error);
+        let errorMessage = 'An unexpected error occurred while loading your data.';
+        let errorCode = error.code || 'unknown';
+        if (error.code === 'auth/network-request-failed' || error.message?.includes('network')) {
+          errorMessage = 'Network connection failed. Please check your internet connection and try again.';
+          errorCode = 'network-error';
+        } else if (error.name === 'TypeError' && error.message?.includes('fetch')) {
+          errorMessage = 'Unable to connect to server. Please check your internet connection.';
+          errorCode = 'connection-error';
+        }
+        setNetworkError({ visible: true, message: errorMessage, code: errorCode });
+      } finally {
+        IN_FLIGHT.promise = null;
       }
-    } catch (error: any) {
-      console.error('Error fetching user data:', error);
-      
-      // Handle specific network errors
-      let errorMessage = 'An unexpected error occurred while loading your data.';
-      let errorCode = error.code || 'unknown';
-      
-      if (error.code === 'auth/network-request-failed' || error.message?.includes('network')) {
-        errorMessage = 'Network connection failed. Please check your internet connection and try again.';
-        errorCode = 'network-error';
-      } else if (error.name === 'TypeError' && error.message?.includes('fetch')) {
-        errorMessage = 'Unable to connect to server. Please check your internet connection.';
-        errorCode = 'connection-error';
-      }
-      
-      setNetworkError({
-        visible: true,
-        message: errorMessage,
-        code: errorCode
-      });
-    }
+    };
+
+    IN_FLIGHT.promise = run();
+    await IN_FLIGHT.promise;
   };
 
   const updateUserData = (updates: Partial<UserData>) => {
