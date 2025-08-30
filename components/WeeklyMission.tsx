@@ -54,9 +54,9 @@ export const WeeklyMission: React.FC<WeeklyMissionProps> = ({
     <TouchableOpacity style={styles.container} onPress={onPress}>
       <View style={styles.header}>
         <MaterialCommunityIcons
-          name={allGoalsCompleted ? "trophy-award" : "trophy"}
+          name="trophy"
           size={24}
-          color={allGoalsCompleted ? "#00ff88" : "#fdd700"}
+          color="#fdd700"
         />
         <Text style={[styles.title, allGoalsCompleted && styles.completedTitle]}>
           {allGoalsCompleted ? "Mission Completed! 🎉" : "Weekly Mission"}
@@ -70,14 +70,14 @@ export const WeeklyMission: React.FC<WeeklyMissionProps> = ({
             <MaterialCommunityIcons
               name="boxing-glove"
               size={20}
-              color={roundsCompleted ? "#00ff88" : Colors.text}
+              color={roundsCompleted ? "#fdd700" : Colors.text}
             />
             <Text style={styles.missionText}>Rounds</Text>
             <Text style={[styles.missionCount, roundsCompleted && styles.completedCount]}>
               {completedRounds}/{totalRounds}
             </Text>
             {roundsCompleted && (
-              <MaterialCommunityIcons name="check-circle" size={16} color="#00ff88" />
+              <MaterialCommunityIcons name="check-circle" size={16} color="#fdd700" />
             )}
           </View>
           <View style={styles.progressBarContainer}>
@@ -96,14 +96,14 @@ export const WeeklyMission: React.FC<WeeklyMissionProps> = ({
             <MaterialCommunityIcons
               name="timer"
               size={20}
-              color={timeCompleted ? "#00ff88" : Colors.text}
+              color={timeCompleted ? "#fdd700" : Colors.text}
             />
             <Text style={styles.missionText}>Time (min)</Text>
             <Text style={[styles.missionCount, timeCompleted && styles.completedCount]}>
               {completedTime} m/{totalTime} m
             </Text>
             {timeCompleted && (
-              <MaterialCommunityIcons name="check-circle" size={16} color="#00ff88" />
+              <MaterialCommunityIcons name="check-circle" size={16} color="#fdd700" />
             )}
           </View>
           <View style={styles.progressBarContainer}>
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   completedTitle: {
-    color: '#00ff88',
+    color: '#fdd700',
   },
   content: {
     gap: 10,
@@ -198,40 +198,39 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   completedCount: {
-    color: '#00ff88',
+    color: '#fdd700',
   },
   progressBarContainer: {
     paddingLeft: 28,
   },
   progressBar: {
-    height: 6,
+    height: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 3,
     overflow: 'hidden',
-  },
+  },  
   progressFill: {
     height: '100%',
     backgroundColor: '#fdd700',
     borderRadius: 3,
   },
   completedProgressFill: {
-    backgroundColor: '#00ff88',
+    backgroundColor: '#fdd700',
   },
   completionMessage: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0, 255, 136, 0.1)',
+    backgroundColor: 'rgba(255, 200, 0, 0.1)',
     padding: 12,
     borderRadius: 8,
     marginTop: 8,
     gap: 8,
   },
   completionText: {
-    color: '#00ff88',
+    color: '#ffffffff',
     fontSize: 14,
     fontFamily: Typography.fontFamily,
-    fontWeight: '600',
     textAlign: 'center',
     flex: 1,
   },

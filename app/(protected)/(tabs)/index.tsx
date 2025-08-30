@@ -397,7 +397,7 @@ export default function Index() {
         <MaterialCommunityIcons
           name="fire"
           size={24}
-          color="#fdd700"
+          color="#fd6100ff"
           style={styles.streakIcon}
         />
         <Text style={styles.streakText}>

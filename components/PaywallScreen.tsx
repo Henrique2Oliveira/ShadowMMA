@@ -1,3 +1,4 @@
+import QuizIntro from '@/components/QuizIntro';
 import QuizScreen, { QuizData } from '@/components/QuizScreen';
 import { subscriptionPlans, type SubscriptionPlan } from '@/config/subscriptionPlans';
 import { Colors, Typography } from '@/themes/theme';
@@ -11,15 +12,18 @@ type Props = {
 };
 
 export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
-  const [showQuiz, setShowQuiz] = useState(true);
+  const [quizStage, setQuizStage] = useState<'intro' | 'quiz' | 'plans'>('intro');
   const [quizData, setQuizData] = useState<QuizData | null>(null);
 
   const handleQuizComplete = (data: QuizData) => {
     setQuizData(data);
-    setShowQuiz(false);
+    setQuizStage('plans');
   };
 
-  if (showQuiz) {
+  if (quizStage === 'intro') {
+    return <QuizIntro onStart={() => setQuizStage('quiz')} onSkip={onSkip} />;
+  }
+  if (quizStage === 'quiz') {
     return <QuizScreen onComplete={handleQuizComplete} />;
   }
 
@@ -140,7 +144,6 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontFamily: Typography.fontFamily,
     fontSize: 12,
-    fontWeight: 'bold',
   },
   planTitle: {
     fontFamily: Typography.fontFamily,
@@ -175,7 +178,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   button: {
-    backgroundColor: Colors.button,
+    backgroundColor: "#3154bdff",
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
@@ -187,7 +190,6 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily,
     color: Colors.text,
     fontSize: 16,
-    fontWeight: 'bold',
   },
   skipButton: {
     paddingVertical: 15,
