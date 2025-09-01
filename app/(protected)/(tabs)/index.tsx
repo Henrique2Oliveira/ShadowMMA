@@ -358,28 +358,13 @@ export default function Index() {
       title: 'Random Fight',
       disabled: false,
       onPress: () => {
-        // Generate random fight configuration
-        const roundDurations = ['1', '2', '3', '5'];
-        const numRoundsOptions = ['1', '2', '3', '4', '5'];
-        const restTimes = ['0.5', '1'];
-        const moveSpeeds = ['0.8', '1', '1.2'];
-        const moveModeOptions: string[][] = [
-          ['Punches'],
-          ['Punches', 'Defense'],
-          ['Kicks'],
-          ['Defense'],
-          ['Punches', 'Kicks'],
-          ['Punches', 'Kicks', 'Defense']
-        ];
-
-        const pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
-
+        // Full random fight: include all move types + sentinel flag
         setModalConfig({
-          roundDuration: pick(roundDurations),
-          numRounds: pick(numRoundsOptions),
-          restTime: pick(restTimes),
-          moveSpeed: pick(moveSpeeds),
-          movesMode: pick(moveModeOptions),
+          roundDuration: '3',
+          numRounds: '2',
+          restTime: '0.5',
+          moveSpeed: '1',
+          movesMode: ['Punches', 'Kicks', 'Defense', 'RANDOM_ALL'],
           category: '0'
         });
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -600,21 +585,21 @@ export default function Index() {
             disabled={buttons[8].disabled}
             onPress={buttons[8].onPress}
           />
-        <View
-          style={{
-            width: '100%',
-            maxWidth: 600,
-          }}
-        >
-          <GradientButton
-            title={buttons[9].title}
-            iconName="run"
-            iconSize={130}
-            fontSize={42}
-            disabled={buttons[9].disabled}
-            onPress={buttons[9].onPress}
-          />
-        </View>
+          <View
+            style={{
+              width: '100%',
+              maxWidth: 600,
+            }}
+          >
+            <GradientButton
+              title={buttons[9].title}
+              iconName="run"
+              iconSize={130}
+              fontSize={42}
+              disabled={buttons[9].disabled}
+              onPress={buttons[9].onPress}
+            />
+          </View>
 
         </View>
       </View>

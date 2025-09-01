@@ -404,11 +404,20 @@ export const startFight = onRequest(async (req, res) => {
     const decodedToken = await auth.verifyIdToken(idToken);
     const uid = decodedToken.uid;
 
-    // Accept both moveTypes and movesMode from client, defaulting to Punches
+  // Accept both moveTypes and movesMode from client, defaulting to Punches
     const bodyOrQuery: any = req.method === "POST" ? req.body : req.query;
     const category = (bodyOrQuery?.category ?? '0') as string | number;
     const comboId = bodyOrQuery?.comboId as string | number | undefined;
     const categoryToUse = category.toString();
+  const randomFight = bodyOrQuery?.randomFight === true || bodyOrQuery?.randomFight === 'true';
+    // Optional limit for randomFight mode; safeguard bounds
+    let randomFightLimit: number | undefined = undefined;
+    if (randomFight) {
+      const rawLimit = parseInt(bodyOrQuery?.randomLimit ?? bodyOrQuery?.limit ?? '');
+      if (!isNaN(rawLimit)) {
+        randomFightLimit = Math.max(3, Math.min(rawLimit, 50)); // clamp 3..50
+      }
+    }
     
   // Get fight configuration values (round duration provided in MINUTES from client UI)
   let fightRounds = parseInt(bodyOrQuery?.fightRounds || bodyOrQuery?.numRounds || '1');
@@ -573,11 +582,17 @@ export const startFight = onRequest(async (req, res) => {
     }
   }
 
-  // Decide random quantity between 3 and 5 (limited by available combos)
-  const maxPick = Math.min(4, totalAvailable);
-  const pickCount = totalAvailable < 3
-    ? totalAvailable // return all if less than 3 available
-    : 3 + Math.floor(Math.random() * (maxPick - 3 + 1)); // integer between 3 and maxPick
+    // If randomFight=true client wants ALL eligible combos (no repetition, order will be randomized client-side)
+  let pickCount: number;
+  if (randomFight) {
+    pickCount = totalAvailable; // send everything user can play
+  } else {
+    // Decide random quantity between 3 and 5 (limited by available combos)
+    const maxPick = Math.min(4, totalAvailable);
+    pickCount = totalAvailable < 3
+      ? totalAvailable // return all if less than 3 available
+      : 3 + Math.floor(Math.random() * (maxPick - 3 + 1)); // integer between 3 and maxPick
+  }
 
   // Interleave picks across the selected types in round-robin, ensuring at least one highest-level overall
   let randomCombos: ComboT[] = [];
@@ -636,10 +651,71 @@ export const startFight = onRequest(async (req, res) => {
     // Update the user's playing status
     await userRef.update(updates);
 
+    // Build final combos list: if randomFight we must merge all remaining pools plus the chosenTop (if not already)
+    let finalCombos = randomCombos;
+    if (randomFight) {
+      // Gather all remaining combos (including those in pools not yet chosen)
+      const remaining = Object.values(typePools).flat();
+      const seen = new Set<string>();
+      finalCombos = [...randomCombos, ...remaining].filter(c => {
+        const id = String(c.comboId ?? c.name ?? Math.random());
+        if (seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      });
+
+      // If a limit is specified (or apply default) we sample a balanced subset
+      const LIMIT = randomFightLimit ?? 20; // default cap 20 to control payload
+      if (finalCombos.length > LIMIT) {
+        // Group by type (fallback to 'Unknown')
+        const byType: Record<string, any[]> = {};
+        for (const combo of finalCombos) {
+          const typeKey = (combo.type || combo.moveType || 'Unknown').toString();
+          (byType[typeKey] ||= []).push(combo);
+        }
+        // Shuffle each type group to randomize internal order
+        for (const key of Object.keys(byType)) {
+          const arr = byType[key];
+          for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+          }
+        }
+        const selected: any[] = [];
+        // Ensure at least one from each type (up to LIMIT)
+        for (const key of Object.keys(byType)) {
+          if (selected.length >= LIMIT) break;
+            const first = byType[key].shift();
+            if (first) selected.push(first);
+        }
+        // Build a remaining pool and shuffle globally
+        let remainingPool: any[] = Object.values(byType).flat();
+        for (let i = remainingPool.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [remainingPool[i], remainingPool[j]] = [remainingPool[j], remainingPool[i]];
+        }
+        // Fill until reaching LIMIT
+        for (const c of remainingPool) {
+          if (selected.length >= LIMIT) break;
+          selected.push(c);
+        }
+        finalCombos = selected;
+      }
+
+      // Final shuffle for overall random order
+      for (let i = finalCombos.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [finalCombos[i], finalCombos[j]] = [finalCombos[j], finalCombos[i]];
+      }
+    }
+
     // Retorna resposta
     res.status(200).json({
-      combos: randomCombos,
+      combos: finalCombos,
       fightsLeft: updatedFightsLeft,
+      randomFight,
+      appliedLimit: randomFight ? (randomFightLimit ?? 20) : undefined,
+      totalEligible: randomFight ? totalAvailable : undefined,
     });
   } catch (error) {
     logger.error("Error in startFight:", error);

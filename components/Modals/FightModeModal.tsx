@@ -82,12 +82,13 @@ export function FightModeModal({
   moveType,
   onStartFight,
 }: FightModeModalProps) {
+  const isFullRandomFight = movesMode.includes('RANDOM_ALL');
   const handleStartFight = () => {
     // Add haptic feedback when fight button is pressed
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     
     onStartFight();
-    router.push({
+  router.push({
       pathname: '/(protected)/(tabs)/game',
       params: {
         roundDuration,
@@ -102,6 +103,7 @@ export function FightModeModal({
         // Send fight configuration for tracking
         fightRounds: numRounds,
         fightTimePerRound: roundDuration,
+    randomFight: movesMode.includes('RANDOM_ALL') ? 'true' : 'false',
         timestamp: Date.now().toString()
       }
     });
@@ -131,7 +133,9 @@ export function FightModeModal({
             <Text style={styles.modeDescription}>
               {comboId !== undefined && comboId !== null
                 ? 'Focused Combo: Repeat a chosen combo each round to sharpen precision and endurance.'
-                : 'Random Combos: 3–5 varied combos from selected move types for skill variety & conditioning.'}
+                : isFullRandomFight
+                  ? 'Random Fight: All unlocked combos (below or at your level) are loaded. Order shuffles each time.'
+                  : 'Random Combos: 3–5 varied combos from selected move types for skill variety & conditioning.'}
             </Text>
             <View style={styles.lifeBadge} accessibilityRole="text" accessibilityLabel="Costs one life">
               <MaterialCommunityIcons name="heart-minus" color="#fff" size={14} style={{ marginRight: 4 }} />
@@ -233,7 +237,7 @@ export function FightModeModal({
 
 
 
-            {comboId === undefined && (
+            {comboId === undefined && !isFullRandomFight && (
               <View style={styles.optionRow}>
                 <Text style={styles.optionLabel}>Moves:</Text>
                 <View style={styles.buttonContainer}>

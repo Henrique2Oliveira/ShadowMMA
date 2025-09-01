@@ -20,12 +20,14 @@ interface CombosModalProps {
   visible: boolean;
   combos: { name: string; moves: Move[]; level: number }[];
   onClose: () => void;
+  randomFight?: boolean;
 }
 
 export const CombosModal: React.FC<CombosModalProps> = ({
   visible,
   combos,
   onClose,
+  randomFight = false,
 }) => {
   const slideAnims = useRef<AnimatedValue[]>(
     combos.map(() => new Animated.Value(300))
@@ -118,9 +120,17 @@ export const CombosModal: React.FC<CombosModalProps> = ({
           >
             <MaterialCommunityIcons name="close" size={24} color="white" />
           </TouchableOpacity>
-          <Text style={styles.modalTitle}>Combos</Text>
+          <Text style={styles.modalTitle}>{randomFight ? 'Random Fight' : 'Combos'}</Text>
           <ScrollView style={styles.optionsContainer}>
-            {combos.map((combo, index) => (
+            {randomFight ? (
+              <View style={styles.randomInfoContainer}>
+                <MaterialCommunityIcons name="shuffle" size={34} color={Colors.text} style={{ marginBottom: 12 }} />
+                <Text style={styles.randomInfoTitle}>All Eligible Combos Loaded</Text>
+                <Text style={styles.randomInfoText}>
+                  This is a Random Fight. Combos are shuffled and presented one after another without repeats. Stay sharp!
+                </Text>
+              </View>
+            ) : combos.map((combo, index) => (
               <Animated.View
                 key={index}
                 style={[
@@ -317,5 +327,30 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily,
     textAlign: 'center',
 
+  },
+  randomInfoContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    marginHorizontal: 10,
+    marginVertical: 20,
+    backgroundColor: '#1a1a1aff',
+    borderRadius: 14,
+    borderWidth: 2,
+    borderBottomWidth: 6,
+    borderColor: '#edededff',
+  },
+  randomInfoTitle: {
+    color: Colors.text,
+    fontSize: 20,
+    fontFamily: Typography.fontFamily,
+    marginBottom: 10,
+  },
+  randomInfoText: {
+    color: Colors.text,
+    fontSize: 14,
+    fontFamily: Typography.fontFamily,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
