@@ -29,11 +29,13 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
-  const [newBadge, setNewBadge] = useState<{ id: number; days: number } | null>(null);
+  // Generic new badge state supporting both streak and rounds categories
+  const [newBadge, setNewBadge] = useState<{ id: number; type: 'streak' | 'rounds' } | null>(null);
+  const [badgeQueue, setBadgeQueue] = useState<{ id: number; type: 'streak' | 'rounds' }[]>([]);
   const [badgeModalVisible, setBadgeModalVisible] = useState(false);
 
   // Define badge thresholds and mapping to images
-  const badgeThresholds = [3, 7, 14, 30];
+  const badgeThresholds = [3, 7, 14, 30]; // streak (days) thresholds
   const badgeImages: Record<number, any> = {
     3: require('@/assets/images/badges/badge-3.png'),
     7: require('@/assets/images/badges/badge-7.png'),
@@ -41,32 +43,76 @@ export default function Profile() {
     30: require('@/assets/images/badges/badge-30.png'),
   };
 
+  // Lifetime rounds badge thresholds (based on total lifetimeFightRounds)
+  const roundBadgeThresholds = [5, 10, 25];
+  const roundBadgeImages: Record<number, any> = {
+    5: require('@/assets/images/badges/5rounds.png'),
+    10: require('@/assets/images/badges/10rounds.png'),
+    25: require('@/assets/images/badges/25rounds.png'),
+  };
+
   // Determine earned badges based on maxLoginStreak
   const maxStreak = (userData as any)?.maxLoginStreak || userData?.loginStreak || 0;
-  const earnedBadges = badgeThresholds.filter(d => maxStreak >= d);
+  const earnedBadges = badgeThresholds.filter(d => maxStreak >= d); // streak badges earned
+  const lifetimeRounds = userData?.lifetimeFightRounds || 0;
+  const earnedRoundBadges = roundBadgeThresholds.filter(r => lifetimeRounds >= r);
 
+  // Unified badge storage + detection (migration from legacy keys)
   useEffect(() => {
-    // Check if a new badge was earned this session
-    const checkNewBadge = async () => {
+    const run = async () => {
       if (!user || !userData) return;
-      const storageKey = `shownBadges_${user.uid}`;
+      const unifiedKey = `shownBadgesV2_${user.uid}`;
+      let unified: { streak: number[]; rounds: number[] } = { streak: [], rounds: [] };
       try {
-        const shownRaw = await AsyncStorage.getItem(storageKey);
-        const shown: number[] = shownRaw ? JSON.parse(shownRaw) : [];
-        const unseen = earnedBadges.filter(b => !shown.includes(b)).sort((a, b) => a - b);
-        if (unseen.length > 0) {
-          const newest = unseen[unseen.length - 1];
-          setNewBadge({ id: newest, days: newest });
-          setBadgeModalVisible(true);
-          const updated = Array.from(new Set([...shown, ...unseen]));
-          await AsyncStorage.setItem(storageKey, JSON.stringify(updated));
+        const rawUnified = await AsyncStorage.getItem(unifiedKey);
+        if (rawUnified) {
+          unified = { streak: [], rounds: [], ...JSON.parse(rawUnified) };
+        } else {
+          // migrate legacy keys if exist
+          const legacyStreakRaw = await AsyncStorage.getItem(`shownBadges_${user.uid}`);
+          const legacyRoundsRaw = await AsyncStorage.getItem(`shownRoundBadges_${user.uid}`);
+          unified.streak = legacyStreakRaw ? JSON.parse(legacyStreakRaw) : [];
+          unified.rounds = legacyRoundsRaw ? JSON.parse(legacyRoundsRaw) : [];
+          await AsyncStorage.setItem(unifiedKey, JSON.stringify(unified));
+        }
+
+        const newStreakUnseen = earnedBadges.filter(b => !unified.streak.includes(b)).sort((a,b)=>a-b);
+        const newRoundUnseen = earnedRoundBadges.filter(b => !unified.rounds.includes(b)).sort((a,b)=>a-b);
+
+        const queueAdds: {id:number; type:'streak'|'rounds'}[] = [];
+        if (newStreakUnseen.length > 0) {
+          newStreakUnseen.forEach(id => queueAdds.push({ id, type: 'streak' }));
+          unified.streak = Array.from(new Set([...unified.streak, ...newStreakUnseen]));
+        }
+        if (newRoundUnseen.length > 0) {
+          newRoundUnseen.forEach(id => queueAdds.push({ id, type: 'rounds' }));
+          unified.rounds = Array.from(new Set([...unified.rounds, ...newRoundUnseen]));
+        }
+        if (queueAdds.length > 0) {
+          setBadgeQueue(prev => [...prev, ...queueAdds]);
+          await AsyncStorage.setItem(unifiedKey, JSON.stringify(unified));
         }
       } catch (e) {
-        console.warn('Badge storage error', e);
+        console.warn('Unified badge storage error', e);
       }
     };
-    checkNewBadge();
-  }, [userData, user]);
+    run();
+  }, [user, userData, earnedBadges, earnedRoundBadges]);
+
+  // Process badge queue to display modals sequentially
+  useEffect(() => {
+    if (!badgeModalVisible && badgeQueue.length > 0) {
+      const next = badgeQueue[0];
+      setNewBadge(next);
+      setBadgeModalVisible(true);
+    }
+  }, [badgeQueue, badgeModalVisible]);
+
+  const closeBadgeModal = () => {
+    setBadgeModalVisible(false);
+    setBadgeQueue(q => q.slice(1));
+    setNewBadge(null);
+  };
 
   // Helper function to format large numbers
   const formatNumber = (num: number): string => {
@@ -168,8 +214,7 @@ export default function Profile() {
             <Text style={styles.name}>{userData?.name || 'Anonymous'}</Text>
             <Text style={styles.subtitle}>{userData?.plan !== 'free' ? 'Pro Member' : 'Free Member'}</Text>
           </View>
-          
-          {/* Lifetime Stats Section */}
+          {/* Lifetime Stats Section (moved above badges) */}
           <View style={styles.lifetimeSection}>
             <Text style={styles.lifetimeTitle}>Lifetime Stats</Text>
             <Text style={styles.lifetimeSubtitle}>Your all–time progress in Shadow MMA</Text>
@@ -226,29 +271,86 @@ export default function Profile() {
               </View>
             </View>
           </View>
-          <View style={styles.buttonList}>
-            <View style={styles.badgesContainer}>
-              <Text style={styles.badgesTitle}>Badges</Text>
-              {earnedBadges.length === 0 ? (
-                <View style={styles.noBadgesBox}>
-                  <MaterialCommunityIcons name="fire" size={38} color={Colors.text} style={{ marginBottom: 10 }} />
-                  <Text style={styles.noBadgesTitle}>Start Your Streak</Text>
-                  <Text style={styles.noBadgesText}>
-                    Log in on 3 different days to earn your first badge. Come back tomorrow and begin building your legacy.
-                  </Text>
-                  <View style={styles.nextBadgeRow}>
-                    <View style={styles.badgePreviewWrapper}>
-                      <View style={styles.badgeBgDim}>
-                        <Image source={badgeImages[3]} style={[styles.badgeImage, { opacity: 0.35 }]} />
-                      </View>
-                      <Text style={styles.nextBadgeLabel}>First badge at 3 days</Text>
+
+          <View style={[styles.badgesContainer, { marginTop: 18 }] }>
+            <Text style={styles.badgesTitle}>Badges Progress</Text>
+            {/* Lifetime Rounds Badges Section FIRST */}
+            {earnedRoundBadges.length === 0 ? (
+              <View style={styles.noBadgesBox}>
+                <MaterialCommunityIcons name="boxing-glove" size={38} color={Colors.text} style={{ marginBottom: 10 }} />
+                <Text style={styles.noBadgesTitle}>Start Fighting</Text>
+                <Text style={styles.noBadgesText}>
+                  Complete 5 total rounds to earn your first rounds badge. Every finished round pushes you toward the next reward.
+                </Text>
+                <View style={styles.nextBadgeRow}>
+                  <View style={styles.badgePreviewWrapper}>
+                    <View style={styles.badgeBgDim}>
+                      <Image source={roundBadgeImages[5]} style={[styles.badgeImage, { opacity: 0.35 }]} />
                     </View>
+                    <Text style={styles.nextBadgeLabel}>First rounds badge at 5 rounds</Text>
                   </View>
                 </View>
-              ) : (
+              </View>
+            ) : (
+              <View>
+                <Text style={[styles.nextBadgeLabel, { textAlign: 'center', marginBottom: 8 }]}>Lifetime Rounds</Text>
+                <View style={[styles.badgesRow, earnedRoundBadges.length === 1 && styles.badgesRowSingle]}>
+                  {earnedRoundBadges.map(r => (
+                    <View key={`rounds-${r}`} style={styles.badgeWrapper}>
+                      <View style={styles.badgeBg}>
+                        <Image source={roundBadgeImages[r]} style={styles.badgeImage} resizeMode="contain" />
+                      </View>
+                      <Text style={styles.badgeLabel}>{r} {r === 1 ? 'round' : 'rounds'}</Text>
+                    </View>
+                  ))}
+                </View>
+                {/* Progress to next rounds badge */}
+                {(() => {
+                  const next = roundBadgeThresholds.find(t => lifetimeRounds < t);
+                  if (!next) return (
+                    <Text style={styles.progressCompleteText}>All rounds badges earned!</Text>
+                  );
+                  const last = [...roundBadgeThresholds.filter(t => t <= lifetimeRounds)].pop() || 0;
+                  const span = next - last;
+                  const prog = Math.min(1, (lifetimeRounds - last) / span);
+                  return (
+                    <View style={styles.progressWrapper}>
+                      <View style={styles.progressHeader}>
+                        <Text style={styles.progressLabel}>Next: {next} rounds badge</Text>
+                        <Text style={styles.progressPercent}>{Math.round(prog * 100)}%</Text>
+                      </View>
+                      <View style={styles.progressBar}>
+                        <View style={[styles.progressFill, { width: `${prog * 100}%` }]} />
+                      </View>
+                      <Text style={styles.progressSubLabel}>Lifetime rounds: {lifetimeRounds} / {next}</Text>
+                    </View>
+                  );
+                })()}
+              </View>
+            )}
+            {/* Streak (Days) Badges Section SECOND */}
+            {earnedBadges.length === 0 ? (
+              <View style={[styles.noBadgesBox, { marginTop: 18 }]}>
+                <MaterialCommunityIcons name="fire" size={38} color={Colors.text} style={{ marginBottom: 10 }} />
+                <Text style={styles.noBadgesTitle}>Build Your Streak</Text>
+                <Text style={styles.noBadgesText}>
+                  Log in on 3 separate days to unlock your first streak badge. Daily consistency multiplies your progress.
+                </Text>
+                <View style={styles.nextBadgeRow}>
+                  <View style={styles.badgePreviewWrapper}>
+                    <View style={styles.badgeBgDim}>
+                      <Image source={badgeImages[3]} style={[styles.badgeImage, { opacity: 0.35 }]} />
+                    </View>
+                    <Text style={styles.nextBadgeLabel}>First streak badge at 3 days</Text>
+                  </View>
+                </View>
+              </View>
+            ) : (
+              <View style={{ marginTop: 18 }}>
+                <Text style={[styles.nextBadgeLabel, { textAlign: 'center', marginBottom: 8 }]}>Login Streak</Text>
                 <View style={[styles.badgesRow, earnedBadges.length === 1 && styles.badgesRowSingle]}>
                   {earnedBadges.map(days => (
-                    <View key={days} style={styles.badgeWrapper}>
+                    <View key={`streak-${days}`} style={styles.badgeWrapper}>
                       <View style={styles.badgeBg}>
                         <Image source={badgeImages[days]} style={styles.badgeImage} resizeMode="contain" />
                       </View>
@@ -256,8 +358,33 @@ export default function Profile() {
                     </View>
                   ))}
                 </View>
-              )}
-            </View>
+                {/* Progress to next streak badge */}
+                {(() => {
+                  const next = badgeThresholds.find(t => maxStreak < t);
+                  if (!next) return (
+                    <Text style={styles.progressCompleteText}>All streak badges earned!</Text>
+                  );
+                  const last = [...badgeThresholds.filter(t => t <= maxStreak)].pop() || 0;
+                  const span = next - last;
+                  const prog = Math.min(1, (maxStreak - last) / span);
+                  return (
+                    <View style={styles.progressWrapper}>
+                      <View style={styles.progressHeader}>
+                        <Text style={styles.progressLabel}>Next: {next}-day badge</Text>
+                        <Text style={styles.progressPercent}>{Math.round(prog * 100)}%</Text>
+                      </View>
+                      <View style={styles.progressBar}>
+                        <View style={[styles.progressFill, { width: `${prog * 100}%` }]} />
+                      </View>
+                      <Text style={styles.progressSubLabel}>Current streak: {maxStreak} / {next}</Text>
+                    </View>
+                  );
+                })()}
+              </View>
+            )}
+          </View>
+          
+          <View style={styles.buttonList}>
             <TouchableOpacity style={styles.button} onPress={() => router.push('/settings')}>
               <MaterialCommunityIcons name="cog" size={24} color={Colors.text} />
               <Text style={styles.buttonText}>Settings</Text>
@@ -303,18 +430,27 @@ export default function Profile() {
       <Modal visible={badgeModalVisible} transparent animationType="fade" onRequestClose={() => setBadgeModalVisible(false)}>
         <View style={styles.badgeModalOverlay}>
           <View style={styles.badgeModalContent}>
-            <TouchableOpacity style={styles.badgeModalClose} onPress={() => setBadgeModalVisible(false)}>
+            <TouchableOpacity style={styles.badgeModalClose} onPress={closeBadgeModal}>
               <MaterialCommunityIcons name="close" size={24} color={Colors.text} />
             </TouchableOpacity>
             {newBadge && (
-              <>
-                <Image source={badgeImages[newBadge.days]} style={styles.badgeModalImage} resizeMode="contain" />
-                <Text style={styles.badgeModalTitle}>New Badge!</Text>
-                <Text style={styles.badgeModalText}>You reached a {newBadge.days}-day streak. Keep going!</Text>
-                <TouchableOpacity style={styles.badgeModalButton} onPress={() => setBadgeModalVisible(false)}>
-                  <Text style={styles.badgeModalButtonText}>Awesome!</Text>
-                </TouchableOpacity>
-              </>
+              (() => {
+                const img = newBadge.type === 'streak' ? badgeImages[newBadge.id] : roundBadgeImages[newBadge.id];
+                const title = newBadge.type === 'streak' ? 'New Streak Badge!' : 'New Rounds Badge!';
+                const text = newBadge.type === 'streak'
+                  ? `You reached a ${newBadge.id}-day streak. Keep going!`
+                  : `You completed ${newBadge.id} lifetime rounds. Keep fighting!`;
+                return (
+                  <>
+                    <Image source={img} style={styles.badgeModalImage} resizeMode="contain" />
+                    <Text style={styles.badgeModalTitle}>{title}</Text>
+                    <Text style={styles.badgeModalText}>{text}</Text>
+                    <TouchableOpacity style={styles.badgeModalButton} onPress={closeBadgeModal}>
+                      <Text style={styles.badgeModalButtonText}>Awesome!</Text>
+                    </TouchableOpacity>
+                  </>
+                );
+              })()
             )}
           </View>
         </View>
@@ -666,6 +802,54 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontSize: 16,
     fontFamily: Typography.fontFamily,
-  }
+  },
+  // Progress bar styles
+  progressWrapper: {
+    marginTop: 6,
+    marginBottom: 4,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  progressLabel: {
+    color: Colors.text,
+    fontSize: 12,
+    fontFamily: Typography.fontFamily,
+    opacity: 0.85,
+  },
+  progressPercent: {
+    color: Colors.text,
+    fontSize: 12,
+    fontFamily: Typography.fontFamily,
+  },
+  progressBar: {
+    width: '100%',
+    height: 8,
+    backgroundColor: '#ffffff22',
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#ffd700',
+    borderRadius: 6,
+  },
+  progressSubLabel: {
+    color: Colors.text,
+    fontSize: 11,
+    fontFamily: Typography.fontFamily,
+    marginTop: 4,
+    opacity: 0.75,
+  },
+  progressCompleteText: {
+    color: Colors.text,
+    fontSize: 12,
+    fontFamily: Typography.fontFamily,
+    textAlign: 'center',
+    marginTop: 6,
+    opacity: 0.85,
+  },
 });
 

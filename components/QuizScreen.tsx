@@ -1,9 +1,10 @@
 import { Colors, Typography } from '@/themes/theme';
-import { recordLoginAndScheduleNotifications, registerForPushNotificationsAsync } from '@/utils/notificationUtils';
+import { recordLoginAndScheduleNotifications, registerForPushNotificationsAsync, scheduleDailyNotification } from '@/utils/notificationUtils';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export type QuizData = {
   age: string;
@@ -14,14 +15,17 @@ export type QuizData = {
   notificationsEnabled: boolean;
   weeklyMissionRounds: number;
   weeklyMissionTime: number; // minutes
+  dailyReminderEnabled: boolean;
+  dailyReminderHour: number;
+  dailyReminderMinute: number;
 };
 type Props = {
   onComplete: (data: QuizData) => void;
 };
 
 export default function QuizScreen({ onComplete }: Props) {
-  const [step, setStep] = useState(0); // 0..7
-  const totalSteps = 8;
+  const [step, setStep] = useState(0); // 0..8
+  const totalSteps = 9;
   const [answers, setAnswers] = useState<QuizData>({
     age: '',
     gender: '',
@@ -29,14 +33,40 @@ export default function QuizScreen({ onComplete }: Props) {
     goal: '',
     stance: 'orthodox',
     notificationsEnabled: false,
-    weeklyMissionRounds: 20,
-    weeklyMissionTime: 60,
+  weeklyMissionRounds: 20,
+  weeklyMissionTime: 60,
+  dailyReminderEnabled: false,
+  dailyReminderHour: 18,
+  dailyReminderMinute: 0,
   });
   const [isRequestingPermission, setIsRequestingPermission] = useState(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
+  // Progress bar animation
+  const [trackWidth, setTrackWidth] = useState(0);
+  const progressAnim = useRef(new Animated.Value(0)).current;
+  // Daily reminder custom time state
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [customReminderTime, setCustomReminderTime] = useState<Date | null>(null);
+  // Animate whenever step or track width changes
+  useEffect(() => {
+    if (!trackWidth) return; // wait for layout
+    const target = ((step + 1) / totalSteps) * trackWidth;
+    Animated.timing(progressAnim, {
+      toValue: target,
+      duration: 420,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false, // width animation
+    }).start();
+  }, [step, trackWidth]);
 
   const roundsOptions = [5,10,15,20,25,30,35,40,50];
   const timeOptions = [15,30,45,60,90,120,150,180,240];
+  const dailyTimeChoices = [
+    { label: 'Morning', hour: 8, minute: 0 },
+    { label: 'Afternoon', hour: 14, minute: 0 },
+    { label: 'Evening', hour: 18, minute: 0 },
+    { label: 'Night', hour: 21, minute: 0 },
+  ];
 
   const goNext = async (updated?: Partial<QuizData>) => {
     const newAnswers = updated ? { ...answers, ...updated } : answers;
@@ -48,6 +78,11 @@ export default function QuizScreen({ onComplete }: Props) {
         await AsyncStorage.setItem('weeklyMissionRounds', newAnswers.weeklyMissionRounds.toString());
         await AsyncStorage.setItem('weeklyMissionTime', newAnswers.weeklyMissionTime.toString());
         await AsyncStorage.setItem('enhancedNotificationsEnabled', newAnswers.notificationsEnabled ? 'true' : 'false');
+        await AsyncStorage.setItem('dailyReminderEnabled', newAnswers.dailyReminderEnabled ? 'true' : 'false');
+        if (newAnswers.dailyReminderEnabled) {
+          await AsyncStorage.setItem('dailyReminderHour', newAnswers.dailyReminderHour.toString());
+          await AsyncStorage.setItem('dailyReminderMinute', newAnswers.dailyReminderMinute.toString());
+        }
         // Persist stance into game preferences
         try {
           const raw = await AsyncStorage.getItem('shadowmma_game_preferences');
@@ -211,7 +246,108 @@ export default function QuizScreen({ onComplete }: Props) {
             {permissionError && <Text style={styles.errorText}>{permissionError}</Text>}
           </View>
         );
-  case 6:
+      case 6:
+        return (
+          <View style={styles.sectionContainer}>
+            <Text style={styles.question}>Daily training reminder?</Text>
+            <Text style={styles.helperText}>Pick a time (optional). We'll nudge you to train. Change anytime in Settings.</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center', marginTop: 10 }}>
+              {dailyTimeChoices.map(choice => {
+                const isSelected = answers.dailyReminderEnabled && answers.dailyReminderHour === choice.hour && answers.dailyReminderMinute === choice.minute;
+                return (
+                  <Pressable
+                    accessibilityLabel={`Select ${choice.label.toLowerCase()} reminder`}
+                    key={choice.label}
+                    style={{
+                      paddingVertical: 16,
+                      paddingHorizontal: 18,
+                      backgroundColor: isSelected ? Colors.green : Colors.cardColor,
+                      borderRadius: 14,
+                      minWidth: 130,
+                      alignItems: 'center',
+                      borderWidth: 1,
+                      borderColor: isSelected ? Colors.green : Colors.button,
+                    }}
+                    onPress={async () => {
+                      let granted = true;
+                      if (!answers.notificationsEnabled) {
+                        granted = await registerForPushNotificationsAsync();
+                      }
+                      if (granted) {
+                        await scheduleDailyNotification(choice.hour, choice.minute);
+                        goNext({ dailyReminderEnabled: true, dailyReminderHour: choice.hour, dailyReminderMinute: choice.minute });
+                      } else {
+                        goNext({ dailyReminderEnabled: false });
+                      }
+                    }}
+                  >
+                    <Text style={{ fontFamily: Typography.fontFamily, fontSize: 16, color: Colors.text }}>{choice.label}</Text>
+                    <Text style={{ fontFamily: Typography.fontFamily, fontSize: 12, color: Colors.text, opacity: 0.75 }}>{`${choice.hour.toString().padStart(2,'0')}:${choice.minute.toString().padStart(2,'0')}`}</Text>
+                  </Pressable>
+                );
+              })}
+              <Pressable
+                accessibilityLabel="Pick a custom reminder time"
+                style={{
+                  paddingVertical: 16,
+                  paddingHorizontal: 18,
+                  backgroundColor: Colors.cardColor,
+                  borderRadius: 14,
+                  minWidth: 130,
+                  alignItems: 'center',
+                  borderWidth: 1,
+                  borderColor: Colors.button,
+                }}
+                onPress={async () => {
+                  let granted = true;
+                  if (!answers.notificationsEnabled) {
+                    granted = await registerForPushNotificationsAsync();
+                  }
+                  if (granted) {
+                    setShowTimePicker(true);
+                  } else {
+                    goNext({ dailyReminderEnabled: false });
+                  }
+                }}
+              >
+                <Text style={{ fontFamily: Typography.fontFamily, fontSize: 16, color: Colors.text }}>Custom Time</Text>
+                {customReminderTime && (
+                  <Text style={{ fontFamily: Typography.fontFamily, fontSize: 12, color: Colors.text, opacity: 0.75 }}>
+                    {customReminderTime.getHours().toString().padStart(2,'0')}
+                    :
+                    {customReminderTime.getMinutes().toString().padStart(2,'0')}
+                  </Text>
+                )}
+              </Pressable>
+            </View>
+            {showTimePicker && (
+              <DateTimePicker
+                value={customReminderTime || new Date()}
+                mode="time"
+                is24Hour={true}
+                onChange={async (event, selectedDate) => {
+                  setShowTimePicker(false);
+                  if (event.type === 'set' && selectedDate) {
+                    setCustomReminderTime(selectedDate);
+                    const h = selectedDate.getHours();
+                    const m = selectedDate.getMinutes();
+                    await scheduleDailyNotification(h, m);
+                    goNext({ dailyReminderEnabled: true, dailyReminderHour: h, dailyReminderMinute: m });
+                  }
+                }}
+              />
+            )}
+            <Pressable
+              accessibilityLabel="Skip daily reminder setup"
+              style={{ marginVertical: 28, alignSelf: 'center', paddingVertical: 10, paddingHorizontal: 22, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)' }}
+              onPress={() => goNext({ dailyReminderEnabled: false })}
+            >
+              <Text style={{ fontFamily: Typography.fontFamily, fontSize: 14, color: Colors.text }}>Skip</Text>
+            </Pressable>
+            <Text style={styles.helperTextSecondary}>This is separate from smart motivation notifications.</Text>
+          </View>
+        );
+      case 7:
         return (
           <NumberSelect
             title="Choose your weekly target rounds"
@@ -222,7 +358,7 @@ export default function QuizScreen({ onComplete }: Props) {
             onSelect={(v) => goNext({ weeklyMissionRounds: v })}
           />
         );
-  case 7:
+      case 8:
         return (
           <NumberSelect
             title="Choose your weekly training time"
@@ -246,11 +382,21 @@ export default function QuizScreen({ onComplete }: Props) {
         accessibilityLabel="Quiz progress"
         accessibilityValue={{ now: step + 1, min: 1, max: totalSteps }}
       >
-        <View style={styles.progressTrack}>
-          <View
+        <View
+          style={styles.progressTrack}
+          onLayout={(e) => {
+            const w = e.nativeEvent.layout.width;
+            if (w && w !== trackWidth) {
+              setTrackWidth(w);
+              // set immediate value to current progress to avoid flash
+              progressAnim.setValue(((step + 1) / totalSteps) * w);
+            }
+          }}
+        >
+          <Animated.View
             style={[
               styles.progressFill,
-              { width: `${((step + 1) / totalSteps) * 100}%` },
+              trackWidth ? { width: progressAnim } : undefined,
             ]}
           />
         </View>
