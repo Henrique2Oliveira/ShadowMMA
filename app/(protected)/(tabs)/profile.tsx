@@ -11,9 +11,6 @@ import { Image, ImageBackground, Linking, Modal, RefreshControl, ScrollView, Sty
 
 type UserData = {
   name: string;
-  hours: number;
-  moves: number;
-  combos: number;
   plan: string;
   xp: number;
   fightsLeft: number;
@@ -56,7 +53,7 @@ export default function Profile() {
       try {
         const shownRaw = await AsyncStorage.getItem(storageKey);
         const shown: number[] = shownRaw ? JSON.parse(shownRaw) : [];
-        const unseen = earnedBadges.filter(b => !shown.includes(b)).sort((a,b)=>a-b);
+        const unseen = earnedBadges.filter(b => !shown.includes(b)).sort((a, b) => a - b);
         if (unseen.length > 0) {
           const newest = unseen[unseen.length - 1];
           setNewBadge({ id: newest, days: newest });
@@ -171,34 +168,32 @@ export default function Profile() {
             <Text style={styles.name}>{userData?.name || 'Anonymous'}</Text>
             <Text style={styles.subtitle}>{userData?.plan !== 'free' ? 'Pro Member' : 'Free Member'}</Text>
           </View>
-
-          <View style={styles.statsContainer}>
-            <View style={styles.statBox}>
-              <View style={styles.statRow}>
-                <MaterialCommunityIcons name="boxing-glove" size={20} color={Colors.text} style={styles.statIcon} />
-                <Text style={styles.statNumber}>
-                  {userData?.lifetimeFightRounds ? formatNumber(userData.lifetimeFightRounds) : "-"}
+          
+          {/* Lifetime Stats Section */}
+          <View style={styles.lifetimeSection}>
+            <Text style={styles.lifetimeTitle}>Lifetime Stats</Text>
+            <Text style={styles.lifetimeSubtitle}>Your all–time progress in Shadow MMA</Text>
+            <View style={styles.statsContainer}>
+              <View style={styles.statBox}>
+                <View style={styles.statRow}>
+                  <MaterialCommunityIcons name="boxing-glove" size={20} color={Colors.text} style={styles.statIcon} />
+                  <Text style={styles.statNumber}>
+                    {userData?.lifetimeFightRounds ? formatNumber(userData.lifetimeFightRounds) : "-"}
+                  </Text>
+                </View>
+                <Text style={styles.statLabel}>Total Rounds</Text>
+              </View>
+              <View style={styles.statBox}>
+                <View style={styles.statRow}>
+                  <MaterialCommunityIcons name="timer" size={20} color={Colors.text} style={styles.statIcon} />
+                  <Text style={styles.statNumber}>
+                    {userData?.lifetimeFightTime ? formatTime(userData.lifetimeFightTime).value : "-"}
+                  </Text>
+                </View>
+                <Text style={styles.statLabel}>
+                  {userData?.lifetimeFightTime ? formatTime(userData.lifetimeFightTime).unit : "Total Time"}
                 </Text>
               </View>
-              <Text style={styles.statLabel}>Total Rounds</Text>
-            </View>
-            {/* <View style={styles.statBox}>
-              <View style={styles.statRow}>
-                <MaterialCommunityIcons name="fire" size={30} color="#fd6100ff" style={styles.statIcon} />
-                <Text style={styles.statNumber}>{userData?.loginStreak || "-"}</Text>
-              </View>
-              <Text style={styles.statLabel}>Days Streak</Text>
-            </View> */}
-            <View style={styles.statBox}>
-              <View style={styles.statRow}>
-                <MaterialCommunityIcons name="timer" size={20} color={Colors.text} style={styles.statIcon} />
-                <Text style={styles.statNumber}>
-                  {userData?.lifetimeFightTime ? formatTime(userData.lifetimeFightTime).value : "-"}
-                </Text>
-              </View>
-              <Text style={styles.statLabel}>
-                {userData?.lifetimeFightTime ? formatTime(userData.lifetimeFightTime).unit : "Total Time"}
-              </Text>
             </View>
           </View>
 
@@ -305,10 +300,10 @@ export default function Profile() {
           setShowPaywall(false);
         }}
       />
-      <Modal visible={badgeModalVisible} transparent animationType="fade" onRequestClose={()=>setBadgeModalVisible(false)}>
+      <Modal visible={badgeModalVisible} transparent animationType="fade" onRequestClose={() => setBadgeModalVisible(false)}>
         <View style={styles.badgeModalOverlay}>
           <View style={styles.badgeModalContent}>
-            <TouchableOpacity style={styles.badgeModalClose} onPress={()=>setBadgeModalVisible(false)}>
+            <TouchableOpacity style={styles.badgeModalClose} onPress={() => setBadgeModalVisible(false)}>
               <MaterialCommunityIcons name="close" size={24} color={Colors.text} />
             </TouchableOpacity>
             {newBadge && (
@@ -316,7 +311,7 @@ export default function Profile() {
                 <Image source={badgeImages[newBadge.days]} style={styles.badgeModalImage} resizeMode="contain" />
                 <Text style={styles.badgeModalTitle}>New Badge!</Text>
                 <Text style={styles.badgeModalText}>You reached a {newBadge.days}-day streak. Keep going!</Text>
-                <TouchableOpacity style={styles.badgeModalButton} onPress={()=>setBadgeModalVisible(false)}>
+                <TouchableOpacity style={styles.badgeModalButton} onPress={() => setBadgeModalVisible(false)}>
                   <Text style={styles.badgeModalButtonText}>Awesome!</Text>
                 </TouchableOpacity>
               </>
@@ -382,8 +377,8 @@ const styles = StyleSheet.create({
   badgesRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-  justifyContent: 'center',
-  alignItems: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   badgesRowSingle: {
     justifyContent: 'flex-start',
@@ -392,8 +387,8 @@ const styles = StyleSheet.create({
   badgeWrapper: {
     width: 70,
     alignItems: 'center',
-  marginHorizontal: 10,
-  marginBottom: 12,
+    marginHorizontal: 10,
+    marginBottom: 12,
   },
   badgeBg: {
     width: 60,
@@ -506,10 +501,38 @@ const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: 30,
+    marginTop: 3,
     backgroundColor: "#0000009f",
     borderRadius: 15,
-    padding: 20,
+    padding: 8,
+  },
+  lifetimeSection: {
+    marginTop: 25,
+    backgroundColor: '#00000080',
+    borderRadius: 18,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#ffffff12'
+  },
+  lifetimeTitle: {
+    color: Colors.text,
+    fontSize: 24,
+    fontFamily: Typography.fontFamily,
+    textAlign: 'center',
+    textShadowColor: '#000',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 3,
+    marginBottom: 4,
+  },
+  lifetimeSubtitle: {
+    color: Colors.text,
+    opacity: 0.7,
+    fontSize: 13,
+    fontFamily: Typography.fontFamily,
+    textAlign: 'center',
+    marginBottom: 8,
+    letterSpacing: 0.5,
   },
   statBox: {
     alignItems: 'center',
@@ -592,56 +615,56 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   badgeModalOverlay: {
-    flex:1,
-    backgroundColor:'rgba(0,0,0,0.8)',
-    justifyContent:'center',
-    alignItems:'center'
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   badgeModalContent: {
     width: '80%',
     maxWidth: 360,
-    backgroundColor:'#111',
-    borderRadius:20,
-    padding:25,
-    alignItems:'center',
-    borderWidth:2,
+    backgroundColor: '#111',
+    borderRadius: 20,
+    padding: 25,
+    alignItems: 'center',
+    borderWidth: 2,
     borderColor: Colors.text
   },
   badgeModalClose: {
-    position:'absolute',
-    top:10,
-    right:10,
-    padding:4
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    padding: 4
   },
   badgeModalImage: {
-    width:120,
-    height:120,
-    marginBottom:15
+    width: 120,
+    height: 120,
+    marginBottom: 15
   },
   badgeModalTitle: {
     color: Colors.text,
-    fontSize:26,
+    fontSize: 26,
     fontFamily: Typography.fontFamily,
-    marginBottom:8
+    marginBottom: 8
   },
   badgeModalText: {
     color: Colors.text,
-    fontSize:16,
-    textAlign:'center',
-    marginBottom:20,
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
     fontFamily: Typography.fontFamily,
   },
   badgeModalButton: {
-    backgroundColor:'#ffffff22',
-    paddingVertical:12,
-    paddingHorizontal:30,
-    borderRadius:25,
-    borderWidth:1,
+    backgroundColor: '#ffffff22',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    borderWidth: 1,
     borderColor: Colors.text
   },
   badgeModalButtonText: {
     color: Colors.text,
-    fontSize:16,
+    fontSize: 16,
     fontFamily: Typography.fontFamily,
   }
 });

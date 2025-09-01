@@ -78,9 +78,6 @@ export const getUserData = onRequest(async (req, res) => {
     const safeUserData = {
       name: userData?.name || 'Warrior',
       xp: userData?.xp || 120,
-      hours: userData?.hours || 0,
-      moves: userData?.moves || 0,
-      combos: userData?.combos || 0,
       plan: userData?.plan || 'free',
       fightsLeft: userData?.fightsLeft || 3,
       loginStreak: userData?.loginStreak || 0,
@@ -667,18 +664,21 @@ export const createUser = onRequest(async (req, res) => {
     await userDocRef.set({
       email: email,
       name: name,
-      xp: 120, // Start at level 1 (100 XP) plus some buffer for visual progress
+      xp: 130, // Start at level 1 (100 XP) plus some buffer for visual progress
       plan: 'free', // Default plan, can be 'free' or 'pro' or 'annual'
       fightsLeft: 4, // Start with 4 fights to allow immediate play
       playing: false,
+
       loginStreak: 1, // New field to track login streak count
-  maxLoginStreak: 1, // Track highest streak ever
+      maxLoginStreak: 1, // Track highest streak ever
+
       currentFightRound: 0, // New field to track current fight round
       currentFightTime: 0, // New field to track current fight time
       totalFightRounds: 0, // New field to track total fight rounds (weekly mission - resets)
       totalFightTime: 0, // New field to track total fight time (weekly mission - resets)
       lifetimeFightRounds: 0, // New field to track lifetime total fight rounds (never resets)
       lifetimeFightTime: 0, // New field to track lifetime total fight time (never resets)
+
       createdAt: FieldValue.serverTimestamp(),
       lastLoginAt: FieldValue.serverTimestamp()
     });    res.status(200).json({ success: true });

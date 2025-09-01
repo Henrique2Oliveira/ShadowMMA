@@ -240,17 +240,21 @@ export default function QuizScreen({ onComplete }: Props) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.progressContainer}>
-        {Array.from({ length: totalSteps }).map((_, index) => (
+      <View
+        style={styles.progressBarContainer}
+        accessibilityRole="progressbar"
+        accessibilityLabel="Quiz progress"
+        accessibilityValue={{ now: step + 1, min: 1, max: totalSteps }}
+      >
+        <View style={styles.progressTrack}>
           <View
-            key={index}
             style={[
-              styles.progressDot,
-              index === step && styles.progressDotActive,
-              index < step && styles.progressDotCompleted,
+              styles.progressFill,
+              { width: `${((step + 1) / totalSteps) * 100}%` },
             ]}
           />
-        ))}
+        </View>
+        <Text style={styles.progressText}>{step + 1}/{totalSteps}</Text>
       </View>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {renderStep()}
@@ -276,6 +280,7 @@ const styles = StyleSheet.create({
     backgroundColor: "black",
     padding: 20,
     justifyContent: 'center',
+    minWidth: 380,
   },
   scrollContent: {
     paddingBottom: 40,
@@ -284,6 +289,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     marginBottom: 40,
+  },
+  // New progress bar styles
+  progressBarContainer: {
+    marginBottom: 40,
+    minWidth: 290,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  progressTrack: {
+    height: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: Colors.redDotsDark,
+    borderRadius: 6,
+  },
+  progressText: {
+    marginTop: 8,
+    textAlign: 'center',
+    fontFamily: Typography.fontFamily,
+    fontSize: 12,
+    color: Colors.text,
+    opacity: 0.7,
   },
   backFloatingButton: {
     position: 'absolute',
@@ -303,7 +334,6 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily,
     fontSize: 14,
     color: Colors.text,
-    fontWeight: '600',
   },
   progressDot: {
     width: 10,
@@ -356,8 +386,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.button,
   },
   selectedOption: {
-    borderColor: Colors.green,
-    backgroundColor: Colors.green,
+    borderColor: Colors.text,
+    backgroundColor: Colors.redDotsDark,
   },
   optionText: {
     fontFamily: Typography.fontFamily,
@@ -388,8 +418,8 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   selectedBigOption: {
-    borderColor: Colors.green,
-    backgroundColor: Colors.green,
+    borderColor: Colors.redDotsDark,
+    backgroundColor: Colors.redDotsDark,
   },
   selectedDeclineOption: {
     borderColor: Colors.button,
@@ -399,7 +429,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.text,
     textAlign: 'center',
-    fontWeight: '600',
   },
   stanceNote: {
     fontFamily: Typography.fontFamily,
@@ -433,13 +462,12 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   stanceOptionSelected: {
-    borderColor: Colors.green,
-    backgroundColor: Colors.green,
+    borderColor: Colors.text,
+    backgroundColor: Colors.background,
   },
   stanceTitle: {
     fontFamily: Typography.fontFamily,
     fontSize: 18,
-    fontWeight: '700',
     color: Colors.text,
   },
   stanceDesc: {
