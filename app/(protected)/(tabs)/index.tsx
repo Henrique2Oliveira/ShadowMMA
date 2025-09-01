@@ -61,7 +61,7 @@ export default function Index() {
     try {
       const savedRounds = await AsyncStorage.getItem('weeklyMissionRounds');
       const savedTime = await AsyncStorage.getItem('weeklyMissionTime');
-      
+
       if (savedRounds) setWeeklyMissionRounds(parseInt(savedRounds));
       if (savedTime) setWeeklyMissionTime(parseInt(savedTime));
     } catch (error) {
@@ -160,17 +160,16 @@ export default function Index() {
         const today = new Date().toDateString();
         const storageKey = `streakModalShown_${user.uid}_${today}`;
         const modalAlreadyShown = await AsyncStorage.getItem(storageKey);
-        
+
         // If we haven't shown the modal today and the user has a streak
         if (!modalAlreadyShown && userData.loginStreak > 0) {
           // Check if this is a new day login by comparing with yesterday's stored streak
           const yesterdayStreakKey = `previousStreak_${user.uid}`;
           const yesterdayStreak = await AsyncStorage.getItem(yesterdayStreakKey);
           const prevStreak = yesterdayStreak ? parseInt(yesterdayStreak) : 0;
-          
+
           // If streak increased, show modal
           if (userData.loginStreak > prevStreak) {
-            console.log(`Showing streak modal on mount: ${prevStreak} -> ${userData.loginStreak}`);
             setStreakCount(userData.loginStreak);
             setShowStreakModal(true);
             // Mark modal as shown today
@@ -181,7 +180,7 @@ export default function Index() {
         }
       }
     };
-    
+
     if (userData?.loginStreak !== undefined) {
       checkStreakAchievement();
     }
@@ -356,6 +355,37 @@ export default function Index() {
       }
     },
     {
+      title: 'Random Fight',
+      disabled: false,
+      onPress: () => {
+        // Generate random fight configuration
+        const roundDurations = ['1', '2', '3', '5'];
+        const numRoundsOptions = ['1', '2', '3', '4', '5'];
+        const restTimes = ['0.5', '1'];
+        const moveSpeeds = ['0.8', '1', '1.2'];
+        const moveModeOptions: string[][] = [
+          ['Punches'],
+          ['Punches', 'Defense'],
+          ['Kicks'],
+          ['Defense'],
+          ['Punches', 'Kicks'],
+          ['Punches', 'Kicks', 'Defense']
+        ];
+
+        const pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
+
+        setModalConfig({
+          roundDuration: pick(roundDurations),
+          numRounds: pick(numRoundsOptions),
+          restTime: pick(restTimes),
+          moveSpeed: pick(moveSpeeds),
+          movesMode: pick(moveModeOptions),
+          category: '0'
+        });
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }
+    },
+    {
       title: 'Upgrade Plan',
       disabled: false,
       onPress: () => {
@@ -507,7 +537,7 @@ export default function Index() {
             </TouchableOpacity>
           </View>
         )}
-      
+
         <View
           style={{
             width: '100%',
@@ -532,9 +562,9 @@ export default function Index() {
         >
           <GradientButton
             title={buttons[6].title}
-            iconName="arrow-up-bold-circle"
+            iconName="dice-multiple"
             iconSize={120}
-            fontSize={35}
+            fontSize={38}
             disabled={buttons[6].disabled}
             onPress={buttons[6].onPress}
           />
@@ -548,9 +578,9 @@ export default function Index() {
         >
           <GradientButton
             title={buttons[7].title}
-            iconName="cog"
-            iconSize={130}
-            fontSize={42}
+            iconName="arrow-up-bold-circle"
+            iconSize={120}
+            fontSize={35}
             disabled={buttons[7].disabled}
             onPress={buttons[7].onPress}
           />
@@ -564,12 +594,28 @@ export default function Index() {
         >
           <GradientButton
             title={buttons[8].title}
-            iconName="run"
+            iconName="cog"
             iconSize={130}
             fontSize={42}
             disabled={buttons[8].disabled}
             onPress={buttons[8].onPress}
           />
+        <View
+          style={{
+            width: '100%',
+            maxWidth: 600,
+          }}
+        >
+          <GradientButton
+            title={buttons[9].title}
+            iconName="run"
+            iconSize={130}
+            fontSize={42}
+            disabled={buttons[9].disabled}
+            onPress={buttons[9].onPress}
+          />
+        </View>
+
         </View>
       </View>
 

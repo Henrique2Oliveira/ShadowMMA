@@ -7,7 +7,7 @@ import { Dimensions, Modal, StyleSheet, Text, TouchableOpacity, View } from 'rea
 interface AlertModalProps {
   visible: boolean;
   title: string;
-  message: string;
+  message?: string; // optional so we can show a modal without body text
   type?: 'error' | 'warning' | 'success' | 'info';
   primaryButton: {
     text: string;
@@ -23,7 +23,7 @@ interface AlertModalProps {
 export const AlertModal: React.FC<AlertModalProps> = ({
   visible,
   title,
-  message,
+  message = '',
   type = 'info',
   primaryButton,
   secondaryButton,
@@ -79,7 +79,9 @@ export const AlertModal: React.FC<AlertModalProps> = ({
           </View>
           
           <Text style={styles.title}>{title}</Text>
-          <Text style={styles.message}>{message}</Text>
+          {message.trim().length > 0 && (
+            <Text style={styles.message}>{message}</Text>
+          )}
           
           <View style={styles.buttonContainer}>
             <TouchableOpacity

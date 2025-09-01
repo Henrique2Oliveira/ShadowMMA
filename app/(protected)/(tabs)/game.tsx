@@ -24,6 +24,29 @@ import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { Animated, AppState, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+// Pre-game tips (shown once before the user presses Start)
+const PRE_GAME_TIPS = [
+  'Remember to breathe – controlled exhales on every strike.',
+  'Hands up, chin tucked. Protect before you attack.',
+  'Relax your shoulders – tension slows you down.',
+  'Pivot your feet to add power and protect your knees.',
+  'See the target. Strike with intent, not just motion.',
+  'Stay light on your feet – movement is your best defense.',
+  'Focus on technique, not just speed.',
+  'Keep your core engaged for better balance and power.',
+  'Visualize your opponent and react accordingly.',
+  'Recover quickly between rounds – shake out your arms and legs.',
+  'Aim for clean, precise strikes over wild swings.',
+  'Use your hips to generate more force in every punch or kick.',
+  'Keep your eyes on your target at all times.',
+  'Consistency beats intensity – keep a steady pace.',
+  'Warm up before you start to prevent injuries.',
+  'Cool down and stretch after your workout.',
+  'Track your progress and celebrate small wins.',
+  'Stay hydrated throughout your session.',
+  'Enjoy the process – improvement comes with practice!'
+];
+
 type ModalConfig = {
   visible: boolean;
   title: string;
@@ -192,6 +215,8 @@ export default function Game() {
   const [speedMultiplier, setSpeedMultiplier] = React.useState(parseFloat(params.moveSpeed || '1'));
   const [animationMode, setAnimationMode] = React.useState<'none' | 'old' | 'new'>('new');
   const [showComboCarousel, setShowComboCarousel] = React.useState(true); // Default to true
+  // Random pre-start tip
+  const [preGameTip, setPreGameTip] = React.useState<string | null>(null);
   // Load preferences from AsyncStorage on mount
   React.useEffect(() => {
     loadGamePreferences().then((prefs) => {
@@ -427,34 +452,11 @@ export default function Game() {
           if (allMoves.length > 0) {
             setCurrentMove(countdownMoves[0]);
           }
-          // Show game mode description before user starts (stay paused until dismissed)
-          const isFocusedCombo = !!params.comboId;
-          const modeTitle = isFocusedCombo ? 'Focused Combo Mode' : 'Random Combo Mode';
-          const modeMessage = isFocusedCombo
-            ? 'You selected a specific combo. Each round will cycle this combo so you can refine timing, technique and endurance. Tap Start when ready.'
-            : 'You will face 3–5 randomly selected combos built from your chosen move types. Maintain form as variety challenges stamina and reaction. Tap Start when ready.';
-          setCurrentModal({
-            visible: true,
-            title: modeTitle,
-            message: modeMessage,
-            type: 'info',
-            primaryButton: {
-              text: 'Start',
-              onPress: () => {
-                setCurrentModal(null);
-                // Unpause to let countdown advance
-                setGameState(prev => ({ ...prev, isPaused: false }));
-              }
-            },
-            secondaryButton: {
-              text: 'Close',
-              onPress: () => {
-                setCurrentModal(null);
-                // Leave game if user closes without starting
-                router.replace('/(protected)/(tabs)');
-              }
-            }
-          });
+          // Set a random pre-game tip now that moves are ready
+          if (!preGameTip) {
+            setPreGameTip(PRE_GAME_TIPS[Math.floor(Math.random() * PRE_GAME_TIPS.length)]);
+          }
+       
           // Update the user's fights left in the context
           if (data.fightsLeft !== undefined) {
             updateUserData({ fightsLeft: data.fightsLeft });
@@ -752,10 +754,14 @@ export default function Game() {
   }, [currentMove, effectiveSpeedMultiplier, updateMove]);
 
   const handlePress = () => {
-    setGameState(prev => ({
-      ...prev,
-      isPaused: !prev.isPaused
-    }));
+    setGameState(prev => {
+      const nextPaused = !prev.isPaused;
+      // When transitioning from paused to running for the first time (before countdown complete), hide tip
+      if (prev.isPaused && !nextPaused && !isCountdownComplete && preGameTip) {
+        setPreGameTip(null);
+      }
+      return { ...prev, isPaused: nextPaused };
+    });
 
 
     // Animate the side buttons opacity
@@ -833,6 +839,14 @@ export default function Game() {
         {gameState.isGameOver && (
           <View style={styles.topLevelBarContainer}>
             <LevelBar xp={userData?.xp || 0} />
+          </View>
+        )}
+
+        {/* Pre-game random tip (only before countdown starts) */}
+        {preGameTip && !isCountdownComplete && !gameState.isGameOver && (
+          <View style={styles.preGameTipContainer}>
+            <Text style={styles.preGameTipLabel}>Tip</Text>
+            <Text style={styles.preGameTipText}>{preGameTip}</Text>
           </View>
         )}
 
@@ -1084,5 +1098,30 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: Typography.fontFamily,
     letterSpacing: 1,
+  },
+  preGameTipContainer: {
+    position: 'absolute',
+    top: 140,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    zIndex: 25,
+  },
+  preGameTipLabel: {
+    color: '#ffd257',
+    fontSize: 12,
+    fontFamily: Typography.fontFamily,
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    marginBottom: 4,
+  },
+  preGameTipText: {
+    color: '#ffffff',
+    fontSize: 14,
+    lineHeight: 19,
+    fontFamily: Typography.fontFamily,
   },
 });
