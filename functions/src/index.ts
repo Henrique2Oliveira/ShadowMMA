@@ -302,22 +302,47 @@ export const handleGameOver = onRequest(async (req, res) => {
       return;
     }
 
-    // Calculate new XP based on current level (progressive difficulty)
-    const oldXp = userData.xp || 0;
-    const currentLevel = Math.floor(oldXp / 100);
-    
-    // Base XP formula: starts high for early levels, decreases as level increases
-    // Formula: baseXP = max(20, 120 - (level * 4))
-    // This gives: Level 0-4: 120-104 XP, Level 10: 80 XP, Level 20: 40 XP, Level 25+: 20 XP minimum
-    const baseXP = Math.max(20, 120 - (currentLevel * 4));
-    
-    // Add random variation (±25% of base XP)
-    const variation = Math.floor(baseXP * 0.25);
-    const randomXP = Math.floor(Math.random() * (variation * 2 + 1)) - variation;
-    
-    // Final XP calculation with minimum guarantee
-    const xpGained = Math.max(15, baseXP + randomXP);
-    const newXp = oldXp + xpGained;
+  // Calculate new XP based on current level (progressive difficulty + fight length bonus)
+  const oldXp = userData.xp || 0;
+  const currentLevel = Math.floor(oldXp / 100);
+
+  // --- Base XP (unchanged core curve) ---
+  // Base decreases with level so early progression feels fast.
+  // baseXP = max(20, 120 - level * 4)
+  const baseXP = Math.max(20, 120 - (currentLevel * 4));
+
+  // Random variation (±25%) keeps results dynamic while maintaining fairness
+  const variation = Math.floor(baseXP * 0.25);
+  const randomXP = Math.floor(Math.random() * (variation * 2 + 1)) - variation;
+
+  // --- Fight length reward multiplier ---
+  // We reward longer / more intense fights using both rounds and total fight time.
+  // Assumptions:
+  //  * currentFightRound = total number of rounds selected for the fight (not the current round index)
+  //  * currentFightTime = total fight time (sum of all rounds) in SECONDS (if it's another unit, adjust BASELINE_TOTAL_TIME_SECONDS accordingly)
+  // Baselines: 1 round & 60 seconds receive no bonus. Bonuses are capped to avoid abuse.
+  const fightRoundsForBonus = Math.max(0, userData?.currentFightRound || 0);
+  const fightTimeForBonus = Math.max(0, userData?.currentFightTime || 0); // assumed seconds
+
+  const BASELINE_ROUNDS = 1; // no extra bonus until more than 1 round
+  const BASELINE_TOTAL_TIME_SECONDS = 60; // adjust if your typical short fight differs
+
+  // Round bonus: +10% per extra round beyond baseline up to +100%
+  const roundsOverBaseline = Math.max(0, fightRoundsForBonus - BASELINE_ROUNDS);
+  const roundBonusPct = Math.min(roundsOverBaseline * 0.10, 1.0); // 0..1.0
+
+  // Time bonus: +5% per extra minute (60s) beyond baseline total time up to +75%
+  const timeOverBaseline = Math.max(0, fightTimeForBonus - BASELINE_TOTAL_TIME_SECONDS);
+  const timeBonusPct = Math.min((timeOverBaseline / 60) * 0.05, 0.75); // 0..0.75
+
+  // Combine & cap overall multiplier (cap 2.5x total to prevent runaway farming)
+  let lengthMultiplier = 1 + roundBonusPct + timeBonusPct; // base 1.0 .. 2.75
+  lengthMultiplier = Math.min(lengthMultiplier, 2.5);
+
+  // Final XP (pre-floor) then enforce minimum absolute XP of 15
+  const rawXP = (baseXP + randomXP) * lengthMultiplier;
+  const xpGained = Math.max(15, Math.round(rawXP));
+  const newXp = oldXp + xpGained;
 
     // Get current fight stats to add to totals
     const currentFightRounds = userData?.currentFightRound || 0;
@@ -345,7 +370,16 @@ export const handleGameOver = onRequest(async (req, res) => {
       newXp,
       xpGained,
       currentLevel: Math.floor(oldXp / 100),
-      newLevel: Math.floor(newXp / 100)
+      newLevel: Math.floor(newXp / 100),
+      xpBreakdown: {
+        baseXP,
+        randomXPAdjustment: randomXP,
+        lengthMultiplier,
+        roundBonusPct,
+        timeBonusPct,
+  currentFightRounds: fightRoundsForBonus,
+  currentFightTime: fightTimeForBonus
+      }
     });
 
   } catch (error) {
@@ -376,9 +410,20 @@ export const startFight = onRequest(async (req, res) => {
     const comboId = bodyOrQuery?.comboId as string | number | undefined;
     const categoryToUse = category.toString();
     
-    // Get fight configuration values
-    const fightRounds = parseInt(bodyOrQuery?.fightRounds || bodyOrQuery?.numRounds || '1');
-    const fightTimePerRound = parseFloat(bodyOrQuery?.fightTimePerRound || bodyOrQuery?.roundDuration || '3');
+  // Get fight configuration values (round duration provided in MINUTES from client UI)
+  let fightRounds = parseInt(bodyOrQuery?.fightRounds || bodyOrQuery?.numRounds || '1');
+  let fightTimePerRoundMinutes = parseFloat(bodyOrQuery?.fightTimePerRound || bodyOrQuery?.roundDuration || '3');
+
+  // Sanitize NaN
+  if (isNaN(fightRounds)) fightRounds = 1;
+  if (isNaN(fightTimePerRoundMinutes)) fightTimePerRoundMinutes = 1;
+
+  // Enforce business rules: rounds 1..7, duration 1..5 minutes
+  if (fightRounds < 1) fightRounds = 1; else if (fightRounds > 7) fightRounds = 7;
+  if (fightTimePerRoundMinutes < 1) fightTimePerRoundMinutes = 1; else if (fightTimePerRoundMinutes > 5) fightTimePerRoundMinutes = 5;
+
+  // Convert to seconds for storage & XP calculations consistency server-side
+  const fightTimePerRoundSeconds = Math.round(fightTimePerRoundMinutes * 60);
     
     // Process moveTypes for both combo selection and specific comboId
     const moveTypesArray = (() => {
@@ -478,9 +523,9 @@ export const startFight = onRequest(async (req, res) => {
         updates.fightsLeft = updatedFightsLeft;
       }
       
-      // Save current fight configuration
-      updates.currentFightRound = fightRounds;
-      updates.currentFightTime = fightTimePerRound * fightRounds; // Total time for this fight
+  // Save current fight configuration (store total seconds across all rounds)
+  updates.currentFightRound = fightRounds;
+  updates.currentFightTime = fightTimePerRoundSeconds * fightRounds; // total seconds for this fight
       
       await userRef.update(updates);
 
@@ -584,9 +629,9 @@ export const startFight = onRequest(async (req, res) => {
       updates.fightsLeft = updatedFightsLeft;
     }
     
-    // Save current fight configuration
-    updates.currentFightRound = fightRounds;
-    updates.currentFightTime = fightTimePerRound * fightRounds; // Total time for this fight
+  // Save current fight configuration
+  updates.currentFightRound = fightRounds;
+  updates.currentFightTime = fightTimePerRoundSeconds * fightRounds; // total seconds
     
     // Update the user's playing status
     await userRef.update(updates);
