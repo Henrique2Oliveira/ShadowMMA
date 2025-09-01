@@ -126,6 +126,19 @@ export function FightModeModal({
             <MaterialCommunityIcons name="close" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.modalTitle}>Fight Mode Options</Text>
+          {/* Mode description + cost badge */}
+          <View style={styles.modeHeaderRow}>
+            <Text style={styles.modeDescription}>
+              {comboId !== undefined && comboId !== null
+                ? 'Focused Combo: Repeat a chosen combo each round to sharpen precision and endurance.'
+                : 'Random Combos: 3–5 varied combos from selected move types for skill variety & conditioning.'}
+            </Text>
+            <View style={styles.lifeBadge} accessibilityRole="text" accessibilityLabel="Costs one life">
+              <MaterialCommunityIcons name="heart-minus" color="#fff" size={14} style={{ marginRight: 4 }} />
+              <Text style={styles.lifeBadgeText}>-1 Life</Text>
+            </View>
+          </View>
+          <Text style={styles.lifeHint}>Starting a fight consumes one Life. Lives refill daily — upgrade for more.</Text>
 
           <View style={styles.optionsContainer}>
             <View style={styles.optionRow}>
@@ -358,6 +371,47 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 15,
     textAlign: 'center',
+  },
+  modeDescription: {
+    color: '#ffffffcc',
+    fontSize: 14,
+    fontFamily: Typography.fontFamily,
+    flex: 1,
+    marginRight: 12,
+    marginBottom: 6,
+    lineHeight: 18,
+  },
+  modeHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 4,
+  },
+  lifeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#b72222',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3.5,
+    elevation: 4,
+  },
+  lifeBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontFamily: Typography.fontFamily,
+    letterSpacing: 0.5,
+    fontWeight: '600',
+  },
+  lifeHint: {
+    color: '#ffffff80',
+    fontSize: 11,
+    fontFamily: Typography.fontFamily,
+    textAlign: 'center',
+    marginBottom: 12,
   },
   optionsContainer: {
     width: '100%',

@@ -379,7 +379,7 @@ export default function Game() {
 
         const data = await response.json();
 
-        if (data.combos && data.combos.length > 0) {
+  if (data.combos && data.combos.length > 0) {
           // Extract all moves from the combos and track which combo they belong to
           let allMoves = data.combos.reduce((acc: Move[], combo: any, comboIndex: number) => {
             // Add combo reference to each move with move index
@@ -427,6 +427,34 @@ export default function Game() {
           if (allMoves.length > 0) {
             setCurrentMove(countdownMoves[0]);
           }
+          // Show game mode description before user starts (stay paused until dismissed)
+          const isFocusedCombo = !!params.comboId;
+          const modeTitle = isFocusedCombo ? 'Focused Combo Mode' : 'Random Combo Mode';
+          const modeMessage = isFocusedCombo
+            ? 'You selected a specific combo. Each round will cycle this combo so you can refine timing, technique and endurance. Tap Start when ready.'
+            : 'You will face 3–5 randomly selected combos built from your chosen move types. Maintain form as variety challenges stamina and reaction. Tap Start when ready.';
+          setCurrentModal({
+            visible: true,
+            title: modeTitle,
+            message: modeMessage,
+            type: 'info',
+            primaryButton: {
+              text: 'Start',
+              onPress: () => {
+                setCurrentModal(null);
+                // Unpause to let countdown advance
+                setGameState(prev => ({ ...prev, isPaused: false }));
+              }
+            },
+            secondaryButton: {
+              text: 'Close',
+              onPress: () => {
+                setCurrentModal(null);
+                // Leave game if user closes without starting
+                router.replace('/(protected)/(tabs)');
+              }
+            }
+          });
           // Update the user's fights left in the context
           if (data.fightsLeft !== undefined) {
             updateUserData({ fightsLeft: data.fightsLeft });
