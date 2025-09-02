@@ -319,21 +319,21 @@ export const handleGameOver = onRequest(async (req, res) => {
   // We reward longer / more intense fights using both rounds and total fight time.
   // Assumptions:
   //  * currentFightRound = total number of rounds selected for the fight (not the current round index)
-  //  * currentFightTime = total fight time (sum of all rounds) in SECONDS (if it's another unit, adjust BASELINE_TOTAL_TIME_SECONDS accordingly)
-  // Baselines: 1 round & 60 seconds receive no bonus. Bonuses are capped to avoid abuse.
+  //  * currentFightTime = total fight time in MINUTES (1-5 minutes per round)
+  // Baselines: 1 round & 1 minute receive no bonus. Bonuses are capped to avoid abuse.
   const fightRoundsForBonus = Math.max(0, userData?.currentFightRound || 0);
-  const fightTimeForBonus = Math.max(0, userData?.currentFightTime || 0); // assumed seconds
+  const fightTimeForBonus = Math.max(0, userData?.currentFightTime || 0); // in minutes
 
   const BASELINE_ROUNDS = 1; // no extra bonus until more than 1 round
-  const BASELINE_TOTAL_TIME_SECONDS = 60; // adjust if your typical short fight differs
+  const BASELINE_TOTAL_TIME = 1; // 1 minute baseline (matching game's minimum round time)
 
   // Round bonus: +10% per extra round beyond baseline up to +100%
   const roundsOverBaseline = Math.max(0, fightRoundsForBonus - BASELINE_ROUNDS);
   const roundBonusPct = Math.min(roundsOverBaseline * 0.10, 1.0); // 0..1.0
 
-  // Time bonus: +5% per extra minute (60s) beyond baseline total time up to +75%
-  const timeOverBaseline = Math.max(0, fightTimeForBonus - BASELINE_TOTAL_TIME_SECONDS);
-  const timeBonusPct = Math.min((timeOverBaseline / 60) * 0.05, 0.75); // 0..0.75
+  // Time bonus: +5% per extra minute beyond baseline time up to +75%
+  const timeOverBaseline = Math.max(0, fightTimeForBonus - BASELINE_TOTAL_TIME);
+  const timeBonusPct = Math.min(timeOverBaseline * 0.05, 0.75); // 0..0.75
 
   // Combine & cap overall multiplier (cap 2.5x total to prevent runaway farming)
   let lengthMultiplier = 1 + roundBonusPct + timeBonusPct; // base 1.0 .. 2.75

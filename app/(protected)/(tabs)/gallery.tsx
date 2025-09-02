@@ -1,7 +1,7 @@
 import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import React, { useCallback, useState } from 'react';
-import { FlatList, ListRenderItem, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Linking, ListRenderItem, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type MoveIconName = 'boxing-glove' | 'karate' | 'arm-flex' | 'human-handsdown';
 
@@ -151,6 +151,14 @@ export default function Gallery() {
     setIsModalVisible(true);
   };
 
+  const handleOpenYouTube = useCallback(() => {
+    if (!selectedMove) return;
+    // Build a YouTube search query using the move name; include a context keyword for better relevance.
+    const query = encodeURIComponent(`How to ${selectedMove.name} boxing technique`);
+    const url = `https://www.youtube.com/results?search_query=${query}`;
+    Linking.openURL(url).catch(() => { /* noop: could add error toast */ });
+  }, [selectedMove]);
+
   const renderMove: ListRenderItem<Move> = useCallback(({ item: move }) => {
     return (
       <TouchableOpacity
@@ -225,6 +233,10 @@ export default function Gallery() {
                   <Text style={styles.modalCategory}>{selectedMove.category}</Text>
                 </View>
                 <Text style={styles.modalDescription}>{selectedMove.description}</Text>
+                <TouchableOpacity style={styles.youtubeButton} onPress={handleOpenYouTube}>
+                  <MaterialCommunityIcons name="youtube" size={28} color="#fff" style={{ marginRight: 8 }} />
+                  <Text style={styles.youtubeButtonText}>Search on YouTube</Text>
+                </TouchableOpacity>
               </View>
             )}
           </View>
@@ -350,5 +362,26 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily,
     lineHeight: 26,
     textAlign: 'center',
+  },
+  youtubeButton: {
+    marginTop: 24,
+    marginBottom: 30,
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'center',
+    backgroundColor: '#c30404ff',
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  youtubeButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: Typography.fontFamily,
   },
 });
