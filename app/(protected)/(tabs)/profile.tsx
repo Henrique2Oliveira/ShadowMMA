@@ -44,11 +44,13 @@ export default function Profile() {
   };
 
   // Lifetime rounds badge thresholds (based on total lifetimeFightRounds)
-  const roundBadgeThresholds = [5, 10, 25];
+  const roundBadgeThresholds = [5, 10, 25, 50, 75];
   const roundBadgeImages: Record<number, any> = {
     5: require('@/assets/images/badges/5rounds.png'),
     10: require('@/assets/images/badges/10rounds.png'),
     25: require('@/assets/images/badges/25rounds.png'),
+    50: require('@/assets/images/badges/50rounds.png'),
+    75: require('@/assets/images/badges/75rounds.png'),
   };
 
   // Determine earned badges based on maxLoginStreak
