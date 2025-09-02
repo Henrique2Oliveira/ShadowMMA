@@ -29,6 +29,17 @@ initializeApp();
 const db = getFirestore();
 const auth = getAuth();
 
+// --- Game progression caps ---
+// Hard cap user progression at level 100.
+// Level formula remains floor(xp / 100) but we never allow level to exceed MAX_LEVEL
+// and we clamp XP so it cannot progress beyond MAX_XP (exact multiple for stable UI logic).
+const MAX_LEVEL = 100;
+const MAX_XP = MAX_LEVEL * 100; // e.g. level 100 shows as exactly 100 (no overflow remainder)
+const calcLevel = (xp: number | undefined | null) => {
+  if (!xp || xp < 0) return 0;
+  return Math.min(MAX_LEVEL, Math.floor(xp / 100));
+};
+
 // --- Simple in-memory cache (persists per warm Cloud Function instance) ---
 // Reduces Firestore reads if the same user requests data repeatedly in a short window.
 // NOTE: This does NOT eliminate function invocation cost, but saves reads + latency.
@@ -75,6 +86,13 @@ export const getUserData = onRequest(async (req, res) => {
     }
 
   const userData = userDoc.data();
+  // Clamp XP server-side before exposing (in case of historical overflow)
+  let safeXp: number = userData?.xp || 0;
+  if (safeXp > MAX_XP) {
+    safeXp = MAX_XP;
+    // Opportunistic background fix (non-blocking)
+    try { await userRef.update({ xp: MAX_XP }); } catch {}
+  }
   // Times already stored in minutes in DB
   const currentFightRound = userData?.currentFightRound || 0;
   const currentFightTime = userData?.currentFightTime || 0;
@@ -84,7 +102,7 @@ export const getUserData = onRequest(async (req, res) => {
   const lifetimeFightTime = userData?.lifetimeFightTime || 0;
     const safeUserData = {
       name: userData?.name || 'Warrior',
-      xp: userData?.xp || 120,
+  xp: safeXp || 120,
       plan: userData?.plan || 'free',
       fightsLeft: userData?.fightsLeft || 3,
       loginStreak: userData?.loginStreak || 0,
@@ -309,7 +327,8 @@ export const handleGameOver = onRequest(async (req, res) => {
     }
 
   // Calculate new XP based on current level (progressive difficulty + fight length bonus)
-  const oldXp = userData.xp || 0;
+  const oldXpRaw = userData.xp || 0;
+  const oldXp = Math.min(oldXpRaw, MAX_XP);
   const currentLevel = Math.floor(oldXp / 100);
 
   // --- Base XP (unchanged core curve) ---
@@ -348,7 +367,10 @@ export const handleGameOver = onRequest(async (req, res) => {
   // Final XP (pre-floor) then enforce minimum absolute XP of 15
   const rawXP = (baseXP + randomXP) * lengthMultiplier;
   const xpGained = Math.max(15, Math.round(rawXP));
-  const newXp = oldXp + xpGained;
+  let newXp = oldXp + xpGained;
+  if (newXp > MAX_XP) {
+    newXp = MAX_XP;
+  }
 
     // Get current fight stats to add to totals
     const currentFightRounds = userData?.currentFightRound || 0;
@@ -376,7 +398,7 @@ export const handleGameOver = onRequest(async (req, res) => {
       newXp,
       xpGained,
       currentLevel: Math.floor(oldXp / 100),
-      newLevel: Math.floor(newXp / 100),
+  newLevel: Math.floor(newXp / 100),
       xpBreakdown: {
         baseXP,
         randomXPAdjustment: randomXP,
@@ -554,7 +576,7 @@ export const startFight = onRequest(async (req, res) => {
 
   // Get the user's level from XP
   const xp = typeof userData?.xp === 'number' ? userData.xp : 0;
-  const currentUserLevel = Math.floor(xp / 100);
+  const currentUserLevel = Math.min(MAX_LEVEL, Math.floor(xp / 100));
 
   // Build pools per selected move type and filter by user level
   type ComboT = any;
@@ -789,7 +811,7 @@ export const createUser = onRequest(async (req, res) => {
     await userDocRef.set({
       email: email,
       name: name,
-      xp: 130, // Start at level 1 (100 XP) plus some buffer for visual progress
+      xp: Math.min(130, MAX_XP), // Start at level 1 (100 XP) plus some buffer for visual progress (capped)
       plan: 'free', // Default plan, can be 'free' or 'pro' or 'annual'
       fightsLeft: 4, // Start with 4 fights to allow immediate play
       playing: false,

@@ -20,7 +20,8 @@ export const LevelBar: React.FC<LevelBarProps> = ({
   showPrevLevelDuringLevelUp = false
 }) => {
   // Calculate level and XP percentage
-  const level = Math.floor(xp / 100) || 0; // Level starts at 0
+  const MAX_LEVEL = 100;
+  const level = Math.min(MAX_LEVEL, Math.floor(xp / 100) || 0); // Clamp at max
   const [displayedLevel, setDisplayedLevel] = useState(level);
   // (legacy calculation removed; we only need remainder inside effect)
   // Use a ref container (xpAnim) instead of exposing a long property name that
@@ -68,7 +69,8 @@ export const LevelBar: React.FC<LevelBarProps> = ({
     }
 
     // Initialization logic: establish baseline without triggering level-up sequence
-    const remainder = Math.max(0, Math.min(100, xp % 100));
+  // If at max level clamp remainder to full bar
+  const remainder = level >= MAX_LEVEL ? 100 : Math.max(0, Math.min(100, xp % 100));
     if (!initializedRef.current) {
       // Set bar instantly to current remainder
       xpAnim.setValue(remainder);
@@ -81,7 +83,7 @@ export const LevelBar: React.FC<LevelBarProps> = ({
     const prevXp = prevXpRef.current ?? xp;
 
     const prevLevel = Math.floor(prevXp / 100);
-    const newLevel = Math.floor(xp / 100);
+  const newLevel = Math.min(MAX_LEVEL, Math.floor(xp / 100));
   // remainder already computed above
 
     // If level increased, play a "fill -> pause -> reset -> grow remainder" sequence
@@ -153,7 +155,7 @@ export const LevelBar: React.FC<LevelBarProps> = ({
   <Animated.View style={[styles.levelTextContainer, levelAnimatedStyle]}>
           <Text style={styles.levelText}>
           <Text style={styles.levelPrefix}>Lv.</Text>
-          <Text style={styles.levelNumber}> {displayedLevel}</Text>
+          <Text style={styles.levelNumber}> {displayedLevel >= MAX_LEVEL ? 'MAX' : displayedLevel}</Text>
           </Text>
         </Animated.View>
 

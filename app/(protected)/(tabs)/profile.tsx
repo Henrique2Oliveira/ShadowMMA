@@ -258,11 +258,11 @@ export default function Profile() {
             <View style={[styles.infoContainer, styles.levelContainer]}>
               <View style={styles.infoRow}>
                 <MaterialCommunityIcons name="trophy" size={26} color={Colors.text} />
-                <Text style={styles.infoText}>Level {userData?.xp ? Math.floor(userData.xp / 100) : 0}</Text>
+                <Text style={styles.infoText}>Level {userData?.xp ? (Math.floor(userData.xp / 100) >= 100 ? 'MAX' : Math.floor(userData.xp / 100)) : 0}</Text>
               </View>
               <View style={styles.infoRow}>
                 <MaterialCommunityIcons name="star" size={26} color={Colors.text} />
-                <Text style={styles.infoText}>XP: {userData?.xp != null ? formatNumber(userData.xp) : "-"}</Text>
+                <Text style={styles.infoText}>XP: {userData?.xp != null ? formatNumber(Math.min(userData.xp, 10000)) : "-"}</Text>
               </View>
               <View style={styles.infoRow}>
                 <MaterialCommunityIcons name="fire" size={30} color="#fd6100ff" />

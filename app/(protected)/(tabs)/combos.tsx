@@ -152,8 +152,8 @@ export default function Combos() {
   }, [fetchCombos, loadRecentCombos]);
 
   const getUserLevel = (xp: number) => {
-    // Simple level calculation: every 100 XP is a new level, starting from level 1
-    return Math.floor(xp / 100);
+    // Simple level calculation with hard cap: every 100 XP is a new level up to 100
+    return Math.min(100, Math.floor(xp / 100));
   };
 
   const saveRecentCombo = useCallback(async (comboId: string | number) => {

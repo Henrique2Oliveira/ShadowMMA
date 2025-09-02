@@ -253,7 +253,7 @@ export default function Game() {
   // Handle new combo unlock detection (XP bar animation handled in LevelBar component)
   React.useEffect(() => {
     if (userData?.xp !== undefined && userData?.xp !== null) {
-      const currentLevel = Math.floor(userData.xp / 100) || 0;
+      const currentLevel = Math.min(100, Math.floor(userData.xp / 100) || 0);
       if (currentLevel > previousLevel && previousLevel > 0) {
         setShowNewCombo(true);
         const timer = setTimeout(() => setShowNewCombo(false), 5000);
