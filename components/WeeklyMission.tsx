@@ -101,7 +101,7 @@ export const WeeklyMission: React.FC<WeeklyMissionProps> = ({
             />
             <Text style={styles.missionText}>Time (min)</Text>
             <Text style={[styles.missionCount, timeCompleted && styles.completedCount]}>
-              {completedTime} m/{totalTime} m
+              {completedTime}/{totalTime}
             </Text>
             {timeCompleted && (
               <MaterialCommunityIcons name="check-circle" size={16} color="#fdd700" />

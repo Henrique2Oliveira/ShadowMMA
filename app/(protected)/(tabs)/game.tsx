@@ -945,7 +945,7 @@ export default function Game() {
         {/* Level Bar - reuse shared component (shows only on game over to mirror original logic) */}
         {gameState.isGameOver && (
           <View style={styles.topLevelBarContainer}>
-            <LevelBar xp={userData?.xp || 0} />
+            <LevelBar xp={userData?.xp || 0} showPrevLevelDuringLevelUp />
           </View>
         )}
 

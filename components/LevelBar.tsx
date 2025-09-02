@@ -1,21 +1,28 @@
 import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 
 interface LevelBarProps {
   xp: number;
   containerStyle?: any; // Optional container style override
+  levelUpHoldMs?: number; // Optional: how long to hold full bar on level up
+  suppressInitialLevelUpAnimation?: boolean; // Skip level-up animation on first data load
+  showPrevLevelDuringLevelUp?: boolean; // Keep displaying previous level number until animation sequence completes
 }
 
 export const LevelBar: React.FC<LevelBarProps> = ({ 
   xp, 
-  containerStyle 
+  containerStyle,
+  levelUpHoldMs = 1000,
+  suppressInitialLevelUpAnimation = true,
+  showPrevLevelDuringLevelUp = false
 }) => {
   // Calculate level and XP percentage
   const level = Math.floor(xp / 100) || 0; // Level starts at 0
-  const xpPercentage = Math.max(0, Math.min(100, xp % 100));
+  const [displayedLevel, setDisplayedLevel] = useState(level);
+  // (legacy calculation removed; we only need remainder inside effect)
   // Use a ref container (xpAnim) instead of exposing a long property name that
   // might accidentally be accessed as a (missing) prop key somewhere else and
   // trigger the dev warning: "Property 'xpBarAnimatedWidth' doesn't exist".
@@ -23,6 +30,15 @@ export const LevelBar: React.FC<LevelBarProps> = ({
   // spread or style object key referencing it incorrectly.
   const xpAnimRef = useRef(new Animated.Value(0));
   const xpAnim = xpAnimRef.current;
+
+  // Level text appearance + pulse animation values
+  const levelScale = useRef(new Animated.Value(1)).current; // Base scale stays 1; pulse only on level-up
+  const prevXpRef = useRef<number | null>(null);
+  const initializedRef = useRef(false);
+
+  const levelAnimatedStyle = {
+    transform: [{ scale: levelScale }]
+  } as const;
 
   // Helper function to safely get animated width
   const getAnimatedWidth = React.useCallback(() => {
@@ -46,29 +62,100 @@ export const LevelBar: React.FC<LevelBarProps> = ({
   }, [xpAnim]);
 
   useEffect(() => {
-    if (xp !== undefined && xp !== null) {
-      const currentXpPercentage = Math.max(0, Math.min(100, xp % 100));
+    if (xp === undefined || xp === null) {
+      xpAnim.setValue(0);
+      return;
+    }
 
-      // Animate the XP bar with safety bounds
-    Animated.spring(xpAnim, {
-        toValue: currentXpPercentage,
+    // Initialization logic: establish baseline without triggering level-up sequence
+    const remainder = Math.max(0, Math.min(100, xp % 100));
+    if (!initializedRef.current) {
+      // Set bar instantly to current remainder
+      xpAnim.setValue(remainder);
+      prevXpRef.current = xp;
+      initializedRef.current = true;
+      setDisplayedLevel(level);
+      return; // Skip further logic first time
+    }
+
+    const prevXp = prevXpRef.current ?? xp;
+
+    const prevLevel = Math.floor(prevXp / 100);
+    const newLevel = Math.floor(xp / 100);
+  // remainder already computed above
+
+    // If level increased, play a "fill -> pause -> reset -> grow remainder" sequence
+    if (newLevel > prevLevel && !(suppressInitialLevelUpAnimation && !prevXpRef.current)) {
+      if (showPrevLevelDuringLevelUp) {
+        // Show previous level number during the fill + reset sequence
+        setDisplayedLevel(prevLevel);
+      }
+      Animated.sequence([
+        // Finish filling current bar to 100%
+        Animated.spring(xpAnim, {
+          toValue: 100,
+          useNativeDriver: false,
+          tension: 25,
+          friction: 5,
+        }),
+  Animated.delay(levelUpHoldMs), // celebratory pause at full bar (configurable)
+        // Instant reset to 0 for the next level's bar
+        Animated.timing(xpAnim, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: false,
+        }),
+        // Animate up to the new remainder so user feels fresh progress
+        Animated.spring(xpAnim, {
+          toValue: remainder,
+          useNativeDriver: false,
+          tension: 20,
+          friction: 4,
+        })
+      ]).start(() => {
+        // Pulse the level text ONLY on actual level-up
+        Animated.sequence([
+          Animated.spring(levelScale, {
+            toValue: 1.25,
+            useNativeDriver: true,
+            tension: 150,
+            friction: 8,
+          }),
+          Animated.spring(levelScale, {
+            toValue: 1,
+            useNativeDriver: true,
+            tension: 120,
+            friction: 9,
+          })
+        ]).start(() => {
+          // After pulse completes, reveal the new level number
+          setDisplayedLevel(newLevel);
+        });
+      });
+    } else {
+      // Normal progression within same level
+      Animated.spring(xpAnim, {
+        toValue: remainder,
         useNativeDriver: false,
         tension: 20,
-        friction: 4
+        friction: 4,
       }).start();
-    } else {
-      // Default to 0 if no XP data
-    xpAnim.setValue(0);
+      setDisplayedLevel(newLevel);
     }
-  }, [xp, xpAnim]);
+
+    // Update stored previous XP
+    prevXpRef.current = xp;
+  }, [xp, xpAnim, levelUpHoldMs, suppressInitialLevelUpAnimation, showPrevLevelDuringLevelUp, level]);
 
   return (
     <View style={[styles.container, containerStyle]}>
       <View style={styles.levelBarRow}>
-        <Text style={styles.levelText}>
+  <Animated.View style={[styles.levelTextContainer, levelAnimatedStyle]}>
+          <Text style={styles.levelText}>
           <Text style={styles.levelPrefix}>Lv.</Text>
-          <Text style={styles.levelNumber}> {level}</Text>
-        </Text>
+          <Text style={styles.levelNumber}> {displayedLevel}</Text>
+          </Text>
+        </Animated.View>
 
         <View style={styles.progressBarContainer}>
           <Animated.View style={{ width: getAnimatedWidth(), height: '100%' }}>
@@ -110,6 +197,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     paddingHorizontal: 25,
     width: '100%',
+  },
+  levelTextContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   levelText: {
     color: Colors.text,

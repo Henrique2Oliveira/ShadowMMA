@@ -293,7 +293,7 @@ export default function Profile() {
               </View>
             ) : (
               <View>
-                <Text style={[styles.nextBadgeLabel, { textAlign: 'center', marginBottom: 8 }]}>Lifetime Rounds</Text>
+                <Text style={[styles.nextBadgeLabel, { textAlign: 'center', marginBottom: 8 }]}>Rounds</Text>
                 <View style={[styles.badgesRow, earnedRoundBadges.length === 1 && styles.badgesRowSingle]}>
                   {earnedRoundBadges.map(r => (
                     <View key={`rounds-${r}`} style={styles.badgeWrapper}>
@@ -826,7 +826,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     width: '100%',
-    height: 8,
+    height: 10,
     backgroundColor: '#ffffff22',
     borderRadius: 6,
     overflow: 'hidden',

@@ -74,21 +74,27 @@ export const getUserData = onRequest(async (req, res) => {
       return;
     }
 
-    const userData = userDoc.data();
+  const userData = userDoc.data();
+  // Times already stored in minutes in DB
+  const currentFightRound = userData?.currentFightRound || 0;
+  const currentFightTime = userData?.currentFightTime || 0;
+  const totalFightRounds = userData?.totalFightRounds || 0;
+  const totalFightTime = userData?.totalFightTime || 0;
+  const lifetimeFightRounds = userData?.lifetimeFightRounds || 0;
+  const lifetimeFightTime = userData?.lifetimeFightTime || 0;
     const safeUserData = {
       name: userData?.name || 'Warrior',
       xp: userData?.xp || 120,
       plan: userData?.plan || 'free',
       fightsLeft: userData?.fightsLeft || 3,
       loginStreak: userData?.loginStreak || 0,
-  // Highest login streak ever achieved (used for badge display)
-  maxLoginStreak: userData?.maxLoginStreak || userData?.loginStreak || 0,
-      currentFightRound: userData?.currentFightRound || 0,
-      currentFightTime: userData?.currentFightTime || 0,
-      totalFightRounds: userData?.totalFightRounds || 0,
-      totalFightTime: userData?.totalFightTime || 0,
-      lifetimeFightRounds: userData?.lifetimeFightRounds || 0,
-      lifetimeFightTime: userData?.lifetimeFightTime || 0,
+      maxLoginStreak: userData?.maxLoginStreak || userData?.loginStreak || 0,
+      currentFightRound,
+      currentFightTime,
+      totalFightRounds,
+      totalFightTime,
+      lifetimeFightRounds,
+      lifetimeFightTime,
     };
 
     // 3. Generate ETag hash of response (fast, stable)
@@ -322,7 +328,7 @@ export const handleGameOver = onRequest(async (req, res) => {
   //  * currentFightTime = total fight time in MINUTES (1-5 minutes per round)
   // Baselines: 1 round & 1 minute receive no bonus. Bonuses are capped to avoid abuse.
   const fightRoundsForBonus = Math.max(0, userData?.currentFightRound || 0);
-  const fightTimeForBonus = Math.max(0, userData?.currentFightTime || 0); // in minutes
+  const fightTimeForBonus = Math.max(0, userData?.currentFightTime || 0); // minutes
 
   const BASELINE_ROUNDS = 1; // no extra bonus until more than 1 round
   const BASELINE_TOTAL_TIME = 1; // 1 minute baseline (matching game's minimum round time)
@@ -346,7 +352,7 @@ export const handleGameOver = onRequest(async (req, res) => {
 
     // Get current fight stats to add to totals
     const currentFightRounds = userData?.currentFightRound || 0;
-    const currentFightTime = userData?.currentFightTime || 0;
+  const currentFightTime = userData?.currentFightTime || 0; // minutes
     const totalFightRounds = (userData?.totalFightRounds || 0) + currentFightRounds;
     const totalFightTime = (userData?.totalFightTime || 0) + currentFightTime;
     const lifetimeFightRounds = (userData?.lifetimeFightRounds || 0) + currentFightRounds;
@@ -430,9 +436,7 @@ export const startFight = onRequest(async (req, res) => {
   // Enforce business rules: rounds 1..7, duration 1..5 minutes
   if (fightRounds < 1) fightRounds = 1; else if (fightRounds > 7) fightRounds = 7;
   if (fightTimePerRoundMinutes < 1) fightTimePerRoundMinutes = 1; else if (fightTimePerRoundMinutes > 5) fightTimePerRoundMinutes = 5;
-
-  // Convert to seconds for storage & XP calculations consistency server-side
-  const fightTimePerRoundSeconds = Math.round(fightTimePerRoundMinutes * 60);
+  // NOTE: We now store all fight time metrics in MINUTES (previously seconds) to simplify UI logic.
     
     // Process moveTypes for both combo selection and specific comboId
     const moveTypesArray = (() => {
@@ -532,9 +536,9 @@ export const startFight = onRequest(async (req, res) => {
         updates.fightsLeft = updatedFightsLeft;
       }
       
-  // Save current fight configuration (store total seconds across all rounds)
+  // Save current fight configuration (store TOTAL MINUTES across all rounds)
   updates.currentFightRound = fightRounds;
-  updates.currentFightTime = fightTimePerRoundSeconds * fightRounds; // total seconds for this fight
+  updates.currentFightTime = Math.round(fightTimePerRoundMinutes * fightRounds); // total minutes for this fight
       
       await userRef.update(updates);
 
@@ -644,9 +648,9 @@ export const startFight = onRequest(async (req, res) => {
       updates.fightsLeft = updatedFightsLeft;
     }
     
-  // Save current fight configuration
+  // Save current fight configuration (TOTAL MINUTES)
   updates.currentFightRound = fightRounds;
-  updates.currentFightTime = fightTimePerRoundSeconds * fightRounds; // total seconds
+  updates.currentFightTime = Math.round(fightTimePerRoundMinutes * fightRounds); // total minutes
     
     // Update the user's playing status
     await userRef.update(updates);
