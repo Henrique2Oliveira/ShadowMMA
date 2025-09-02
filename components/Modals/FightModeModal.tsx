@@ -23,6 +23,7 @@ interface FightModeModalProps {
   comboId?: string | number; // hidden param, not shown in UI
   moveType?: string; // The move type of the selected combo
   onStartFight: () => void;
+  userLevel?: number; // player level for gating
 }
 
 interface FightOption {
@@ -81,8 +82,11 @@ export function FightModeModal({
   comboId,
   moveType,
   onStartFight,
+  userLevel = 0,
 }: FightModeModalProps) {
   const isFullRandomFight = movesMode.includes('RANDOM_ALL');
+  const KICKS_REQUIRED_LEVEL = 7;
+  const DEFENSE_REQUIRED_LEVEL = 3;
   const handleStartFight = () => {
     // Add haptic feedback when fight button is pressed
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
@@ -241,39 +245,55 @@ export function FightModeModal({
               <View style={styles.optionRow}>
                 <Text style={styles.optionLabel}>Moves:</Text>
                 <View style={styles.buttonContainer}>
-                  {FIGHT_OPTIONS.movesMode.map((move) => (
-                    <TouchableOpacity
-                      key={move.value}
-                      style={[
-                        styles.moveModeButton,
-                        movesMode.includes(move.value) && styles.moveModeButtonActive
-                      ]}
-                      onPress={() => {
-                        const newMovesMode = movesMode.includes(move.value)
-                          ? movesMode.length > 1
-                            ? movesMode.filter(m => m !== move.value)
-                            : movesMode // Don't remove if it's the last selected option
-                          : [...movesMode, move.value];
-                        setMovesMode(newMovesMode);
-                      }}
-                    >
-                      <MaterialCommunityIcons
-                        name={
-                          move.value === 'Punches' ? 'hand-back-right' :
-                            move.value === 'Kicks' ? 'foot-print' :
-                              'shield'
-                        }
-                        size={24}
-                        color={movesMode.includes(move.value) ? '#FFFFFF' : '#FFFFFF80'}
-                      />
-                      <Text style={[
-                        styles.moveModeButtonText,
-                        movesMode.includes(move.value) && styles.moveModeButtonTextActive
-                      ]}>
-                        {move.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                  {FIGHT_OPTIONS.movesMode.map((move) => {
+                    const requiredLevel = move.value === 'Kicks' ? KICKS_REQUIRED_LEVEL : move.value === 'Defense' ? DEFENSE_REQUIRED_LEVEL : 0;
+                    const locked = requiredLevel > 0 && userLevel < requiredLevel;
+                    const selected = movesMode.includes(move.value);
+                    return (
+                      <TouchableOpacity
+                        key={move.value}
+                        style={[
+                          styles.moveModeButton,
+                          selected && styles.moveModeButtonActive,
+                          locked && { opacity: 0.45, borderColor: '#555', borderWidth: 1 }
+                        ]}
+                        onPress={() => {
+                          if (locked) {
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                            return;
+                          }
+                          const newMovesMode = selected
+                            ? movesMode.length > 1
+                              ? movesMode.filter(m => m !== move.value)
+                              : movesMode
+                            : [...movesMode, move.value];
+                          setMovesMode(newMovesMode);
+                        }}
+                        disabled={locked}
+                      >
+                        <MaterialCommunityIcons
+                          name={
+                            move.value === 'Punches' ? 'hand-back-right' :
+                              move.value === 'Kicks' ? 'foot-print' :
+                                'shield'
+                          }
+                          size={24}
+                          color={selected ? '#FFFFFF' : '#FFFFFF80'}
+                        />
+                        <Text style={[
+                          styles.moveModeButtonText,
+                          selected && styles.moveModeButtonTextActive
+                        ]}>
+                          {move.label}
+                        </Text>
+                        {locked && (
+                          <View style={{ position: 'absolute', bottom: 4, right: 4, backgroundColor: '#222', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
+                            <Text style={{ color: '#ffdd55', fontSize: 10, fontFamily: Typography.fontFamily }}>Lv {requiredLevel}</Text>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
               </View>
             )}

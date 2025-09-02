@@ -92,6 +92,19 @@ export default function Index() {
   const [moveSpeed, setMoveSpeed] = React.useState('1');
   const [movesMode, setMovesMode] = React.useState<string[]>(['Punches']);
   const [category, setCategory] = React.useState('0');
+  // Derived player level from XP (same formula as LevelBar)
+  const userLevel = Math.floor((userData?.xp || 0) / 100);
+  const KICKS_REQUIRED_LEVEL = 7;
+  const DEFENSE_REQUIRED_LEVEL = 3;
+
+  // Helper to filter requested moves to those unlocked
+  const getAllowedMoves = useCallback((requested: string[]) => {
+    return requested.filter(m => {
+      if (m === 'Kicks' && userLevel < KICKS_REQUIRED_LEVEL) return false;
+      if (m === 'Defense' && userLevel < DEFENSE_REQUIRED_LEVEL) return false;
+      return true;
+    });
+  }, [userLevel]);
 
   // Refresh user data (including updated rounds/time) whenever this tab gains focus after a fight
   useFocusEffect(
@@ -280,7 +293,7 @@ export default function Index() {
           numRounds: '1',
           restTime: '1',
           moveSpeed: '1',
-          movesMode: ['Punches'],
+          movesMode: getAllowedMoves(['Punches']),
           category: "0"
         });
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -295,7 +308,7 @@ export default function Index() {
           numRounds: '1',
           restTime: '1',
           moveSpeed: '1',
-          movesMode: ['Punches', 'Defense'],
+          movesMode: getAllowedMoves(['Punches', 'Defense']),
           category: '0'
         });
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -310,7 +323,7 @@ export default function Index() {
           numRounds: '3',
           restTime: '1',
           moveSpeed: '1',
-          movesMode: ['Punches', 'Defense'],
+          movesMode: getAllowedMoves(['Punches', 'Defense']),
           category: '0'
         });
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -318,14 +331,20 @@ export default function Index() {
     },
     {
       title: 'Kicks',
-      disabled: false,
+      disabled: userLevel < KICKS_REQUIRED_LEVEL,
       onPress: () => {
+        if (userLevel < KICKS_REQUIRED_LEVEL) {
+          setErrorMessage(`Kicks unlock at Level ${KICKS_REQUIRED_LEVEL}. Keep training!`);
+          setShowErrorModal(true);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          return;
+        }
         setModalConfig({
           roundDuration: '3',
           numRounds: '3',
           restTime: '1',
           moveSpeed: '1',
-          movesMode: ['Kicks'],
+          movesMode: getAllowedMoves(['Kicks']),
           category: '0'
         });
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -333,14 +352,20 @@ export default function Index() {
     },
     {
       title: 'Defense',
-      disabled: false,
+      disabled: userLevel < DEFENSE_REQUIRED_LEVEL,
       onPress: () => {
+        if (userLevel < DEFENSE_REQUIRED_LEVEL) {
+          setErrorMessage(`Defense unlocks at Level ${DEFENSE_REQUIRED_LEVEL}. Reach it to sharpen your guard!`);
+          setShowErrorModal(true);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          return;
+        }
         setModalConfig({
           roundDuration: '3',
           numRounds: '5',
           restTime: '0.5',
           moveSpeed: '1',
-          movesMode: ['Defense'],
+          movesMode: getAllowedMoves(['Defense']),
           category: '0'
         });
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -359,12 +384,15 @@ export default function Index() {
       disabled: false,
       onPress: () => {
         // Full random fight: include all move types + sentinel flag
+        const randomBase: string[] = ['Punches'];
+        if (userLevel >= KICKS_REQUIRED_LEVEL) randomBase.push('Kicks');
+        if (userLevel >= DEFENSE_REQUIRED_LEVEL) randomBase.push('Defense');
         setModalConfig({
           roundDuration: '3',
           numRounds: '2',
           restTime: '0.5',
           moveSpeed: '1',
-          movesMode: ['Punches', 'Kicks', 'Defense', 'RANDOM_ALL'],
+          movesMode: [...randomBase, 'RANDOM_ALL'],
           category: '0'
         });
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -462,11 +490,15 @@ export default function Index() {
             { buttonIndex: 4, iconName: "shield" }
           ].map(({ buttonIndex, iconName }, index) => {
             const button = buttons[buttonIndex];
+            const isLockedKicks = button.title === 'Kicks' && userLevel < KICKS_REQUIRED_LEVEL;
+            const isLockedDefense = button.title === 'Defense' && userLevel < DEFENSE_REQUIRED_LEVEL;
+            const locked = isLockedKicks || isLockedDefense;
             return (
               <View
                 key={buttonIndex}
                 style={[
                   styles.smallButton,
+                  locked && { opacity: 0.5 }
                 ]}
               >
                 <TouchableOpacity
@@ -479,7 +511,16 @@ export default function Index() {
                     color={"#fff"}
                     style={styles.smallButtonIcon}
                   />
-                  <Text style={[styles.smallTextButton]}>{button.title}</Text>
+                  <Text style={[styles.smallTextButton]}>
+                    {button.title}
+                  </Text>
+                  {locked && (
+                    <View style={{ position: 'absolute', bottom: 4, right: 4, backgroundColor: '#222', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8, borderWidth: 1, borderColor: '#555' }}>
+                      <Text style={{ color: '#ffdd55', fontSize: 10, fontFamily: Typography.fontFamily }}>
+                        Lv {isLockedKicks ? KICKS_REQUIRED_LEVEL : DEFENSE_REQUIRED_LEVEL}
+                      </Text>
+                    </View>
+                  )}
                 </TouchableOpacity>
               </View>
             );
@@ -620,6 +661,7 @@ export default function Index() {
         movesMode={movesMode}
         setMovesMode={setMovesMode}
         category={category}
+  userLevel={userLevel}
         onStartFight={() => {
           setIsModalVisible(false);
         }}
