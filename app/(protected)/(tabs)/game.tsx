@@ -7,6 +7,7 @@ import { AlertModal } from '@/components/Modals/AlertModal';
 import { CombosModal } from '@/components/Modals/CombosModal';
 import { GameOptionsModal } from '@/components/Modals/GameOptionsModal';
 import { MoveCard } from '@/components/MoveCard';
+import { MoveStats } from '@/components/MoveStats';
 import { TimerDisplay } from '@/components/TimerDisplay';
 import { useUserData } from '@/contexts/UserDataContext';
 import { app } from '@/FirebaseConfig';
@@ -35,11 +36,9 @@ const PRE_GAME_TIPS = [
   'Stay light on your feet – movement is your best defense.',
   'Focus on technique, not just speed.',
   'Keep your core engaged for better balance and power.',
-  'Visualize your opponent and react accordingly.',
   'Recover quickly between rounds – shake out your arms and legs.',
   'Aim for clean, precise strikes over wild swings.',
   'Use your hips to generate more force in every punch or kick.',
-  'Keep your eyes on your target at all times.',
   'Consistency beats intensity – keep a steady pace.',
   'Warm up before you start to prevent injuries.',
   'Cool down and stretch after your workout.',
@@ -202,6 +201,8 @@ export default function Game() {
 
   const [moves, setMoves] = React.useState<Move[]>([]);
   const [currentMove, setCurrentMove] = React.useState<Move | null>(null);
+  const [moveStats, setMoveStats] = React.useState<{ [key: string]: number }>({});
+  const [showMoveStats, setShowMoveStats] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
   const [showCombosModal, setShowCombosModal] = React.useState(false);
   const [combos, setCombos] = React.useState<Combo[]>([]);
@@ -334,6 +335,24 @@ export default function Game() {
     };
   }, [gameState.isPaused, gameState.isRestPeriod, gameState.isGameOver, isBoostActive]);
 
+  // Track moves for stats
+  const trackMove = React.useCallback((move: Move) => {
+    if (!move.move || move.move === "Ready?" || move.move === "3" || move.move === "2" || 
+        move.move === "1" || move.move === "Fight!" || move.move === "Rest Time") {
+      return;
+    }
+    
+    // Extract the base move name without Left/Right prefix
+    const baseMovePattern = /(?:Left|Right)\s+(.+)/;
+    const match = move.move.match(baseMovePattern);
+    const baseName = match ? match[1] : move.move;
+    
+    setMoveStats(prev => ({
+      ...prev,
+      [baseName]: (prev[baseName] || 0) + 1
+    }));
+  }, []);
+
   // Reset game state and fetch moves when component mounts or when params change
   React.useEffect(() => {
     setGameState({
@@ -343,6 +362,8 @@ export default function Game() {
       isPaused: true,
       isGameOver: false,
     });
+    // Reset move stats
+    setMoveStats({});
   // Reset countdown completion so round timer waits until after full countdown (incl. 'Fight!')
   setIsCountdownComplete(false);
 
@@ -833,6 +854,20 @@ export default function Game() {
       }
     }
   }, [currentMove, moves, gameState.isPaused, gameState.isRestPeriod, tiltX, tiltY, scale, sounds, isMuted, isCountdownComplete, stance]);
+  // Track current move for stats
+  React.useEffect(() => {
+    if (currentMove && !gameState.isPaused && !gameState.isRestPeriod) {
+      trackMove(currentMove);
+    }
+  }, [currentMove, gameState.isPaused, gameState.isRestPeriod, trackMove]);
+
+  // Handle game over to show move stats
+  React.useEffect(() => {
+    if (gameState.isGameOver) {
+      setShowMoveStats(true);
+    }
+  }, [gameState.isGameOver]);
+
   // Add random movement effect
   React.useEffect(() => {
     let isAnimating = false;
@@ -1055,6 +1090,14 @@ export default function Game() {
           onOptionsPress={() => gameState.isPaused && setIsOptionsModalVisible(true)}
           isGameOver={gameState.isGameOver}
         />
+
+        {/* Show move stats when game is over */}
+        {showMoveStats && gameState.isGameOver && (
+          <MoveStats
+            stats={moveStats}
+            onComplete={() => setShowMoveStats(false)}
+          />
+        )}
 
         <GameOptionsModal
           visible={isOptionsModalVisible}
