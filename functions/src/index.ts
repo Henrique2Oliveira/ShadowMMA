@@ -35,10 +35,6 @@ const auth = getAuth();
 // and we clamp XP so it cannot progress beyond MAX_XP (exact multiple for stable UI logic).
 const MAX_LEVEL = 100;
 const MAX_XP = MAX_LEVEL * 100; // e.g. level 100 shows as exactly 100 (no overflow remainder)
-const calcLevel = (xp: number | undefined | null) => {
-  if (!xp || xp < 0) return 0;
-  return Math.min(MAX_LEVEL, Math.floor(xp / 100));
-};
 
 // --- Simple in-memory cache (persists per warm Cloud Function instance) ---
 // Reduces Firestore reads if the same user requests data repeatedly in a short window.
