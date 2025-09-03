@@ -1,14 +1,14 @@
 import { Colors, Typography } from '@/themes/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ImageBackground, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface QuizIntroProps {
   onStart: () => void;
-  onSkip?: () => void; // optional skip directly to plans
+  onSkip?: () => void; // kept for backward compatibility (not rendered)
 }
 
-export const QuizIntro: React.FC<QuizIntroProps> = ({ onStart, onSkip }) => {
+export const QuizIntro: React.FC<QuizIntroProps> = ({ onStart }) => {
   return (
     <ImageBackground
       source={require('@/assets/images/bg-gym-profile.png')}
@@ -30,11 +30,11 @@ export const QuizIntro: React.FC<QuizIntroProps> = ({ onStart, onSkip }) => {
             <Text style={styles.startText}>START</Text>
           </LinearGradient>
         </TouchableOpacity>
-        {onSkip && (
-          <TouchableOpacity onPress={onSkip} style={styles.skipArea}>
-            <Text style={styles.skipText}>Skip for now</Text>
-          </TouchableOpacity>
-        )}
+        <Text style={styles.disclaimer}>
+          By tapping <Text style={styles.disclaimerStrong}>START</Text> you agree to our{' '}
+          <Text style={styles.link} onPress={() => Linking.openURL('https://shadowmma.com/terms-of-service')}>Terms of Service</Text>{' '}and{' '}
+          <Text style={styles.link} onPress={() => Linking.openURL('https://shadowmma.com/privacy-policy')}>Privacy Policy</Text>.
+        </Text>
       </View>
     </ImageBackground>
   );
@@ -92,15 +92,21 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     color: Colors.text,
   },
-  skipArea: {
+  disclaimer: {
     marginTop: 26,
-    alignItems: 'center',
-  },
-  skipText: {
     fontFamily: Typography.fontFamily,
-    fontSize: 14,
+    fontSize: 12,
     color: Colors.lightText,
-    textDecorationLine: 'underline'
+    lineHeight: 16,
+    textAlign: 'center',
+  },
+  disclaimerStrong: {
+    color: Colors.text,
+    fontWeight: '600',
+  },
+  link: {
+    color: Colors.green,
+    textDecorationLine: 'underline',
   },
 });
 
