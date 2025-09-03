@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   comboTitle: {
-    fontSize: 18,
+    fontSize: 25,
     fontFamily: Typography.fontFamily,
     color: Colors.text,
     flex: 1,

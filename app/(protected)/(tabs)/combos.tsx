@@ -1,4 +1,4 @@
-import ComboCard from '@/components/ComboCard';
+import MemoizedComboCard from '@/components/MemoizedComboCard';
 import { AlertModal } from '@/components/Modals/AlertModal';
 import { FightModeModal } from '@/components/Modals/FightModeModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -197,23 +197,17 @@ export default function Combos() {
     }
   }, [setModalConfig, saveRecentCombo]);
 
+  const userLevel = useMemo(() => getUserLevel(userData?.xp || 0), [userData?.xp]);
+  
   const renderItem = useCallback(({ item }: { item: ComboMeta }) => {
-    const userLevel = getUserLevel(userData?.xp || 0);
-    const isLocked = item.level > userLevel;
-
     return (
-      <ComboCard
-        id={item.id}
-        name={item.name}
-        level={item.level}
-        type={item.type}
-        categoryName={item.categoryName}
-        comboId={item.comboId}
-        isLocked={isLocked}
-        onPress={() => handleComboPress(item, isLocked)}
+      <MemoizedComboCard
+        item={item}
+        userLevel={userLevel}
+        onPress={handleComboPress}
       />
     );
-  }, [userData?.xp, handleComboPress]);
+  }, [userLevel, handleComboPress]);
 
   const keyExtractor = useCallback((item: ComboMeta) => item.id, []);
 
