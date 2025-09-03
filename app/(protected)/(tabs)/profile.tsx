@@ -208,7 +208,18 @@ export default function Profile() {
         }
       >
         <View style={styles.container}>
-          <Text style={styles.screenTitle}>My Gym</Text>
+          <View style={styles.topRow}>
+            <Text style={styles.screenTitle}>My Gym</Text>
+            <TouchableOpacity
+              style={styles.inlineSettingsButton}
+              onPress={() => router.push('/(protected)/settings')}
+              accessibilityLabel="Open Settings"
+              accessibilityRole="button"
+              hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+            >
+              <MaterialCommunityIcons name="cog-outline" size={26} color={Colors.text} />
+            </TouchableOpacity>
+          </View>
           <View style={styles.header}>
             <View style={styles.avatarContainer}>
               <MaterialCommunityIcons name="account-circle" size={100} color={Colors.text} />
@@ -852,6 +863,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 6,
     opacity: 0.85,
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  inlineSettingsButton: {
+    backgroundColor: '#00000055',
+    padding: 10,
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: '#ffffff22'
   },
 });
 

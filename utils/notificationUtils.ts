@@ -18,6 +18,8 @@ const STORAGE_KEYS = {
   LAST_LOGIN_DATE: 'lastLoginDate',
   STREAK_NOTIFICATION_SCHEDULED: 'streakNotificationScheduled',
   ENGAGEMENT_NOTIFICATIONS_ENABLED: 'engagementNotificationsEnabled',
+  DAILY_TRAINING_COMPLETED_DATE: 'dailyTrainingCompletedDate',
+  ENGAGEMENT_NOTIFICATION_IDS: 'engagementNotificationIds',
 };
 
 export const registerForPushNotificationsAsync = async () => {
@@ -152,6 +154,8 @@ export const scheduleStreakReminder = async (currentStreak: number) => {
 // Schedule multiple engagement notifications throughout the day
 export const scheduleEngagementNotifications = async (userStreak: number) => {
   try {
+  // We'll keep track of the identifiers so we can selectively cancel these
+  const engagementIds: string[] = [];
     const notifications = [
       // Morning motivation (8 AM)
       {
@@ -208,8 +212,14 @@ export const scheduleEngagementNotifications = async (userStreak: number) => {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
           date: scheduledTime,
         },
-      });
+      }).then(id => engagementIds.push(id));
     }
+
+    // Persist the ids so we can cancel just these later (not the streak reminder for tomorrow)
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.ENGAGEMENT_NOTIFICATION_IDS,
+      JSON.stringify(engagementIds)
+    );
 
     return true;
   } catch (error) {
@@ -306,6 +316,10 @@ export const recordLoginAndScheduleNotifications = async (userStreak: number) =>
   try {
     const today = new Date().toDateString();
     const lastLogin = await AsyncStorage.getItem(STORAGE_KEYS.LAST_LOGIN_DATE);
+    const dailyTrainingCompletedDate = await AsyncStorage.getItem(
+      STORAGE_KEYS.DAILY_TRAINING_COMPLETED_DATE
+    );
+    const dailyTrainingCompleted = dailyTrainingCompletedDate === today;
     
     // Store today's login
     await AsyncStorage.setItem(STORAGE_KEYS.LAST_LOGIN_DATE, today);
@@ -318,8 +332,10 @@ export const recordLoginAndScheduleNotifications = async (userStreak: number) =>
       // Schedule streak reminder for tomorrow
       await scheduleStreakReminder(userStreak);
       
-      // Schedule engagement notifications
-      await scheduleEngagementNotifications(userStreak);
+      // Schedule engagement notifications only if user hasn't already completed training for today
+      if (!dailyTrainingCompleted) {
+        await scheduleEngagementNotifications(userStreak);
+      }
       
       // Schedule weekly achievement if applicable
       await scheduleWeeklyAchievementNotification(userStreak);
@@ -359,6 +375,58 @@ export const getEnhancedNotificationsEnabled = async (): Promise<boolean> => {
     return enabled === 'true';
   } catch (error) {
     console.log('Error checking enhanced notifications setting:', error);
+    return false;
+  }
+};
+
+// Check if the user has already completed the daily training (so we can avoid further reminders today)
+export const isDailyTrainingCompleted = async (): Promise<boolean> => {
+  try {
+    const today = new Date().toDateString();
+    const completedDate = await AsyncStorage.getItem(
+      STORAGE_KEYS.DAILY_TRAINING_COMPLETED_DATE
+    );
+    return completedDate === today;
+  } catch (error) {
+    console.log('Error reading daily training completion state:', error);
+    return false;
+  }
+};
+
+// Cancel only engagement (same‑day motivational) notifications, leaving future (tomorrow) streak reminder intact
+export const cancelEngagementNotifications = async () => {
+  try {
+    const raw = await AsyncStorage.getItem(STORAGE_KEYS.ENGAGEMENT_NOTIFICATION_IDS);
+    if (raw) {
+      const ids: string[] = JSON.parse(raw);
+      await Promise.all(
+        ids.map(id =>
+          Notifications.cancelScheduledNotificationAsync(id).catch(() => {})
+        )
+      );
+    }
+    await AsyncStorage.removeItem(STORAGE_KEYS.ENGAGEMENT_NOTIFICATION_IDS);
+    return true;
+  } catch (error) {
+    console.log('Error canceling engagement notifications:', error);
+    return false;
+  }
+};
+
+// Mark the daily training as completed and prevent further same‑day reminders
+export const markDailyTrainingCompleted = async () => {
+  try {
+    const today = new Date().toDateString();
+    // Persist completion date
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.DAILY_TRAINING_COMPLETED_DATE,
+      today
+    );
+    // Cancel just the engagement notifications for the remainder of today
+    await cancelEngagementNotifications();
+    return true;
+  } catch (error) {
+    console.log('Error marking daily training completed:', error);
     return false;
   }
 };

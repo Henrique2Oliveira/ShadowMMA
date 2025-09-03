@@ -14,6 +14,7 @@ import { useGameAnimations } from '@/hooks/useGameAnimations';
 import { Colors, Typography } from '@/themes/theme';
 import { Combo, Move } from '@/types/game';
 import { loadGamePreferences, saveGamePreferences } from '@/utils/gamePreferences';
+import { markDailyTrainingCompleted } from '@/utils/notificationUtils';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getAuth } from '@firebase/auth';
 import { useIsFocused } from '@react-navigation/native';
@@ -640,8 +641,10 @@ export default function Game() {
               });
           });
         }
-        playBellSound();
-        setCurrentModal({
+  playBellSound();
+  // Mark daily training complete to suppress further same‑day engagement notifications
+  markDailyTrainingCompleted().catch(() => {});
+  setCurrentModal({
           visible: true,
             title: 'Workout Complete! 🎉',
             message: `Great job! You've completed all ${totalRounds} rounds. Keep up the good work!`,

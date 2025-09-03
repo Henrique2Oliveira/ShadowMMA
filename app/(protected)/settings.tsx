@@ -14,7 +14,7 @@ import { router } from 'expo-router';
 import { deleteDoc, doc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
-;
+
 
 export default function Settings() {
   const { user, resetPassword } = useAuth();
@@ -188,13 +188,17 @@ export default function Settings() {
       bounces={true}
     >
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={() => router.back()}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={24} color={Colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.title}>Settings</Text>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity 
+            style={styles.backButton} 
+            onPress={() => router.back()}
+            accessibilityLabel="Go Back"
+            accessibilityRole="button"
+          >
+            <MaterialCommunityIcons name="arrow-left" size={24} color={Colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.title}>Settings</Text>
+        </View>
       </View>
 
       <View style={styles.content}>
@@ -507,6 +511,12 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 60,
     backgroundColor: '#0000009f',
+  // centered layout now that extra settings icon removed
+  justifyContent: 'flex-start'
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center'
   },
   backButton: {
     marginRight: 15,
