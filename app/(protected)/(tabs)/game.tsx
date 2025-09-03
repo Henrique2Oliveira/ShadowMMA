@@ -177,7 +177,7 @@ export default function Game() {
     movesMode: string;
     category: string;
     comboId?: string;
-  randomFight?: string;
+    randomFight?: string;
     timestamp: string;
   }>();
   const isRandomFight = params.randomFight === 'true';
@@ -238,10 +238,10 @@ export default function Game() {
         setSpeedMultiplier(1.3);
         saveGamePreferences({
           isMuted: false,
-            animationMode: 'new',
-            stance: 'orthodox',
-            showComboCarousel: true,
-            speedMultiplier: 1.3,
+          animationMode: 'new',
+          stance: 'orthodox',
+          showComboCarousel: true,
+          speedMultiplier: 1.3,
         });
       }
     });
@@ -337,16 +337,16 @@ export default function Game() {
 
   // Track moves for stats
   const trackMove = React.useCallback((move: Move) => {
-    if (!move.move || move.move === "Ready?" || move.move === "3" || move.move === "2" || 
-        move.move === "1" || move.move === "Fight!" || move.move === "Rest Time") {
+    if (!move.move || move.move === "Ready?" || move.move === "3" || move.move === "2" ||
+      move.move === "1" || move.move === "Fight!" || move.move === "Rest Time") {
       return;
     }
-    
+
     // Extract the base move name without Left/Right prefix
     const baseMovePattern = /(?:Left|Right)\s+(.+)/;
     const match = move.move.match(baseMovePattern);
     const baseName = match ? match[1] : move.move;
-    
+
     setMoveStats(prev => ({
       ...prev,
       [baseName]: (prev[baseName] || 0) + 1
@@ -364,8 +364,8 @@ export default function Game() {
     });
     // Reset move stats
     setMoveStats({});
-  // Reset countdown completion so round timer waits until after full countdown (incl. 'Fight!')
-  setIsCountdownComplete(false);
+    // Reset countdown completion so round timer waits until after full countdown (incl. 'Fight!')
+    setIsCountdownComplete(false);
 
     // Don't reset speed multiplier - preserve user's saved preference
     // setSpeedMultiplier(parseFloat(params.moveSpeed || '1'));
@@ -382,7 +382,7 @@ export default function Game() {
         if (!user) throw new Error('No user');
         const idToken = await user.getIdToken();
 
-    const response = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/startFight', {
+        const response = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/startFight', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -395,7 +395,7 @@ export default function Game() {
               .filter(m => m && m !== 'RANDOM_ALL')
               .join(',') || 'Punches',
             comboId: params.comboId || undefined,
-      randomFight: params.randomFight === 'true'
+            randomFight: params.randomFight === 'true'
           })
         });
         // Reset animations when new game starts
@@ -433,7 +433,7 @@ export default function Game() {
 
         const data = await response.json();
 
-  if (data.combos && data.combos.length > 0) {
+        if (data.combos && data.combos.length > 0) {
           // Extract all moves from the combos and track which combo they belong to
           // If randomFight flag, combos already randomized server-side; otherwise keep given order
           let combosList = data.randomFight ? data.combos : data.combos;
@@ -525,7 +525,7 @@ export default function Game() {
           if (!preGameTip) {
             setPreGameTip(PRE_GAME_TIPS[Math.floor(Math.random() * PRE_GAME_TIPS.length)]);
           }
-       
+
           // Update the user's fights left in the context
           if (data.fightsLeft !== undefined) {
             updateUserData({ fightsLeft: data.fightsLeft });
@@ -602,13 +602,13 @@ export default function Game() {
         // Time reached 0 -> handle transitions
         if (prev.isRestPeriod) {
           // Start next round
-            playBellSound();
-            setCurrentMove(moves[5]);
-            return {
-              ...prev,
-              isRestPeriod: false,
-              timeLeft: roundDurationMs,
-            };
+          playBellSound();
+          setCurrentMove(moves[5]);
+          return {
+            ...prev,
+            isRestPeriod: false,
+            timeLeft: roundDurationMs,
+          };
         }
         // End of a fighting round (not final)
         if (prev.currentRound + 2 <= totalRounds) {
@@ -662,21 +662,24 @@ export default function Game() {
               });
           });
         }
-  playBellSound();
-  // Mark daily training complete to suppress further same‑day engagement notifications
-  markDailyTrainingCompleted().catch(() => {});
-  setCurrentModal({
-          visible: true,
-            title: 'Workout Complete! 🎉',
-            message: `Great job! You've completed all ${totalRounds} rounds. Keep up the good work!`,
-            type: 'success',
-            primaryButton: { text: 'Close', onPress: () => setCurrentModal(null) }
+        playBellSound();
+        // Mark daily training complete to suppress further same‑day engagement notifications
+        markDailyTrainingCompleted().catch(() => { });
+        // Reset animations with a sequence to ensure completion
+        Animated.sequence([
+          Animated.parallel([
+            Animated.timing(tiltX, { toValue: 0, duration: 300, useNativeDriver: true }),
+            Animated.timing(tiltY, { toValue: 0, duration: 300, useNativeDriver: true }),
+            Animated.timing(scale, { toValue: 1, duration: 600, useNativeDriver: true })
+          ]),
+          // After parallel animations complete, ensure reset
+          Animated.timing(new Animated.Value(0), { toValue: 1, duration: 1, useNativeDriver: true })
+        ]).start(() => {
+          resetAnimations();
+          tiltX.setValue(0);
+          tiltY.setValue(0);
+          scale.setValue(1);
         });
-        Animated.parallel([
-          Animated.timing(tiltX, { toValue: 0, duration: 100, useNativeDriver: true }),
-          Animated.timing(tiltY, { toValue: 0, duration: 100, useNativeDriver: true }),
-          Animated.timing(scale, { toValue: 1, duration: 100, useNativeDriver: true })
-        ]).start();
         return {
           ...prev,
           isPaused: true,
@@ -752,61 +755,61 @@ export default function Game() {
         const nextIndexRelative = (effectiveIndex + 1 - countdownLength) % fightSegmentLength; // 0-based within fight segment
         if (nextIndexRelative === 0 && isRandomFight) {
           // Completed full pass; reshuffle combo order (not internal moves)
-            const prefix = moves.slice(0, countdownLength);
-            // Reconstruct combos from existing fight segment (group by comboName preserving move order)
-            const fightPart = moves.slice(countdownLength);
-            const comboMap = new Map<string, { comboData: any; moves: any[] }>();
-            fightPart.forEach((m: any) => {
-              if (!comboMap.has(m.comboName)) {
-                comboMap.set(m.comboName, { comboData: m.comboData, moves: [] });
-              }
-              comboMap.get(m.comboName)!.moves.push(m);
-            });
-            const comboEntries = Array.from(comboMap.values());
-            // Shuffle combos
-            for (let i = comboEntries.length - 1; i > 0; i--) {
-              const j = Math.floor(Math.random() * (i + 1));
-              [comboEntries[i], comboEntries[j]] = [comboEntries[j], comboEntries[i]];
+          const prefix = moves.slice(0, countdownLength);
+          // Reconstruct combos from existing fight segment (group by comboName preserving move order)
+          const fightPart = moves.slice(countdownLength);
+          const comboMap = new Map<string, { comboData: any; moves: any[] }>();
+          fightPart.forEach((m: any) => {
+            if (!comboMap.has(m.comboName)) {
+              comboMap.set(m.comboName, { comboData: m.comboData, moves: [] });
             }
-            // Flatten preserving move order inside each combo
-            const reshuffledFightPart = comboEntries.flatMap((c, comboIndex) => c.moves.map((mv, idx) => ({
-              ...mv,
-              comboIndex,
-              moveIndex: idx,
-            })));
-            const newMovesArray = [...prefix, ...reshuffledFightPart];
-            const nextMove = newMovesArray[countdownLength];
-            setMoves(newMovesArray);
-            setCurrentMove(nextMove);
-            if (nextMove.comboName) {
-              setCurrentComboName(nextMove.comboName);
-              if (nextMove.comboData && nextMove.moveIndex !== undefined) {
-                setCurrentCombo(nextMove.comboData);
-                setCurrentComboMoveIndex(nextMove.moveIndex);
-              }
+            comboMap.get(m.comboName)!.moves.push(m);
+          });
+          const comboEntries = Array.from(comboMap.values());
+          // Shuffle combos
+          for (let i = comboEntries.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [comboEntries[i], comboEntries[j]] = [comboEntries[j], comboEntries[i]];
+          }
+          // Flatten preserving move order inside each combo
+          const reshuffledFightPart = comboEntries.flatMap((c, comboIndex) => c.moves.map((mv, idx) => ({
+            ...mv,
+            comboIndex,
+            moveIndex: idx,
+          })));
+          const newMovesArray = [...prefix, ...reshuffledFightPart];
+          const nextMove = newMovesArray[countdownLength];
+          setMoves(newMovesArray);
+          setCurrentMove(nextMove);
+          if (nextMove.comboName) {
+            setCurrentComboName(nextMove.comboName);
+            if (nextMove.comboData && nextMove.moveIndex !== undefined) {
+              setCurrentCombo(nextMove.comboData);
+              setCurrentComboMoveIndex(nextMove.moveIndex);
             }
-            const adjusted = (stance === 'southpaw' && (nextMove.direction === 'left' || nextMove.direction === 'right'))
-              ? { ...nextMove, tiltValue: -nextMove.tiltValue }
-              : nextMove;
-            animateMove(adjusted);
-            if (sounds.length > 0 && !isMuted) {
-              const randomSound = sounds[Math.floor(Math.random() * sounds.length)];
-              if (randomSound) {
-                (async () => {
-                  try {
-                    const status = await randomSound.getStatusAsync();
-                    if (status.isLoaded && status.isPlaying) await randomSound.stopAsync();
-                    if (status.isLoaded) {
-                      await randomSound.setPositionAsync(0);
-                      await randomSound.playAsync();
-                    }
-                  } catch (error) {
-                    console.warn('Sound effect error:', error);
+          }
+          const adjusted = (stance === 'southpaw' && (nextMove.direction === 'left' || nextMove.direction === 'right'))
+            ? { ...nextMove, tiltValue: -nextMove.tiltValue }
+            : nextMove;
+          animateMove(adjusted);
+          if (sounds.length > 0 && !isMuted) {
+            const randomSound = sounds[Math.floor(Math.random() * sounds.length)];
+            if (randomSound) {
+              (async () => {
+                try {
+                  const status = await randomSound.getStatusAsync();
+                  if (status.isLoaded && status.isPlaying) await randomSound.stopAsync();
+                  if (status.isLoaded) {
+                    await randomSound.setPositionAsync(0);
+                    await randomSound.playAsync();
                   }
-                })();
-              }
+                } catch (error) {
+                  console.warn('Sound effect error:', error);
+                }
+              })();
             }
-            return;
+          }
+          return;
         }
         const nextMove = moves[nextIndexRelative + countdownLength];
         setCurrentMove(nextMove);
@@ -823,7 +826,7 @@ export default function Game() {
         const adjusted = (stance === 'southpaw' && (nextMove.direction === 'left' || nextMove.direction === 'right'))
           ? { ...nextMove, tiltValue: -nextMove.tiltValue }
           : nextMove;
-  animateMove(adjusted);
+        animateMove(adjusted);
       }
 
       // Play a random sound effect if not muted
@@ -967,7 +970,7 @@ export default function Game() {
       <CombosModal
         visible={showCombosModal}
         combos={combos}
-  randomFight={params.randomFight === 'true'}
+        randomFight={params.randomFight === 'true'}
         onClose={() => {
           setShowCombosModal(false);
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
