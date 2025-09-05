@@ -3,7 +3,7 @@ import { transformMoveForStance } from '@/utils/stance';
 import { formatTime } from '@/utils/time';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 interface MoveCardProps {
   move: string;
@@ -34,6 +34,10 @@ export const MoveCard: React.FC<MoveCardProps> = ({
   isSouthPaw = false,
   stance,
 }) => {
+  // Responsive sizing for larger screens (e.g., tablets)
+  const { width } = useWindowDimensions();
+  const scaleUp = width >= 1024 ? 1.8 : width >= 768 ? 1.4 : 1;
+
   // Enhanced animation values for move transitions (new and old modes)
   const slideAnim = useRef(new Animated.Value(0)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
@@ -166,6 +170,11 @@ export const MoveCard: React.FC<MoveCardProps> = ({
       style={[
         styles.card,
         {
+          width: 280 * scaleUp,
+          height: 220 * scaleUp,
+          borderRadius: 25 * scaleUp,
+        },
+        {
           transform: animationMode !== 'none'
             ? [
                 ...(animationMode === 'new' ? [{ translateX: slideAnim }] : []),
@@ -215,24 +224,54 @@ export const MoveCard: React.FC<MoveCardProps> = ({
     >
       <LinearGradient
         colors={['#171717ff', '#1a1a1aff']}
-        style={styles.gradientBackground}
+        style={[
+          styles.gradientBackground,
+          {
+            paddingHorizontal: 20 * scaleUp,
+            paddingVertical: 20 * scaleUp,
+          },
+        ]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
       >
-        <Text style={styles.text} numberOfLines={2} adjustsFontSizeToFit>
+        <Text
+          style={[
+            styles.text,
+            {
+              fontSize: 44 * scaleUp,
+              lineHeight: 52 * scaleUp,
+              padding: 5 * scaleUp,
+            },
+          ]}
+          numberOfLines={2}
+          adjustsFontSizeToFit
+        >
           {isGameOver
             ? 'FIGHT OVER!'
             : transformMoveForStance(move || '', (stance || (isSouthPaw ? 'southpaw' : 'orthodox')))}
         </Text>
 
         {isRestPeriod && (
-          <Text style={styles.restTimeText}>
+          <Text
+            style={[
+              styles.restTimeText,
+              { fontSize: 32 * scaleUp, marginTop: 10 * scaleUp },
+            ]}
+          >
             {formatTime(timeLeft)}
           </Text>
         )}
 
         {!isPaused && !isGameOver && !isRestPeriod && (
-          <View style={styles.progressBarContainer}>
+          <View
+            style={[
+              styles.progressBarContainer,
+              {
+                height: Math.max(8 * scaleUp, 8),
+                marginTop: 10 * scaleUp,
+              },
+            ]}
+          >
             <Animated.View
               style={[
                 styles.progressBar,
@@ -255,9 +294,9 @@ const styles = StyleSheet.create({
   card: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 280,
-    height: 220,
-    borderRadius: 25,
+  width: 280,
+  height: 220,
+  borderRadius: 25,
     overflow: 'hidden',
   },
   gradientBackground: {
@@ -265,33 +304,33 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 20,
+  paddingHorizontal: 20,
+  paddingVertical: 20,
   },
   text: {
     color: Colors.text,
-    fontSize: 44,
+  fontSize: 44,
     textAlign: 'center',
     width: '100%',
-    lineHeight: 52, // Increased line height
+  lineHeight: 52, // Increased line height
     fontFamily: Typography.fontFamily,
     flexShrink: 1,
     flexWrap: 'wrap',
-    padding: 5 // Added padding
+  padding: 5 // Added padding
   },
   restTimeText: {
     fontFamily: Typography.fontFamily,
     color: '#ffffff',
-    fontSize: 32,
-    marginTop: 10,
+  fontSize: 32,
+  marginTop: 10,
   },
   progressBarContainer: {
     width: '80%',
-    height: 8,
+  height: 8,
     backgroundColor: '#000000ff',
     borderRadius: 4,
     overflow: 'hidden',
-    marginTop: 10,
+  marginTop: 10,
   },
   progressBar: {
     height: '100%',

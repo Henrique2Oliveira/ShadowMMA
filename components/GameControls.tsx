@@ -3,7 +3,7 @@ import { Colors, Typography } from '@/themes/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
-import { Animated, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Animated, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 
 interface GameControlsProps {
   isPaused: boolean;
@@ -32,25 +32,42 @@ export const GameControls: React.FC<GameControlsProps> = ({
   onOptionsPress,
   isGameOver,
 }) => {
+  const { width } = useWindowDimensions();
+  const scaleUp = width >= 1024 ? 1.6 : width >= 768 ? 1.3 : 1;
+  const sideBtn = {
+    width: 80 * scaleUp,
+    height: 45 * scaleUp,
+    borderRadius: 25 * scaleUp,
+    borderBottomWidth: 5 * Math.min(scaleUp, 1.4),
+  } as const;
+  const pauseBtn = {
+    width: 80 * scaleUp,
+    height: 80 * scaleUp,
+    borderRadius: 40 * scaleUp,
+    borderBottomWidth: 5 * Math.min(scaleUp, 1.4),
+  } as const;
+  const iconMain = 40 * scaleUp;
+  const iconSide = 30 * scaleUp;
+
   return (
-    <View style={styles.buttonsContainer}>
+    <View style={[styles.buttonsContainer, { bottom: 40 * scaleUp, paddingHorizontal: 30 * scaleUp }]}>
       <Animated.View style={{ opacity: sideButtonsOpacity }}>
         {/* Home Button */}
         <TouchableOpacity
-          style={[styles.sideButton, !isPaused && styles.disabledButton]}
+          style={[styles.sideButton, sideBtn, !isPaused && styles.disabledButton]}
           onPress={() => isPaused && router.push("/")}
         >
-          <Ionicons name="home" size={30} color={Colors.bgDark} />
+          <Ionicons name="home" size={iconSide} color={Colors.bgDark} />
         </TouchableOpacity>
 
         {/* Sound Toggle Button */}
         <TouchableOpacity
-          style={[styles.sideButton, !isPaused && styles.disabledButton]}
+          style={[styles.sideButton, sideBtn, !isPaused && styles.disabledButton]}
           onPress={onMuteToggle}
         >
           <Ionicons
             name={isMuted ? "volume-mute" : "volume-high"}
-            size={30}
+            size={iconSide}
             color={Colors.bgDark}
           />
         </TouchableOpacity>
@@ -59,10 +76,10 @@ export const GameControls: React.FC<GameControlsProps> = ({
 
       {/* Pause/Play Button - Hidden when fight is over */}
       {!isGameOver && (
-        <TouchableOpacity style={styles.pauseButton} onPress={onPauseToggle}>
+        <TouchableOpacity style={[styles.pauseButton, pauseBtn]} onPress={onPauseToggle}>
           <Ionicons
             name={isPaused ? "play" : "pause"}
-            size={40}
+            size={iconMain}
             color={Colors.bgDark}
           />
         </TouchableOpacity>
@@ -78,10 +95,10 @@ export const GameControls: React.FC<GameControlsProps> = ({
         />
         {/* Options Button */}
         <TouchableOpacity
-          style={[styles.sideButton, !isPaused && styles.disabledButton]}
+          style={[styles.sideButton, sideBtn, !isPaused && styles.disabledButton]}
           onPress={onOptionsPress}
         >
-          <Ionicons name="options" size={30} color={Colors.bgDark}
+          <Ionicons name="options" size={iconSide} color={Colors.bgDark}
           />
         </TouchableOpacity>
       </Animated.View>

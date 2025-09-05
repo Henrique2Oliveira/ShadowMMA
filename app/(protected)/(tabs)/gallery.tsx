@@ -1,7 +1,7 @@
 import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import React, { useCallback, useState } from 'react';
-import { FlatList, Linking, ListRenderItem, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Linking, ListRenderItem, Modal, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 
 type MoveIconName = 'boxing-glove' | 'karate' | 'arm-flex' | 'shield' | 'human-handsdown';
 
@@ -16,6 +16,14 @@ interface Move {
 export default function Gallery() {
   const [selectedMove, setSelectedMove] = useState<Move | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+
+  // Responsive icon sizing based on screen width (phones vs tablets)
+  const { width } = useWindowDimensions();
+  const sizeFactor = width >= 1024 ? 1.5 : width >= 768 ? 1.25 : 1; // iPad landscape / iPad portrait / phones
+  const moveIconSize = Math.round(55 * sizeFactor);
+  const headerIconSize = Math.round(42 * sizeFactor);
+  const modalIconSize = Math.round(50 * sizeFactor);
+  const youtubeIconSize = Math.round(28 * sizeFactor);
 
   const moves: Move[] = [
     {
@@ -136,8 +144,7 @@ export default function Gallery() {
       category: 'Footwork',
       description: 'Moving laterally and backward to escape pressure while maintaining proper distance and stance.',
       icon: 'human-handsdown'
-    }
-    ,
+    },
     // --- Added extended stand‑up techniques (no ground moves) ---
     {
       id: 19,
@@ -267,7 +274,7 @@ export default function Gallery() {
       >
         <MaterialCommunityIcons
           name={move.icon}
-          size={55}
+          size={moveIconSize}
           color="white"
           style={styles.moveIcon}
         />
@@ -277,14 +284,14 @@ export default function Gallery() {
         </View>
       </TouchableOpacity>
     );
-  }, []);
+  }, [moveIconSize]);
 
   const keyExtractor = useCallback((item: Move) => item.id.toString(), []);
 
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <MaterialIcons name="school" size={42} color="white"> </MaterialIcons>
+        <MaterialIcons name="school" size={headerIconSize} color="white"> </MaterialIcons>
         <Text style={styles.title}>Move Library</Text>
       </View>
 
@@ -325,7 +332,7 @@ export default function Gallery() {
                 <View style={styles.modalHeader}>
                   <MaterialCommunityIcons
                     name={selectedMove.icon}
-                    size={50}
+                    size={modalIconSize}
                     color="white"
                     style={styles.modalIcon}
                   />
@@ -334,7 +341,7 @@ export default function Gallery() {
                 </View>
                 <Text style={styles.modalDescription}>{selectedMove.description}</Text>
                 <TouchableOpacity style={styles.youtubeButton} onPress={handleOpenYouTube}>
-                  <MaterialCommunityIcons name="youtube" size={28} color="#fff" style={{ marginRight: 8 }} />
+                  <MaterialCommunityIcons name="youtube" size={youtubeIconSize} color="#fff" style={{ marginRight: 8 }} />
                   <Text style={styles.youtubeButtonText}>Search on YouTube</Text>
                 </TouchableOpacity>
               </View>

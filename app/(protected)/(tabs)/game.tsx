@@ -24,7 +24,7 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
-import { Animated, AppState, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, AppState, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 
 // Pre-game tips (shown once before the user presses Start)
 const PRE_GAME_TIPS = [
@@ -63,6 +63,8 @@ type ModalConfig = {
 };
 
 export default function Game() {
+  const { width } = useWindowDimensions();
+  const scaleUp = width >= 1024 ? 1.5 : width >= 768 ? 1.25 : 1;
   const [currentModal, setCurrentModal] = React.useState<ModalConfig | null>(null);
   const { updateUserData, userData } = useUserData();
 
@@ -1027,11 +1029,15 @@ export default function Game() {
         )}
 
         {/* Speed Boost bubble indicator - placed below combo name */}
-        {isBoostActive && !gameState.isRestPeriod && !gameState.isGameOver && (
+  {isBoostActive && !gameState.isRestPeriod && !gameState.isGameOver && (
           <Animated.View
             style={[
               styles.boostBubble,
               {
+    bottom: 190 * scaleUp,
+    paddingHorizontal: 18 * scaleUp,
+    paddingVertical: 6 * scaleUp,
+    borderRadius: 20 * scaleUp,
                 transform: [
                   {
                     scale: boostPulse.interpolate({
@@ -1043,12 +1049,12 @@ export default function Game() {
               },
             ]}
           >
-            <MaterialCommunityIcons name="lightning-bolt-outline" size={18} color="#e8c916ff" style={{ marginRight: 4 }} />
-            <Animated.Text style={styles.boostText}>
+      <MaterialCommunityIcons name="lightning-bolt-outline" size={18 * scaleUp} color="#e8c916ff" style={{ marginRight: 4 * scaleUp }} />
+      <Animated.Text style={[styles.boostText, { fontSize: 14 * scaleUp }]}>
               Speed Boost
             </Animated.Text>
             {boostRemainingMs > 0 && (
-              <Animated.Text style={styles.boostTime}>
+        <Animated.Text style={[styles.boostTime, { fontSize: 14 * scaleUp }] }>
                 {Math.ceil(boostRemainingMs / 1000)}s
               </Animated.Text>
             )}
@@ -1071,8 +1077,24 @@ export default function Game() {
 
         {/* Skip button (visible only when paused) */}
         {gameState.isRestPeriod && !gameState.isPaused && !gameState.isGameOver && (
-          <TouchableOpacity onPress={handleSkipToRest} style={styles.skipButton} activeOpacity={0.8}>
-            <Text style={styles.skipButtonText}>Skip</Text>
+          <TouchableOpacity
+            onPress={handleSkipToRest}
+            style={[
+              styles.skipButton,
+              {
+                bottom: 180 * scaleUp,
+                paddingVertical: 10 * scaleUp,
+                paddingHorizontal: 26 * scaleUp,
+                borderRadius: 30 * scaleUp,
+                borderWidth: 2 * Math.min(scaleUp, 1.4),
+                borderBottomWidth: 4 * Math.min(scaleUp, 1.4),
+              },
+            ]}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.skipButtonText, { fontSize: 24 * scaleUp }]}>
+              Skip
+            </Text>
           </TouchableOpacity>
         )}
 

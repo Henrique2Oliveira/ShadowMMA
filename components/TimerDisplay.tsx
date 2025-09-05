@@ -1,7 +1,7 @@
 import { Colors, Typography } from '@/themes/theme';
 import { formatTime } from '@/utils/time';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 interface TimerDisplayProps {
   currentRound: number;
@@ -16,11 +16,13 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
   timeLeft,
   isRestPeriod,
 }) => {
+  const { width } = useWindowDimensions();
+  const scaleUp = width >= 1024 ? 1.5 : width >= 768 ? 1.25 : 1;
   return (
-    <View style={styles.timerContainer}>
-      <Text style={styles.roundText}>Round {currentRound}/{totalRounds}</Text>
+    <View style={[styles.timerContainer, { top: 20 * scaleUp }]}>
+      <Text style={[styles.roundText, { fontSize: 24 * scaleUp, marginBottom: 5 * scaleUp }]}>Round {currentRound}/{totalRounds}</Text>
       {!isRestPeriod && (
-        <Text style={styles.timerText}>
+        <Text style={[styles.timerText, { fontSize: 32 * scaleUp }] }>
           {formatTime(timeLeft)}
         </Text>
       )}

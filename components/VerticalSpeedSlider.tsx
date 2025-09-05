@@ -1,6 +1,6 @@
 import { Colors, Typography } from '@/themes/theme';
 import React from 'react';
-import { Animated, PanResponder, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, PanResponder, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 
 interface VerticalSpeedSliderProps {
   speedMultiplier: number;
@@ -15,8 +15,14 @@ export const VerticalSpeedSlider: React.FC<VerticalSpeedSliderProps> = ({
   isPaused,
   opacity,
 }) => {
-  const SLIDER_HEIGHT = 120;
-  const THUMB_SIZE = -17;
+  const { width } = useWindowDimensions();
+  const scaleUp = width >= 1024 ? 1.5 : width >= 768 ? 1.25 : 1;
+  const SLIDER_HEIGHT = 120 * scaleUp;
+  const TRACK_WIDTH = 10 * scaleUp;
+  const THUMB_SIZE = 20 * scaleUp;
+  const BUTTON_W = 80 * scaleUp;
+  const BUTTON_H = 45 * scaleUp;
+  const BUTTON_RADIUS = 25 * scaleUp;
   const MIN_SPEED = 1;
   const MAX_SPEED = 2.5;
   
@@ -87,26 +93,44 @@ export const VerticalSpeedSlider: React.FC<VerticalSpeedSliderProps> = ({
       <TouchableOpacity 
         style={[
           styles.speedButton, 
+          {
+            width: BUTTON_W,
+            height: BUTTON_H,
+            borderRadius: BUTTON_RADIUS,
+            borderBottomWidth: 5 * Math.min(scaleUp, 1.4),
+          },
           !isPaused && styles.disabledButton
         ]}
         onPress={toggleSlider}
         disabled={!isPaused}
       >
-        <Text style={styles.speedText}>x{Math.round(speedMultiplier * 10) / 10}</Text>
+        <Text style={[styles.speedText, { fontSize: 22 * scaleUp }]}>x{Math.round(speedMultiplier * 10) / 10}</Text>
       </TouchableOpacity>
 
       {/* Vertical Slider */}
       {isVisible && (
-        <View style={styles.sliderContainer}>
+        <View style={[
+          styles.sliderContainer,
+          {
+            bottom: 65 * scaleUp,
+            width: BUTTON_W,
+            borderRadius: 15 * scaleUp,
+            paddingVertical: 12 * scaleUp,
+            paddingTop: 25 * scaleUp,
+            paddingHorizontal: 10 * scaleUp,
+          }
+        ]}>
           
           {/* Slider Track */}
-          <View style={styles.track}>
+          <View style={[styles.track, { width: TRACK_WIDTH, height: SLIDER_HEIGHT, borderRadius: 5 * scaleUp, marginVertical: 5 * scaleUp }]}>
             {/* Active Track */}
             <View 
               style={[
                 styles.activeTrack,
                 {
                   height: SLIDER_HEIGHT - speedToPosition(speedMultiplier),
+                  width: TRACK_WIDTH,
+                  borderRadius: 5 * scaleUp,
                 }
               ]}
             />
@@ -117,15 +141,19 @@ export const VerticalSpeedSlider: React.FC<VerticalSpeedSliderProps> = ({
             style={[
               styles.thumb,
               {
-                top: speedToPosition(speedMultiplier) - THUMB_SIZE / 1,
+                top: speedToPosition(speedMultiplier) - THUMB_SIZE / 2,
+                width: THUMB_SIZE,
+                height: THUMB_SIZE,
+                borderRadius: THUMB_SIZE / 2,
+                left: 30 * scaleUp,
               },
             ]}
             {...panResponder.panHandlers}
           />
           
           {/* Speed Value Display */}
-          <View style={styles.speedDisplay}>
-            <Text style={styles.speedDisplayText}>
+          <View style={[styles.speedDisplay, { marginTop: 6 * scaleUp, borderRadius: 8 * scaleUp, paddingHorizontal: 8 * scaleUp, paddingVertical: 4 * scaleUp }]}>
+            <Text style={[styles.speedDisplayText, { fontSize: 14 * scaleUp }]}>
               {Math.round(speedMultiplier * 10) / 10}x
             </Text>
           </View>
@@ -142,10 +170,10 @@ const styles = StyleSheet.create({
   },
   speedButton: {
     backgroundColor: '#efefefff',
-    width: 80,
-    height: 45,
-    marginVertical: 10,
-    borderRadius: 25,
+  width: 80,
+  height: 45,
+  marginVertical: 10,
+  borderRadius: 25,
     borderWidth: 2,
     borderColor: Colors.background,
     borderBottomWidth: 5,
@@ -171,9 +199,9 @@ const styles = StyleSheet.create({
   },
   sliderContainer: {
     position: 'absolute',
-    bottom: 65, // Position above the speed button
-    left: 0, // Center it with the button
-    width: 80, // Same width as button
+  bottom: 65, // Position above the speed button
+  left: 0, // Center it with the button
+  width: 80, // Same width as button
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.9)',
     borderRadius: 15,
@@ -188,8 +216,8 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   track: {
-    width: 10,
-    height: 120,
+  width: 10,
+  height: 120,
     backgroundColor: '#444',
     borderRadius: 5,
     position: 'relative',
@@ -198,16 +226,16 @@ const styles = StyleSheet.create({
   activeTrack: {
     position: 'absolute',
     bottom: 0,
-    width: 10,
+  width: 10,
     backgroundColor: Colors.redDots,
     borderRadius: 5,
   },
   thumb: {
     position: 'absolute',
-    width: 20,
-    height: 20,
+  width: 20,
+  height: 20,
     backgroundColor: '#fff',
-    borderRadius: 10,
+  borderRadius: 10,
     borderWidth: 2,
     borderColor: Colors.redDots,
     shadowColor: '#000',
@@ -218,10 +246,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 2,
     elevation: 3,
-    left: 30, // Center the thumb on the track (track width 10px, thumb width 20px, so -5px)
+  left: 30, // Center the thumb on the track (track width 10px, thumb width 20px, so -5px)
   },
   speedDisplay: {
-    marginTop: 6,
+  marginTop: 6,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 8,
     paddingHorizontal: 8,
@@ -229,7 +257,7 @@ const styles = StyleSheet.create({
   },
   speedDisplayText: {
     color: '#fff',
-    fontSize: 14,
+  fontSize: 14,
     fontFamily: Typography.fontFamily,
   },
 });

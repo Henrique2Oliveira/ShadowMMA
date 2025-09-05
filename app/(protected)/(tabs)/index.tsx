@@ -460,7 +460,7 @@ export default function Index() {
       </View>
 
       {/* Header */}
-      <View style={{ backgroundColor: Colors.background, paddingTop: 10, maxWidth: 600 }}>
+      <View style={{ backgroundColor: Colors.background, paddingTop: 10, maxWidth: 600 , marginHorizontal: 'auto', width: '100%', alignItems: 'center'}}>
         <LevelBar xp={userData?.xp || 0} />
       </View>
 
