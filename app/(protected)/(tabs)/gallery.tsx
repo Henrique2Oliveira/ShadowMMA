@@ -3,7 +3,7 @@ import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import React, { useCallback, useState } from 'react';
 import { FlatList, Linking, ListRenderItem, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-type MoveIconName = 'boxing-glove' | 'karate' | 'arm-flex' | 'human-handsdown';
+type MoveIconName = 'boxing-glove' | 'karate' | 'arm-flex' | 'shield' | 'human-handsdown';
 
 interface Move {
   id: number;
@@ -47,13 +47,6 @@ export default function Gallery() {
       icon: 'boxing-glove'
     },
     {
-      id: 5,
-      name: 'Front Kick',
-      category: 'Kick',
-      description: 'A straight kick thrown with the front leg, targeting the opponent\'s midsection or head.',
-      icon: 'karate'
-    },
-    {
       id: 6,
       name: 'Roundhouse Kick',
       category: 'Kick',
@@ -79,42 +72,42 @@ export default function Gallery() {
       name: 'Front Knee',
       category: 'Knee',
       description: 'A straight knee strike typically targeting the midsection or head in the clinch.',
-      icon: 'human-handsdown'
+      icon: 'karate'
     },
     {
       id: 10,
       name: 'Circular Knee',
       category: 'Knee',
       description: 'A knee strike thrown in a circular motion, often used in the clinch or against the body.',
-      icon: 'human-handsdown'
+      icon: 'karate'
     },
     {
       id: 11,
       name: 'Slip',
       category: 'Defense',
       description: 'A defensive head movement where you move your head to either side to avoid straight punches while staying in position to counter.',
-      icon: 'human-handsdown'
+      icon: 'shield'
     },
     {
       id: 12,
       name: 'Duck',
       category: 'Defense',
       description: 'A defensive movement where you lower your head and upper body under an incoming hook or wide punch.',
-      icon: 'human-handsdown'
+      icon: 'shield'
     },
     {
       id: 13,
       name: 'Block',
       category: 'Defense',
       description: 'Using your arms and hands to protect against strikes, either by catching them or deflecting their force.',
-      icon: 'arm-flex'
+      icon: 'shield'
     },
     {
       id: 14,
       name: 'Parry',
       category: 'Defense',
       description: 'A defensive technique where you redirect an incoming strike by knocking it slightly off course with your hand.',
-      icon: 'boxing-glove'
+      icon: 'shield'
     },
     {
       id: 15,
@@ -143,6 +136,113 @@ export default function Gallery() {
       category: 'Footwork',
       description: 'Moving laterally and backward to escape pressure while maintaining proper distance and stance.',
       icon: 'human-handsdown'
+    }
+    ,
+    // --- Added extended stand‑up techniques (no ground moves) ---
+    {
+      id: 19,
+      name: 'Overhand',
+      category: 'Punch',
+      description: 'A looping, powerful rear hand punch that travels over the opponent\'s guard. Setup: Dip slightly to the outside of lead leg, rotate hips & shoulder, whip the arm in an arc. Keep opposite hand tight on defense and re‑chamber quickly.',
+      icon: 'boxing-glove'
+    },
+    {
+      id: 22,
+      name: 'Superman Punch',
+      category: 'Punch',
+      description: 'Explosive rear hand punch faked off a kick. Chamber a lead leg feint (as if for a kick), then snap it back while launching forward and extending rear hand straight. Land balanced; avoid overcommitting.',
+      icon: 'boxing-glove'
+    },
+    {
+      id: 23,
+      name: 'Spinning Backfist',
+      category: 'Punch',
+      description: 'Rotational strike delivered with back of the fist. Step across or pivot, rotate torso spotting target over shoulder, extend arm loosely and connect with forearm/back of fist. Reset stance immediately.',
+      icon: 'boxing-glove'
+    },
+    {
+      id: 24,
+      name: 'Teep (Push Kick)',
+      category: 'Kick',
+      description: 'Long-range stopping kick. Lift lead knee straight, dorsiflex foot, extend hips to push ball of foot into opponent\'s midsection or thigh. Retract sharply to stance; maintain upright posture.',
+      icon: 'karate'
+    },
+    {
+      id: 25,
+      name: 'Side Kick',
+      category: 'Kick',
+      description: 'Linear kick delivered with heel. Chamber knee across body, pivot supporting foot, extend leg driving hip through target. Strike with heel, retract and return to stance or step through to angle off.',
+      icon: 'karate'
+    },
+    {
+      id: 26,
+      name: 'Spinning Back Kick',
+      category: 'Kick',
+      description: 'Rotational kick thrusting heel backward. Step or pivot, spot target over shoulder, chamber knee tight, drive heel straight back through centerline. Avoid over-rotation; re-center stance on landing.',
+      icon: 'karate'
+    },
+    {
+      id: 27,
+      name: 'Inside Leg Kick',
+      category: 'Kick',
+      description: 'Low kick targeting inner thigh of lead leg. Turn hip slightly out, whip lower shin into target, foot slightly dorsiflexed. Set up with jab/feints; retract quickly to avoid counters.',
+      icon: 'karate'
+    },
+    {
+      id: 28,
+      name: 'Outside Leg Kick',
+      category: 'Kick',
+      description: 'Chopping kick to outer thigh (quad). Step out to open angle, rotate hip, strike with lower shin across muscle. Keep hands guarded; finish with pivot or shuffle out of range.',
+      icon: 'karate'
+    },
+    {
+      id: 29,
+      name: 'Oblique Kick',
+      category: 'Kick',
+      description: 'Stomping kick to opponent\'s front thigh/knee area (above joint for safety). Chamber knee, extend heel downward/forward to post or disrupt forward movement. Maintain guard and balance.',
+      icon: 'karate'
+    },
+    {
+      id: 30,
+      name: 'Axe Kick',
+      category: 'Kick',
+      description: 'Vertical downward kick. Lift leg high with extended knee, then drop heel sharply onto target line (head/shoulder/guard). Slightly flex supporting knee to absorb impact; retract under control.',
+      icon: 'karate'
+    },
+    {
+      id: 31,
+      name: 'Spinning Elbow',
+      category: 'Elbow',
+      description: 'Rotational elbow strike. Step across (or pivot), rotate torso while keeping chin tucked, whip rear (or lead) elbow horizontally through target. Follow through minimally to stay balanced.',
+      icon: 'arm-flex'
+    },
+    {
+      id: 32,
+      name: 'Upward Elbow',
+      category: 'Elbow',
+      description: 'Close-range vertical elbow traveling upward between opponent\'s guard. Sink knees slightly, drive elbow up with hip & shoulder, palm facing inward. Ideal after a level change or clinch break.',
+      icon: 'arm-flex'
+    },
+    {
+      id: 33,
+      name: 'Check (Leg Kick Defense)',
+      category: 'Defense',
+      description: 'Defensive lift of lead leg to block low kicks with shin. Turn knee outward, raise leg just enough to meet kick, keep hands high. Land back into stance ready to counter (cross or teep).',
+      icon: 'shield'
+    },
+    {
+      id: 34,
+      name: 'Shoulder Roll',
+      category: 'Defense',
+      description: 'Deflection of straight/right hand shots by rotating lead shoulder up and in while tucking chin. Rear hand ready to parry or counter. Reset posture—do not over-rotate exposing body.',
+      icon: 'shield'
+    },
+    {
+      id: 35,
+      name: 'High Guard',
+      category: 'Defense',
+      description: 'Tight two-hand guard absorbing or deflecting strikes. Elbows in, forearms vertical, chin tucked. Rotate torso & subtly angle gloves to redirect impact; look through eyebrows to maintain vision.',
+      icon: 'shield'
     }
   ] as const;
 
