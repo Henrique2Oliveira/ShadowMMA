@@ -135,7 +135,7 @@ export default function AuthScreen() {
           </Text>
         </TouchableOpacity>
 
-        <View style={styles.dividerContainer}>
+        {/* <View style={styles.dividerContainer}>
           <View style={styles.divider} />
           <Text style={styles.dividerText}>or login with</Text>
           <View style={styles.divider} />
@@ -144,7 +144,7 @@ export default function AuthScreen() {
         <TouchableOpacity style={styles.socialButton} onPress={() => console.log('Google login')}>
           <MaterialCommunityIcons name="google" size={24} color="#fff" />
           <Text style={styles.socialButtonText}>Google</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     </View>
   );
