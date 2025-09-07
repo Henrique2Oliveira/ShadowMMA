@@ -1029,15 +1029,15 @@ export default function Game() {
         )}
 
         {/* Speed Boost bubble indicator - placed below combo name */}
-  {isBoostActive && !gameState.isRestPeriod && !gameState.isGameOver && (
+        {isBoostActive && !gameState.isRestPeriod && !gameState.isGameOver && (
           <Animated.View
             style={[
               styles.boostBubble,
               {
-    bottom: 190 * scaleUp,
-    paddingHorizontal: 18 * scaleUp,
-    paddingVertical: 6 * scaleUp,
-    borderRadius: 20 * scaleUp,
+                bottom: 190 * scaleUp,
+                paddingHorizontal: 18 * scaleUp,
+                paddingVertical: 6 * scaleUp,
+                borderRadius: 20 * scaleUp,
                 transform: [
                   {
                     scale: boostPulse.interpolate({
@@ -1049,12 +1049,12 @@ export default function Game() {
               },
             ]}
           >
-      <MaterialCommunityIcons name="lightning-bolt-outline" size={18 * scaleUp} color="#e8c916ff" style={{ marginRight: 4 * scaleUp }} />
-      <Animated.Text style={[styles.boostText, { fontSize: 14 * scaleUp }]}>
+            <MaterialCommunityIcons name="lightning-bolt-outline" size={18 * scaleUp} color="#e8c916ff" style={{ marginRight: 4 * scaleUp }} />
+            <Animated.Text style={[styles.boostText, { fontSize: 14 * scaleUp }]}>
               Speed Boost
             </Animated.Text>
             {boostRemainingMs > 0 && (
-        <Animated.Text style={[styles.boostTime, { fontSize: 14 * scaleUp }] }>
+              <Animated.Text style={[styles.boostTime, { fontSize: 14 * scaleUp }]}>
                 {Math.ceil(boostRemainingMs / 1000)}s
               </Animated.Text>
             )}
@@ -1177,8 +1177,6 @@ const styles = StyleSheet.create({
   topLevelBarContainer: {
     position: 'absolute',
     top: 40,
-    left: 0,
-    right: 0,
     width: '100%',
     backgroundColor: Colors.background,
     paddingHorizontal: 20,
@@ -1212,20 +1210,6 @@ const styles = StyleSheet.create({
     textShadowColor: "#000",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
-  },
-  levelBarContainer: {
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    borderRadius: 15,
-    paddingHorizontal: 20,
-    paddingVertical: 5,
-    marginBottom: 20,
-    width: '90%',
-    maxWidth: 600,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
   },
   boostBubble: {
     position: 'absolute',

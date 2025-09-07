@@ -36,7 +36,7 @@ export const MoveCard: React.FC<MoveCardProps> = ({
 }) => {
   // Responsive sizing for larger screens (e.g., tablets)
   const { width } = useWindowDimensions();
-  const scaleUp = width >= 1024 ? 1.8 : width >= 768 ? 1.4 : 1;
+  const scaleUp = width >= 1024 ? 1.8 : width >= 768 ? 1.8 : 1;
 
   // Enhanced animation values for move transitions (new and old modes)
   const slideAnim = useRef(new Animated.Value(0)).current;

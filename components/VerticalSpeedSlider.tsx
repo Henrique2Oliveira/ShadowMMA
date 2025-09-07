@@ -17,7 +17,7 @@ export const VerticalSpeedSlider: React.FC<VerticalSpeedSliderProps> = ({
 }) => {
   const { width } = useWindowDimensions();
   const scaleUp = width >= 1024 ? 1.5 : width >= 768 ? 1.25 : 1;
-  const SLIDER_HEIGHT = 120 * scaleUp;
+  const SLIDER_HEIGHT = 110 * scaleUp;
   const TRACK_WIDTH = 10 * scaleUp;
   const THUMB_SIZE = 20 * scaleUp;
   const BUTTON_W = 80 * scaleUp;
@@ -141,7 +141,7 @@ export const VerticalSpeedSlider: React.FC<VerticalSpeedSliderProps> = ({
             style={[
               styles.thumb,
               {
-                top: speedToPosition(speedMultiplier) - THUMB_SIZE / 2,
+                top: speedToPosition(speedMultiplier) - THUMB_SIZE / 2 +30,
                 width: THUMB_SIZE,
                 height: THUMB_SIZE,
                 borderRadius: THUMB_SIZE / 2,
