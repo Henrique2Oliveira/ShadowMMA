@@ -320,7 +320,7 @@ export default function Combos() {
                       <Text style={styles.recentHeaderText}>Most Recent</Text>
                     </View>
                     {recentCombos.slice(0, MAX_RECENT_COMBOS).map(combo => (
-                      <View key={combo.id} style={styles.recentComboContainer}>
+                      <View key={combo.id}>
                         {renderItem({ item: combo })}
                       </View>
                     ))}
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     paddingBottom: 8,
     borderBottomWidth: 2,
-    borderBottomColor: 'rgba(255, 255, 255, 0.28)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.74)',
   },
   recentHeader: {
     backgroundColor: '#ffffffff',
@@ -409,40 +409,6 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily,
     textAlign: "center",
     fontSize: 16,
-  },
-  recentComboContainer: {
-
-  },
-  lockedCard: {
-    opacity: 0.5,
-  },
-  lockedText: {
-    color: Colors.text + '99',  // Adding transparency to the text
-  },
-  lockIcon: {
-    position: 'absolute',
-    right: '30%',
-    top: '10%',
-    transform: [{ translateX: -12 }], // Half of the icon size (24/2)
-    zIndex: 1,
-  },
-  lockedLevelBadge: {
-    backgroundColor: 'rgba(22, 22, 22, 1)',
-  },
-  lockedLevelText: {
-    color: Colors.text + '99',
-
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  typeIcon: {
-    position: 'absolute',
-    right: -25,
-    top: -15,
-    overflow: 'hidden',
   },
   headerText: {
     color: Colors.text,
@@ -486,51 +452,7 @@ const styles = StyleSheet.create({
     color: Colors.background,
     fontFamily: Typography.fontFamily,
   },
-  comboCard: {
-    marginBottom: 24,
-    borderRadius: 12,
-    overflow: 'hidden',
-    elevation: 5,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3.84,
-  },
-  cardGradient: {
-    padding: 20,
-  },
-  comboTitle: {
-    color: Colors.text,
-    fontSize: 24,
-    fontFamily: Typography.fontFamily,
 
-    marginBottom: 4,
-    textShadowColor: "#000",
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
-  },
-  comboDescription: {
-    color: Colors.text,
-    fontSize: 14,
-    fontFamily: Typography.fontFamily,
-    opacity: 0.75,
-    marginBottom: 12,
-  },
-  levelBadge: {
-    position: 'absolute',
-    bottom: 10,
-    right: 10,
-    backgroundColor: 'rgba(22, 22, 22, 1)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-  },
-  levelText: {
-    color: Colors.text,
-    fontSize: 14,
-    fontFamily: Typography.fontFamily,
-    textTransform: 'capitalize',
-  },
 });
 
 const errStyles = StyleSheet.create({

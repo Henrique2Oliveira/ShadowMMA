@@ -1,7 +1,7 @@
 import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type ComboCardProps = {
@@ -15,21 +15,26 @@ type ComboCardProps = {
   onPress: () => void;
 };
 
-const ComboCard = React.memo(({
-  name,
-  type,
-  level,
-  categoryName,
-  isLocked,
-  onPress,
-}: ComboCardProps) => {
+const ComboCard = React.memo(({ name, type, level, categoryName, isLocked, onPress }: ComboCardProps) => {
+  // Map categories/types to vibrant gradient color pairs (mirrors gallery.tsx)
+  const gradientColors = useMemo<[string, string]>(() => {
+    const key = (type || categoryName || '').toLowerCase();
+    if (key.includes('punch')) return ['#ff512f', '#dd2476']; // red → magenta
+    if (key.includes('kick')) return ['#7F00FF', '#E100FF']; // violet → pink
+    if (key.includes('elbow')) return ['#f7971e', '#ffd200']; // orange → gold
+    if (key.includes('knee')) return ['#11998e', '#38ef7d']; // teal → green
+    if (key.includes('defense') || key.includes('defence')) return ['#00c6ff', '#0072ff']; // blue spectrum
+    if (key.includes('footwork') || key.includes('foot')) return ['#fceabb', '#f8b500']; // pale gold → amber
+    return ['#434343', '#000000'];
+  }, [type, categoryName]);
+
   return (
     <TouchableOpacity
       style={[styles.comboCard, isLocked && styles.lockedCard]}
       onPress={() => {onPress()}}
       disabled={isLocked}
     >
-      <LinearGradient colors={[Colors.button, '#5a5a5aff']} style={styles.cardGradient}>
+      <LinearGradient colors={gradientColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.cardGradient}>
         <View style={styles.titleContainer}>
           <MaterialCommunityIcons
             name={type === 'Punches' ? 'boxing-glove' : type === 'Defense' ? 'shield' : 'karate'}
