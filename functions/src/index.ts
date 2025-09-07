@@ -432,6 +432,7 @@ export const startFight = onRequest(async (req, res) => {
     const bodyOrQuery: any = req.method === "POST" ? req.body : req.query;
     const category = (bodyOrQuery?.category ?? '0') as string | number;
     const comboId = bodyOrQuery?.comboId as string | number | undefined;
+    const selectedComboIdsRaw = (bodyOrQuery?.selectedComboIds as string | undefined) || undefined; // comma-separated ids for custom-selected mode
     const categoryToUse = category.toString();
   const randomFight = bodyOrQuery?.randomFight === true || bodyOrQuery?.randomFight === 'true';
     // Optional limit for randomFight mode; safeguard bounds
@@ -481,7 +482,7 @@ export const startFight = onRequest(async (req, res) => {
       return;
     }
 
-    const userData = userDoc.data();
+  const userData = userDoc.data();
  
     // If user is not pro, check fights left
     if (userData?.plan === 'free') {
@@ -502,6 +503,94 @@ export const startFight = onRequest(async (req, res) => {
     }
 
     const comboData = comboDoc.data();
+
+    // SPECIAL MODE: Custom-selected combos by explicit IDs (pro-only)
+    if (selectedComboIdsRaw && selectedComboIdsRaw.trim().length > 0) {
+      // Enforce plan not free
+      if ((userData?.plan || 'free') === 'free') {
+        res.status(403).json({ error: 'pro-required', message: 'Custom selected combos require a Pro plan.' });
+        return;
+      }
+
+      // Parse list and preserve original order
+      const requestedIds = selectedComboIdsRaw
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+
+      // Build lookup across all levels/types in this category
+      const levelsObj = (comboData as any)?.levels as Record<string, any[]> | undefined;
+      if (!levelsObj || typeof levelsObj !== 'object') {
+        res.status(400).send("Invalid combos data structure: missing levels");
+        return;
+      }
+      // Determine user level for gating (match other selection logic)
+      const xp = typeof userData?.xp === 'number' ? userData.xp : 0;
+      const currentUserLevel = Math.min(MAX_LEVEL, Math.floor(xp / 100));
+
+      // Build maps: by raw comboId and by composite key `${category}-${type}-${comboId}`
+      const byKey = new Map<string, any>();
+      for (const [typeKey, arr] of Object.entries(levelsObj)) {
+        const list = Array.isArray(arr) ? arr : [];
+        for (let i = 0; i < list.length; i++) {
+          const c = list[i];
+          const cidRaw = c?.comboId ?? c?.id;
+          const cid = cidRaw !== undefined && cidRaw !== null ? String(cidRaw) : '';
+          // Keys by explicit comboId (if exists)
+          if (cid) {
+            byKey.set(cid, c);
+            byKey.set(`${categoryToUse}-${typeKey}-${cid}`, c);
+          }
+          // Keys by index fallback (to match getCombosMeta idx-based ids)
+          byKey.set(`${categoryToUse}-${typeKey}-${i}`, c);
+          // Also index by name as a last resort
+          if (c?.name) byKey.set(String(c.name), c);
+        }
+      }
+
+      const chosen: any[] = [];
+      for (const id of requestedIds) {
+        let key = String(id);
+        let c = byKey.get(key);
+        if (!c && key.includes('-')) {
+          // Try last-segment fallback (assumed to be comboId)
+          const last = key.split('-').pop() as string;
+          c = byKey.get(last);
+        }
+        if (c && typeof c.level === 'number' && c.level <= currentUserLevel) {
+          chosen.push(c);
+        }
+      }
+      if (!chosen.length) {
+        res.status(404).send('No matching combos found for requested ids');
+        return;
+      }
+
+      let updatedFightsLeft = userData?.fightsLeft;
+      const updates: any = { playing: true };
+      if (userData?.plan === 'free') {
+        // should never reach here due to guard above, but keep for safety
+        if (!userData?.fightsLeft || userData.fightsLeft <= 0) {
+          res.status(403).json({ error: 'No fights left', fightsLeft: userData?.fightsLeft || 0 });
+          return;
+        }
+        updatedFightsLeft = (userData?.fightsLeft || 0) - 1;
+        updates.fightsLeft = updatedFightsLeft;
+      }
+      // Save current fight configuration (TOTAL MINUTES)
+      updates.currentFightRound = fightRounds;
+      updates.currentFightTime = Math.round(fightTimePerRoundMinutes * fightRounds);
+      await userRef.update(updates);
+
+      res.status(200).json({
+        combos: chosen,
+        fightsLeft: updatedFightsLeft,
+        randomFight: false,
+        appliedLimit: undefined,
+        totalEligible: chosen.length,
+      });
+      return;
+    }
 
     // If a specific comboId is requested, find and return only that combo
     if (comboId !== undefined && comboId !== null) {

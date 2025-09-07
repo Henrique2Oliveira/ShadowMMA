@@ -1,6 +1,7 @@
 import MemoizedComboCard from '@/components/MemoizedComboCard';
 import { AlertModal } from '@/components/Modals/AlertModal';
 import { FightModeModal } from '@/components/Modals/FightModeModal';
+import PlansModal from '@/components/Modals/PlansModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { app as firebaseApp } from '@/FirebaseConfig.js';
@@ -27,7 +28,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const CACHE_KEY = 'custom_fight_combos_meta_cache_v1_cat0_asc';
 const CACHE_TTL_MS = 1000 * 60 * 10; // 10 minutes
-const MAX_SELECT = 5;
+const SELECTED_KEY = 'custom_fight_last_selection';
+const MAX_SELECT = 6;
 
 export default function CustomFight() {
   const { user } = useAuth();
@@ -47,6 +49,7 @@ export default function CustomFight() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
+  const [showPlansModal, setShowPlansModal] = useState(false);
 
   // selection state: store unique id and type for each
   const [selected, setSelected] = useState<Array<{ id: string; type: string }>>([]);
@@ -120,10 +123,50 @@ export default function CustomFight() {
     fetchCombos();
   }, [fetchCombos]);
 
+  // Load previously saved selection on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const raw = await AsyncStorage.getItem(SELECTED_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw) as Array<{ id: string; type?: string }>;
+        if (Array.isArray(parsed)) {
+          const normalized = parsed
+            .filter(p => p && p.id)
+            .slice(0, MAX_SELECT)
+            .map(p => ({ id: String(p.id), type: p.type || 'Punches' }));
+          if (normalized.length) setSelected(normalized);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+  }, []);
+
+  // Auto-save selection for next time
+  useEffect(() => {
+    AsyncStorage.setItem(SELECTED_KEY, JSON.stringify(selected)).catch(() => {});
+  }, [selected]);
+
   const getUserLevel = (xp: number) => Math.min(100, Math.floor(xp / 100));
   const userLevel = useMemo(() => getUserLevel(userData?.xp || 0), [userData?.xp]);
   const KICKS_REQUIRED_LEVEL = 7;
   const DEFENSE_REQUIRED_LEVEL = 3;
+
+  // Reconcile loaded selection with available (and unlocked) combos once data/user level ready
+  useEffect(() => {
+    if (!combos) return;
+    setSelected(prev => {
+      const allowed = new Set(
+        combos
+          .filter(c => c.level <= userLevel)
+          .map(c => String(c.id))
+      );
+      const filtered = prev.filter(p => allowed.has(String(p.id)));
+      if (filtered.length !== prev.length) return filtered.slice(0, MAX_SELECT);
+      return prev;
+    });
+  }, [combos, userLevel]);
 
   const availableTypes = useMemo(() => {
     const set = new Set<string>();
@@ -179,9 +222,15 @@ export default function CustomFight() {
 
   const handleStart = useCallback(() => {
     if (selected.length === 0) return;
+    // If user is on free plan, show upgrade plans modal instead of opening fight options
+    const plan = (userData?.plan || 'free').toLowerCase();
+    if (plan === 'free') {
+      setShowPlansModal(true);
+      return;
+    }
     // Open fight modal to set durations etc; pass a sentinel so Game knows to use selected combos only
     setIsModalVisible(true);
-  }, [selected]);
+  }, [selected, userData?.plan]);
 
   const iconSize = Math.max(28, Math.min(44, Math.floor(width * 0.1)));
 
@@ -210,7 +259,7 @@ export default function CustomFight() {
         />
         <Animated.View pointerEvents="none" style={[styles.fullOverlay, { opacity: overlayOpacity }]}>          
           <LinearGradient colors={["rgba(0,0,0,0.05)", "rgba(0,0,0,0.8)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.overlayInner}>
-            <MaterialCommunityIcons name="check-decagram" size={54} color="#79f279" style={{ marginBottom: 6 }} />
+            <MaterialCommunityIcons name="check" size={54} color="#ffffffff" style={{ marginBottom: 6 }} />
             <Text style={styles.overlayTitle}>SELECTED</Text>
             <Text style={styles.overlaySub}>Tap again to remove</Text>
           </LinearGradient>
@@ -235,7 +284,7 @@ export default function CustomFight() {
       >
         <View style={styles.headerContent}>
           <MaterialCommunityIcons
-            name="account-multiple-check"
+            name="mixed-martial-arts"
             size={iconSize}
             color={Colors.text}
             style={{ opacity: 0.9 }}
@@ -361,8 +410,16 @@ export default function CustomFight() {
         }}
         onStartFight={() => {
           setIsModalVisible(false);
-          // Optionally persist last selection
-          AsyncStorage.setItem('custom_fight_last_selection', JSON.stringify(selected)).catch(()=>{});
+          // Persist last selection (already autosaved, but keep here for reliability)
+          AsyncStorage.setItem(SELECTED_KEY, JSON.stringify(selected)).catch(()=>{});
+        }}
+      />
+      <PlansModal
+        visible={showPlansModal}
+        onClose={() => setShowPlansModal(false)}
+        onSelectPlan={() => {
+          setShowPlansModal(false);
+          router.push('/(protected)/plans');
         }}
       />
     </SafeAreaView>
@@ -475,7 +532,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   overlayTitle: {
-    color: '#79f279',
+    color: '#eeeeeeff',
     fontFamily: Typography.fontFamily,
     fontSize: 28,
     letterSpacing: 2,

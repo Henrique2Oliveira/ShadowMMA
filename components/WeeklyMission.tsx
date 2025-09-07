@@ -157,7 +157,6 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontSize: 16,
     fontFamily: Typography.fontFamily,
-    fontWeight: '600',
     flex: 1,
     marginLeft: 10,
   },
@@ -202,7 +201,6 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontSize: 14,
     fontFamily: Typography.fontFamily,
-    fontWeight: '600',
   },
   completedCount: {
     color: '#fdd700',

@@ -460,7 +460,7 @@ export default function Index() {
       </View>
 
       {/* Header */}
-      <View style={{ backgroundColor: Colors.background, paddingTop: 10, maxWidth: 600 , marginHorizontal: 'auto', width: '100%', alignItems: 'center'}}>
+      <View style={{ backgroundColor: Colors.background, paddingTop: 10, maxWidth: 600, marginHorizontal: 'auto', width: '100%', alignItems: 'center' }}>
         <LevelBar xp={userData?.xp || 0} />
       </View>
 
@@ -575,6 +575,7 @@ export default function Index() {
             iconName="boxing-glove"
             iconSize={130}
             fontSize={42}
+            subtitle="Single Combos to master like a pro"
             disabled={buttons[5].disabled}
             onPress={buttons[5].onPress}
           />
@@ -606,7 +607,9 @@ export default function Index() {
             title={buttons[7].title}
             iconName="arrow-up-bold-circle"
             iconSize={120}
-            fontSize={35}
+            fontSize={27}
+            subtitle="Advance to the next level"
+            proOnly
             disabled={buttons[7].disabled}
             onPress={buttons[7].onPress}
           />
@@ -620,9 +623,11 @@ export default function Index() {
         >
           <GradientButton
             title={buttons[8].title}
-            iconName="cog"
-            iconSize={130}
-            fontSize={42}
+            iconName="tune"
+            iconSize={120}
+            fontSize={26}
+            subtitle="Customize rounds, rest, and moves"
+            proOnly
             disabled={buttons[8].disabled}
             onPress={buttons[8].onPress}
           />
@@ -661,7 +666,7 @@ export default function Index() {
         movesMode={movesMode}
         setMovesMode={setMovesMode}
         category={category}
-  userLevel={userLevel}
+        userLevel={userLevel}
         onStartFight={() => {
           setIsModalVisible(false);
         }}

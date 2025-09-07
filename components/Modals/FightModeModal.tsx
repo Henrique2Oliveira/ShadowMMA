@@ -87,6 +87,7 @@ export function FightModeModal({
   extraParams,
 }: FightModeModalProps) {
   const isFullRandomFight = movesMode.includes('RANDOM_ALL');
+  const isCustomSelected = movesMode.includes('CUSTOM_SELECTED');
   const KICKS_REQUIRED_LEVEL = 7;
   const DEFENSE_REQUIRED_LEVEL = 3;
   const handleStartFight = () => {
@@ -244,7 +245,7 @@ export function FightModeModal({
 
 
 
-            {comboId === undefined && !isFullRandomFight && (
+            {comboId === undefined && !isFullRandomFight && !isCustomSelected && (
               <View style={styles.optionRow}>
                 <Text style={styles.optionLabel}>Moves:</Text>
                 <View style={styles.buttonContainer}>

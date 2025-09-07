@@ -409,6 +409,34 @@ export default function Game() {
         setCurrentComboMoveIndex(0);
         if (!response.ok) {
           if (response.status === 403) {
+            // Attempt to parse error to distinguish reasons
+            let payload: any = null;
+            try { payload = await response.json(); } catch {}
+            const isProRequired = payload?.error === 'pro-required';
+            if (isProRequired) {
+              setCurrentModal({
+                visible: true,
+                title: 'Pro Required',
+                message: 'Custom selected combos are a Pro feature. Upgrade to unlock this mode.',
+                type: 'warning',
+                primaryButton: {
+                  text: 'Upgrade to Pro',
+                  onPress: () => {
+                    setCurrentModal(null);
+                    router.navigate('/(protected)/plans');
+                  }
+                },
+                secondaryButton: {
+                  text: 'Back',
+                  onPress: () => {
+                    setCurrentModal(null);
+                    router.navigate('/(protected)/(tabs)');
+                  }
+                }
+              });
+              return;
+            }
+
             setCurrentModal({
               visible: true,
               title: 'No Fights Left',
@@ -418,7 +446,6 @@ export default function Game() {
                 text: 'Upgrade to Pro',
                 onPress: () => {
                   setCurrentModal(null);
-                  // Add your upgrade navigation logic here
                   router.navigate('/(protected)/plans');
                 }
               },
