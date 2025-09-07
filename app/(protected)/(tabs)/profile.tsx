@@ -44,13 +44,14 @@ export default function Profile() {
   };
 
   // Lifetime rounds badge thresholds (based on total lifetimeFightRounds)
-  const roundBadgeThresholds = [5, 10, 25, 50, 75];
+  const roundBadgeThresholds = [5, 10, 25, 50, 75, 100];
   const roundBadgeImages: Record<number, any> = {
     5: require('@/assets/images/badges/5rounds.png'),
     10: require('@/assets/images/badges/10rounds.png'),
     25: require('@/assets/images/badges/25rounds.png'),
     50: require('@/assets/images/badges/50rounds.png'),
     75: require('@/assets/images/badges/75rounds.png'),
+    100: require('@/assets/images/badges/100rounds.png'),
   };
 
   // Determine earned badges based on maxLoginStreak
@@ -78,10 +79,10 @@ export default function Profile() {
           await AsyncStorage.setItem(unifiedKey, JSON.stringify(unified));
         }
 
-        const newStreakUnseen = earnedBadges.filter(b => !unified.streak.includes(b)).sort((a,b)=>a-b);
-        const newRoundUnseen = earnedRoundBadges.filter(b => !unified.rounds.includes(b)).sort((a,b)=>a-b);
+        const newStreakUnseen = earnedBadges.filter(b => !unified.streak.includes(b)).sort((a, b) => a - b);
+        const newRoundUnseen = earnedRoundBadges.filter(b => !unified.rounds.includes(b)).sort((a, b) => a - b);
 
-        const queueAdds: {id:number; type:'streak'|'rounds'}[] = [];
+        const queueAdds: { id: number; type: 'streak' | 'rounds' }[] = [];
         if (newStreakUnseen.length > 0) {
           newStreakUnseen.forEach(id => queueAdds.push({ id, type: 'streak' }));
           unified.streak = Array.from(new Set([...unified.streak, ...newStreakUnseen]));
@@ -285,7 +286,7 @@ export default function Profile() {
             </View>
           </View>
 
-          <View style={[styles.badgesContainer, { marginTop: 18 }] }>
+          <View style={[styles.badgesContainer, { marginTop: 18 }]}>
             <Text style={styles.badgesTitle}>Badges Progress</Text>
             {/* Lifetime Rounds Badges Section FIRST */}
             {earnedRoundBadges.length === 0 ? (
@@ -396,7 +397,7 @@ export default function Profile() {
               </View>
             )}
           </View>
-          
+
           <View style={styles.buttonList}>
             <TouchableOpacity style={styles.button} onPress={() => router.push('/settings')}>
               <MaterialCommunityIcons name="cog" size={24} color={Colors.text} />
