@@ -5,11 +5,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { app as firebaseApp } from '@/FirebaseConfig.js';
 import { Colors, Typography } from '@/themes/theme';
+import { rf } from '@/utils/responsive';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
 import { getAuth as getClientAuth } from 'firebase/auth';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type ComboMeta = {
   id: string;
@@ -31,6 +34,7 @@ const MAX_RECENT_COMBOS = 2; // Maximum number of recent combos to store
 export default function Combos() {
   const { user } = useAuth();
   const { userData } = useUserData();
+  const { width } = useWindowDimensions();
 
   const [isModalVisible, setIsModalVisible] = React.useState(false);
   const [roundDuration, setRoundDuration] = React.useState('1');
@@ -40,6 +44,7 @@ export default function Combos() {
   const [movesMode, setMovesMode] = React.useState<string[]>(['Punches']);
   const [category, setCategory] = React.useState('0');
   const [selectedComboId, setSelectedComboId] = React.useState<string | number | undefined>(undefined);
+  const [selectedType, setSelectedType] = React.useState<string>('All');
 
   const setModalConfig = (config: {
     roundDuration?: string;
@@ -198,6 +203,24 @@ export default function Combos() {
   }, [setModalConfig, saveRecentCombo]);
 
   const userLevel = useMemo(() => getUserLevel(userData?.xp || 0), [userData?.xp]);
+
+  const availableTypes = useMemo(() => {
+    if (!combos || combos.length === 0) return ['All'];
+    const s = new Set<string>();
+    combos.forEach(c => s.add(c.type || 'Punches'));
+    return ['All', ...Array.from(s)];
+  }, [combos]);
+
+  const filteredCombos = useMemo(() => {
+    if (!combos) return [] as ComboMeta[];
+    const isAll = selectedType === 'All';
+    const setRecent = new Set(recentComboIds);
+    return combos.filter(c => {
+      const type = c.type || 'Punches';
+      const notRecent = !c.comboId || !setRecent.has(c.comboId);
+      return notRecent && (isAll || type === selectedType);
+    });
+  }, [combos, selectedType, recentComboIds]);
   
   const renderItem = useCallback(({ item }: { item: ComboMeta }) => {
     return (
@@ -211,12 +234,29 @@ export default function Combos() {
 
   const keyExtractor = useCallback((item: ComboMeta) => item.id, []);
 
+  const iconSize = Math.max(28, Math.min(44, Math.floor(width * 0.1)));
+
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <MaterialCommunityIcons name="boxing-glove" size={40} style={{ transform: [{ rotate: '90deg' }] }} color={Colors.bgGameDark} />
-        <Text style={styles.headerText}>Combo List</Text>
-      </View>
+    <SafeAreaView style={styles.container}>
+      <LinearGradient
+        colors={[Colors.bgGameDark ,Colors.bgGameDark, Colors.background]}
+        start={{ x: 0, y: 1 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.headerGradient}
+      >
+        <View style={styles.headerContent}>
+          <MaterialCommunityIcons
+            name="boxing-glove"
+            size={iconSize}
+            style={{ transform: [{ rotate: '90deg' }], opacity: 0.9 }}
+            color={Colors.text}
+          />
+          <View style={{ marginLeft: 10 }}>
+            <Text style={[styles.headerText, { fontSize: rf(28) }]}>Combos</Text>
+            <Text style={[styles.headerSubtitle, { fontSize: rf(12) }]}>Pick a combo and start fighting</Text>
+          </View>
+        </View>
+      </LinearGradient>
 
       {loading && !combos && (
         <View style={{ padding: 24, alignItems: 'center', justifyContent: 'center' }}>
@@ -250,39 +290,57 @@ export default function Combos() {
 
       {combos && combos.length > 0 && (
         <FlatList
-          data={combos}
+          data={filteredCombos}
           keyExtractor={keyExtractor}
           contentContainerStyle={styles.comboList}
           ListHeaderComponent={() => {
             const recentCombos = combos.filter(combo => combo.comboId && recentComboIds.includes(combo.comboId));
-            if (recentCombos.length === 0) return null;
-
             return (
-              <View style={styles.recentSection}>
-                <View style={styles.recentHeader}>
-                  <Text style={styles.recentHeaderText}>Most Recent</Text>
-                </View>
-                {recentCombos.slice(0, MAX_RECENT_COMBOS).map(combo => (
-                  <View key={combo.id} style={styles.recentComboContainer}>
-                    {renderItem({ item: combo })}
+              <View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterChips}>
+                  {availableTypes.map((t) => {
+                    const selected = selectedType === t;
+                    return (
+                      <View key={t} style={{ marginRight: 10 }}>
+                        {selected ? (
+                          <LinearGradient colors={[Colors.bgGame, Colors.bgGameDark]} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }} style={styles.chipSelectedBg}>
+                            <Text onPress={() => setSelectedType(t)} style={styles.chipSelectedText}>{t}</Text>
+                          </LinearGradient>
+                        ) : (
+                          <Text onPress={() => setSelectedType(t)} style={styles.chipText}>{t}</Text>
+                        )}
+                      </View>
+                    );
+                  })}
+                </ScrollView>
+
+                {recentCombos.length > 0 && (
+                  <View style={styles.recentSection}>
+                    <View style={styles.recentHeader}>
+                      <Text style={styles.recentHeaderText}>Most Recent</Text>
+                    </View>
+                    {recentCombos.slice(0, MAX_RECENT_COMBOS).map(combo => (
+                      <View key={combo.id} style={styles.recentComboContainer}>
+                        {renderItem({ item: combo })}
+                      </View>
+                    ))}
                   </View>
-                ))}
+                )}
               </View>
             );
           }}
-          renderItem={({ item }) => {
-            // Don't render recent combos in the main list
-            if (item.comboId && recentComboIds.includes(item.comboId)) {
-              return null;
-            }
-            return renderItem({ item });
-          }}
+          renderItem={({ item }) => renderItem({ item })}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={() => fetchCombos(true)} tintColor={Colors.text} />}
           maxToRenderPerBatch={10}
           windowSize={5}
           removeClippedSubviews={true}
           initialNumToRender={8}
           updateCellsBatchingPeriod={50}
+          ListEmptyComponent={!loading ? (
+            <View style={{ padding: 24, alignItems: 'center' }}>
+              <Text style={{ color: Colors.text, fontFamily: Typography.fontFamily, opacity: 0.8 }}>No combos match this filter.</Text>
+            </View>
+          ) : null}
         />
       )}
 
@@ -312,7 +370,7 @@ export default function Combos() {
           setIsModalVisible(false);
         }}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -320,6 +378,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  headerGradient: {
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+    paddingTop: 10,
+
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   recentSection: {
     marginBottom: 8,
@@ -329,10 +397,10 @@ const styles = StyleSheet.create({
   },
   recentHeader: {
     backgroundColor: '#ffffffff',
-    paddingVertical: 8,
+    paddingVertical: 6,
     paddingHorizontal: 16,
-    marginBottom: 16,
-    borderRadius: 8,
+    marginVertical: 12,
+    borderRadius: 12,
     alignSelf: 'flex-start',
     marginLeft: 16,
   },
@@ -376,26 +444,47 @@ const styles = StyleSheet.create({
     top: -15,
     overflow: 'hidden',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 15,
-    backgroundColor: Colors.background,
-  },
   headerText: {
     color: Colors.text,
-    fontSize: 32,
-    textAlign: "center",
+    textAlign: 'left',
     fontFamily: Typography.fontFamily,
-    marginLeft: 10,
-
+    textShadowRadius: 2,
+  },
+  headerSubtitle: {
+  color: Colors.text,
+    opacity: 0.8,
+    fontFamily: Typography.fontFamily,
     textShadowColor: "#000",
     textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 1,
   },
   comboList: {
     padding: 16,
     paddingBottom: 170,
+  },
+  filterChips: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 4,
+  },
+  chipText: {
+    color: Colors.text,
+    fontFamily: Typography.fontFamily,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    backgroundColor: '#202020',
+    overflow: 'hidden',
+    opacity: 0.9,
+  },
+  chipSelectedBg: {
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+  },
+  chipSelectedText: {
+    color: Colors.background,
+    fontFamily: Typography.fontFamily,
   },
   comboCard: {
     marginBottom: 24,
