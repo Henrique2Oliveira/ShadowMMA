@@ -24,6 +24,7 @@ interface FightModeModalProps {
   moveType?: string; // The move type of the selected combo
   onStartFight: () => void;
   userLevel?: number; // player level for gating
+  extraParams?: Record<string, string>; // optional extra router params
 }
 
 interface FightOption {
@@ -46,10 +47,10 @@ export const FIGHT_OPTIONS: {
   ],
   numberOfRounds: [
     { value: '1', label: '1' },
-  { value: '2', label: '2' },
-  { value: '3', label: '3' },
-  { value: '5', label: '5' },
-  { value: '7', label: '7' },
+    { value: '2', label: '2' },
+    { value: '3', label: '3' },
+    { value: '5', label: '5' },
+    { value: '7', label: '7' },
   ],
   restTimes: [
     { value: '0.5', label: '30s' },
@@ -83,6 +84,7 @@ export function FightModeModal({
   moveType,
   onStartFight,
   userLevel = 0,
+  extraParams,
 }: FightModeModalProps) {
   const isFullRandomFight = movesMode.includes('RANDOM_ALL');
   const KICKS_REQUIRED_LEVEL = 7;
@@ -90,9 +92,9 @@ export function FightModeModal({
   const handleStartFight = () => {
     // Add haptic feedback when fight button is pressed
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    
+
     onStartFight();
-  router.push({
+    router.push({
       pathname: '/(protected)/(tabs)/game',
       params: {
         roundDuration,
@@ -107,8 +109,9 @@ export function FightModeModal({
         // Send fight configuration for tracking
         fightRounds: numRounds,
         fightTimePerRound: roundDuration,
-    randomFight: movesMode.includes('RANDOM_ALL') ? 'true' : 'false',
+        randomFight: movesMode.includes('RANDOM_ALL') ? 'true' : 'false',
         timestamp: Date.now().toString()
+        , ...(extraParams || {})
       }
     });
   };

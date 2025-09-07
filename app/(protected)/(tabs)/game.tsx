@@ -179,6 +179,7 @@ export default function Game() {
     movesMode: string;
     category: string;
     comboId?: string;
+  selectedComboIds?: string; // comma-separated when custom fight
     randomFight?: string;
     timestamp: string;
   }>();
@@ -394,10 +395,11 @@ export default function Game() {
             category: params.category || '0',
             movesMode: (params.movesMode || 'Punches')
               .split(',')
-              .filter(m => m && m !== 'RANDOM_ALL')
+              .filter(m => m && m !== 'RANDOM_ALL' && m !== 'CUSTOM_SELECTED')
               .join(',') || 'Punches',
             comboId: params.comboId || undefined,
-            randomFight: params.randomFight === 'true'
+            randomFight: params.randomFight === 'true',
+            selectedComboIds: params.selectedComboIds || undefined,
           })
         });
         // Reset animations when new game starts

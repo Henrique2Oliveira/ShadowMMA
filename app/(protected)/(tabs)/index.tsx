@@ -407,10 +407,10 @@ export default function Index() {
       }
     },
     {
-      title: 'Custom Fights',
-      disabled: true,
+      title: 'Custom Fight',
+      disabled: false,
       onPress: () => {
-        setModalConfig({}); // Uses default values
+        router.push('/(protected)/custom-fight');
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
     },

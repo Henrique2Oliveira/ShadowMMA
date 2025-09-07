@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   comboDescription: {
-    color: "rgba(187, 187, 187, 1)",
+    color: "rgba(255, 255, 255, 0.94)",
     fontFamily: Typography.fontFamily,
     marginTop: 4,
   },
