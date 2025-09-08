@@ -222,9 +222,9 @@ export default function Profile() {
             </TouchableOpacity>
           </View>
           <View style={styles.header}>
-            <View style={styles.avatarContainer}>
+            {/* <View style={styles.avatarContainer}>
               <MaterialCommunityIcons name="account-circle" size={100} color={Colors.text} />
-            </View>
+            </View> */}
             <Text style={styles.name}>{userData?.name || 'Anonymous'}</Text>
             <Text style={styles.subtitle}>{userData?.plan !== 'free' ? 'Pro Member' : 'Free Member'}</Text>
           </View>
@@ -263,7 +263,7 @@ export default function Profile() {
                 <View style={styles.fightsInfo}>
                   <Text style={styles.fightsTitle}>{userData?.plan !== 'free' ? 'Pro Status' : 'Fights Left Today'}</Text>
                   <Text style={styles.fightsNumber}>
-                    {userData?.plan === 'free' ? userData?.fightsLeft : '∞'}
+                    {userData?.plan === 'free' ? Math.max(0, userData?.fightsLeft ?? 0) : '∞'}
                   </Text>
                 </View>
               </View>
