@@ -1,4 +1,5 @@
 import { Colors, Typography } from '@/themes/theme';
+import { isTablet, rf, rs } from '@/utils/responsive';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -26,13 +27,9 @@ export const WeeklyMission: React.FC<WeeklyMissionProps> = ({
     return (
       <TouchableOpacity style={styles.container} onPress={onPress} disabled={isLoading}>
         <View style={styles.header}>
-          <MaterialCommunityIcons
-            name="trophy"
-            size={24}
-            color="#fdd700"
-          />
+          <MaterialCommunityIcons name="trophy" size={rs(28)} color="#fdd700" />
           <Text style={styles.title}>Weekly Mission</Text>
-          <MaterialCommunityIcons name="chevron-right" size={24} color={Colors.text} />
+          <MaterialCommunityIcons name="chevron-right" size={rs(28)} color={Colors.text} />
         </View>
 
         <View style={styles.loadingContent}>
@@ -53,32 +50,24 @@ export const WeeklyMission: React.FC<WeeklyMissionProps> = ({
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
       <View style={styles.header}>
-        <MaterialCommunityIcons
-          name="trophy"
-          size={24}
-          color="#fdd700"
-        />
+  <MaterialCommunityIcons name="trophy" size={rs(28)} color="#fdd700" />
         <Text style={[styles.title, allGoalsCompleted && styles.completedTitle]}>
           {allGoalsCompleted ? "Mission Completed! 🎉" : "Weekly Mission"}
         </Text>
-        <MaterialCommunityIcons name="chevron-right" size={24} color={Colors.text} />
+  <MaterialCommunityIcons name="chevron-right" size={rs(28)} color={Colors.text} />
       </View>
 
       <View style={styles.content}>
   <Text style={styles.smallNote}>You can adjust your weekly targets anytime in Settings.</Text>
         <View style={styles.missionItem}>
           <View style={styles.missionInfo}>
-            <MaterialCommunityIcons
-              name="boxing-glove"
-              size={20}
-              color={roundsCompleted ? "#fdd700" : Colors.text}
-            />
+            <MaterialCommunityIcons name="boxing-glove" size={rs(22)} color={roundsCompleted ? "#fdd700" : Colors.text} />
             <Text style={styles.missionText}>Rounds</Text>
             <Text style={[styles.missionCount, roundsCompleted && styles.completedCount]}>
               {completedRounds}/{totalRounds}
             </Text>
             {roundsCompleted && (
-              <MaterialCommunityIcons name="check-circle" size={16} color="#fdd700" />
+              <MaterialCommunityIcons name="check-circle" size={rs(18)} color="#fdd700" />
             )}
           </View>
           <View style={styles.progressBarContainer}>
@@ -94,17 +83,13 @@ export const WeeklyMission: React.FC<WeeklyMissionProps> = ({
 
         <View style={styles.missionItem}>
           <View style={styles.missionInfo}>
-            <MaterialCommunityIcons
-              name="timer"
-              size={20}
-              color={timeCompleted ? "#fdd700" : Colors.text}
-            />
+            <MaterialCommunityIcons name="timer" size={rs(22)} color={timeCompleted ? "#fdd700" : Colors.text} />
             <Text style={styles.missionText}>Time (min)</Text>
             <Text style={[styles.missionCount, timeCompleted && styles.completedCount]}>
               {completedTime}/{totalTime}
             </Text>
             {timeCompleted && (
-              <MaterialCommunityIcons name="check-circle" size={16} color="#fdd700" />
+              <MaterialCommunityIcons name="check-circle" size={rs(18)} color="#fdd700" />
             )}
           </View>
           <View style={styles.progressBarContainer}>
@@ -120,11 +105,11 @@ export const WeeklyMission: React.FC<WeeklyMissionProps> = ({
 
         {allGoalsCompleted && (
           <View style={styles.completionMessage}>
-            <MaterialCommunityIcons name="star" size={20} color="#fdd700" />
+            <MaterialCommunityIcons name="star" size={rs(22)} color="#fdd700" />
             <Text style={styles.completionText}>
               Amazing work! You've crushed this week's goals! 🥊
             </Text>
-            <MaterialCommunityIcons name="star" size={20} color="#fdd700" />
+            <MaterialCommunityIcons name="star" size={rs(22)} color="#fdd700" />
           </View>
         )}
       </View>
@@ -135,14 +120,14 @@ export const WeeklyMission: React.FC<WeeklyMissionProps> = ({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#1b1b1bff',
-    padding: 20,
-    borderRadius: 10,
-    marginBottom: 14,
+    padding: isTablet ? 28 : 20,
+    borderRadius: 12,
+    marginBottom: isTablet ? 20 : 14,
     width: '100%',
-    maxWidth: 600,
+    maxWidth: isTablet ? 680 : 600,
     borderWidth: 1,
     borderColor: '#c5c5c593',
-    borderBottomWidth: 4,
+    borderBottomWidth: 5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
@@ -155,10 +140,10 @@ const styles = StyleSheet.create({
   },
   title: {
     color: Colors.text,
-    fontSize: 16,
+    fontSize: rf(18),
     fontFamily: Typography.fontFamily,
     flex: 1,
-    marginLeft: 10,
+    marginLeft: 12,
   },
   completedTitle: {
     color: '#fdd700',
@@ -168,9 +153,9 @@ const styles = StyleSheet.create({
   },
   smallNote: {
     color: 'rgba(255,255,255,0.6)',
-    fontSize: 12,
+    fontSize: rf(13),
     fontFamily: Typography.fontFamily,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   loadingContent: {
     alignItems: 'center',
@@ -180,7 +165,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     color: Colors.text,
-    fontSize: 14,
+    fontSize: rf(16),
     fontFamily: Typography.fontFamily,
   },
   missionItem: {
@@ -193,13 +178,13 @@ const styles = StyleSheet.create({
   },
   missionText: {
     color: Colors.text,
-    fontSize: 14,
+    fontSize: rf(15),
     fontFamily: Typography.fontFamily,
     flex: 1,
   },
   missionCount: {
     color: Colors.text,
-    fontSize: 14,
+    fontSize: rf(15),
     fontFamily: Typography.fontFamily,
   },
   completedCount: {
@@ -209,9 +194,9 @@ const styles = StyleSheet.create({
     paddingLeft: 28,
   },
   progressBar: {
-    height: 8,
+    height: isTablet ? 12 : 8,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 3,
+    borderRadius: 4,
     overflow: 'hidden',
   },  
   progressFill: {
@@ -234,7 +219,7 @@ const styles = StyleSheet.create({
   },
   completionText: {
     color: '#ffffffff',
-    fontSize: 14,
+    fontSize: rf(15),
     fontFamily: Typography.fontFamily,
     textAlign: 'center',
     flex: 1,

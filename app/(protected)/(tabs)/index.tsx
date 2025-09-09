@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
 import { checkMissedLoginAndScheduleComeback, recordLoginAndScheduleNotifications, registerForPushNotificationsAsync } from '@/utils/notificationUtils';
+import { isTablet, rf, rs } from '@/utils/responsive';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -450,7 +451,7 @@ export default function Index() {
         </Text>
         <MaterialCommunityIcons
           name="fire"
-          size={24}
+          size={rs(24)}
           color="#fd6100ff"
           style={styles.streakIcon}
         />
@@ -460,7 +461,7 @@ export default function Index() {
       </View>
 
       {/* Header */}
-      <View style={{ backgroundColor: Colors.background, paddingTop: 10, maxWidth: 600, marginHorizontal: 'auto', width: '100%', alignItems: 'center' }}>
+  <View style={{ backgroundColor: Colors.background, paddingTop: isTablet ? 20 : 10, maxWidth: isTablet ? 680 : 600, marginHorizontal: 'auto', width: '100%', alignItems: 'center' }}>
         <LevelBar xp={userData?.xp || 0} />
       </View>
 
@@ -493,6 +494,8 @@ export default function Index() {
             const isLockedKicks = button.title === 'Kicks' && userLevel < KICKS_REQUIRED_LEVEL;
             const isLockedDefense = button.title === 'Defense' && userLevel < DEFENSE_REQUIRED_LEVEL;
             const locked = isLockedKicks || isLockedDefense;
+            const ICON_SIZE = isTablet ? rs(36) : rs(32);
+            const LABEL_FONT = isTablet ? rf(16) : rf(13);
             return (
               <View
                 key={buttonIndex}
@@ -507,7 +510,7 @@ export default function Index() {
                   disabled={button.disabled}>
                   <MaterialCommunityIcons
                     name={iconName as any}
-                    size={32}
+                    size={ICON_SIZE}
                     color={"#fff"}
                     style={styles.smallButtonIcon}
                   />
@@ -554,12 +557,12 @@ export default function Index() {
             }}
           >
             <TouchableOpacity
-              style={styles.notificationCard}
+              style={[styles.notificationCard, isTablet && { padding: 16 }]}
               onPress={handleNotificationCardClick}
             >
-              <MaterialCommunityIcons name="bell" size={24} color={Colors.text} />
+              <MaterialCommunityIcons name="bell" size={rs(26)} color={Colors.text} />
               <Text style={styles.notificationText}>{notificationMessage}</Text>
-              <MaterialCommunityIcons name="chevron-right" size={24} color={Colors.text} />
+              <MaterialCommunityIcons name="chevron-right" size={rs(26)} color={Colors.text} />
             </TouchableOpacity>
           </View>
         )}
@@ -742,7 +745,7 @@ const styles = StyleSheet.create({
   },
   notificationText: {
     color: Colors.text,
-    fontSize: 14,
+    fontSize: rf(14),
     fontFamily: Typography.fontFamily,
     flex: 1,
     marginLeft: 15,
@@ -756,19 +759,19 @@ const styles = StyleSheet.create({
   streakText: {
     color: Colors.text,
     fontFamily: Typography.fontFamily,
-    fontSize: 14,
+    fontSize: rf(14),
     textShadowColor: "#000",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
   container: {
     flex: 1,
-    paddingHorizontal: 25,
-    paddingTop: 10,
+    paddingHorizontal: isTablet ? 40 : 25,
+    paddingTop: isTablet ? 20 : 10,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Colors.background,
-    paddingBottom: 180,
+    paddingBottom: isTablet ? 220 : 180,
   },
   buttonWideContent: {
     flexDirection: 'row',
@@ -787,7 +790,7 @@ const styles = StyleSheet.create({
     maxWidth: 600,
     marginTop: 5,
     marginBottom: 18,
-    gap: 10,
+    gap: isTablet ? 16 : 8,
   },
   buttonWide: {
     maxWidth: 600,
@@ -812,10 +815,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(21, 21, 21, 1)',
     borderRadius: 10,
     padding: 5,
-    aspectRatio: 1,
+    height: isTablet ? 120 : 70,
+    marginVertical: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    maxWidth: 100,
+    maxWidth: 200,
+    minWidth: 70,
     borderWidth: 1,
     borderBottomWidth: 4,
     borderColor: '#c5c5c593',
@@ -827,7 +832,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   smallButtonIcon: {
-    marginBottom: 1,
+    marginBottom: 3,
   },
   text: {
     color: Colors.text,

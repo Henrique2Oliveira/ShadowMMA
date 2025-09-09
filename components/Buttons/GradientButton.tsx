@@ -1,4 +1,5 @@
 import { Colors, Typography } from '@/themes/theme';
+import { isTablet, rf, rs } from '@/utils/responsive';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
@@ -20,8 +21,8 @@ interface GradientButtonProps {
 export const GradientButton: React.FC<GradientButtonProps> = ({
   title,
   iconName,
-  iconSize = 130,
-  fontSize = 32,
+  iconSize = isTablet ? 180 : 130,
+  fontSize = isTablet ? 42 : 32,
   subtitle,
   proOnly = false,
   disabled = false,
@@ -30,10 +31,10 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
   shadowColor = "#5ce248ff"
 }) => {
   return (
-    <LinearGradient 
-      colors={colors} 
+    <LinearGradient
+      colors={colors}
       style={[
-        styles.linearGradientButton, 
+        styles.linearGradientButton,
         { shadowColor },
         disabled && { shadowOpacity: 0, elevation: 0, opacity: 0.3 }
       ]}
@@ -53,24 +54,24 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
           </View>
         )}
         <View style={styles.buttonWideContent}>
-          <MaterialCommunityIcons 
-            name={iconName as any} 
-            size={iconSize} 
-            color="#0808084e" 
-            style={[styles.buttonIcon, styles.buttonIconLarge]} 
+          <MaterialCommunityIcons
+            name={iconName as any}
+            size={iconSize}
+            color="#0808084e"
+            style={[styles.buttonIcon, styles.buttonIconLarge]}
           />
           <View style={styles.textContainer}>
             <Text style={[
               styles.textButton, 
               { 
-                textAlign: 'left', 
-                fontSize 
+                textAlign: 'left',
+                fontSize: rf(fontSize, { maxScale: 1.4 })
               }
             ]}>
               {title}
             </Text>
             {subtitle ? (
-              <Text style={styles.subtitleText} numberOfLines={2}>
+              <Text style={[styles.subtitleText, { fontSize: rf(14), maxWidth: '95%' }]} numberOfLines={2}>
                 {subtitle}
               </Text>
             ) : null}
@@ -93,13 +94,13 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
 const styles = StyleSheet.create({
   linearGradientButton: {
     width: '100%',
-    maxWidth: 600,
-    height: 140,
+    maxWidth: 680,
+    height: rs(140, { maxScale: 1.35 }),
     backgroundColor: 'transparent',
     borderRadius: 15,
     marginBottom: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingVertical: isTablet ? 18 : 10,
+    paddingHorizontal: isTablet ? 28 : 20,
     marginVertical: 10,
     overflow: "hidden",
     shadowOffset: { width: 0, height: 2 },
@@ -167,7 +168,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'flex-start',
     justifyContent: 'center',
-    paddingRight: 80,
+    paddingRight: isTablet ? 120 : 80,
   },
   buttonIcon: {
     marginBottom: 10,
@@ -176,8 +177,8 @@ const styles = StyleSheet.create({
   buttonIconLarge: {
     position: 'absolute',
     overflow: 'hidden',
-    top: 5,
-    right: -10,
+    top: isTablet ? 0 : 5,
+    right: isTablet ? -20 : -10,
     transform: [{ rotate: '15deg' }],
   },
   textButton: {

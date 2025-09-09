@@ -1,4 +1,5 @@
 import { Colors, Typography } from '@/themes/theme';
+import { isTablet, rf, rs } from '@/utils/responsive';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity } from 'react-native';
@@ -29,9 +30,9 @@ export const StartFightButton: React.FC<StartFightButtonProps> = ({
         style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
       >
         <Image source={require('@/assets/images/jab-icon.png')} style={styles.imageButton} />
-        <Text style={[styles.textButton, { textAlign: 'left', fontSize: 44, lineHeight: 55 }]}>
+    <Text style={[styles.textButton, { textAlign: 'left', fontSize: rf(44), lineHeight: rf(55) }]}>
           {title.split(' ').map((word, index) => (
-            <Text key={index} style={[index === 1 ? { fontSize: 64 } : null]}>
+      <Text key={index} style={[index === 1 ? { fontSize: rf(64) } : null]}>
               {word}
               {'\n'}
             </Text>
@@ -45,13 +46,14 @@ export const StartFightButton: React.FC<StartFightButtonProps> = ({
 const styles = StyleSheet.create({
   linearGradientButton: {
     width: '100%',
-    maxWidth: 600,
-    height: 140,
+    maxWidth: 680,
+  // Increase base height for tablets to prevent text clipping
+  height: isTablet ? rs(180, { maxScale: 1.4 }) : rs(140, { maxScale: 1.35 }),
     backgroundColor: 'transparent',
     borderRadius: 15,
     marginBottom: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+  paddingVertical: isTablet ? 26 : 12,
+  paddingHorizontal: isTablet ? 36 : 22,
     marginVertical: 10,
     overflow: "hidden",
     shadowOffset: { width: 0, height: 2 },
@@ -73,10 +75,10 @@ const styles = StyleSheet.create({
   },
   imageButton: {
     position: 'absolute',
-    bottom: -20,
-    right: -10,
-    width: 150,
-    height: 150,
+    bottom: isTablet ? -30 : -20,
+    right: isTablet ? -20 : -10,
+    width: rs(150),
+    height: rs(150),
     tintColor: '#de3232e2',
   },
 });
