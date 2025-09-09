@@ -6,6 +6,7 @@ import { useUserData } from '@/contexts/UserDataContext';
 import { db } from '@/FirebaseConfig';
 import { Colors, Typography } from '@/themes/theme';
 import { cancelAllNotifications, recordLoginAndScheduleNotifications, registerForPushNotificationsAsync, scheduleDailyNotification } from '@/utils/notificationUtils';
+import { isTablet, rf } from '@/utils/responsive';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { deleteUser, EmailAuthProvider, reauthenticateWithCredential } from '@firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -195,9 +196,9 @@ export default function Settings() {
             accessibilityLabel="Go Back"
             accessibilityRole="button"
           >
-            <MaterialCommunityIcons name="arrow-left" size={24} color={Colors.text} />
+            <MaterialCommunityIcons name="arrow-left" size={isTablet ? 30 : 24} color={Colors.text} />
           </TouchableOpacity>
-          <Text style={styles.title}>Settings</Text>
+          <Text style={[styles.title, isTablet && styles.titleTablet]}>Settings</Text>
         </View>
       </View>
 
@@ -206,23 +207,23 @@ export default function Settings() {
           style={styles.option} 
           onPress={() => router.push('/(protected)/plans')}
         >
-          <MaterialCommunityIcons name="crown" size={24} color="#fdd700" />
-          <Text style={styles.optionText}>Subscription Plans</Text>
-          <MaterialCommunityIcons name="chevron-right" size={24} color={Colors.text} />
+          <MaterialCommunityIcons name="crown" size={isTablet ? 30 : 24} color="#fdd700" />
+          <Text style={[styles.optionText, isTablet && styles.optionTextTablet]}>Subscription Plans</Text>
+          <MaterialCommunityIcons name="chevron-right" size={isTablet ? 30 : 24} color={Colors.text} />
         </TouchableOpacity>
 
         <TouchableOpacity 
           style={styles.option} 
           onPress={handleChangePassword}
         >
-          <MaterialCommunityIcons name="key" size={24} color={Colors.text} />
-          <Text style={styles.optionText}>Change Password</Text>
-          <MaterialCommunityIcons name="chevron-right" size={24} color={Colors.text} />
+          <MaterialCommunityIcons name="key" size={isTablet ? 30 : 24} color={Colors.text} />
+          <Text style={[styles.optionText, isTablet && styles.optionTextTablet]}>Change Password</Text>
+          <MaterialCommunityIcons name="chevron-right" size={isTablet ? 30 : 24} color={Colors.text} />
         </TouchableOpacity>
 
         <View style={styles.option}>
-          <MaterialCommunityIcons name="bell" size={24} color={Colors.text} />
-          <Text style={styles.optionText}>Daily Training Reminder</Text>
+          <MaterialCommunityIcons name="bell" size={isTablet ? 30 : 24} color={Colors.text} />
+          <Text style={[styles.optionText, isTablet && styles.optionTextTablet]}>Daily Training Reminder</Text>
           <Switch
             value={notificationsEnabled}
             onValueChange={async (value) => {
@@ -266,17 +267,17 @@ export default function Settings() {
             style={[styles.option, styles.subOption]} 
             onPress={() => setShowTimePicker(true)}
           >
-            <MaterialCommunityIcons name="clock-outline" size={24} color={Colors.text} />
-            <Text style={styles.optionText}>
+            <MaterialCommunityIcons name="clock-outline" size={isTablet ? 28 : 24} color={Colors.text} />
+            <Text style={[styles.optionText, isTablet && styles.optionTextTablet]}>
               Reminder Time: {notificationTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </Text>
-            <MaterialCommunityIcons name="chevron-right" size={24} color={Colors.text} />
+            <MaterialCommunityIcons name="chevron-right" size={isTablet ? 28 : 24} color={Colors.text} />
           </TouchableOpacity>
         )}
 
         <View style={styles.option}>
-          <MaterialCommunityIcons name="rocket-launch" size={24} color={Colors.text} />
-          <Text style={styles.optionText}>Enhanced Fight Alerts</Text>
+          <MaterialCommunityIcons name="rocket-launch" size={isTablet ? 30 : 24} color={Colors.text} />
+          <Text style={[styles.optionText, isTablet && styles.optionTextTablet]}>Enhanced Fight Alerts</Text>
           <Switch
             value={enhancedNotificationsEnabled}
             onValueChange={async (value) => {
@@ -316,8 +317,8 @@ export default function Settings() {
 
         {enhancedNotificationsEnabled && (
           <TouchableOpacity style={[styles.option, styles.subOption]}>
-            <MaterialCommunityIcons name="information-outline" size={24} color={Colors.text} />
-            <Text style={[styles.optionText, { fontSize: 14 }]}>
+            <MaterialCommunityIcons name="information-outline" size={isTablet ? 28 : 24} color={Colors.text} />
+            <Text style={[styles.optionText, { fontSize: isTablet ? 18 : 14 }]}>
               Includes streak reminders, daily motivations, and comeback alerts
             </Text>
           </TouchableOpacity>
@@ -328,29 +329,36 @@ export default function Settings() {
 
         {/* Weekly Mission Settings */}
         <View style={styles.sectionHeader}>
-          <MaterialCommunityIcons name="trophy" size={20} color="#fdd700" />
-          <Text style={styles.sectionTitle}>Weekly Mission</Text>
+          <MaterialCommunityIcons name="trophy" size={isTablet ? 28 : 20} color="#fdd700" />
+          <Text style={[styles.sectionTitle, isTablet && styles.sectionTitleTablet]}>Weekly Mission</Text>
         </View>
-  <Text style={styles.helperInline}>Adjust these goals whenever you want to keep progress realistic.</Text>
+  <Text
+    style={[
+      styles.helperInline,
+      isTablet && { fontSize: rf(14) }
+    ]}
+  >
+    Adjust these goals whenever you want to keep progress realistic.
+  </Text>
 
         <TouchableOpacity 
           style={styles.option}
           onPress={() => setShowMissionRoundsModal(true)}
         >
-          <MaterialCommunityIcons name="boxing-glove" size={24} color={Colors.text} />
-          <Text style={styles.optionText}>Target Rounds</Text>
-          <Text style={styles.optionValue}>{weeklyMissionRounds}</Text>
-          <MaterialCommunityIcons name="chevron-right" size={24} color={Colors.text} />
+          <MaterialCommunityIcons name="boxing-glove" size={isTablet ? 30 : 24} color={Colors.text} />
+          <Text style={[styles.optionText, isTablet && styles.optionTextTablet]}>Target Rounds</Text>
+          <Text style={[styles.optionValue, isTablet && styles.optionValueTablet]}>{weeklyMissionRounds}</Text>
+          <MaterialCommunityIcons name="chevron-right" size={isTablet ? 30 : 24} color={Colors.text} />
         </TouchableOpacity>
 
         <TouchableOpacity 
           style={styles.option}
           onPress={() => setShowMissionTimeModal(true)}
         >
-          <MaterialCommunityIcons name="timer" size={24} color={Colors.text} />
-          <Text style={styles.optionText}>Target Time (minutes)</Text>
-          <Text style={styles.optionValue}>{weeklyMissionTime}</Text>
-          <MaterialCommunityIcons name="chevron-right" size={24} color={Colors.text} />
+          <MaterialCommunityIcons name="timer" size={isTablet ? 30 : 24} color={Colors.text} />
+          <Text style={[styles.optionText, isTablet && styles.optionTextTablet]}>Target Time (minutes)</Text>
+          <Text style={[styles.optionValue, isTablet && styles.optionValueTablet]}>{weeklyMissionTime}</Text>
+          <MaterialCommunityIcons name="chevron-right" size={isTablet ? 30 : 24} color={Colors.text} />
         </TouchableOpacity>
 
         {/* <TouchableOpacity style={styles.option}>
@@ -369,9 +377,9 @@ export default function Settings() {
           style={[styles.option, styles.dangerOption]} 
           onPress={handleDeleteAccount}
         >
-          <MaterialCommunityIcons name="delete" size={24} color="#ff4444" />
-          <Text style={[styles.optionText, styles.dangerText]}>Delete Account</Text>
-          <MaterialCommunityIcons name="chevron-right" size={24} color="#ff4444" />
+          <MaterialCommunityIcons name="delete" size={isTablet ? 30 : 24} color="#ff4444" />
+          <Text style={[styles.optionText, styles.dangerText, isTablet && styles.optionTextTablet]}>Delete Account</Text>
+          <MaterialCommunityIcons name="chevron-right" size={isTablet ? 30 : 24} color="#ff4444" />
         </TouchableOpacity>
       </View>
 
@@ -526,6 +534,9 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: Typography.fontFamily,
   },
+  titleTablet: {
+    fontSize: rf(30, { maxScale: 1.7 })
+  },
   content: {
     padding: 20,
   },
@@ -544,12 +555,18 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 15,
   },
+  optionTextTablet: {
+    fontSize: rf(20, { maxScale: 1.6 })
+  },
   optionValue: {
     color: Colors.text,
     fontSize: 16,
     fontFamily: Typography.fontFamily,
     fontWeight: '600',
     marginRight: 10,
+  },
+  optionValueTablet: {
+    fontSize: rf(20, { maxScale: 1.6 })
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -564,6 +581,9 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily,
     fontWeight: '600',
     marginLeft: 8,
+  },
+  sectionTitleTablet: {
+    fontSize: rf(24, { maxScale: 1.6 })
   },
   dangerOption: {
     marginTop: 20,

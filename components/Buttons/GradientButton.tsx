@@ -65,7 +65,7 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
               styles.textButton, 
               { 
                 textAlign: 'left',
-                fontSize: rf(fontSize, { maxScale: 1.4 })
+                fontSize: rf(fontSize, { maxScale: 1.4 }),
               }
             ]}>
               {title}
