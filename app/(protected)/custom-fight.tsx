@@ -283,6 +283,9 @@ export default function CustomFight() {
         style={styles.headerGradient}
       >
         <View style={styles.headerContent}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <MaterialCommunityIcons name="arrow-left" size={28} color={Colors.text} />
+          </TouchableOpacity>
           <MaterialCommunityIcons
             name="mixed-martial-arts"
             size={iconSize}
@@ -439,6 +442,10 @@ const styles = StyleSheet.create({
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  backButton: {
+    marginRight: 8,
+    padding: 4,
   },
   headerText: {
     color: Colors.text,

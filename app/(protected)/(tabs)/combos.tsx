@@ -9,9 +9,10 @@ import { rf } from '@/utils/responsive';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { getAuth as getClientAuth } from 'firebase/auth';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type ComboMeta = {
@@ -245,6 +246,9 @@ export default function Combos() {
         style={styles.headerGradient}
       >
         <View style={styles.headerContent}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <MaterialCommunityIcons name="arrow-left" size={28} color={Colors.text} />
+          </TouchableOpacity>
           <MaterialCommunityIcons
             name="boxing-glove"
             size={iconSize}
@@ -388,6 +392,10 @@ const styles = StyleSheet.create({
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  backButton: {
+    marginRight: 8,
+    padding: 4,
   },
   recentSection: {
     marginBottom: 8,

@@ -145,12 +145,14 @@ export function FightModeModal({
                   ? 'Random Fight: All unlocked combos (below or at your level) are loaded. Order shuffles each time.'
                   : 'Random Combos: 3–5 varied combos from selected move types for skill variety & conditioning.'}
             </Text>
-            <View style={styles.lifeBadge} accessibilityRole="text" accessibilityLabel="Costs one life">
-              <MaterialCommunityIcons name="heart-minus" color="#fff" size={14} style={{ marginRight: 4 }} />
-              <Text style={styles.lifeBadgeText}>-1 Life</Text>
-            </View>
+            {extraParams?.plan === 'free' && (
+              <View style={styles.lifeBadge} accessibilityRole="text" accessibilityLabel="Costs one life">
+                <MaterialCommunityIcons name="heart-minus" color="#fff" size={14} style={{ marginRight: 4 }} />
+                <Text style={styles.lifeBadgeText}>-1 Life</Text>
+              </View>
+            )}
           </View>
-          <Text style={styles.lifeHint}>Starting a fight consumes one Life. Lives refill daily — upgrade for more.</Text>
+           {extraParams?.plan === 'free' && <Text style={styles.lifeHint}>Starting a fight consumes one Life. Lives refill daily — upgrade for more.</Text>}
 
           <View style={styles.optionsContainer}>
             <View style={styles.optionRow}>

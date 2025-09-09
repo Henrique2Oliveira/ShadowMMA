@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   link: {
-    color: Colors.green,
+    color: Colors.text,
     textDecorationLine: 'underline',
   },
 });

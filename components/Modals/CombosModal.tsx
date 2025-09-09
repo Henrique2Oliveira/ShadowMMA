@@ -18,7 +18,7 @@ type AnimatedValue = Animated.Value;
 
 interface CombosModalProps {
   visible: boolean;
-  combos: { name: string; moves: Move[]; level: number }[];
+  combos: { name: string; moves: Move[]; level: number}[];
   onClose: () => void;
   randomFight?: boolean;
 }
@@ -157,12 +157,12 @@ export const CombosModal: React.FC<CombosModalProps> = ({
                 >
                   <View style={styles.comboHeader}>
                     <View style={styles.comboNameContainer}>
-                      <MaterialCommunityIcons
+                      {/* <MaterialCommunityIcons
                         name="boxing-glove"
                         size={20}
                         color={Colors.text}
                         style={styles.comboIcon}
-                      />
+                      /> */}
                       <Text style={styles.comboName}>{combo.name}</Text>
                     </View>
                     <View style={styles.levelBadge}>
