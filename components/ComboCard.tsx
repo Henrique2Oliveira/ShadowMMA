@@ -1,4 +1,5 @@
 import { Colors, Typography } from '@/themes/theme';
+import { getDeviceBucket, uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useMemo } from 'react';
@@ -28,35 +29,58 @@ const ComboCard = React.memo(({ name, type, level, categoryName, isLocked, onPre
     return ['#434343', '#000000'];
   }, [type, categoryName]);
 
+  // Responsive sizing
+  const bucket = getDeviceBucket();
+  // Base responsive sizes
+  let titleSize = uiScale(27, { category: 'font' });
+  let descSize = uiScale(15, { category: 'font' });
+  let lvlSize = uiScale(15, { category: 'font' });
+  const iconSize = uiScale(105, { category: 'icon' });
+
+  // Tablet-only adjustments (requested): tighter vertical height but larger text
+  // Only apply to 'tablet' bucket, leave 'largeTablet' unchanged.
+  const padding = bucket === 'tablet'
+    ? uiScale(20, { category: 'spacing' })
+    : uiScale(28, { category: 'spacing' });
+
+  const minHeights: Record<string, number> = { phone: 130, phablet: 120, tablet: 120, largeTablet: 130 };
+  const minHeight = uiScale(minHeights[bucket as keyof typeof minHeights] || 120, { category: 'spacing' });
+
+  if (bucket === 'tablet') {
+    titleSize += 4; // boost readability
+    descSize += 2;
+    lvlSize += 2;
+  }
+
   return (
     <TouchableOpacity
-      style={[styles.comboCard, isLocked && styles.lockedCard]}
-      onPress={() => {onPress()}}
+      style={[styles.comboCard, { minHeight }, isLocked && styles.lockedCard]}
+      onPress={() => { onPress(); }}
       disabled={isLocked}
     >
-      <LinearGradient colors={gradientColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.cardGradient}>
+      <LinearGradient colors={gradientColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.cardGradient, { padding }]}>        
         <View style={styles.titleContainer}>
           <MaterialCommunityIcons
             name={type === 'Punches' ? 'boxing-glove' : type === 'Defense' ? 'shield' : 'karate'}
-            size={115}
+            size={iconSize}
             color="#02020247"
             style={styles.typeIcon}
           />
-          <Text style={[styles.comboTitle, isLocked && styles.lockedText]}>{name}</Text>
+          <Text style={[styles.comboTitle, { fontSize: titleSize }, isLocked && styles.lockedText]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>{name}</Text>
           {isLocked && (
             <MaterialCommunityIcons
               name="lock"
-              size={35}
+              size={uiScale(35, { category: 'icon' })}
               color={Colors.text}
               style={styles.lockIcon}
             />
           )}
         </View>
-        <Text style={[styles.comboDescription, isLocked && styles.lockedText]}>
+  <Text style={[styles.comboDescription, { fontSize: descSize, lineHeight: descSize + 4 }, isLocked && styles.lockedText]}>
           {categoryName ? `${type ?? ''}` : type ?? ''}
         </Text>
         <View style={[styles.levelBadge, isLocked && styles.lockedLevelBadge]}>
-          <Text style={[styles.levelText, isLocked && styles.lockedLevelText]}>Level  {level}</Text>
+          <Text style={[styles.levelText, { fontSize: lvlSize }, isLocked && styles.lockedLevelText]}>Level  {level}</Text>
         </View>
       </LinearGradient>
     </TouchableOpacity>
@@ -67,14 +91,11 @@ ComboCard.displayName = 'ComboCard';
 
 const styles = StyleSheet.create({
   comboCard: {
-    marginVertical: 8,
-    marginHorizontal: 8,
-    borderRadius: 8,
+    borderRadius: 12,
     overflow: 'hidden',
   },
   cardGradient: {
-    padding: 16,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   lockedCard: {
     opacity: 0.5,
@@ -102,17 +123,17 @@ const styles = StyleSheet.create({
   typeIcon: {
     position: 'absolute',
     right: -25,
-    top: -15,
+    top: -18,
     overflow: 'hidden',
+    
   },
   comboTitle: {
-    fontSize: 25,
     fontFamily: Typography.fontFamily,
     color: Colors.text,
     flex: 1,
   },
   comboDescription: {
-    color: "rgba(255, 255, 255, 0.94)",
+    color: 'rgba(255, 255, 255, 0.94)',
     fontFamily: Typography.fontFamily,
     marginTop: 4,
   },

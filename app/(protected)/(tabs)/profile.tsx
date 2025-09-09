@@ -3,11 +3,12 @@ import { SubscriptionPlan } from '@/config/subscriptionPlans';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
+import { uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Image, ImageBackground, Linking, Modal, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, ImageBackground, Linking, Modal, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 
 type UserData = {
   name: string;
@@ -24,6 +25,25 @@ type UserData = {
 };
 
 export default function Profile() {
+  const { width } = useWindowDimensions();
+  const deviceScale = width >= 1024 ? 1.45 : width >= 768 ? 1.25 : width >= 600 ? 1.1 : 1;
+  const iconSize = (v: number) => uiScale(v, { category: 'icon' });
+  const font = (v: number) => uiScale(v, { category: 'font' });
+  const spacing = (v: number) => uiScale(v, { category: 'spacing' });
+  const isTablet = width >= 768;
+  // Dynamic layout + sizing adjustments to keep phone visual ratio: enlarge text, tighten padding.
+  const dyn = {
+    containerPadBottom: isTablet ? uiScale(140) : 240,
+    contentWidthStyle: isTablet ? { maxWidth: 900, alignSelf: 'center', width: '100%' as const } : null,
+    badgeSize: isTablet ? uiScale(72) : 60,
+    badgeImage: isTablet ? uiScale(56) : 44,
+    badgeWrapperWidth: isTablet ? uiScale(80) : 70,
+    smallText: (base: number) => font(base + (isTablet ? 2 : 0)),
+    tinyText: (base: number) => font(base + (isTablet ? 2 : 0)),
+    sectionMarginTop: isTablet ? spacing(18) : 25,
+    fightsNumber: font(isTablet ? 34 : 28),
+    statNumber: font(isTablet ? 30 : 24),
+  };
   const { logout, user } = useAuth();
   const { userData, refreshUserData } = useUserData();
   const [loading, setLoading] = useState(true);
@@ -186,8 +206,8 @@ export default function Profile() {
   if (loading) {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
-        <MaterialCommunityIcons name="loading" size={50} color={Colors.text} />
-        <Text style={styles.loadingText}>Loading profile...</Text>
+  <MaterialCommunityIcons name="loading" size={iconSize(50)} color={Colors.text} />
+  <Text style={[styles.loadingText, { fontSize: font(16) }]}>Loading profile...</Text>
       </View>
     );
   }
@@ -208,48 +228,52 @@ export default function Profile() {
           />
         }
       >
-        <View style={styles.container}>
+        <View style={[
+          styles.container,
+          isTablet ? { maxWidth: 900, alignSelf: 'center' as const, width: '100%' as const } : null,
+          { paddingBottom: dyn.containerPadBottom }
+        ]}>
           <View style={styles.topRow}>
-            <Text style={styles.screenTitle}>My Gym</Text>
+            <Text style={[styles.screenTitle, { fontSize: font(isTablet ? 40 : 32) }]}>My Gym</Text>
             <TouchableOpacity
-              style={styles.inlineSettingsButton}
+              style={[styles.inlineSettingsButton, { padding: spacing(10), borderRadius: uiScale(28) }]}
               onPress={() => router.push('/(protected)/settings')}
               accessibilityLabel="Open Settings"
               accessibilityRole="button"
-              hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+              hitSlop={{ top: spacing(8), right: spacing(8), bottom: spacing(8), left: spacing(8) }}
             >
-              <MaterialCommunityIcons name="cog-outline" size={26} color={Colors.text} />
+              <MaterialCommunityIcons name="cog-outline" size={iconSize(26)} color={Colors.text} />
             </TouchableOpacity>
           </View>
           <View style={styles.header}>
             {/* <View style={styles.avatarContainer}>
               <MaterialCommunityIcons name="account-circle" size={100} color={Colors.text} />
             </View> */}
-            <Text style={styles.name}>{userData?.name || 'Anonymous'}</Text>
-            <Text style={styles.subtitle}>{userData?.plan !== 'free' ? 'Pro Member' : 'Free Member'}</Text>
+            <Text style={[styles.name, { fontSize: font(isTablet ? 40 : 32) }]}>{userData?.name || 'Anonymous'}</Text>
+            <Text style={[styles.subtitle, { fontSize: font(isTablet ? 22 : 18) }]}>{userData?.plan !== 'free' ? 'Pro Member' : 'Free Member'}</Text>
           </View>
           {/* Lifetime Stats Section (moved above badges) */}
-          <View style={styles.lifetimeSection}>
-            <Text style={styles.lifetimeTitle}>Lifetime Stats</Text>
-            <Text style={styles.lifetimeSubtitle}>Your all–time progress in Shadow MMA</Text>
+          <View style={[styles.lifetimeSection, { marginTop: dyn.sectionMarginTop, paddingVertical: spacing(isTablet ? 22 : 18) }] }>
+    <Text style={[styles.lifetimeTitle, { fontSize: font(isTablet ? 30 : 24) }]}>Lifetime Stats</Text>
+    <Text style={[styles.lifetimeSubtitle, { fontSize: font(isTablet ? 16 : 13) }]}>Your all–time progress in Shadow MMA</Text>
             <View style={styles.statsContainer}>
               <View style={styles.statBox}>
                 <View style={styles.statRow}>
-                  <MaterialCommunityIcons name="boxing-glove" size={20} color={Colors.text} style={styles.statIcon} />
-                  <Text style={styles.statNumber}>
+      <MaterialCommunityIcons name="boxing-glove" size={iconSize(20)} color={Colors.text} style={styles.statIcon} />
+                  <Text style={[styles.statNumber, { fontSize: dyn.statNumber }] }>
                     {userData?.lifetimeFightRounds ? formatNumber(userData.lifetimeFightRounds) : "-"}
                   </Text>
                 </View>
-                <Text style={styles.statLabel}>Total Rounds</Text>
+                <Text style={[styles.statLabel, { fontSize: dyn.smallText(14) }]}>Total Rounds</Text>
               </View>
               <View style={styles.statBox}>
                 <View style={styles.statRow}>
-                  <MaterialCommunityIcons name="timer" size={20} color={Colors.text} style={styles.statIcon} />
-                  <Text style={styles.statNumber}>
+      <MaterialCommunityIcons name="timer" size={iconSize(20)} color={Colors.text} style={styles.statIcon} />
+                  <Text style={[styles.statNumber, { fontSize: dyn.statNumber }] }>
                     {userData?.lifetimeFightTime ? formatTime(userData.lifetimeFightTime).value : "-"}
                   </Text>
                 </View>
-                <Text style={styles.statLabel}>
+                <Text style={[styles.statLabel, { fontSize: dyn.smallText(14) }] }>
                   {userData?.lifetimeFightTime ? formatTime(userData.lifetimeFightTime).unit : "Total Time"}
                 </Text>
               </View>
@@ -259,10 +283,10 @@ export default function Profile() {
           <View style={styles.statsRow}>
             <View style={[styles.infoContainer, styles.fightsContainer]}>
               <View style={styles.fightsRow}>
-                <MaterialCommunityIcons name="boxing-glove" style={{ transform: [{ rotate: '90deg' }] }} size={38} color={Colors.text} />
+                <MaterialCommunityIcons name="boxing-glove" style={{ transform: [{ rotate: '90deg' }] }} size={iconSize(isTablet ? 48 : 38)} color={Colors.text} />
                 <View style={styles.fightsInfo}>
-                  <Text style={styles.fightsTitle}>{userData?.plan !== 'free' ? 'Pro Status' : 'Fights Left Today'}</Text>
-                  <Text style={styles.fightsNumber}>
+                  <Text style={[styles.fightsTitle, { fontSize: dyn.smallText(14) }]}>{userData?.plan !== 'free' ? 'Pro Status' : 'Fights Left Today'}</Text>
+                  <Text style={[styles.fightsNumber, { fontSize: dyn.fightsNumber }]}>
                     {userData?.plan === 'free' ? Math.max(0, userData?.fightsLeft ?? 0) : '∞'}
                   </Text>
                 </View>
@@ -271,27 +295,27 @@ export default function Profile() {
 
             <View style={[styles.infoContainer, styles.levelContainer]}>
               <View style={styles.infoRow}>
-                <MaterialCommunityIcons name="trophy" size={26} color={Colors.text} />
-                <Text style={styles.infoText}>Level {userData?.xp ? (Math.floor(userData.xp / 100) >= 100 ? 'MAX' : Math.floor(userData.xp / 100)) : 0}</Text>
+                <MaterialCommunityIcons name="trophy" size={iconSize(isTablet ? 34 : 26)} color={Colors.text} />
+                <Text style={[styles.infoText, { fontSize: font(isTablet ? 22 : 16) }]}>Level {userData?.xp ? (Math.floor(userData.xp / 100) >= 100 ? 'MAX' : Math.floor(userData.xp / 100)) : 0}</Text>
               </View>
               <View style={styles.infoRow}>
-                <MaterialCommunityIcons name="star" size={26} color={Colors.text} />
-                <Text style={styles.infoText}>XP: {userData?.xp != null ? formatNumber(Math.min(userData.xp, 10000)) : "-"}</Text>
+                <MaterialCommunityIcons name="star" size={iconSize(isTablet ? 34 : 26)} color={Colors.text} />
+                <Text style={[styles.infoText, { fontSize: font(isTablet ? 22 : 16) }]}>XP: {userData?.xp != null ? formatNumber(Math.min(userData.xp, 10000)) : "-"}</Text>
               </View>
               <View style={styles.infoRow}>
-                <MaterialCommunityIcons name="fire" size={30} color="#fd6100ff" />
-                <Text style={styles.statNumber}> {userData?.loginStreak || "-"}</Text>
-                <Text style={styles.infoText}>Days</Text>
+                <MaterialCommunityIcons name="fire" size={iconSize(isTablet ? 40 : 30)} color="#fd6100ff" />
+                <Text style={[styles.statNumber, { fontSize: dyn.statNumber }]}> {userData?.loginStreak || "-"}</Text>
+                <Text style={[styles.infoText, { fontSize: dyn.smallText(16) }]}>Days</Text>
               </View>
             </View>
           </View>
 
           <View style={[styles.badgesContainer, { marginTop: 18 }]}>
-            <Text style={styles.badgesTitle}>Badges Progress</Text>
+            <Text style={[styles.badgesTitle, { fontSize: font(isTablet ? 30 : 22), marginBottom: spacing(isTablet ? 16 : 10) }]}>Badges Progress</Text>
             {/* Lifetime Rounds Badges Section FIRST */}
             {earnedRoundBadges.length === 0 ? (
               <View style={styles.noBadgesBox}>
-                <MaterialCommunityIcons name="boxing-glove" size={38} color={Colors.text} style={{ marginBottom: 10 }} />
+                <MaterialCommunityIcons name="boxing-glove" size={iconSize(38)} color={Colors.text} style={{ marginBottom: 10 }} />
                 <Text style={styles.noBadgesTitle}>Start Fighting</Text>
                 <Text style={styles.noBadgesText}>
                   Complete 5 total rounds to earn your first rounds badge. Every finished round pushes you toward the next reward.
@@ -310,11 +334,11 @@ export default function Profile() {
                 <Text style={[styles.nextBadgeLabel, { textAlign: 'center', marginBottom: 8 }]}>Rounds</Text>
                 <View style={[styles.badgesRow, earnedRoundBadges.length === 1 && styles.badgesRowSingle]}>
                   {earnedRoundBadges.map(r => (
-                    <View key={`rounds-${r}`} style={styles.badgeWrapper}>
-                      <View style={styles.badgeBg}>
-                        <Image source={roundBadgeImages[r]} style={styles.badgeImage} resizeMode="contain" />
+                    <View key={`rounds-${r}`} style={[styles.badgeWrapper, { width: dyn.badgeWrapperWidth }] }>
+                      <View style={[styles.badgeBg, { width: dyn.badgeSize, height: dyn.badgeSize, borderRadius: uiScale(18) }]}>
+                        <Image source={roundBadgeImages[r]} style={[styles.badgeImage, { width: dyn.badgeImage, height: dyn.badgeImage }]} resizeMode="contain" />
                       </View>
-                      <Text style={styles.badgeLabel}>{r} {r === 1 ? 'round' : 'rounds'}</Text>
+                      <Text style={[styles.badgeLabel, { fontSize: dyn.tinyText(12) }]}>{r} {r === 1 ? 'round' : 'rounds'}</Text>
                     </View>
                   ))}
                 </View>
@@ -345,7 +369,7 @@ export default function Profile() {
             {/* Streak (Days) Badges Section SECOND */}
             {earnedBadges.length === 0 ? (
               <View style={[styles.noBadgesBox, { marginTop: 18 }]}>
-                <MaterialCommunityIcons name="fire" size={38} color={Colors.text} style={{ marginBottom: 10 }} />
+                <MaterialCommunityIcons name="fire" size={iconSize(38)} color={Colors.text} style={{ marginBottom: 10 }} />
                 <Text style={styles.noBadgesTitle}>Build Your Streak</Text>
                 <Text style={styles.noBadgesText}>
                   Log in on 3 separate days to unlock your first streak badge. Daily consistency multiplies your progress.
@@ -364,11 +388,11 @@ export default function Profile() {
                 <Text style={[styles.nextBadgeLabel, { textAlign: 'center', marginBottom: 8 }]}>Login Streak</Text>
                 <View style={[styles.badgesRow, earnedBadges.length === 1 && styles.badgesRowSingle]}>
                   {earnedBadges.map(days => (
-                    <View key={`streak-${days}`} style={styles.badgeWrapper}>
-                      <View style={styles.badgeBg}>
-                        <Image source={badgeImages[days]} style={styles.badgeImage} resizeMode="contain" />
+                    <View key={`streak-${days}`} style={[styles.badgeWrapper, { width: dyn.badgeWrapperWidth }]}>
+                      <View style={[styles.badgeBg, { width: dyn.badgeSize, height: dyn.badgeSize, borderRadius: uiScale(18) }]}>
+                        <Image source={badgeImages[days]} style={[styles.badgeImage, { width: dyn.badgeImage, height: dyn.badgeImage }]} resizeMode="contain" />
                       </View>
-                      <Text style={styles.badgeLabel}>{days} {days === 1 ? 'day' : 'days'}</Text>
+                      <Text style={[styles.badgeLabel, { fontSize: dyn.tinyText(12) }]}>{days} {days === 1 ? 'day' : 'days'}</Text>
                     </View>
                   ))}
                 </View>
@@ -399,35 +423,35 @@ export default function Profile() {
           </View>
 
           <View style={styles.buttonList}>
-            <TouchableOpacity style={styles.button} onPress={() => router.push('/settings')}>
-              <MaterialCommunityIcons name="cog" size={24} color={Colors.text} />
-              <Text style={styles.buttonText}>Settings</Text>
+            <TouchableOpacity style={[styles.button, { padding: spacing(18), borderRadius: uiScale(14), minHeight: uiScale(60, { category: 'button' }) }]} onPress={() => router.push('/settings')}>
+              <MaterialCommunityIcons name="cog" size={iconSize(24)} color={Colors.text} />
+              <Text style={[styles.buttonText, { fontSize: font(16) }]}>Settings</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.button} onPress={() => setShowPaywall(true)}>
-              <MaterialCommunityIcons name="star" size={24} color={Colors.text} />
-              <Text style={styles.buttonText}>Upgrade Plan</Text>
+            <TouchableOpacity style={[styles.button, { padding: spacing(18), borderRadius: uiScale(14), minHeight: uiScale(60, { category: 'button' }) }]} onPress={() => setShowPaywall(true)}>
+              <MaterialCommunityIcons name="star" size={iconSize(24)} color={Colors.text} />
+              <Text style={[styles.buttonText, { fontSize: font(16) }]}>Upgrade Plan</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.button}
+              style={[styles.button, { padding: spacing(18), borderRadius: uiScale(14), minHeight: uiScale(60, { category: 'button' }) }]}
               onPress={() => Linking.openURL('https://shadowmma.com/privacy-policy')}
             >
-              <MaterialCommunityIcons name="shield-account" size={24} color={Colors.text} />
-              <Text style={styles.buttonText}>Privacy Policy</Text>
+              <MaterialCommunityIcons name="shield-account" size={iconSize(24)} color={Colors.text} />
+              <Text style={[styles.buttonText, { fontSize: font(16) }]}>Privacy Policy</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.button}
+              style={[styles.button, { padding: spacing(18), borderRadius: uiScale(14), minHeight: uiScale(60, { category: 'button' }) }]}
               onPress={() => Linking.openURL('https://shadowmma.com/terms-of-service')}
             >
-              <MaterialCommunityIcons name="file-document-outline" size={24} color={Colors.text} />
-              <Text style={styles.buttonText}>Terms of Service</Text>
+              <MaterialCommunityIcons name="file-document-outline" size={iconSize(24)} color={Colors.text} />
+              <Text style={[styles.buttonText, { fontSize: font(16) }]}>Terms of Service</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.button} onPress={handleLogout}>
-              <MaterialCommunityIcons name="logout" size={24} color={Colors.text} />
-              <Text style={styles.buttonText}>Logout</Text>
+            <TouchableOpacity style={[styles.button, { padding: spacing(18), borderRadius: uiScale(14), minHeight: uiScale(60, { category: 'button' }) }]} onPress={handleLogout}>
+              <MaterialCommunityIcons name="logout" size={iconSize(24)} color={Colors.text} />
+              <Text style={[styles.buttonText, { fontSize: font(16) }]}>Logout</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -445,7 +469,7 @@ export default function Profile() {
         <View style={styles.badgeModalOverlay}>
           <View style={styles.badgeModalContent}>
             <TouchableOpacity style={styles.badgeModalClose} onPress={closeBadgeModal}>
-              <MaterialCommunityIcons name="close" size={24} color={Colors.text} />
+              <MaterialCommunityIcons name="close" size={iconSize(24)} color={Colors.text} />
             </TouchableOpacity>
             {newBadge && (
               (() => {
@@ -456,11 +480,11 @@ export default function Profile() {
                   : `You completed ${newBadge.id} lifetime rounds. Keep fighting!`;
                 return (
                   <>
-                    <Image source={img} style={styles.badgeModalImage} resizeMode="contain" />
-                    <Text style={styles.badgeModalTitle}>{title}</Text>
-                    <Text style={styles.badgeModalText}>{text}</Text>
-                    <TouchableOpacity style={styles.badgeModalButton} onPress={closeBadgeModal}>
-                      <Text style={styles.badgeModalButtonText}>Awesome!</Text>
+                    <Image source={img} style={[styles.badgeModalImage, { width: uiScale(140), height: uiScale(140) }]} resizeMode="contain" />
+                    <Text style={[styles.badgeModalTitle, { fontSize: font(26) }]}>{title}</Text>
+                    <Text style={[styles.badgeModalText, { fontSize: font(16) }]}>{text}</Text>
+                    <TouchableOpacity style={[styles.badgeModalButton, { paddingVertical: spacing(14), paddingHorizontal: spacing(36), borderRadius: uiScale(28) }]} onPress={closeBadgeModal}>
+                      <Text style={[styles.badgeModalButtonText, { fontSize: font(16) }]}>Awesome!</Text>
                     </TouchableOpacity>
                   </>
                 );

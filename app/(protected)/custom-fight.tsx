@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { app as firebaseApp } from '@/FirebaseConfig.js';
 import { Colors, Typography } from '@/themes/theme';
-import { rf } from '@/utils/responsive';
+import { uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -35,6 +35,28 @@ export default function CustomFight() {
   const { user } = useAuth();
   const { userData } = useUserData();
   const { width } = useWindowDimensions();
+  // Responsive scaling helpers
+  const font = (v: number) => uiScale(v, { category: 'font' });
+  const spacing = (v: number) => uiScale(v, { category: 'spacing' });
+  const icon = (v: number) => uiScale(v, { category: 'icon' });
+  const button = (v: number) => uiScale(v, { category: 'button' });
+
+  const headerIconSize = icon(42);
+  const backIconSize = icon(30);
+  // Overlay (selection) UI sizing – slightly smaller so it doesn't overflow on tablets
+  const overlayCheckSize = icon(44);
+  const fs = {
+    headerTitle: font(30),
+    headerSubtitle: font(14),
+    selectionText: font(16),
+    clearBtn: font(14),
+    startHint: font(15),
+    startButton: font(22),
+  overlayTitle: font(26),
+  overlaySub: font(12),
+    chip: font(14),
+    lockedLevel: font(11),
+  } as const;
 
   // Fight modal config
   const [isModalVisible, setIsModalVisible] = React.useState(false);
@@ -232,7 +254,7 @@ export default function CustomFight() {
     setIsModalVisible(true);
   }, [selected, userData?.plan]);
 
-  const iconSize = Math.max(28, Math.min(44, Math.floor(width * 0.1)));
+  const iconSize = headerIconSize;
 
   const SelectableComboItem = useCallback(({ item }: { item: ComboMeta }) => {
     const locked = item.level > userLevel;
@@ -251,7 +273,7 @@ export default function CustomFight() {
     }, [selected, scale, overlayOpacity]);
 
     return (
-      <Animated.View style={[styles.cardWrapper, { transform: [{ scale }] }]}>        
+  <Animated.View style={[styles.cardWrapper, { transform: [{ scale }], marginVertical: uiScale(4, { category: 'spacing' }) }]}>        
         <MemoizedComboCard
           item={item}
           userLevel={userLevel}
@@ -259,9 +281,9 @@ export default function CustomFight() {
         />
         <Animated.View pointerEvents="none" style={[styles.fullOverlay, { opacity: overlayOpacity }]}>          
           <LinearGradient colors={["rgba(0,0,0,0.05)", "rgba(0,0,0,0.8)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.overlayInner}>
-            <MaterialCommunityIcons name="check" size={54} color="#ffffffff" style={{ marginBottom: 6 }} />
-            <Text style={styles.overlayTitle}>SELECTED</Text>
-            <Text style={styles.overlaySub}>Tap again to remove</Text>
+            <MaterialCommunityIcons name="check" size={overlayCheckSize} color="#ffffffff" style={{ marginBottom: spacing(4) }} />
+            <Text style={[styles.overlayTitle, { fontSize: fs.overlayTitle, maxWidth: '85%', textAlign: 'center' }]}>SELECTED</Text>
+            <Text style={[styles.overlaySub, { fontSize: fs.overlaySub, maxWidth: '85%', textAlign: 'center' }]}>Tap again to remove</Text>
           </LinearGradient>
         </Animated.View>
       </Animated.View>
@@ -284,7 +306,7 @@ export default function CustomFight() {
       >
         <View style={styles.headerContent}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <MaterialCommunityIcons name="arrow-left" size={28} color={Colors.text} />
+            <MaterialCommunityIcons name="arrow-left" size={backIconSize} color={Colors.text} />
           </TouchableOpacity>
           <MaterialCommunityIcons
             name="mixed-martial-arts"
@@ -293,8 +315,8 @@ export default function CustomFight() {
             style={{ opacity: 0.9 }}
           />
           <View style={{ marginLeft: 10 }}>
-            <Text style={[styles.headerText, { fontSize: rf(26) }]}>Custom Fight</Text>
-            <Text style={[styles.headerSubtitle, { fontSize: rf(12) }]}>Pick up to {MAX_SELECT} combos and start fighting</Text>
+            <Text style={[styles.headerText, { fontSize: fs.headerTitle }]}>Custom Fight</Text>
+            <Text style={[styles.headerSubtitle, { fontSize: fs.headerSubtitle }]}>Pick up to {MAX_SELECT} combos and start fighting</Text>
           </View>
         </View>
       </LinearGradient>
@@ -334,14 +356,14 @@ export default function CustomFight() {
             ListHeaderComponent={() => (
               <View>
                 <View style={styles.selectionHeader}>
-                  <Text style={styles.selectionText}>Selected: {selected.length}/{MAX_SELECT}</Text>
+                  <Text style={[styles.selectionText, { fontSize: fs.selectionText }]}>Selected: {selected.length}/{MAX_SELECT}</Text>
                   <TouchableOpacity
                     onPress={() => setSelected([])}
                     disabled={selected.length === 0}
                     style={[styles.clearBtn, selected.length === 0 && { opacity: 0.5 }]}
                   >
                     <MaterialCommunityIcons name="trash-can-outline" size={18} color={Colors.background} />
-                    <Text style={styles.clearBtnText}>Clear</Text>
+                    <Text style={[styles.clearBtnText, { fontSize: fs.clearBtn }]}>Clear</Text>
                   </TouchableOpacity>
                 </View>
                 {availableTypes.length > 0 && (
@@ -361,10 +383,10 @@ export default function CustomFight() {
                             color={Colors.background}
                             style={{ marginRight: 6 }}
                           />
-                          <Text style={styles.chipText}>Add {t}</Text>
+                          <Text style={[styles.chipText, { fontSize: fs.chip }]}>Add {t}</Text>
                           {locked && (
                             <View style={{ marginLeft: 8, backgroundColor: '#222', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
-                              <Text style={{ color: '#ffdd55', fontSize: 10, fontFamily: Typography.fontFamily }}>
+                              <Text style={{ color: '#ffdd55', fontSize: fs.lockedLevel, fontFamily: Typography.fontFamily }}>
                                 Lv {t === 'Kicks' ? KICKS_REQUIRED_LEVEL : DEFENSE_REQUIRED_LEVEL}
                               </Text>
                             </View>
@@ -381,13 +403,13 @@ export default function CustomFight() {
             )}
           />
           <View style={styles.startBar}>
-            <Text style={styles.startHint}>{selected.length > 0 ? `${selected.length} combo${selected.length>1?'s':''} selected` : 'Select combos to enable'}</Text>
+            <Text style={[styles.startHint, { fontSize: fs.startHint }]}>{selected.length > 0 ? `${selected.length} combo${selected.length>1?'s':''} selected` : 'Select combos to enable'}</Text>
             <TouchableOpacity
               style={[styles.startButton, selected.length === 0 && { opacity: 0.6 }]}
               onPress={handleStart}
               disabled={selected.length === 0}
             >
-              <Text style={styles.startButtonText}>Start Fight</Text>
+              <Text style={[styles.startButtonText, { fontSize: fs.startButton }]}>Start Fight</Text>
             </TouchableOpacity>
           </View>
         </>
@@ -435,17 +457,17 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   headerGradient: {
-    paddingHorizontal: 16,
-    paddingBottom: 14,
-    paddingTop: 10,
+    paddingHorizontal: uiScale(16, { category: 'spacing' }),
+    paddingBottom: uiScale(14, { category: 'spacing' }),
+    paddingTop: uiScale(10, { category: 'spacing' }),
   },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   backButton: {
-    marginRight: 8,
-    padding: 4,
+    marginRight: uiScale(8, { category: 'spacing' }),
+    padding: uiScale(4, { category: 'spacing' }),
   },
   headerText: {
     color: Colors.text,
@@ -462,15 +484,15 @@ const styles = StyleSheet.create({
     textShadowRadius: 1,
   },
   comboList: {
-    padding: 16,
-    paddingBottom: 170,
+    padding: uiScale(16, { category: 'spacing' }),
+    paddingBottom: uiScale(170, { category: 'spacing' }),
   },
   selectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    marginBottom: 4,
+    paddingHorizontal: uiScale(8, { category: 'spacing' }),
+    marginBottom: uiScale(4, { category: 'spacing' }),
   },
   selectionText: {
     color: Colors.text,
@@ -480,25 +502,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.text,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: uiScale(10, { category: 'spacing' }),
+    paddingVertical: uiScale(6, { category: 'spacing' }),
+    borderRadius: uiScale(8, { category: 'button' }),
   },
   clearBtnText: {
     color: Colors.background,
     marginLeft: 6,
     fontFamily: Typography.fontFamily,
   },
-  footerSpace: { height: 120 },
+  footerSpace: { height: uiScale(120, { category: 'spacing' }) },
   startBar: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
     backgroundColor: '#1b1b1bff',
-    borderTopWidth: 1,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderColor: '#c5c5c593',
-    padding: 12,
+    padding: uiScale(12, { category: 'spacing' }),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -509,9 +531,9 @@ const styles = StyleSheet.create({
   },
   startButton: {
     backgroundColor: Colors.darkGreen,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 10,
+    paddingVertical: uiScale(12, { category: 'spacing' }),
+    paddingHorizontal: uiScale(20, { category: 'spacing' }),
+    borderRadius: uiScale(10, { category: 'button' }),
     borderWidth: 1,
     borderColor: '#1a610cff',
     borderBottomWidth: 4,
@@ -519,12 +541,11 @@ const styles = StyleSheet.create({
   startButtonText: {
     color: '#fff',
     fontFamily: Typography.fontFamily,
-    fontSize: 16,
   },
   cardWrapper: {
-    marginVertical: 8,
-    marginHorizontal: 8,
-    borderRadius: 8,
+    marginVertical: uiScale(4, { category: 'spacing' }),
+    marginHorizontal: uiScale(8, { category: 'spacing' }),
+    borderRadius: uiScale(8, { category: 'button' }),
     overflow: 'hidden',
   },
   fullOverlay: {
@@ -536,12 +557,11 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject as any,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
+    padding: uiScale(16, { category: 'spacing' }),
   },
   overlayTitle: {
     color: '#eeeeeeff',
     fontFamily: Typography.fontFamily,
-    fontSize: 28,
     letterSpacing: 2,
     textShadowColor: '#000',
     textShadowOffset: { width: 0, height: 2 },
@@ -550,29 +570,27 @@ const styles = StyleSheet.create({
   overlaySub: {
     color: '#e8ffe8',
     fontFamily: Typography.fontFamily,
-    fontSize: 13,
     opacity: 0.9,
   },
   typeChips: {
-    paddingHorizontal: 8,
-    paddingTop: 6,
-    paddingBottom: 2,
-    gap: 8,
+    paddingHorizontal: uiScale(8, { category: 'spacing' }),
+    paddingTop: uiScale(6, { category: 'spacing' }),
+    paddingBottom: uiScale(12, { category: 'spacing' }),
+    gap: uiScale(8, { category: 'spacing' }),
   },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.text,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 18,
-    marginRight: 8,
+    paddingVertical: uiScale(8, { category: 'spacing' }),
+    paddingHorizontal: uiScale(12, { category: 'spacing' }),
+    borderRadius: uiScale(18, { category: 'button' }),
+    marginRight: uiScale(8, { category: 'spacing' }),
     borderWidth: 1,
     borderColor: '#1a610c55',
   },
   chipText: {
     color: Colors.background,
     fontFamily: Typography.fontFamily,
-    fontSize: 12,
   },
 });

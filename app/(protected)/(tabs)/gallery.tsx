@@ -1,4 +1,5 @@
 import { Colors, Typography } from '@/themes/theme';
+import { getDeviceBucket, uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -35,6 +36,28 @@ export default function Gallery() {
   const headerIconSize = Math.round(36 * sizeFactor);
   const modalIconSize = Math.round(50 * sizeFactor);
   const youtubeIconSize = Math.round(24 * sizeFactor);
+
+  // Device bucket aware font scaling: tablets already get increased base via uiScale; avoid shrinking due to more columns.
+  const deviceBucket = getDeviceBucket();
+  const allowCardScale = deviceBucket === 'phone' || deviceBucket === 'phablet';
+  const fontSize = (base: number, opts: { cardScale?: boolean } = {}) => {
+    const { cardScale = true } = opts;
+    let v = uiScale(base, { category: 'font' });
+    if (cardScale && allowCardScale) v = Math.round(v * sizeFactor);
+    return v;
+  };
+
+  // Precompute modal / text sizes
+  const fs = {
+    title: fontSize(32, { cardScale: false }),
+    moveName: fontSize(18),
+    moveCategory: fontSize(14),
+    chip: fontSize(11, { cardScale: false }),
+    modalTitle: fontSize(32, { cardScale: false }),
+    modalCategory: fontSize(18),
+    modalDescription: fontSize(17),
+    youtubeButton: fontSize(16),
+  } as const;
 
   const moves: Move[] = [
     {
@@ -384,19 +407,19 @@ export default function Gallery() {
             />
             <View style={styles.moveInfo}>
               <Text
-                style={[styles.moveName, { fontSize: Math.round(18 * sizeFactor) }]}
+                style={[styles.moveName, { fontSize: fs.moveName }]}
                 numberOfLines={2}
                 adjustsFontSizeToFit
                 minimumFontScale={0.8}
               >
                 {move.name}
               </Text>
-              <Text style={styles.moveCategory}>{move.category}</Text>
+              <Text style={[styles.moveCategory, { fontSize: fs.moveCategory }]}>{move.category}</Text>
             </View>
 
             <View style={styles.chipContainer} pointerEvents="none">
               <LinearGradient colors={[gradientColors[1], gradientColors[0]]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.chip}>
-                <Text style={styles.chipText}>{move.difficulty}</Text>
+                <Text style={[styles.chipText, { fontSize: fs.chip }]}>{move.difficulty}</Text>
               </LinearGradient>
             </View>
 
@@ -411,7 +434,7 @@ export default function Gallery() {
     <View style={styles.container}>
       <View style={styles.headerRow}>
         <MaterialIcons name="school" size={headerIconSize} color="white"> </MaterialIcons>
-        <Text style={styles.title}>Move Library</Text>
+  <Text style={[styles.title, { fontSize: fs.title }]}>Move Library</Text>
       </View>
 
       <FlatList
@@ -456,13 +479,13 @@ export default function Gallery() {
                     color="white"
                     style={styles.modalIcon}
                   />
-                  <Text style={styles.modalTitle}>{selectedMove.name}</Text>
-                  <Text style={styles.modalCategory}>{selectedMove.category}</Text>
+                  <Text style={[styles.modalTitle, { fontSize: fs.modalTitle }]}>{selectedMove.name}</Text>
+                  <Text style={[styles.modalCategory, { fontSize: fs.modalCategory }]}>{selectedMove.category}</Text>
                 </View>
-                <Text style={styles.modalDescription}>{selectedMove.description}</Text>
+                <Text style={[styles.modalDescription, { fontSize: fs.modalDescription }]}>{selectedMove.description}</Text>
                 <TouchableOpacity style={styles.youtubeButton} onPress={handleOpenYouTube}>
                   <MaterialCommunityIcons name="youtube" size={youtubeIconSize} color="#fff" style={{ marginRight: 8 }} />
-                  <Text style={styles.youtubeButtonText}>Search on YouTube</Text>
+                  <Text style={[styles.youtubeButtonText, { fontSize: fs.youtubeButton }]}>Search on YouTube</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -488,7 +511,6 @@ const styles = StyleSheet.create({
   },
   title: {
     color: Colors.text,
-    fontSize: 32,
     fontFamily: Typography.fontFamily,
     textAlign: 'center',
     marginVertical: 20,
@@ -533,7 +555,6 @@ const styles = StyleSheet.create({
   },
   moveName: {
     color: Colors.text,
-    fontSize: 18,
     fontFamily: Typography.fontFamily,
     textAlign: 'center',
     textShadowColor: "#000",
@@ -544,7 +565,6 @@ const styles = StyleSheet.create({
   moveCategory: {
     color: Colors.text,
     opacity: 0.7,
-    fontSize: 16,
     fontFamily: Typography.fontFamily,
     textAlign: 'center',
     marginTop: 2,
@@ -563,7 +583,6 @@ const styles = StyleSheet.create({
   },
   chipText: {
     color: '#fff',
-    fontSize: 10,
     fontFamily: Typography.fontFamily,
     opacity: 0.95,
   },
@@ -605,7 +624,6 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     color: Colors.text,
-    fontSize: 32,
     fontFamily: Typography.fontFamily,
     textAlign: 'center',
     textShadowColor: "#000",
@@ -615,13 +633,11 @@ const styles = StyleSheet.create({
   modalCategory: {
     color: Colors.text,
     opacity: 0.8,
-    fontSize: 20,
     fontFamily: Typography.fontFamily,
     marginTop: 5,
   },
   modalDescription: {
     color: Colors.text,
-    fontSize: 18,
     fontFamily: Typography.fontFamily,
     lineHeight: 26,
     textAlign: 'center',
@@ -644,7 +660,6 @@ const styles = StyleSheet.create({
   },
   youtubeButtonText: {
     color: '#fff',
-    fontSize: 16,
     fontFamily: Typography.fontFamily,
   },
 });

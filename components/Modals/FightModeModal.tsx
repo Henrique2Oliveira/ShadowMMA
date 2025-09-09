@@ -1,4 +1,5 @@
 import { Colors, Typography } from '@/themes/theme';
+import { isTablet, rf, rs } from '@/utils/responsive';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
@@ -133,7 +134,7 @@ export function FightModeModal({
             style={styles.closeButton}
             onPress={onClose}
           >
-            <MaterialCommunityIcons name="close" size={24} color="white" />
+            <MaterialCommunityIcons name="close" size={rs(28)} color="white" />
           </TouchableOpacity>
           <Text style={styles.modalTitle}>Fight Mode Options</Text>
           {/* Mode description + cost badge */}
@@ -283,7 +284,7 @@ export function FightModeModal({
                               move.value === 'Kicks' ? 'foot-print' :
                                 'shield'
                           }
-                          size={24}
+                          size={rs(28)}
                           color={selected ? '#FFFFFF' : '#FFFFFF80'}
                         />
                         <Text style={[
@@ -304,7 +305,7 @@ export function FightModeModal({
               </View>
             )}
 
-            <TouchableOpacity style={styles.startButton} onPress={handleStartFight}>
+            <TouchableOpacity style={styles.startButton} onPress={handleStartFight} activeOpacity={0.9}>
               <Text style={styles.startButtonText}>Start Fight</Text>
             </TouchableOpacity>
           </View>
@@ -316,19 +317,20 @@ export function FightModeModal({
 
 const styles = StyleSheet.create({
   buttonContainer: {
-    flexDirection: 'row',
-    gap: 8,
-    flex: 2,
-    justifyContent: 'space-between',
+  flexDirection: 'row',
+  flexWrap: 'nowrap',
+  flex: 2,
+  justifyContent: 'space-between',
+  columnGap: 8,
   },
   moveModeButton: {
-    backgroundColor: '#444444',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    flex: 1,
-    alignItems: 'center',
-    gap: 4,
+  backgroundColor: '#444444',
+  paddingVertical: isTablet ? 14 : 10,
+  paddingHorizontal: isTablet ? 14 : 10,
+  borderRadius: 10,
+  flex: 1,
+  alignItems: 'center',
+  gap: 4,
   },
   moveModeButtonActive: {
     backgroundColor: Colors.darkGreen,
@@ -343,86 +345,96 @@ const styles = StyleSheet.create({
   },
   moveModeButtonText: {
     color: '#FFFFFF80',
-    fontSize: 12,
+    fontSize: rf(12),
     fontFamily: Typography.fontFamily,
     textAlign: 'center',
+    letterSpacing: 0.3,
   },
   moveModeButtonTextActive: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: rf(12),
     fontFamily: Typography.fontFamily,
+    fontWeight: '600'
   },
   sliderContainer: {
     flex: 2,
-    paddingHorizontal: 10,
+    paddingHorizontal: isTablet ? 20 : 10,
   },
   slider: {
     width: '100%',
-    height: 35,
-
+    height: isTablet ? 50 : 35,
   },
   sliderLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    marginTop: -5,
+    paddingHorizontal: isTablet ? 8 : 10,
+    marginTop: isTablet ? -2 : -5,
   },
   sliderLabel: {
     color: '#ffffff80',
-    fontSize: 14,
+    fontSize: rf(14),
     fontFamily: Typography.fontFamily,
   },
   sliderLabelActive: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: rf(16),
+    fontWeight: '600'
   },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
+    alignItems: 'center'
   },
   bottomSheet: {
     backgroundColor: '#333333',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    minHeight: 300,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: isTablet ? 32 : 20,
+    paddingBottom: isTablet ? 40 : 28,
+    minHeight: isTablet ? 420 : 300,
+    width: '100%',
+    maxWidth: isTablet ? 760 : '100%',
+    alignSelf: 'center'
   },
   closeButton: {
     position: 'absolute',
-    right: 20,
-    top: 20,
+    right: isTablet ? 28 : 20,
+    top: isTablet ? 24 : 20,
     zIndex: 1,
+    padding: 4,
   },
   modalTitle: {
     color: 'white',
-    fontSize: 27,
+    fontSize: rf(30),
     fontFamily: Typography.fontFamily,
-    marginTop: 20,
-    marginBottom: 15,
+    marginTop: isTablet ? 28 : 20,
+    marginBottom: isTablet ? 22 : 15,
     textAlign: 'center',
+    letterSpacing: 0.5,
   },
   modeDescription: {
     color: '#ffffffcc',
-    fontSize: 14,
+    fontSize: rf(15),
     fontFamily: Typography.fontFamily,
     flex: 1,
-    marginRight: 12,
+    marginRight: isTablet ? 16 : 12,
     marginBottom: 6,
-    lineHeight: 18,
+    lineHeight: rf(20),
   },
   modeHeaderRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginBottom: 4,
+    gap: 8,
   },
   lifeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#b72222',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: isTablet ? 14 : 10,
+    paddingVertical: isTablet ? 8 : 6,
+    borderRadius: 18,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
@@ -431,54 +443,56 @@ const styles = StyleSheet.create({
   },
   lifeBadgeText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: rf(12),
     fontFamily: Typography.fontFamily,
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
     fontWeight: '600',
   },
   lifeHint: {
     color: '#ffffff80',
-    fontSize: 11,
+    fontSize: rf(12),
     fontFamily: Typography.fontFamily,
     textAlign: 'center',
     marginBottom: 12,
+    lineHeight: rf(16),
   },
   optionsContainer: {
     width: '100%',
-    marginTop: 20,
+    marginTop: isTablet ? 28 : 20,
+    gap: isTablet ? 8 : 0,
   },
   optionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
-
+    marginBottom: isTablet ? 26 : 20,
+    gap: isTablet ? 12 : 0,
   },
   optionLabel: {
     color: 'white',
-    fontSize: 18,
+    fontSize: rf(19),
     fontFamily: Typography.fontFamily,
     flex: 1,
-
+    letterSpacing: 0.3,
   },
 
   startButton: {
     backgroundColor: Colors.darkGreen,
-    paddingVertical: 15,
-    borderRadius: 10,
-    marginTop: 20,
+    paddingVertical: isTablet ? 22 : 15,
+    borderRadius: 14,
+    marginTop: isTablet ? 30 : 20,
     borderWidth: 1,
     borderColor: '#1a610cff',
-    borderBottomWidth: 4,
+    borderBottomWidth: 5,
     shadowColor: '#000',
-    elevation: 5,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    elevation: 6,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.28,
+    shadowRadius: 4.2,
   },
   startButtonText: {
     color: 'white',
-    fontSize: 20,
+    fontSize: rf(22),
     fontFamily: Typography.fontFamily,
     textAlign: 'center',
     shadowColor: '#000',
@@ -487,6 +501,7 @@ const styles = StyleSheet.create({
     elevation: 5,
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-
+    letterSpacing: 0.5,
+    fontWeight: '600'
   },
 });

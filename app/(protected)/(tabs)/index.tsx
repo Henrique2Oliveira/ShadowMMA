@@ -644,7 +644,7 @@ export default function Index() {
               title={buttons[9].title}
               iconName="run"
               iconSize={130}
-              fontSize={42}
+              fontSize={32}
               disabled={buttons[9].disabled}
               onPress={buttons[9].onPress}
             />
@@ -819,7 +819,6 @@ const styles = StyleSheet.create({
     marginVertical: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    maxWidth: 200,
     minWidth: 70,
     borderWidth: 1,
     borderBottomWidth: 4,

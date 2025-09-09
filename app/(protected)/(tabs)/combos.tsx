@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { app as firebaseApp } from '@/FirebaseConfig.js';
 import { Colors, Typography } from '@/themes/theme';
-import { rf } from '@/utils/responsive';
+import { getDeviceBucket, uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -36,6 +36,19 @@ export default function Combos() {
   const { user } = useAuth();
   const { userData } = useUserData();
   const { width } = useWindowDimensions();
+  // Responsive helpers
+  const font = (v: number) => uiScale(v, { category: 'font' });
+  const spacing = (v: number) => uiScale(v, { category: 'spacing' });
+  const icon = (v: number) => uiScale(v, { category: 'icon' });
+  const button = (v: number) => uiScale(v, { category: 'button' });
+  const headerIconSize = icon(42);
+  const backIconSize = icon(30);
+  const fs = {
+    headerTitle: font(30),
+    headerSubtitle: font(14),
+    filter: font(16),
+    recentHeader: font(18),
+  } as const;
 
   const [isModalVisible, setIsModalVisible] = React.useState(false);
   const [roundDuration, setRoundDuration] = React.useState('1');
@@ -223,19 +236,26 @@ export default function Combos() {
     });
   }, [combos, selectedType, recentComboIds]);
   
+  const deviceBucket = getDeviceBucket();
+  const cardVerticalGap = deviceBucket === 'tablet'
+    ? uiScale(4, { category: 'spacing' }) // tighter spacing only on tablet
+    : uiScale(10, { category: 'spacing' });
+
   const renderItem = useCallback(({ item }: { item: ComboMeta }) => {
     return (
-      <MemoizedComboCard
-        item={item}
-        userLevel={userLevel}
-        onPress={handleComboPress}
-      />
+      <View style={{ marginVertical: cardVerticalGap }}>
+        <MemoizedComboCard
+          item={item}
+          userLevel={userLevel}
+          onPress={handleComboPress}
+        />
+      </View>
     );
-  }, [userLevel, handleComboPress]);
+  }, [userLevel, handleComboPress, cardVerticalGap]);
 
   const keyExtractor = useCallback((item: ComboMeta) => item.id, []);
 
-  const iconSize = Math.max(28, Math.min(44, Math.floor(width * 0.1)));
+  const iconSize = headerIconSize;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -247,7 +267,7 @@ export default function Combos() {
       >
         <View style={styles.headerContent}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <MaterialCommunityIcons name="arrow-left" size={28} color={Colors.text} />
+            <MaterialCommunityIcons name="arrow-left" size={backIconSize} color={Colors.text} />
           </TouchableOpacity>
           <MaterialCommunityIcons
             name="boxing-glove"
@@ -256,8 +276,8 @@ export default function Combos() {
             color={Colors.text}
           />
           <View style={{ marginLeft: 10 }}>
-            <Text style={[styles.headerText, { fontSize: rf(28) }]}>Combos</Text>
-            <Text style={[styles.headerSubtitle, { fontSize: rf(12) }]}>Pick a combo and start fighting</Text>
+            <Text style={[styles.headerText, { fontSize: fs.headerTitle }]}>Combos</Text>
+            <Text style={[styles.headerSubtitle, { fontSize: fs.headerSubtitle }]}>Pick a combo and start fighting</Text>
           </View>
         </View>
       </LinearGradient>
@@ -308,10 +328,10 @@ export default function Combos() {
                       <View key={t} style={{ marginRight: 10 }}>
                         {selected ? (
                           <LinearGradient colors={[Colors.bgGame, Colors.bgGameDark]} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }} style={styles.chipSelectedBg}>
-                            <Text onPress={() => setSelectedType(t)} style={styles.chipSelectedText}>{t}</Text>
+                            <Text onPress={() => setSelectedType(t)} style={[styles.chipSelectedText, { fontSize: fs.filter }]}>{t}</Text>
                           </LinearGradient>
                         ) : (
-                          <Text onPress={() => setSelectedType(t)} style={styles.chipText}>{t}</Text>
+                          <Text onPress={() => setSelectedType(t)} style={[styles.chipText, { fontSize: fs.filter }]}>{t}</Text>
                         )}
                       </View>
                     );
@@ -321,7 +341,7 @@ export default function Combos() {
                 {recentCombos.length > 0 && (
                   <View style={styles.recentSection}>
                     <View style={styles.recentHeader}>
-                      <Text style={styles.recentHeaderText}>Most Recent</Text>
+                      <Text style={[styles.recentHeaderText, { fontSize: fs.recentHeader }]}>Most Recent</Text>
                     </View>
                     {recentCombos.slice(0, MAX_RECENT_COMBOS).map(combo => (
                       <View key={combo.id}>
@@ -384,18 +404,17 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   headerGradient: {
-    paddingHorizontal: 16,
-    paddingBottom: 14,
-    paddingTop: 10,
-
+    paddingHorizontal: uiScale(16, { category: 'spacing' }),
+    paddingBottom: uiScale(14, { category: 'spacing' }),
+    paddingTop: uiScale(10, { category: 'spacing' }),
   },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   backButton: {
-    marginRight: 8,
-    padding: 4,
+    marginRight: uiScale(8, { category: 'spacing' }),
+    padding: uiScale(4, { category: 'spacing' }),
   },
   recentSection: {
     marginBottom: 8,
@@ -405,18 +424,17 @@ const styles = StyleSheet.create({
   },
   recentHeader: {
     backgroundColor: '#ffffffff',
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    marginVertical: 12,
-    borderRadius: 12,
+    paddingVertical: uiScale(6, { category: 'spacing' }),
+    paddingHorizontal: uiScale(16, { category: 'spacing' }),
+    marginVertical: uiScale(12, { category: 'spacing' }),
+    borderRadius: uiScale(12, { category: 'button' }),
     alignSelf: 'flex-start',
-    marginLeft: 16,
+    marginLeft: uiScale(16, { category: 'spacing' }),
   },
   recentHeaderText: {
     color: Colors.background,
     fontFamily: Typography.fontFamily,
-    textAlign: "center",
-    fontSize: 16,
+    textAlign: 'center',
   },
   headerText: {
     color: Colors.text,
@@ -433,28 +451,28 @@ const styles = StyleSheet.create({
     textShadowRadius: 1,
   },
   comboList: {
-    padding: 16,
-    paddingBottom: 170,
+    padding: uiScale(16, { category: 'spacing' }),
+    paddingBottom: uiScale(170, { category: 'spacing' }),
   },
   filterChips: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 4,
+    paddingHorizontal: uiScale(16, { category: 'spacing' }),
+    paddingTop: uiScale(12, { category: 'spacing' }),
+    paddingBottom: uiScale(4, { category: 'spacing' }),
   },
   chipText: {
     color: Colors.text,
     fontFamily: Typography.fontFamily,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 20,
+    paddingVertical: uiScale(8, { category: 'spacing' }),
+    paddingHorizontal: uiScale(14, { category: 'spacing' }),
+    borderRadius: uiScale(20, { category: 'button' }),
     backgroundColor: '#202020',
     overflow: 'hidden',
     opacity: 0.9,
   },
   chipSelectedBg: {
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    borderRadius: uiScale(20, { category: 'button' }),
+    paddingVertical: uiScale(8, { category: 'spacing' }),
+    paddingHorizontal: uiScale(14, { category: 'spacing' }),
   },
   chipSelectedText: {
     color: Colors.background,

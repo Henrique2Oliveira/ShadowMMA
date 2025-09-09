@@ -1,4 +1,5 @@
 import { Colors } from '@/themes/theme';
+import { uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
 import { Tabs, useRouter } from 'expo-router';
@@ -20,33 +21,46 @@ export default function TabsLayout() {
     }, 100);
   };
 
+  // --- Responsive scaling values ---
+  const tabBarHeight = uiScale(80, { category: 'button' });
+  const tabBarRadius = uiScale(35, { category: 'button' });
+  const tabBarPaddingHorizontal = uiScale(10, { category: 'spacing' });
+  const tabBarBottom = uiScale(8, { category: 'spacing' });
+  const iconSizeHome = uiScale(42, { category: 'icon' });
+  const iconSizeGallery = uiScale(42, { category: 'icon' });
+  const iconSizeGame = uiScale(42, { category: 'icon' });
+  const iconSizeCombos = uiScale(43, { category: 'icon' });
+  const iconSizeProfile = uiScale(38, { category: 'icon' });
+  const fightBtnHeight = uiScale(40, { category: 'button' });
+  const fightFontSize = uiScale(28, { category: 'font' });
+  const fightLineHeight = fightFontSize + 6;
+  const iconWrapperHeight = uiScale(50, { category: 'button' });
+  const iconWrapperWidth = uiScale(36, { category: 'button' });
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-
         tabBarActiveTintColor: 'white',
         tabBarInactiveTintColor: 'gray',
         tabBarStyle: {
           backgroundColor: Colors.bgDark,
           position: 'absolute',
-          bottom: 8,
-
-          borderRadius: 35,
-          marginHorizontal: 10,
-          paddingHorizontal: 10,
+          bottom: tabBarBottom,
+          borderRadius: tabBarRadius,
+          marginHorizontal: uiScale(10, { category: 'spacing' }),
+          paddingHorizontal: tabBarPaddingHorizontal,
           borderTopWidth: 0,
           elevation: 2,
           shadowOpacity: 0.2,
-          height: 80,
+          height: tabBarHeight,
         },
         tabBarIconStyle: {
-          height: 50,
-          marginVertical: 10,
-          marginHorizontal: 10,
-          width: 36,
+          height: iconWrapperHeight,
+          marginVertical: uiScale(10, { category: 'spacing' }),
+          marginHorizontal: uiScale(10, { category: 'spacing' }),
+          width: iconWrapperWidth,
         },
-
       }}
     >
       <Tabs.Screen
@@ -57,7 +71,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => (
             <MaterialIcons
               name="home"
-              size={42}
+              size={iconSizeHome}
               color={focused ? 'white' : '#e6e6e6ff'}
               alt="Home Icon"
             />
@@ -73,7 +87,7 @@ export default function TabsLayout() {
             <MaterialIcons
               name="school"
               marginLeft={-20}
-              size={42}
+              size={iconSizeGallery}
               color={focused ? 'white' : '#e6e6e6ff'}
             />
           ),
@@ -90,11 +104,11 @@ export default function TabsLayout() {
               onPress={handleFightPress}
               style={{
                 width: '220%',
-                height: 40,
+                height: fightBtnHeight,
                 backgroundColor: focused ? 'white' : '#e6e6e6ff',
-                borderRadius: 5,
-                paddingVertical: 2,
-                paddingHorizontal: 5,
+                borderRadius: uiScale(5, { category: 'button' }),
+                paddingVertical: uiScale(2, { category: 'spacing' }),
+                paddingHorizontal: uiScale(5, { category: 'spacing' }),
                 justifyContent: 'center',
                 alignItems: 'center',
                 shadowColor: '#000',
@@ -105,8 +119,8 @@ export default function TabsLayout() {
               }}>
               <Text style={{
                 color: "#000000",
-                fontSize: 28,
-                lineHeight: 34,
+                fontSize: fightFontSize,
+                lineHeight: fightLineHeight,
                 shadowColor: "#000",
                 textShadowOffset: { width: 0, height: 2 },
                 textShadowRadius: 2,
@@ -126,7 +140,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => (
             <MaterialCommunityIcons
               name="boxing-glove"
-              size={43}
+              size={iconSizeCombos}
               marginRight={-20}
               style={{ transform: [{ rotateZ: '90deg' }] }}
               color={focused ? 'white' : '#e6e6e6ff'}
@@ -142,7 +156,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => (
             <MaterialIcons
               name="account-circle"
-              size={38}
+              size={iconSizeProfile}
               color={focused ? 'white' : '#e6e6e6ff'}
             />
           ),
