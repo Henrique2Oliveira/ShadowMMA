@@ -43,6 +43,18 @@ interface CachedUserData { data: any; etag: string; fetchedAt: number; }
 const userDataCache: Record<string, CachedUserData> = {};
 const USER_CACHE_TTL_MS = 15_000; // 15s server-side TTL (tune as needed)
 
+// --- Time normalization helpers ---
+// We persist all fight time metrics in MINUTES. Some older data might have seconds.
+// For per-fight totals (currentFightTime), anything larger than 45 is very likely seconds
+// because our max configured fight length is 7 rounds x 5 minutes = 35 minutes.
+const normalizePerFightMinutes = (val: any): number => {
+  let n = typeof val === 'number' ? val : parseFloat(val ?? '0');
+  if (!isFinite(n) || n < 0) return 0;
+  // If value looks like seconds for a single fight, convert to minutes.
+  if (n > 45) return Math.round(n / 60);
+  return Math.round(n); // keep minutes as integer for consistency
+};
+
 // Cloud function to handle user login update with caching + ETag conditional response
 export const getUserData = onRequest(async (req, res) => {
   try {
@@ -91,7 +103,8 @@ export const getUserData = onRequest(async (req, res) => {
   }
   // Times already stored in minutes in DB
   const currentFightRound = userData?.currentFightRound || 0;
-  const currentFightTime = userData?.currentFightTime || 0;
+  // Normalize per-fight time to minutes for compatibility with older data.
+  let currentFightTime = normalizePerFightMinutes(userData?.currentFightTime ?? 0);
   const totalFightRounds = userData?.totalFightRounds || 0;
   const totalFightTime = userData?.totalFightTime || 0;
   const lifetimeFightRounds = userData?.lifetimeFightRounds || 0;
@@ -110,6 +123,13 @@ export const getUserData = onRequest(async (req, res) => {
       lifetimeFightRounds,
       lifetimeFightTime,
     };
+
+    // Opportunistically fix currentFightTime in DB if we detected seconds
+    try {
+      if ((userData?.currentFightTime ?? 0) !== currentFightTime) {
+        await userRef.update({ currentFightTime });
+      }
+    } catch {}
 
     // 3. Generate ETag hash of response (fast, stable)
     const etag = crypto.createHash('sha1').update(JSON.stringify(safeUserData)).digest('hex');
@@ -302,99 +322,98 @@ export const handleGameOver = onRequest(async (req, res) => {
     const decodedToken = await auth.verifyIdToken(idToken);
     const uid = decodedToken.uid;
 
-    // Get user data
     const userRef = db.collection("users").doc(uid);
-    const userDoc = await userRef.get();
-    
-    if (!userDoc.exists) {
-      res.status(404).send("User not found");
-      return;
-    }
 
-    const userData = userDoc.data();
+    // Run transaction to avoid double-counting under concurrent requests
+    const txResult = await db.runTransaction(async (t) => {
+      const snap = await t.get(userRef);
+      if (!snap.exists) {
+        return { error: { code: 404, message: 'User not found' } } as const;
+      }
+      const userData = snap.data() as any;
+      if (!userData?.playing) {
+        return { error: { code: 400, message: 'User was not playing', oldXp: userData?.xp || 0 } } as const;
+      }
 
-    // Check if user was playing
-    if (!userData?.playing) {
-      res.status(400).json({
-        error: "User was not playing",
-        oldXp: userData?.xp || 0,
+      // Calculate new XP based on current level (progressive difficulty + fight length bonus)
+      const oldXpRaw = userData.xp || 0;
+      const oldXp = Math.min(oldXpRaw, MAX_XP);
+      const currentLevel = Math.floor(oldXp / 100);
+
+      const baseXP = Math.max(20, 120 - (currentLevel * 4));
+      const variation = Math.floor(baseXP * 0.25);
+      const randomXP = Math.floor(Math.random() * (variation * 2 + 1)) - variation;
+
+      const fightRoundsForBonus = Math.max(0, userData?.currentFightRound || 0);
+      const fightTimeForBonus = Math.max(0, normalizePerFightMinutes(userData?.currentFightTime || 0)); // minutes
+      const BASELINE_ROUNDS = 1;
+      const BASELINE_TOTAL_TIME = 1;
+      const roundsOverBaseline = Math.max(0, fightRoundsForBonus - BASELINE_ROUNDS);
+      const roundBonusPct = Math.min(roundsOverBaseline * 0.10, 1.0);
+      const timeOverBaseline = Math.max(0, fightTimeForBonus - BASELINE_TOTAL_TIME);
+      const timeBonusPct = Math.min(timeOverBaseline * 0.05, 0.75);
+      let lengthMultiplier = 1 + roundBonusPct + timeBonusPct;
+      lengthMultiplier = Math.min(lengthMultiplier, 2.5);
+
+      const rawXP = (baseXP + randomXP) * lengthMultiplier;
+      const xpGained = Math.max(15, Math.round(rawXP));
+      let newXp = oldXp + xpGained;
+      if (newXp > MAX_XP) newXp = MAX_XP;
+
+      const currentFightRounds = userData?.currentFightRound || 0;
+      const currentFightTime = fightTimeForBonus; // already normalized minutes
+      const totalFightRounds = (userData?.totalFightRounds || 0) + currentFightRounds;
+      const totalFightTime = (userData?.totalFightTime || 0) + currentFightTime;
+      const lifetimeFightRounds = (userData?.lifetimeFightRounds || 0) + currentFightRounds;
+      const lifetimeFightTime = (userData?.lifetimeFightTime || 0) + currentFightTime;
+
+      t.update(userRef, {
+        xp: newXp,
+        playing: false,
+        totalFightRounds,
+        totalFightTime,
+        lifetimeFightRounds,
+        lifetimeFightTime,
+        currentFightRound: 0,
+        currentFightTime: 0,
       });
-      return;
-    }
 
-  // Calculate new XP based on current level (progressive difficulty + fight length bonus)
-  const oldXpRaw = userData.xp || 0;
-  const oldXp = Math.min(oldXpRaw, MAX_XP);
-  const currentLevel = Math.floor(oldXp / 100);
+      const newLevel = Math.floor(newXp / 100);
+      const didLevelUp = newLevel > currentLevel;
 
-  // --- Base XP (unchanged core curve) ---
-  // Base decreases with level so early progression feels fast.
-  // baseXP = max(20, 120 - level * 4)
-  const baseXP = Math.max(20, 120 - (currentLevel * 4));
-
-  // Random variation (±25%) keeps results dynamic while maintaining fairness
-  const variation = Math.floor(baseXP * 0.25);
-  const randomXP = Math.floor(Math.random() * (variation * 2 + 1)) - variation;
-
-  // --- Fight length reward multiplier ---
-  // We reward longer / more intense fights using both rounds and total fight time.
-  // Assumptions:
-  //  * currentFightRound = total number of rounds selected for the fight (not the current round index)
-  //  * currentFightTime = total fight time in MINUTES (1-5 minutes per round)
-  // Baselines: 1 round & 1 minute receive no bonus. Bonuses are capped to avoid abuse.
-  const fightRoundsForBonus = Math.max(0, userData?.currentFightRound || 0);
-  const fightTimeForBonus = Math.max(0, userData?.currentFightTime || 0); // minutes
-
-  const BASELINE_ROUNDS = 1; // no extra bonus until more than 1 round
-  const BASELINE_TOTAL_TIME = 1; // 1 minute baseline (matching game's minimum round time)
-
-  // Round bonus: +10% per extra round beyond baseline up to +100%
-  const roundsOverBaseline = Math.max(0, fightRoundsForBonus - BASELINE_ROUNDS);
-  const roundBonusPct = Math.min(roundsOverBaseline * 0.10, 1.0); // 0..1.0
-
-  // Time bonus: +5% per extra minute beyond baseline time up to +75%
-  const timeOverBaseline = Math.max(0, fightTimeForBonus - BASELINE_TOTAL_TIME);
-  const timeBonusPct = Math.min(timeOverBaseline * 0.05, 0.75); // 0..0.75
-
-  // Combine & cap overall multiplier (cap 2.5x total to prevent runaway farming)
-  let lengthMultiplier = 1 + roundBonusPct + timeBonusPct; // base 1.0 .. 2.75
-  lengthMultiplier = Math.min(lengthMultiplier, 2.5);
-
-  // Final XP (pre-floor) then enforce minimum absolute XP of 15
-  const rawXP = (baseXP + randomXP) * lengthMultiplier;
-  const xpGained = Math.max(15, Math.round(rawXP));
-  let newXp = oldXp + xpGained;
-  if (newXp > MAX_XP) {
-    newXp = MAX_XP;
-  }
-
-    // Get current fight stats to add to totals
-    const currentFightRounds = userData?.currentFightRound || 0;
-  const currentFightTime = userData?.currentFightTime || 0; // minutes
-    const totalFightRounds = (userData?.totalFightRounds || 0) + currentFightRounds;
-    const totalFightTime = (userData?.totalFightTime || 0) + currentFightTime;
-    const lifetimeFightRounds = (userData?.lifetimeFightRounds || 0) + currentFightRounds;
-    const lifetimeFightTime = (userData?.lifetimeFightTime || 0) + currentFightTime;
-
-    // Update user data - add current fight stats to totals and reset current values
-    await userRef.update({
-      xp: newXp,
-      playing: false,
-      totalFightRounds: totalFightRounds,
-      totalFightTime: totalFightTime,
-      lifetimeFightRounds: lifetimeFightRounds,
-      lifetimeFightTime: lifetimeFightTime,
-      currentFightRound: 0, // Reset current fight stats
-      currentFightTime: 0
+      return {
+        oldXp,
+        newXp,
+        xpGained,
+        currentLevel,
+        newLevel,
+        didLevelUp,
+        breakdown: {
+          baseXP,
+          randomXP,
+          lengthMultiplier,
+          roundBonusPct,
+          timeBonusPct,
+          currentFightRounds,
+          currentFightTime,
+        }
+      } as const;
     });
 
-    // Determine if the user leveled up and collect newly unlocked combos for the new level only
-    const newLevel = Math.floor(newXp / 100);
-    const didLevelUp = newLevel > currentLevel;
+    if ('error' in txResult && txResult.error) {
+      const err = txResult.error;
+      if (err.code === 400) {
+        res.status(400).json({ error: err.message, oldXp: err.oldXp });
+        return;
+      }
+      res.status(404).send(err.message);
+      return;
+    }
+
+    // Post-transaction: fetch unlocked combos if level up
     let unlockedCombos: string[] | undefined = undefined;
-    if (didLevelUp) {
+    if (txResult.didLevelUp) {
       try {
-        // For now, use the default category '0' (matches getCombosMeta default)
         const catId = '0';
         const combosDoc = await db.collection('combos').doc(catId).get();
         if (combosDoc.exists) {
@@ -405,13 +424,12 @@ export const handleGameOver = onRequest(async (req, res) => {
             for (const typeKey of Object.keys(levelsObj)) {
               const arr = Array.isArray(levelsObj[typeKey]) ? levelsObj[typeKey] : [];
               for (const c of arr) {
-                if (typeof c?.level === 'number' && c.level === newLevel) {
+                if (typeof c?.level === 'number' && c.level === txResult.newLevel) {
                   const nm = String(c?.name || c?.title || 'Combo');
                   names.push(nm);
                 }
               }
             }
-            // Deduplicate while preserving order
             const seen = new Set<string>();
             unlockedCombos = names.filter(n => (seen.has(n) ? false : (seen.add(n), true)));
           }
@@ -421,23 +439,22 @@ export const handleGameOver = onRequest(async (req, res) => {
       }
     }
 
-    // Return old and new values for animation
     res.status(200).json({
-      oldXp,
-      newXp,
-      xpGained,
-      currentLevel: Math.floor(oldXp / 100),
-      newLevel,
-      levelUp: didLevelUp,
-      unlockedCombos, // array of names when levelUp, otherwise undefined
+      oldXp: txResult.oldXp,
+      newXp: txResult.newXp,
+      xpGained: txResult.xpGained,
+      currentLevel: txResult.currentLevel,
+      newLevel: txResult.newLevel,
+      levelUp: txResult.didLevelUp,
+      unlockedCombos,
       xpBreakdown: {
-        baseXP,
-        randomXPAdjustment: randomXP,
-        lengthMultiplier,
-        roundBonusPct,
-        timeBonusPct,
-  currentFightRounds: fightRoundsForBonus,
-  currentFightTime: fightTimeForBonus
+        baseXP: txResult.breakdown.baseXP,
+        randomXPAdjustment: txResult.breakdown.randomXP,
+        lengthMultiplier: txResult.breakdown.lengthMultiplier,
+        roundBonusPct: txResult.breakdown.roundBonusPct,
+        timeBonusPct: txResult.breakdown.timeBonusPct,
+        currentFightRounds: txResult.breakdown.currentFightRounds,
+        currentFightTime: txResult.breakdown.currentFightTime,
       }
     });
 
@@ -487,6 +504,10 @@ export const startFight = onRequest(async (req, res) => {
   if (isNaN(fightRounds)) fightRounds = 1;
   if (isNaN(fightTimePerRoundMinutes)) fightTimePerRoundMinutes = 1;
 
+  // If client accidentally sends seconds (e.g., 60, 120), convert to minutes
+  if (isFinite(fightTimePerRoundMinutes) && fightTimePerRoundMinutes > 10) {
+    fightTimePerRoundMinutes = fightTimePerRoundMinutes / 60;
+  }
   // Enforce business rules: rounds 1..7, duration 1..5 minutes
   if (fightRounds < 1) fightRounds = 1; else if (fightRounds > 7) fightRounds = 7;
   if (fightTimePerRoundMinutes < 1) fightTimePerRoundMinutes = 1; else if (fightTimePerRoundMinutes > 5) fightTimePerRoundMinutes = 5;

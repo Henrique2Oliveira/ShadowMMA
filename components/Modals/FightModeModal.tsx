@@ -54,7 +54,7 @@ export const FIGHT_OPTIONS: {
     { value: '7', label: '7' },
   ],
   restTimes: [
-    { value: '0.5', label: '30s' },
+  { value: '0.5', label: '30s' },
     { value: '1', label: '1m' },
     { value: '1.5', label: '1.5m' },
     { value: '2', label: '2m' },

@@ -6,6 +6,8 @@ import { LoadingScreen } from '@/components/LoadingScreen';
 import { AlertModal } from '@/components/Modals/AlertModal';
 import { CombosModal } from '@/components/Modals/CombosModal';
 import { GameOptionsModal } from '@/components/Modals/GameOptionsModal';
+import GoodJobModal from '@/components/Modals/GoodJobModal';
+import UnlockedCombosModal from '@/components/Modals/UnlockedCombosModal';
 import { MoveCard } from '@/components/MoveCard';
 import { MoveStats } from '@/components/MoveStats';
 import { TimerDisplay } from '@/components/TimerDisplay';
@@ -21,7 +23,7 @@ import { getAuth } from '@firebase/auth';
 import { useIsFocused } from '@react-navigation/native';
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
-import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
@@ -139,7 +141,7 @@ export default function Game() {
   React.useEffect(() => {
     const tag = 'game-screen';
     if (isFocused) {
-      activateKeepAwake(tag);
+      activateKeepAwakeAsync(tag);
     } else {
       deactivateKeepAwake(tag);
     }
@@ -204,6 +206,8 @@ export default function Game() {
   const roundDurationMs = Math.floor(parseFloat(params.roundDuration || '1') * 60 * 1000);
   const restTimeMs = Math.floor(parseFloat(params.restTime || '1') * 60 * 1000);
   const totalRounds = parseInt(params.numRounds || '1');
+  // Guard to avoid duplicate game-over submissions
+  const gameOverSentRef = React.useRef(false);
 
   // State for tracking game progress
   const [gameState, setGameState] = React.useState({
@@ -233,9 +237,8 @@ export default function Game() {
   const [showNewCombo, setShowNewCombo] = React.useState(false);
   // Names of combos unlocked on the last level up (shown right after game over)
   const [newUnlockedCombos, setNewUnlockedCombos] = React.useState<string[] | null>(null);
-  // Animations for the unlocked combos panel and list items
-  const unlockedPanelAnim = React.useRef(new Animated.Value(0)).current;
-  const unlockedItemAnims = React.useRef<Animated.Value[]>([]);
+  // Good job modal when no new combos
+  const [showGoodJob, setShowGoodJob] = React.useState(false);
   // LevelBar animations handled internally by shared component (DRY)
 
   // Speed multiplier: default param OR 1.0, but we will bump first-time users to 1.3x below
@@ -281,7 +284,7 @@ export default function Game() {
       if (currentLevel > previousLevel && previousLevel > 0) {
         // If backend already provided the combos list, prefer that over the generic banner
         let t: ReturnType<typeof setTimeout> | null = null;
-        if (!newUnlockedCombos || newUnlockedCombos.length === 0) {
+  if (!newUnlockedCombos || newUnlockedCombos.length === 0) {
           setShowNewCombo(true);
           t = setTimeout(() => setShowNewCombo(false), 5000);
         }
@@ -291,30 +294,7 @@ export default function Game() {
     }
   }, [userData?.xp, previousLevel]);
 
-  // Animate unlocked combos panel and items when shown/hidden
-  React.useEffect(() => {
-    if (newUnlockedCombos && newUnlockedCombos.length > 0) {
-      // Prepare per-item animations
-      unlockedItemAnims.current = newUnlockedCombos.map(() => new Animated.Value(0));
-      // Panel pop-in
-      unlockedPanelAnim.setValue(0);
-      Animated.spring(unlockedPanelAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-        friction: 7,
-        tension: 80,
-      }).start(() => {
-        // Stagger items after panel is in
-        Animated.stagger(80,
-          unlockedItemAnims.current.map(v => Animated.timing(v, { toValue: 1, duration: 300, useNativeDriver: true }))
-        ).start();
-      });
-    } else {
-      // Hide panel
-      Animated.timing(unlockedPanelAnim, { toValue: 0, duration: 150, useNativeDriver: true }).start();
-      unlockedItemAnims.current = [];
-    }
-  }, [newUnlockedCombos, unlockedPanelAnim]);
+  // No animations for unlocked combos UI
 
   // Power-up: Speed Boost (random 25% chance to appear, lasts 30s)
   const BOOST_CHANCE = 0.25; // 25% chance per check
@@ -425,7 +405,7 @@ export default function Game() {
     setBoostRemainingMs(0);
     if (lastBoostTickRef) lastBoostTickRef.current = null;
 
-    const fetchMoves = async () => {
+  const fetchMoves = async () => {
       setIsLoading(true);
       try {
         const auth = getAuth(app);
@@ -433,7 +413,7 @@ export default function Game() {
         if (!user) throw new Error('No user');
         const idToken = await user.getIdToken();
 
-        const response = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/startFight', {
+    const response = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/startFight', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -447,7 +427,10 @@ export default function Game() {
               .join(',') || 'Punches',
             comboId: params.comboId || undefined,
             randomFight: params.randomFight === 'true',
-            selectedComboIds: params.selectedComboIds || undefined,
+      selectedComboIds: params.selectedComboIds || undefined,
+      // Pass fight config so backend saves the right minutes
+      fightRounds: totalRounds,
+      fightTimePerRound: parseFloat(params.roundDuration || '1'),
           })
         });
         // Reset animations when new game starts
@@ -644,7 +627,9 @@ export default function Game() {
       }
     };
 
-    fetchMoves();
+  // Reset game-over guard for a fresh session
+  gameOverSentRef.current = false;
+  fetchMoves();
 
   }, [params.roundDuration, params.numRounds, params.restTime, params.moveSpeed, params.timestamp, params.category, params.movesMode, params.comboId]);
 
@@ -725,9 +710,10 @@ export default function Game() {
         }
 
         // Final round over -> game over
-        const auth = getAuth(app);
+  const auth = getAuth(app);
         const user = auth.currentUser;
-        if (user) {
+  if (user && !gameOverSentRef.current) {
+    gameOverSentRef.current = true; // ensure we only send once
           user.getIdToken().then(idToken => {
             fetch('https://us-central1-shadow-mma.cloudfunctions.net/handleGameOver', {
               method: 'POST',
@@ -743,6 +729,11 @@ export default function Game() {
                 if (data?.levelUp && Array.isArray(data?.unlockedCombos) && data.unlockedCombos.length > 0) {
                   setShowNewCombo(false);
                   setNewUnlockedCombos(data.unlockedCombos as string[]);
+                  setShowGoodJob(false);
+                } else {
+                  // No unlocked combos this time — show a positive message modal
+                  setNewUnlockedCombos(null);
+                  setShowGoodJob(true);
                 }
               })
               .catch(error => {
@@ -1072,6 +1063,19 @@ export default function Game() {
         }}
       />
 
+      {/* Positive feedback when no new combos */}
+      <GoodJobModal
+        visible={showGoodJob && !(newUnlockedCombos && newUnlockedCombos.length > 0)}
+        onClose={() => setShowGoodJob(false)}
+      />
+
+      {/* Animated modal for newly unlocked combos (outside LevelBar UI) */}
+      <UnlockedCombosModal
+        visible={!!(newUnlockedCombos && newUnlockedCombos.length > 0)}
+        combos={newUnlockedCombos || []}
+        onClose={() => setNewUnlockedCombos(null)}
+      />
+
       <LinearGradient
         colors={[Colors.bgGameDark, 'rgb(230, 87, 87)', Colors.bgGameDark]}
         style={styles.container}
@@ -1093,89 +1097,9 @@ export default function Game() {
           </View>
         )}
 
-        {/* Newly unlocked combos list (when level up) */}
-        {newUnlockedCombos && newUnlockedCombos.length > 0 ? (
-          <Animated.View
-            style={[
-              styles.unlockedCombosContainer,
-              {
-                opacity: unlockedPanelAnim,
-                transform: [
-                  {
-                    translateY: unlockedPanelAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [-20, 0]
-                    })
-                  },
-                  {
-                    scale: unlockedPanelAnim.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] })
-                  }
-                ]
-              },
-            ]}
-          >
-            <View style={styles.unlockedHeaderRow}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <MaterialCommunityIcons name="party-popper" size={18} color="#ffd257" />
-                {(() => {
-                  const phrases = [
-                    'Good job, warrior!',
-                    'Nice work! You gave it your all.',
-                    'Well fought! That was intense.',
-                    'Great effort!',
-                    'Awesome! Every strike makes you sharper.',
-                  ];
-                  const seedStr = Array.isArray(newUnlockedCombos) ? newUnlockedCombos.join('|') : '';
-                  let hash = 0;
-                  for (let i = 0; i < seedStr.length; i++) {
-                    hash = (hash * 31 + seedStr.charCodeAt(i)) >>> 0;
-                  }
-                  const idx = phrases.length ? hash % phrases.length : 0;
-                  return <Text style={styles.unlockedTitle}>{phrases[idx]}</Text>;
-                })()}
-                <Text style={styles.unlockedCount}>({newUnlockedCombos.length})</Text>
-              </View>
-              <TouchableOpacity
-                accessibilityLabel="Close unlocked combos"
-                onPress={() => setNewUnlockedCombos(null)}
-                style={styles.unlockedClose}
-              >
-                <MaterialCommunityIcons name="close" size={18} color="#ffffff" />
-              </TouchableOpacity>
-            </View>
-
-            <View style={{ marginTop: 8 }}>
-              {newUnlockedCombos.map((name, idx) => (
-                <Animated.View
-                  key={name}
-                  style={{
-                    opacity: unlockedItemAnims.current[idx] || 1,
-                    transform: [{
-                      translateX: (unlockedItemAnims.current[idx] || new Animated.Value(1)).interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [-14, 0]
-                      })
-                    }]
-                  }}
-                >
-                  <Text style={styles.unlockedComboName}>• {name}</Text>
-                </Animated.View>
-              ))}
-            </View>
-
-            <View style={styles.unlockedActionsRow}>
-              <TouchableOpacity
-                style={[styles.upgradeButton, styles.unlockedButton]}
-                onPress={() => {
-                  setNewUnlockedCombos(null);
-                  // Reuse existing modal to show combos list if desired
-                  setShowCombosModal?.(true as any);
-                }}
-              >
-                <Text style={styles.unlockedButtonText}>See all combos</Text>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
+        {/* Newly unlocked combos list is shown inline above; keep fallback banner only */}
+        {false ? (
+          <View />
         ) : (
           // Fallback small banner if we detected level-up via xp watcher but didn't get list yet
           showNewCombo && (
@@ -1415,6 +1339,20 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
     zIndex: 20,
+  },
+  unlockedInlineContainer: {
+    marginTop: 10,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)'
+  },
+  unlockedItemRow: {
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)'
   },
   newComboMessageContainer: {
     position: 'absolute',
