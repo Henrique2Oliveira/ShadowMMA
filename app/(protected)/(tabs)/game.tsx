@@ -251,14 +251,14 @@ export default function Game() {
           setSpeedMultiplier(prefs.speedMultiplier);
         }
       } else {
-        // First time: set a friendlier slightly faster pace (1.3x) and persist
-        setSpeedMultiplier(1.3);
+        // First time: set a friendlier slightly faster pace (1.3x) and persist in storage for speed 
+        setSpeedMultiplier(1.5);
         saveGamePreferences({
           isMuted: false,
           animationMode: 'new',
           stance: 'orthodox',
           showComboCarousel: true,
-          speedMultiplier: 1.3,
+          speedMultiplier: 1.5,
         });
       }
     });
@@ -285,7 +285,7 @@ export default function Game() {
   // Power-up: Speed Boost (random 25% chance to appear, lasts 30s)
   const BOOST_CHANCE = 0.25; // 25% chance per check
   const BOOST_DURATION_MS = 30_000; // 30 seconds
-  const BOOST_MULTIPLIER = 1.3; // 1.3x speed (pause time reduced)
+  const BOOST_MULTIPLIER = 1.35; // 1.3x speed (pause time reduced)
   const BOOST_CHECK_INTERVAL_MS = 20_000; // check every 20s while fighting
 
   const [isBoostActive, setIsBoostActive] = React.useState(false);

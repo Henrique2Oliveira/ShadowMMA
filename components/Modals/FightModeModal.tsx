@@ -132,7 +132,10 @@ export function FightModeModal({
         <View style={styles.bottomSheet}>
           <TouchableOpacity
             style={styles.closeButton}
-            onPress={onClose}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onClose();
+            }}
           >
             <MaterialCommunityIcons name="close" size={rs(28)} color="white" />
           </TouchableOpacity>
@@ -165,7 +168,10 @@ export function FightModeModal({
                   maximumValue={4}
                   step={1}
                   value={FIGHT_OPTIONS.roundDurations.findIndex(d => d.value === roundDuration)}
-                  onValueChange={(value) => setRoundDuration(FIGHT_OPTIONS.roundDurations[value].value)}
+                  onValueChange={(value) => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setRoundDuration(FIGHT_OPTIONS.roundDurations[value].value);
+                  }}
                   minimumTrackTintColor="#FFFFFF"
                   maximumTrackTintColor="#FFFFFF40"
                   thumbTintColor="#FFFFFF"
@@ -195,7 +201,10 @@ export function FightModeModal({
                   maximumValue={4}
                   step={1}
                   value={FIGHT_OPTIONS.numberOfRounds.findIndex(r => r.value === numRounds)}
-                  onValueChange={(value) => setNumRounds(FIGHT_OPTIONS.numberOfRounds[value].value)}
+                  onValueChange={(value) => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setNumRounds(FIGHT_OPTIONS.numberOfRounds[value].value);
+                  }}
                   minimumTrackTintColor="#FFFFFF"
                   maximumTrackTintColor="#FFFFFF40"
                   thumbTintColor="#FFFFFF"
@@ -225,7 +234,10 @@ export function FightModeModal({
                   maximumValue={4}
                   step={1}
                   value={FIGHT_OPTIONS.restTimes.findIndex(t => t.value === restTime)}
-                  onValueChange={(value) => setRestTime(FIGHT_OPTIONS.restTimes[value].value)}
+                  onValueChange={(value) => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setRestTime(FIGHT_OPTIONS.restTimes[value].value);
+                  }}
                   minimumTrackTintColor="#FFFFFF"
                   maximumTrackTintColor="#FFFFFF40"
                   thumbTintColor="#FFFFFF"
@@ -269,6 +281,7 @@ export function FightModeModal({
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
                             return;
                           }
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                           const newMovesMode = selected
                             ? movesMode.length > 1
                               ? movesMode.filter(m => m !== move.value)

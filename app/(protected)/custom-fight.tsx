@@ -9,6 +9,7 @@ import { Colors, Typography } from '@/themes/theme';
 import { uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { getAuth as getClientAuth } from 'firebase/auth';
@@ -205,9 +206,11 @@ export default function CustomFight() {
     setSelected(prev => {
       const exists = prev.find(s => s.id === String(id));
       if (exists) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         return prev.filter(s => s.id !== String(id));
       }
       if (prev.length >= MAX_SELECT) return prev; // ignore if already 5
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       return [...prev, { id: String(id), type }];
     });
   }, []);
@@ -238,6 +241,7 @@ export default function CustomFight() {
         }
       }
       if (toAdd.length === 0) return prev;
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       return [...prev, ...toAdd];
     });
   }, [combos, userLevel]);
@@ -247,10 +251,12 @@ export default function CustomFight() {
     // If user is on free plan, show upgrade plans modal instead of opening fight options
     const plan = (userData?.plan || 'free').toLowerCase();
     if (plan === 'free') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setShowPlansModal(true);
       return;
     }
     // Open fight modal to set durations etc; pass a sentinel so Game knows to use selected combos only
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setIsModalVisible(true);
   }, [selected, userData?.plan]);
 
@@ -305,7 +311,7 @@ export default function CustomFight() {
         style={styles.headerGradient}
       >
         <View style={styles.headerContent}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity style={styles.backButton} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }}>
             <MaterialCommunityIcons name="arrow-left" size={backIconSize} color={Colors.text} />
           </TouchableOpacity>
           <MaterialCommunityIcons
@@ -358,7 +364,7 @@ export default function CustomFight() {
                 <View style={styles.selectionHeader}>
                   <Text style={[styles.selectionText, { fontSize: fs.selectionText }]}>Selected: {selected.length}/{MAX_SELECT}</Text>
                   <TouchableOpacity
-                    onPress={() => setSelected([])}
+                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelected([]); }}
                     disabled={selected.length === 0}
                     style={[styles.clearBtn, selected.length === 0 && { opacity: 0.5 }]}
                   >
@@ -373,7 +379,7 @@ export default function CustomFight() {
                       return (
                         <TouchableOpacity
                           key={t}
-                          onPress={() => selectByType(t)}
+                          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); selectByType(t); }}
                           disabled={locked}
                           style={[styles.chip, locked && { opacity: 0.45, borderColor: '#555' }]}
                         >
@@ -406,7 +412,7 @@ export default function CustomFight() {
             <Text style={[styles.startHint, { fontSize: fs.startHint }]}>{selected.length > 0 ? `${selected.length} combo${selected.length>1?'s':''} selected` : 'Select combos to enable'}</Text>
             <TouchableOpacity
               style={[styles.startButton, selected.length === 0 && { opacity: 0.6 }]}
-              onPress={handleStart}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handleStart(); }}
               disabled={selected.length === 0}
             >
               <Text style={[styles.startButtonText, { fontSize: fs.startButton }]}>Start Fight</Text>
@@ -417,7 +423,7 @@ export default function CustomFight() {
 
       <FightModeModal
         isVisible={isModalVisible}
-        onClose={() => setIsModalVisible(false)}
+  onClose={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setIsModalVisible(false); }}
         roundDuration={roundDuration}
         setRoundDuration={setRoundDuration}
         numRounds={numRounds}
@@ -441,8 +447,9 @@ export default function CustomFight() {
       />
       <PlansModal
         visible={showPlansModal}
-        onClose={() => setShowPlansModal(false)}
+        onClose={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowPlansModal(false); }}
         onSelectPlan={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           setShowPlansModal(false);
           router.push('/(protected)/plans');
         }}

@@ -8,6 +8,7 @@ import { Colors, Typography } from '@/themes/theme';
 import { getDeviceBucket, uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { getAuth as getClientAuth } from 'firebase/auth';
@@ -77,7 +78,8 @@ export default function Combos() {
     setMovesMode(config.movesMode || movesMode);
     setCategory(config.category || category);
     setSelectedComboId(config.comboId);
-    setIsModalVisible(true);
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  setIsModalVisible(true);
   };
 
   const [combos, setCombos] = useState<ComboMeta[] | null>(null);
@@ -199,7 +201,8 @@ export default function Combos() {
 
   const handleComboPress = useCallback((item: ComboMeta, isLocked: boolean) => {
     if (!isLocked) {
-      setModalConfig({
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  setModalConfig({
         roundDuration: '2',
         numRounds: '3',
         restTime: '1',
@@ -266,7 +269,7 @@ export default function Combos() {
         style={styles.headerGradient}
       >
         <View style={styles.headerContent}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity style={styles.backButton} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }}>
             <MaterialCommunityIcons name="arrow-left" size={backIconSize} color={Colors.text} />
           </TouchableOpacity>
           <MaterialCommunityIcons
@@ -290,7 +293,7 @@ export default function Combos() {
       )}
 
       {!!error && (
-        <AlertModal
+    <AlertModal
           visible={showErrorModal}
           title="Error Loading Combos"
           message={error || "Couldn't load combos. Please try again."}
@@ -298,14 +301,16 @@ export default function Combos() {
           primaryButton={{
             text: "Retry",
             onPress: () => {
-              setShowErrorModal(false);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setShowErrorModal(false);
               fetchCombos(true);
             },
           }}
           secondaryButton={{
             text: "Close",
             onPress: () => {
-              setShowErrorModal(false);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setShowErrorModal(false);
             },
           }}
           onClose={() => setShowErrorModal(false)}
@@ -328,10 +333,10 @@ export default function Combos() {
                       <View key={t} style={{ marginRight: 10 }}>
                         {selected ? (
                           <LinearGradient colors={[Colors.bgGame, Colors.bgGameDark]} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }} style={styles.chipSelectedBg}>
-                            <Text onPress={() => setSelectedType(t)} style={[styles.chipSelectedText, { fontSize: fs.filter }]}>{t}</Text>
+                            <Text onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedType(t); }} style={[styles.chipSelectedText, { fontSize: fs.filter }]}>{t}</Text>
                           </LinearGradient>
                         ) : (
-                          <Text onPress={() => setSelectedType(t)} style={[styles.chipText, { fontSize: fs.filter }]}>{t}</Text>
+                          <Text onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedType(t); }} style={[styles.chipText, { fontSize: fs.filter }]}>{t}</Text>
                         )}
                       </View>
                     );
@@ -344,9 +349,9 @@ export default function Combos() {
                       <Text style={[styles.recentHeaderText, { fontSize: fs.recentHeader }]}>Most Recent</Text>
                     </View>
                     {recentCombos.slice(0, MAX_RECENT_COMBOS).map(combo => (
-                      <View key={combo.id}>
+                      <TouchableOpacity key={combo.id} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handleComboPress(combo as any, combo.level > (userLevel || 0)); }}>
                         {renderItem({ item: combo })}
-                      </View>
+                      </TouchableOpacity>
                     ))}
                   </View>
                 )}
@@ -354,7 +359,7 @@ export default function Combos() {
             );
           }}
           renderItem={({ item }) => renderItem({ item })}
-          refreshControl={<RefreshControl refreshing={loading} onRefresh={() => fetchCombos(true)} tintColor={Colors.text} />}
+          refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); fetchCombos(true); }} tintColor={Colors.text} />}
           maxToRenderPerBatch={10}
           windowSize={5}
           removeClippedSubviews={true}
@@ -376,7 +381,7 @@ export default function Combos() {
 
       <FightModeModal
         isVisible={isModalVisible}
-        onClose={() => setIsModalVisible(false)}
+        onClose={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setIsModalVisible(false); }}
         roundDuration={roundDuration}
         setRoundDuration={setRoundDuration}
         numRounds={numRounds}

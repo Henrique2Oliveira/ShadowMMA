@@ -72,6 +72,7 @@ export default function Index() {
 
   // Function to handle navigation to settings
   const handleNavigateToSettings = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push('/settings');
   }, []);
 
@@ -152,6 +153,13 @@ export default function Index() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
   }, []);
+
+  // Gentle tap when the streak modal becomes visible (badge/streak moment)
+  useEffect(() => {
+    if (showStreakModal) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  }, [showStreakModal]);
 
   // Set up streak callback immediately when component mounts
   useEffect(() => {
@@ -246,6 +254,7 @@ export default function Index() {
   // Handle notification card click - enable enhanced notifications
   const handleNotificationCardClick = async () => {
     try {
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const hasPermission = await registerForPushNotificationsAsync();
       if (hasPermission) {
         setEnhancedNotificationsEnabled(true);
@@ -688,6 +697,7 @@ export default function Index() {
           text: "Open Settings",
           onPress: () => {
             setShowErrorModal(false);
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             router.push('/settings');
           },
         }}
