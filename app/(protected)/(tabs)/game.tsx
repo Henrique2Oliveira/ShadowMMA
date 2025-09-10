@@ -231,6 +231,11 @@ export default function Game() {
   // New combo unlock state
   const [previousLevel, setPreviousLevel] = React.useState(0);
   const [showNewCombo, setShowNewCombo] = React.useState(false);
+  // Names of combos unlocked on the last level up (shown right after game over)
+  const [newUnlockedCombos, setNewUnlockedCombos] = React.useState<string[] | null>(null);
+  // Animations for the unlocked combos panel and list items
+  const unlockedPanelAnim = React.useRef(new Animated.Value(0)).current;
+  const unlockedItemAnims = React.useRef<Animated.Value[]>([]);
   // LevelBar animations handled internally by shared component (DRY)
 
   // Speed multiplier: default param OR 1.0, but we will bump first-time users to 1.3x below
@@ -274,13 +279,42 @@ export default function Game() {
     if (userData?.xp !== undefined && userData?.xp !== null) {
       const currentLevel = Math.min(100, Math.floor(userData.xp / 100) || 0);
       if (currentLevel > previousLevel && previousLevel > 0) {
-        setShowNewCombo(true);
-        const timer = setTimeout(() => setShowNewCombo(false), 5000);
-        return () => clearTimeout(timer);
+        // If backend already provided the combos list, prefer that over the generic banner
+        let t: ReturnType<typeof setTimeout> | null = null;
+        if (!newUnlockedCombos || newUnlockedCombos.length === 0) {
+          setShowNewCombo(true);
+          t = setTimeout(() => setShowNewCombo(false), 5000);
+        }
+        return () => { if (t) clearTimeout(t); };
       }
       setPreviousLevel(currentLevel);
     }
   }, [userData?.xp, previousLevel]);
+
+  // Animate unlocked combos panel and items when shown/hidden
+  React.useEffect(() => {
+    if (newUnlockedCombos && newUnlockedCombos.length > 0) {
+      // Prepare per-item animations
+      unlockedItemAnims.current = newUnlockedCombos.map(() => new Animated.Value(0));
+      // Panel pop-in
+      unlockedPanelAnim.setValue(0);
+      Animated.spring(unlockedPanelAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        friction: 7,
+        tension: 80,
+      }).start(() => {
+        // Stagger items after panel is in
+        Animated.stagger(80,
+          unlockedItemAnims.current.map(v => Animated.timing(v, { toValue: 1, duration: 300, useNativeDriver: true }))
+        ).start();
+      });
+    } else {
+      // Hide panel
+      Animated.timing(unlockedPanelAnim, { toValue: 0, duration: 150, useNativeDriver: true }).start();
+      unlockedItemAnims.current = [];
+    }
+  }, [newUnlockedCombos, unlockedPanelAnim]);
 
   // Power-up: Speed Boost (random 25% chance to appear, lasts 30s)
   const BOOST_CHANCE = 0.25; // 25% chance per check
@@ -705,6 +739,11 @@ export default function Game() {
               .then(response => response.json())
               .then(data => {
                 updateUserData({ xp: data.newXp });
+                // On level up, show the unlocked combos list (names only) instead of generic banner
+                if (data?.levelUp && Array.isArray(data?.unlockedCombos) && data.unlockedCombos.length > 0) {
+                  setShowNewCombo(false);
+                  setNewUnlockedCombos(data.unlockedCombos as string[]);
+                }
               })
               .catch(error => {
                 console.error('Error updating XP:', error);
@@ -1054,13 +1093,96 @@ export default function Game() {
           </View>
         )}
 
-        {/* New Combo Unlocked Message - Below level bar */}
-        {showNewCombo && (
-          <View style={styles.newComboMessageContainer}>
-            <Text style={styles.newComboMessageText}>
-              🔥 New Combo Unlocked!
-            </Text>
-          </View>
+        {/* Newly unlocked combos list (when level up) */}
+        {newUnlockedCombos && newUnlockedCombos.length > 0 ? (
+          <Animated.View
+            style={[
+              styles.unlockedCombosContainer,
+              {
+                opacity: unlockedPanelAnim,
+                transform: [
+                  {
+                    translateY: unlockedPanelAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [-20, 0]
+                    })
+                  },
+                  {
+                    scale: unlockedPanelAnim.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] })
+                  }
+                ]
+              },
+            ]}
+          >
+            <View style={styles.unlockedHeaderRow}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <MaterialCommunityIcons name="party-popper" size={18} color="#ffd257" />
+                {(() => {
+                  const phrases = [
+                    'Good job, warrior!',
+                    'Nice work! You gave it your all.',
+                    'Well fought! That was intense.',
+                    'Great effort!',
+                    'Awesome! Every strike makes you sharper.',
+                  ];
+                  const seedStr = Array.isArray(newUnlockedCombos) ? newUnlockedCombos.join('|') : '';
+                  let hash = 0;
+                  for (let i = 0; i < seedStr.length; i++) {
+                    hash = (hash * 31 + seedStr.charCodeAt(i)) >>> 0;
+                  }
+                  const idx = phrases.length ? hash % phrases.length : 0;
+                  return <Text style={styles.unlockedTitle}>{phrases[idx]}</Text>;
+                })()}
+                <Text style={styles.unlockedCount}>({newUnlockedCombos.length})</Text>
+              </View>
+              <TouchableOpacity
+                accessibilityLabel="Close unlocked combos"
+                onPress={() => setNewUnlockedCombos(null)}
+                style={styles.unlockedClose}
+              >
+                <MaterialCommunityIcons name="close" size={18} color="#ffffff" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ marginTop: 8 }}>
+              {newUnlockedCombos.map((name, idx) => (
+                <Animated.View
+                  key={name}
+                  style={{
+                    opacity: unlockedItemAnims.current[idx] || 1,
+                    transform: [{
+                      translateX: (unlockedItemAnims.current[idx] || new Animated.Value(1)).interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [-14, 0]
+                      })
+                    }]
+                  }}
+                >
+                  <Text style={styles.unlockedComboName}>• {name}</Text>
+                </Animated.View>
+              ))}
+            </View>
+
+            <View style={styles.unlockedActionsRow}>
+              <TouchableOpacity
+                style={[styles.upgradeButton, styles.unlockedButton]}
+                onPress={() => {
+                  setNewUnlockedCombos(null);
+                  // Reuse existing modal to show combos list if desired
+                  setShowCombosModal?.(true as any);
+                }}
+              >
+                <Text style={styles.unlockedButtonText}>See all combos</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        ) : (
+          // Fallback small banner if we detected level-up via xp watcher but didn't get list yet
+          showNewCombo && (
+            <View style={styles.newComboMessageContainer}>
+              <Text style={styles.newComboMessageText}>🔥 New Combo Unlocked!</Text>
+            </View>
+          )
         )}
 
         {!gameState.isGameOver && (
@@ -1316,6 +1438,69 @@ const styles = StyleSheet.create({
     textShadowColor: "#000",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
+  },
+  unlockedCombosContainer: {
+    position: 'absolute',
+    top: 120,
+    backgroundColor: 'rgba(134, 33, 33, 1)',
+    borderRadius: 10,
+    padding: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 10,
+    maxWidth: '90%'
+  },
+  unlockedHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  unlockedTitle: {
+    color: '#ffffff',
+    fontFamily: Typography.fontFamily,
+    fontSize: 16,
+  },
+  unlockedCount: {
+    color: 'rgba(255,255,255,0.85)',
+    marginLeft: 6,
+    fontFamily: Typography.fontFamily,
+    fontSize: 14,
+  },
+  unlockedClose: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.08)'
+  },
+  unlockedComboName: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontFamily: Typography.fontFamily,
+    textShadowColor: '#000',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  unlockedActionsRow: {
+    marginTop: 10,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+  },
+  unlockedButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  unlockedButtonText: {
+    color: '#fff',
+    fontFamily: Typography.fontFamily,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   boostBubble: {
     position: 'absolute',

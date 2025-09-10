@@ -388,13 +388,48 @@ export const handleGameOver = onRequest(async (req, res) => {
       currentFightTime: 0
     });
 
+    // Determine if the user leveled up and collect newly unlocked combos for the new level only
+    const newLevel = Math.floor(newXp / 100);
+    const didLevelUp = newLevel > currentLevel;
+    let unlockedCombos: string[] | undefined = undefined;
+    if (didLevelUp) {
+      try {
+        // For now, use the default category '0' (matches getCombosMeta default)
+        const catId = '0';
+        const combosDoc = await db.collection('combos').doc(catId).get();
+        if (combosDoc.exists) {
+          const data = combosDoc.data() as any;
+          const levelsObj = data?.levels;
+          if (levelsObj && typeof levelsObj === 'object') {
+            const names: string[] = [];
+            for (const typeKey of Object.keys(levelsObj)) {
+              const arr = Array.isArray(levelsObj[typeKey]) ? levelsObj[typeKey] : [];
+              for (const c of arr) {
+                if (typeof c?.level === 'number' && c.level === newLevel) {
+                  const nm = String(c?.name || c?.title || 'Combo');
+                  names.push(nm);
+                }
+              }
+            }
+            // Deduplicate while preserving order
+            const seen = new Set<string>();
+            unlockedCombos = names.filter(n => (seen.has(n) ? false : (seen.add(n), true)));
+          }
+        }
+      } catch (e) {
+        logger.warn('Failed to fetch unlocked combos for level up', e as any);
+      }
+    }
+
     // Return old and new values for animation
     res.status(200).json({
       oldXp,
       newXp,
       xpGained,
       currentLevel: Math.floor(oldXp / 100),
-  newLevel: Math.floor(newXp / 100),
+      newLevel,
+      levelUp: didLevelUp,
+      unlockedCombos, // array of names when levelUp, otherwise undefined
       xpBreakdown: {
         baseXP,
         randomXPAdjustment: randomXP,
