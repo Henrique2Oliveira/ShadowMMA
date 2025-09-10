@@ -8,6 +8,7 @@ import {
   Animated,
   Dimensions,
   Modal,
+  PanResponder,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -30,9 +31,12 @@ export const UnlockedCombosModal: React.FC<UnlockedCombosModalProps> = ({
   const opacity = React.useRef(new Animated.Value(0)).current;
   const rotate = React.useRef(new Animated.Value(0)).current;
   const scale = React.useRef(new Animated.Value(0.96)).current;
+  const panX = React.useRef(new Animated.Value(0)).current;
 
   const total = combos?.length ?? 0;
   const hasItems = total > 0;
+  const indexRef = React.useRef(index);
+  const totalRef = React.useRef(total);
 
   const runEntry = React.useCallback(() => {
     translateY.setValue(50);
@@ -65,10 +69,19 @@ export const UnlockedCombosModal: React.FC<UnlockedCombosModalProps> = ({
   React.useEffect(() => {
     if (visible && hasItems) {
       setIndex(0);
+    panX.setValue(0);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       runEntry();
     }
-  }, [visible, hasItems, runEntry]);
+  }, [visible, hasItems, runEntry, panX]);
+
+  // Keep refs in sync for gesture handlers
+  React.useEffect(() => {
+    indexRef.current = index;
+  }, [index]);
+  React.useEffect(() => {
+    totalRef.current = total;
+  }, [total]);
 
   const handleNext = React.useCallback(() => {
     if (!hasItems) return;
@@ -98,6 +111,52 @@ export const UnlockedCombosModal: React.FC<UnlockedCombosModalProps> = ({
 
   const currentName = hasItems ? combos[index] : '';
   const width = Dimensions.get('window').width;
+
+  // Swipe gesture to navigate
+  const panResponder = React.useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_evt, gesture) => {
+        const dx = Math.abs(gesture.dx);
+        const dy = Math.abs(gesture.dy);
+        return dx > 8 && dx > dy; // horizontal intent
+      },
+      onPanResponderMove: Animated.event([
+        null,
+        { dx: panX },
+      ], { useNativeDriver: false }),
+      onPanResponderRelease: (_evt, gesture) => {
+        const { dx, vx } = gesture;
+        const absDx = Math.abs(dx);
+        const swipeVel = Math.abs(vx);
+        const threshold = Math.min(80, width * 0.2);
+        const goLeft = dx < 0;
+        const idx = indexRef.current;
+        const ttl = totalRef.current;
+        const canGoNext = goLeft && idx + 1 < ttl;
+        const canGoPrev = !goLeft && idx > 0;
+
+        if ((absDx > threshold || swipeVel > 0.55) && (canGoNext || canGoPrev)) {
+          // Fling in swipe direction then bring next/prev from opposite side
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          const to = goLeft ? -width : width;
+          Animated.timing(panX, { toValue: to, duration: 200, useNativeDriver: true }).start(() => {
+            const curr = indexRef.current;
+            const nextIndex = goLeft ? curr + 1 : curr - 1;
+            // Prepare next card from opposite side
+            panX.setValue(goLeft ? width : -width);
+            setIndex(nextIndex);
+            Animated.timing(panX, { toValue: 0, duration: 220, useNativeDriver: true }).start();
+          });
+        } else {
+          // Not enough — snap back
+          Animated.spring(panX, { toValue: 0, useNativeDriver: true, friction: 7, tension: 70 }).start();
+        }
+      },
+      onPanResponderTerminate: () => {
+        Animated.spring(panX, { toValue: 0, useNativeDriver: true, friction: 7, tension: 70 }).start();
+      },
+    })
+  ).current;
 
   return (
     <Modal
@@ -130,25 +189,36 @@ export const UnlockedCombosModal: React.FC<UnlockedCombosModalProps> = ({
             <Text style={styles.title}>🔥 New Combo Unlocked</Text>
           </View>
 
-          <LinearGradient
-            colors={['#1a1a1aff', 'rgba(54, 15, 15, 1)']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-            style={[styles.card, { maxWidth: Math.min(700, width * 0.9) }]}
+          <Animated.View
+            style={{
+              transform: [
+                { translateX: panX },
+              ],
+              width: '100%',
+              alignItems: 'center',
+            }}
+            {...panResponder.panHandlers}
           >
-            <View style={styles.cardHeader}>
-              <View style={styles.cardNameWrap}>
-                <Text numberOfLines={2} style={styles.cardName}>{currentName}</Text>
+            <LinearGradient
+              colors={['#1a1a1aff', 'rgba(54, 15, 15, 1)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={[styles.card, { maxWidth: Math.min(700, width * 0.9) }]}
+            >
+              <View style={styles.cardHeader}>
+                <View style={styles.cardNameWrap}>
+                  <Text numberOfLines={2} style={styles.cardName}>{currentName}</Text>
+                </View>
+                <View style={styles.badgeNew}>
+                  <Text style={styles.badgeText}>NEW</Text>
+                </View>
               </View>
-              <View style={styles.badgeNew}>
-                <Text style={styles.badgeText}>NEW</Text>
-              </View>
-            </View>
 
-            <View style={styles.cardBody}>
-              <Text style={styles.cardHint}>You can find it in your next fights.</Text>
-            </View>
-          </LinearGradient>
+              <View style={styles.cardBody}>
+                <Text style={styles.cardHint}>You can find it in your next fights.</Text>
+              </View>
+            </LinearGradient>
+          </Animated.View>
 
           {/* Pager controls */}
           {hasItems && (

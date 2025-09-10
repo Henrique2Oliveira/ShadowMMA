@@ -60,8 +60,8 @@ const GoodJobModal: React.FC<GoodJobModalProps> = ({ visible, onClose, message }
             <MaterialCommunityIcons name="close" size={22} color={Colors.text} />
           </TouchableOpacity>
           <View style={styles.headerRow}>
-            <MaterialCommunityIcons name="check-circle" size={26} color="#7fd35f" />
-            <Text style={styles.title}>Great Fight</Text>
+            {/* <MaterialCommunityIcons name="check-circle" size={26} color="#7fd35f" /> */}
+            <Text style={styles.title}>🔥 Great Fight!</Text>
           </View>
           <LinearGradient
             colors={["#1a1a1aff", "rgba(54, 15, 15, 1)"]}

@@ -34,7 +34,9 @@
       "edgeToEdgeEnabled": true,
       "package": "com.shadowmma.ShadowMMA",
       "versionCode": 1,
-      "permissions": []
+      "permissions": [
+        "com.android.vending.BILLING"
+      ]
     },
     "androidStatusBar": {
       "barStyle": "light-content",

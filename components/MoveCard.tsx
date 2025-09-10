@@ -165,6 +165,25 @@ export const MoveCard: React.FC<MoveCardProps> = ({
     }
   }, [move, animationMode, isGameOver, isRestPeriod]);
 
+  // When the game is over, hard stop and reset all internal animations to keep the card static
+  useEffect(() => {
+    if (isGameOver) {
+      // Stop any ongoing animations
+      slideAnim.stopAnimation();
+      rotateAnim.stopAnimation();
+      scaleAnim.stopAnimation();
+      oldRotateAnim.stopAnimation();
+      oldScaleAnim.stopAnimation();
+
+      // Reset values to neutral so no transform is applied even if styles are recalculated
+      slideAnim.setValue(0);
+      rotateAnim.setValue(0);
+      scaleAnim.setValue(1);
+      oldRotateAnim.setValue(0);
+      oldScaleAnim.setValue(1);
+    }
+  }, [isGameOver, slideAnim, rotateAnim, scaleAnim, oldRotateAnim, oldScaleAnim]);
+
   return (
     <Animated.View
       style={[
@@ -175,7 +194,7 @@ export const MoveCard: React.FC<MoveCardProps> = ({
           borderRadius: 25 * scaleUp,
         },
         {
-          transform: animationMode !== 'none'
+          transform: animationMode !== 'none' && !isGameOver
             ? [
                 ...(animationMode === 'new' ? [{ translateX: slideAnim }] : []),
                 {
