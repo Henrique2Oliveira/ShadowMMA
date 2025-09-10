@@ -21,6 +21,7 @@ import { getAuth } from '@firebase/auth';
 import { useIsFocused } from '@react-navigation/native';
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
+import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
@@ -133,6 +134,19 @@ export default function Game() {
 
   // Add focus detection
   const isFocused = useIsFocused();
+
+  // Keep screen awake while on Game tab
+  React.useEffect(() => {
+    const tag = 'game-screen';
+    if (isFocused) {
+      activateKeepAwake(tag);
+    } else {
+      deactivateKeepAwake(tag);
+    }
+    return () => {
+      deactivateKeepAwake(tag);
+    };
+  }, [isFocused]);
 
   // Handle app state and focus changes
   React.useEffect(() => {
