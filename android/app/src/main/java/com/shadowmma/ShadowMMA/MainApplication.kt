@@ -1,4 +1,4 @@
-package com.belsonsan.ShadowMMA
+package com.shadowmma.ShadowMMA
 import com.facebook.react.common.assets.ReactFontManager
 
 import android.app.Application
