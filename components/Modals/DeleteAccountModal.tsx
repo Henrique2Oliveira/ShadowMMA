@@ -1,4 +1,5 @@
 import { Colors, Typography } from '@/themes/theme';
+import { uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -93,38 +94,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   container: {
-    width: '85%',
+    width: '90%',
     backgroundColor: Colors.bgGameDark,
     borderRadius: 20,
-    padding: 24,
+    padding: uiScale(16, { category: 'spacing' }),
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: uiScale(12, { category: 'spacing' }),
   },
   title: {
-    fontSize: 24,
+    fontSize: uiScale(20, { category: 'font' }),
     fontFamily: Typography.fontFamily,
     color: Colors.text,
-    marginLeft: 12,
+    marginLeft: uiScale(10, { category: 'spacing' }),
   },
   message: {
-    fontSize: 16,
+    fontSize: uiScale(14, { category: 'font' }),
     color: Colors.text,
     opacity: 0.8,
-    marginBottom: 20,
-    lineHeight: 22,
+    marginBottom: uiScale(14, { category: 'spacing' }),
+    lineHeight: uiScale(20, { category: 'font' }),
     fontFamily: Typography.fontFamily,
   },
   input: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 8,
-    padding: 12,
+    padding: uiScale(10, { category: 'spacing' }),
     color: Colors.text,
-    fontSize: 16,
+    fontSize: uiScale(14, { category: 'font' }),
     fontFamily: Typography.fontFamily,
-    marginBottom: 8,
+    marginBottom: uiScale(8, { category: 'spacing' }),
   },
   inputError: {
     borderWidth: 1,
@@ -132,21 +133,21 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: '#FF4B4B',
-    fontSize: 14,
-    marginBottom: 16,
+    fontSize: uiScale(12, { category: 'font' }),
+    marginBottom: uiScale(12, { category: 'spacing' }),
     fontFamily: Typography.fontFamily,
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: 12,
-    marginTop: 8,
+    gap: uiScale(8, { category: 'spacing' }),
+    marginTop: uiScale(8, { category: 'spacing' }),
   },
   button: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingVertical: uiScale(8, { category: 'button' }),
+    paddingHorizontal: uiScale(16, { category: 'button' }),
     borderRadius: 8,
-    minWidth: 100,
+    minWidth: uiScale(90, { category: 'button' }),
     alignItems: 'center',
   },
   cancelButton: {
@@ -157,7 +158,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: Colors.text,
-    fontSize: 16,
+    fontSize: uiScale(14, { category: 'font' }),
     fontFamily: Typography.fontFamily,
   },
 });

@@ -1,8 +1,9 @@
 import { Colors } from '@/themes/theme';
+import { uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { Dimensions, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface AlertModalProps {
   visible: boolean;
@@ -78,9 +79,11 @@ export const AlertModal: React.FC<AlertModalProps> = ({
             />
           </View>
           
-          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.title} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.85}>{title}</Text>
           {message.trim().length > 0 && (
-            <Text style={styles.message}>{message}</Text>
+            <ScrollView style={{ maxHeight: Dimensions.get('window').height * 0.35 }} contentContainerStyle={{ paddingBottom: uiScale(4, { category: 'spacing' }) }}>
+              <Text style={styles.message}>{message}</Text>
+            </ScrollView>
           )}
           
           <View style={styles.buttonContainer}>
@@ -121,10 +124,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContainer: {
-    width: Dimensions.get('window').width * 0.85,
+    width: Dimensions.get('window').width * 0.9,
     backgroundColor: Colors.bgGameDark,
     borderRadius: 20,
-    padding: 24,
+    padding: uiScale(16, { category: 'spacing' }),
     alignItems: 'center',
     elevation: 5,
     shadowColor: '#000',
@@ -133,13 +136,13 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: uiScale(64, { category: 'icon' }),
+    height: uiScale(64, { category: 'icon' }),
+    borderRadius: uiScale(64, { category: 'icon' }) / 2,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: uiScale(12, { category: 'spacing' }),
   },
   icon: {
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
@@ -147,28 +150,28 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   title: {
-    fontSize: 24,
+    fontSize: uiScale(20, { category: 'font' }),
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 12,
+    marginBottom: uiScale(8, { category: 'spacing' }),
     textAlign: 'center',
   },
   message: {
-    fontSize: 16,
+    fontSize: uiScale(14, { category: 'font' }),
     color: '#FFFFFF',
     opacity: 0.8,
     textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 22,
+    marginBottom: uiScale(16, { category: 'spacing' }),
+    lineHeight: uiScale(20, { category: 'font' }),
   },
   buttonContainer: {
     width: '100%',
-    gap: 12,
+    gap: uiScale(8, { category: 'spacing' }),
   },
   button: {
     width: '100%',
-    height: 50,
-    borderRadius: 25,
+    height: uiScale(44, { category: 'button' }),
+    borderRadius: uiScale(22, { category: 'button' }),
     overflow: 'hidden',
   },
   buttonGradient: {
@@ -186,15 +189,15 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: uiScale(14, { category: 'font' }),
     fontWeight: 'bold',
   },
   secondaryButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: uiScale(14, { category: 'font' }),
     fontWeight: '600',
     opacity: 0.8,
     textAlign: 'center',
-    lineHeight: 46, // To center text vertically in button
+    lineHeight: uiScale(42, { category: 'font' }), // To center text vertically in button
   },
 });

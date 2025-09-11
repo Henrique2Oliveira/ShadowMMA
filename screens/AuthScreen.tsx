@@ -1,8 +1,9 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Colors, Typography } from '@/themes/theme';
+import { uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function AuthScreen() {
   const [isLogin, setIsLogin] = useState(false);
@@ -34,14 +35,15 @@ export default function AuthScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Image
-        source={require('@/assets/images/img2.png')}
-        style={{ width: 200, height: 200, marginBottom: 30 }} />
-      <View style={styles.form}>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <Image
+          source={require('@/assets/images/img2.png')}
+          style={{ width: uiScale(160, { category: 'icon' }), height: uiScale(160, { category: 'icon' }), marginBottom: uiScale(20, { category: 'spacing' }) }} />
+        <View style={styles.form}>
         {!isLogin && (
           <View style={styles.inputContainer}>
-            <MaterialCommunityIcons name="account-outline" size={24} color={Colors.lightgray} style={styles.inputIcon} />
+            <MaterialCommunityIcons name="account-outline" size={uiScale(20, { category: 'icon' })} color={Colors.lightgray} style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Full Name"
@@ -54,7 +56,7 @@ export default function AuthScreen() {
           </View>
         )}
         <View style={styles.inputContainer}>
-          <MaterialCommunityIcons name="email-outline" size={24} color={Colors.lightgray} style={styles.inputIcon} />
+          <MaterialCommunityIcons name="email-outline" size={uiScale(20, { category: 'icon' })} color={Colors.lightgray} style={styles.inputIcon} />
           <TextInput
             style={styles.input}
             placeholder="Email"
@@ -65,7 +67,7 @@ export default function AuthScreen() {
           />
         </View>
         <View style={styles.inputContainer}>
-          <MaterialCommunityIcons name="lock-outline" size={24} color={Colors.lightgray} style={styles.inputIcon} />
+          <MaterialCommunityIcons name="lock-outline" size={uiScale(20, { category: 'icon' })} color={Colors.lightgray} style={styles.inputIcon} />
           <TextInput
             style={styles.input}
             placeholder="Password"
@@ -80,13 +82,13 @@ export default function AuthScreen() {
           >
             <MaterialCommunityIcons
               name={showPassword ? "eye-off" : "eye"}
-              size={24}
+              size={uiScale(20, { category: 'icon' })}
               color={Colors.lightgray}
             />
           </TouchableOpacity>
         </View>
         {error ? (
-          <Text style={styles.errorText}>Problem {error}</Text>
+          <Text style={styles.errorText} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>Problem {error}</Text>
         ) : null}
 
         <TouchableOpacity
@@ -94,7 +96,7 @@ export default function AuthScreen() {
           onPress={handleSubmit}
           disabled={isSubmitting}
         >
-          <Text style={styles.buttonText}>
+          <Text style={styles.buttonText} adjustsFontSizeToFit numberOfLines={1}>
             {isSubmitting ? 'Please wait...' : (isLogin ? 'Login' : 'Register')}
           </Text>
         </TouchableOpacity>
@@ -145,8 +147,9 @@ export default function AuthScreen() {
           <MaterialCommunityIcons name="google" size={24} color="#fff" />
           <Text style={styles.socialButtonText}>Google</Text>
         </TouchableOpacity> */}
-      </View>
-    </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -157,18 +160,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'black',
   },
+  content: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: uiScale(16, { category: 'spacing' }),
+    paddingHorizontal: uiScale(12, { category: 'spacing' }),
+  },
   passwordContainer: {
     marginBottom: 15,
   },
   passwordInput: {
     backgroundColor: '#fff',
-    padding: 15,
+  padding: uiScale(12, { category: 'spacing' }),
     borderRadius: 8,
-    fontSize: 16,
+  fontSize: uiScale(14, { category: 'font' }),
     paddingRight: 50,
   },
   eyeButton: {
-    padding: 10,
+  padding: uiScale(8, { category: 'spacing' }),
     position: 'absolute',
     right: 5,
     top: '50%',
@@ -177,51 +187,52 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#ff6b6b',
     fontFamily: Typography.fontFamily,
-    fontSize: 12,
-    marginBottom: 15,
+  fontSize: uiScale(11, { category: 'font' }),
+  marginBottom: uiScale(10, { category: 'spacing' }),
     textAlign: 'center',
   },
   title: {
     fontFamily: Typography.fontFamily,
     color: "#fff",
-    fontSize: 48,
+  fontSize: uiScale(36, { category: 'font' }),
     textAlign: 'center',
-    marginBottom: 40,
+  marginBottom: uiScale(24, { category: 'spacing' }),
   },
   welcomeText: {
     fontFamily: Typography.fontFamily,
     color: "#fff",
-    fontSize: 24,
+  fontSize: uiScale(18, { category: 'font' }),
     textAlign: 'center',
-    marginBottom: 20,
+  marginBottom: uiScale(14, { category: 'spacing' }),
   },
   form: {
     width: '90%',
-    minWidth: 300,
+  minWidth: 0,
+  maxWidth: 520,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#1a1a1a',
     borderRadius: 8,
-    marginBottom: 15,
+  marginBottom: uiScale(10, { category: 'spacing' }),
     position: 'relative',
   },
   inputIcon: {
-    paddingLeft: 15,
+  paddingLeft: uiScale(12, { category: 'spacing' }),
   },
   input: {
     flex: 1,
     color: '#fff',
-    padding: 15,
-    paddingLeft: 10,
-    fontSize: 16,
+  padding: uiScale(12, { category: 'spacing' }),
+  paddingLeft: uiScale(10, { category: 'spacing' }),
+  fontSize: uiScale(16, { category: 'font' }),
   },
   button: {
     backgroundColor: "#db2020ff",
-    paddingHorizontal: 30,
-    paddingVertical: 15,
-    paddingBottom: 18,
+  paddingHorizontal: uiScale(22, { category: 'spacing' }),
+  paddingVertical: uiScale(12, { category: 'spacing' }),
+  paddingBottom: uiScale(14, { category: 'spacing' }),
     borderRadius: 8,
     elevation: 11,
     shadowColor: '#000',
@@ -236,19 +247,19 @@ const styles = StyleSheet.create({
   buttonText: {
     fontFamily: Typography.fontFamily,
     color: "#fff",
-    fontSize: 24,
+  fontSize: uiScale(18, { category: 'font' }),
     textAlign: 'center',
   },
   switchText: {
     fontFamily: Typography.fontFamily,
     color: '#fff',
     textAlign: 'center',
-    marginTop: 15,
+  marginTop: uiScale(12, { category: 'spacing' }),
   },
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 30,
+  marginVertical: uiScale(20, { category: 'spacing' }),
   },
   divider: {
     flex: 1,
@@ -258,7 +269,7 @@ const styles = StyleSheet.create({
   },
   dividerText: {
     color: '#fff',
-    paddingHorizontal: 10,
+  paddingHorizontal: uiScale(8, { category: 'spacing' }),
     opacity: 0.8,
     fontFamily: Typography.fontFamily,
   },
@@ -267,22 +278,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
+  paddingVertical: uiScale(10, { category: 'spacing' }),
+  paddingHorizontal: uiScale(22, { category: 'spacing' }),
     borderRadius: 8,
     gap: 10,
   },
   socialButtonText: {
     color: '#fff',
-    fontSize: 18,
+  fontSize: uiScale(16, { category: 'font' }),
     fontFamily: Typography.fontFamily,
   },
   forgotPasswordText: {
     fontFamily: Typography.fontFamily,
     color: Colors.lightgray,
     textAlign: 'center',
-    marginTop: 10,
-    marginBottom: 5,
-    fontSize: 14,
+  marginTop: uiScale(8, { category: 'spacing' }),
+  marginBottom: uiScale(4, { category: 'spacing' }),
+  fontSize: uiScale(13, { category: 'font' }),
   },
 });

@@ -241,7 +241,7 @@ export default function Game() {
   const [showGoodJob, setShowGoodJob] = React.useState(false);
   // LevelBar animations handled internally by shared component (DRY)
 
-  // Speed multiplier: default param OR 1.0, but we will bump first-time users to 1.3x below
+  // Speed multiplier: default param OR 1.0, but we will bump first-time users to 1.5x below
   const [speedMultiplier, setSpeedMultiplier] = React.useState(parseFloat(params.moveSpeed || '1'));
   const [animationMode, setAnimationMode] = React.useState<'none' | 'old' | 'new'>('new');
   const [showComboCarousel, setShowComboCarousel] = React.useState(true); // Default to true
@@ -259,7 +259,7 @@ export default function Game() {
           setSpeedMultiplier(prefs.speedMultiplier);
         }
       } else {
-        // First time: set a friendlier slightly faster pace (1.3x) and persist in storage for speed 
+  // First time: set a friendlier slightly faster pace (1.5x) and persist in storage for speed 
         setSpeedMultiplier(1.5);
         saveGamePreferences({
           isMuted: false,

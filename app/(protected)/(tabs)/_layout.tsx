@@ -31,9 +31,9 @@ export default function TabsLayout() {
   const iconSizeGame = uiScale(42, { category: 'icon' });
   const iconSizeCombos = uiScale(43, { category: 'icon' });
   const iconSizeProfile = uiScale(38, { category: 'icon' });
-  const fightBtnHeight = uiScale(40, { category: 'button' });
-  const fightFontSize = uiScale(28, { category: 'font' });
-  const fightLineHeight = fightFontSize + 6;
+  const fightBtnHeight = uiScale(30, { category: 'button' });
+  const fightFontSize = uiScale(20, { category: 'font' });
+  const fightLineHeight = fightFontSize + 4;
   const iconWrapperHeight = uiScale(50, { category: 'button' });
   const iconWrapperWidth = uiScale(36, { category: 'button' });
 
@@ -100,10 +100,10 @@ export default function TabsLayout() {
           tabBarShowLabel: false,
           tabBarStyle: { display: 'none' },
           tabBarIcon: ({ focused }) => (
-            <TouchableOpacity
+      <TouchableOpacity
               onPress={handleFightPress}
               style={{
-                width: '220%',
+        width: '160%',
                 height: fightBtnHeight,
                 backgroundColor: focused ? 'white' : '#e6e6e6ff',
                 borderRadius: uiScale(5, { category: 'button' }),

@@ -2,11 +2,12 @@ import PaywallScreen from '@/components/PaywallScreen';
 import { useAuth } from '@/contexts/AuthContext';
 import AuthScreen from '@/screens/AuthScreen';
 import { Colors, Typography } from "@/themes/theme";
+import { uiScale } from '@/utils/uiScale';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFonts } from 'expo-font';
 import { Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 
 export default function Index() {
   const { isAuthenticated, loading } = useAuth();
@@ -51,9 +52,7 @@ export default function Index() {
             Error loading fonts: {fontError.message}
           </Text>
         ) : (
-          <Text style={[styles.loadingText, { fontFamily: undefined }]}>
-            Loading ...
-          </Text>
+          <Text style={[styles.loadingText, { fontFamily: undefined }]}>Loading ...</Text>
         )}
       </View>
     );
@@ -93,7 +92,9 @@ export default function Index() {
 
   return (
     <View style={styles.container}>
-      <AuthScreen />
+      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }} keyboardShouldPersistTaps="handled">
+        <AuthScreen />
+      </ScrollView>
     </View>
   );
 }
@@ -108,16 +109,16 @@ const styles = StyleSheet.create({
   loadingText: {
     fontFamily: Typography.fontFamily,
     color: Colors.text,
-    fontSize: 24,
-    marginTop: 20,
+  fontSize: uiScale(18, { category: 'font' }),
+  marginTop: uiScale(14, { category: 'spacing' }),
     textAlign: 'center',
   },
   title: {
     fontFamily: Typography.fontFamily,
     color: "#fff",
-    fontSize: 48,
+  fontSize: uiScale(36, { category: 'font' }),
     textAlign: 'center',
-    marginBottom: 40,
+  marginBottom: uiScale(24, { category: 'spacing' }),
   },
   button: {
     backgroundColor: Colors.button,
@@ -129,7 +130,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontFamily: Typography.fontFamily,
     color: "#fff",
-    fontSize: 24,
+  fontSize: uiScale(18, { category: 'font' }),
     textAlign: 'center',
   },
 });

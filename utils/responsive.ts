@@ -16,7 +16,8 @@ export const hp = (percent: number) => (height * percent) / 100;
 export const rf = (fontSize: number, options?: { maxScale?: number; minScale?: number }) => {
 	const rawScale = width / guidelineBaseWidth;
 	const maxScale = options?.maxScale ?? 1.6;
-	const minScale = options?.minScale ?? 1;
+	// Allow slight downscale on very small/narrow screens
+	const minScale = options?.minScale ?? 0.9;
 	const boundedScale = Math.min(maxScale, Math.max(minScale, rawScale));
 	const newSize = fontSize * boundedScale;
 	return Math.round(PixelRatio.roundToNearestPixel(newSize));
@@ -26,7 +27,8 @@ export const rf = (fontSize: number, options?: { maxScale?: number; minScale?: n
 export const rs = (size: number, options?: { maxScale?: number; minScale?: number }) => {
 	const rawScale = width / guidelineBaseWidth;
 	const maxScale = options?.maxScale ?? 1.5; // keep UI balanced on very large devices
-	const minScale = options?.minScale ?? 1;
+	// Allow slight downscale on very small/narrow screens
+	const minScale = options?.minScale ?? 0.9;
 	const boundedScale = Math.min(maxScale, Math.max(minScale, rawScale));
 	return Math.round(PixelRatio.roundToNearestPixel(size * boundedScale));
 };

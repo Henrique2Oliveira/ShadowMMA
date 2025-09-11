@@ -1,4 +1,5 @@
 import { Colors, Typography } from '@/themes/theme';
+import { rf, rs } from '@/utils/responsive';
 import { transformMoveForStance } from '@/utils/stance';
 import { formatTime } from '@/utils/time';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -189,9 +190,9 @@ export const MoveCard: React.FC<MoveCardProps> = ({
       style={[
         styles.card,
         {
-          width: 280 * scaleUp,
-          height: 220 * scaleUp,
-          borderRadius: 25 * scaleUp,
+          width: rs(260) * scaleUp,
+          height: rs(200) * scaleUp,
+          borderRadius: rs(20) * scaleUp,
         },
         {
           transform: animationMode !== 'none' && !isGameOver
@@ -246,8 +247,8 @@ export const MoveCard: React.FC<MoveCardProps> = ({
         style={[
           styles.gradientBackground,
           {
-            paddingHorizontal: 20 * scaleUp,
-            paddingVertical: 20 * scaleUp,
+            paddingHorizontal: rs(16) * scaleUp,
+            paddingVertical: rs(16) * scaleUp,
           },
         ]}
         start={{ x: 0, y: 0 }}
@@ -257,9 +258,9 @@ export const MoveCard: React.FC<MoveCardProps> = ({
           style={[
             styles.text,
             {
-              fontSize: 44 * scaleUp,
-              lineHeight: 52 * scaleUp,
-              padding: 5 * scaleUp,
+              fontSize: rf(36) * scaleUp,
+              lineHeight: rf(44) * scaleUp,
+              padding: rs(4) * scaleUp,
             },
           ]}
           numberOfLines={2}
@@ -274,7 +275,7 @@ export const MoveCard: React.FC<MoveCardProps> = ({
           <Text
             style={[
               styles.restTimeText,
-              { fontSize: 32 * scaleUp, marginTop: 10 * scaleUp },
+              { fontSize: rf(26) * scaleUp, marginTop: rs(8) * scaleUp },
             ]}
           >
             {formatTime(timeLeft)}
@@ -286,8 +287,8 @@ export const MoveCard: React.FC<MoveCardProps> = ({
             style={[
               styles.progressBarContainer,
               {
-                height: Math.max(8 * scaleUp, 8),
-                marginTop: 10 * scaleUp,
+                height: Math.max(rs(6) * scaleUp, 6),
+                marginTop: rs(8) * scaleUp,
               },
             ]}
           >
@@ -313,9 +314,9 @@ const styles = StyleSheet.create({
   card: {
     justifyContent: 'center',
     alignItems: 'center',
-  width: 280,
-  height: 220,
-  borderRadius: 25,
+  width: 260,
+  height: 200,
+  borderRadius: 20,
     overflow: 'hidden',
   },
   gradientBackground: {
@@ -323,37 +324,37 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-  paddingHorizontal: 20,
-  paddingVertical: 20,
+  paddingHorizontal: 16,
+  paddingVertical: 16,
   },
   text: {
     color: Colors.text,
-  fontSize: 44,
+  fontSize: 36,
     textAlign: 'center',
     width: '100%',
-  lineHeight: 52, // Increased line height
+  lineHeight: 44, // Increased line height
     fontFamily: Typography.fontFamily,
     flexShrink: 1,
     flexWrap: 'wrap',
-  padding: 5 // Added padding
+  padding: 4 // Added padding
   },
   restTimeText: {
     fontFamily: Typography.fontFamily,
     color: '#ffffff',
-  fontSize: 32,
-  marginTop: 10,
+  fontSize: 26,
+  marginTop: 8,
   },
   progressBarContainer: {
     width: '80%',
-  height: 8,
+  height: 6,
     backgroundColor: '#000000ff',
-    borderRadius: 4,
+    borderRadius: 3,
     overflow: 'hidden',
-  marginTop: 10,
+  marginTop: 8,
   },
   progressBar: {
     height: '100%',
     backgroundColor: '#ffffffff',
-    borderRadius: 4,
+    borderRadius: 3,
   },
 });

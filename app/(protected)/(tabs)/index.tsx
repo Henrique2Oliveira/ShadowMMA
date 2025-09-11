@@ -585,8 +585,8 @@ export default function Index() {
           <GradientButton
             title={buttons[5].title}
             iconName="boxing-glove"
-            iconSize={130}
-            fontSize={42}
+            iconSize={96}
+            fontSize={30}
             subtitle="Single Combos to master like a pro"
             disabled={buttons[5].disabled}
             onPress={buttons[5].onPress}
@@ -602,8 +602,8 @@ export default function Index() {
           <GradientButton
             title={buttons[6].title}
             iconName="dice-multiple"
-            iconSize={120}
-            fontSize={38}
+            iconSize={92}
+            fontSize={28}
             disabled={buttons[6].disabled}
             onPress={buttons[6].onPress}
           />
@@ -618,8 +618,8 @@ export default function Index() {
           <GradientButton
             title={buttons[7].title}
             iconName="arrow-up-bold-circle"
-            iconSize={120}
-            fontSize={27}
+            iconSize={90}
+            fontSize={22}
             subtitle="Advance to the next level"
             proOnly
             disabled={buttons[7].disabled}
@@ -636,8 +636,8 @@ export default function Index() {
           <GradientButton
             title={buttons[8].title}
             iconName="tune"
-            iconSize={120}
-            fontSize={26}
+            iconSize={88}
+            fontSize={20}
             subtitle="Customize rounds, rest, and moves"
             proOnly
             disabled={buttons[8].disabled}
@@ -652,8 +652,8 @@ export default function Index() {
             <GradientButton
               title={buttons[9].title}
               iconName="run"
-              iconSize={130}
-              fontSize={32}
+              iconSize={96}
+              fontSize={24}
               disabled={buttons[9].disabled}
               onPress={buttons[9].onPress}
             />

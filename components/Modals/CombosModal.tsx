@@ -6,13 +6,13 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef } from 'react';
 import {
-  Animated,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    Animated,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 
 type AnimatedValue = Animated.Value;
@@ -216,13 +216,13 @@ const styles = StyleSheet.create({
     padding: uiScale(20, { category: 'spacing' }),
     paddingBottom: uiScale(40, { category: 'spacing' }),
   // Increased base height for better visibility on larger devices
-  minHeight: uiScale(450),
+  minHeight: uiScale(380),
   maxHeight: '88%',
     width: '100%',
   },
   modalTitle: {
     color: Colors.text,
-  fontSize: uiScale(32, { category: 'font' }),
+  fontSize: uiScale(26, { category: 'font' }),
     fontFamily: Typography.fontFamily,
     marginTop: uiScale(20, { category: 'spacing' }),
     marginBottom: uiScale(15, { category: 'spacing' }),
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
   },
   comboName: {
     color: Colors.text,
-  fontSize: uiScale(18, { category: 'font' }),
+  fontSize: uiScale(16, { category: 'font' }),
     fontFamily: Typography.fontFamily,
     flex: 1,
   },
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
   },
   levelText: {
     color: Colors.text,
-  fontSize: uiScale(16, { category: 'font' }),
+  fontSize: uiScale(14, { category: 'font' }),
     fontFamily: Typography.fontFamily,
 
   },
@@ -297,9 +297,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#fafafa25',
     padding: uiScale(10, { category: 'spacing' }),
     borderRadius: uiScale(10, { category: 'spacing' }),
-  fontSize: uiScale(18, { category: 'font' }),
+  fontSize: uiScale(16, { category: 'font' }),
     fontFamily: Typography.fontFamily,
-  lineHeight: uiScale(24, { category: 'font' }),
+  lineHeight: uiScale(22, { category: 'font' }),
     flexShrink: 1,
   },
   closeButton: {
@@ -314,19 +314,19 @@ const styles = StyleSheet.create({
     borderRadius: uiScale(10, { category: 'spacing' }),
     marginTop: uiScale(20, { category: 'spacing' }),
     marginHorizontal: uiScale(10, { category: 'spacing' }),
-    borderBottomWidth: 6,
+  borderBottomWidth: 4,
     borderWidth: 2,
     borderColor: '#ff3636ff',
     overflow: 'hidden',
   },
   startButtonGradient: {
-    paddingVertical: uiScale(15, { category: 'spacing' }),
-    padding: uiScale(15, { category: 'spacing' }),
-    paddingBottom: uiScale(17, { category: 'spacing' }),
+  paddingVertical: uiScale(12, { category: 'spacing' }),
+  padding: uiScale(12, { category: 'spacing' }),
+  paddingBottom: uiScale(14, { category: 'spacing' }),
   },
   startButtonText: {
     color: Colors.text,
-  fontSize: uiScale(30, { category: 'font' }),
+  fontSize: uiScale(24, { category: 'font' }),
     fontFamily: Typography.fontFamily,
     textAlign: 'center',
 
