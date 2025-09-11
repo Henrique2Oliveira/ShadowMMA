@@ -57,6 +57,12 @@
       "expo-router",
       "expo-notifications",
       [
+        "react-native-google-mobile-ads",
+        {
+          "android_app_id": "ca-app-pub-6678510991963006~8573618144"
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",

@@ -22,7 +22,7 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
   title,
   iconName,
   iconSize = isTablet ? 120 : 90,
-  fontSize = isTablet ? 28 : 22,
+  fontSize = isTablet ? 28 : 20,
   subtitle,
   proOnly = false,
   disabled = false,

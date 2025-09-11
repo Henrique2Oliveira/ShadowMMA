@@ -4,3 +4,5 @@ declare global {
 
 export { };
 
+declare module 'react-native-google-mobile-ads';
+

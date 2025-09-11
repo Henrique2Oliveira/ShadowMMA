@@ -1,3 +1,4 @@
+import AppOpenAdManager from '@/components/ads/AppOpenAdManager';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { Colors } from '@/themes/theme';
@@ -34,6 +35,8 @@ export default function RootLayout() {
       <AuthProvider>
         <SafeAreaProvider>
           <SafeAreaView style={{ flex: 1, backgroundColor: getBackgroundColor() }}>
+            {/* App Open Ads on launch and on foreground */}
+            <AppOpenAdManager />
             <Stack screenOptions={{ headerShown: false }} />
           </SafeAreaView>
         </SafeAreaProvider>
