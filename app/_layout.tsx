@@ -2,7 +2,9 @@ import AppOpenAdManager from '@/components/ads/AppOpenAdManager';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { Colors } from '@/themes/theme';
+import Constants from 'expo-constants';
 import { Stack, usePathname } from 'expo-router';
+import { Platform } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RootLayout() {
@@ -35,8 +37,10 @@ export default function RootLayout() {
       <AuthProvider>
         <SafeAreaProvider>
           <SafeAreaView style={{ flex: 1, backgroundColor: getBackgroundColor() }}>
-            {/* App Open Ads on launch and on foreground */}
-            <AppOpenAdManager />
+            {/* App Open Ads on launch and on foreground (Android Dev Client/Prod only) */}
+            {Platform.OS === 'android' && Constants.appOwnership !== 'expo' ? (
+              <AppOpenAdManager />
+            ) : null}
             <Stack screenOptions={{ headerShown: false }} />
           </SafeAreaView>
         </SafeAreaProvider>
