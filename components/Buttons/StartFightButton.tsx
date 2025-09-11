@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 680,
   // Increase base height for tablets to prevent text clipping
-  height: isTablet ? rs(140, { maxScale: 1.25 }) : rs(110, { maxScale: 1.2, minScale: 0.9 }),
+  height: isTablet ? rs(140, { maxScale: 1.25 }) : rs(120, { maxScale: 1.2, minScale: 0.9 }),
     backgroundColor: 'transparent',
     borderRadius: 15,
     marginBottom: 10,

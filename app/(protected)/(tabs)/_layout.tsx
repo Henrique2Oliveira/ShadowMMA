@@ -100,10 +100,10 @@ export default function TabsLayout() {
           tabBarShowLabel: false,
           tabBarStyle: { display: 'none' },
           tabBarIcon: ({ focused }) => (
-      <TouchableOpacity
+            <TouchableOpacity
               onPress={handleFightPress}
               style={{
-        width: '160%',
+                width: '160%',
                 height: fightBtnHeight,
                 backgroundColor: focused ? 'white' : '#e6e6e6ff',
                 borderRadius: uiScale(5, { category: 'button' }),

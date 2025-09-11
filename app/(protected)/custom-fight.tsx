@@ -30,7 +30,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const CACHE_KEY = 'custom_fight_combos_meta_cache_v1_cat0_asc';
 const CACHE_TTL_MS = 1000 * 60 * 10; // 10 minutes
 const SELECTED_KEY = 'custom_fight_last_selection';
-const MAX_SELECT = 6;
+const MAX_SELECT = 10;
 
 export default function CustomFight() {
   const { user } = useAuth();

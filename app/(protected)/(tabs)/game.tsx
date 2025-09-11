@@ -27,7 +27,7 @@ import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
-import { Animated, AppState, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { Animated, AppState, Easing, Pressable, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 
 // Pre-game tips (shown once before the user presses Start)
 const PRE_GAME_TIPS = [
@@ -66,7 +66,7 @@ type ModalConfig = {
 };
 
 export default function Game() {
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const scaleUp = width >= 1024 ? 1.5 : width >= 768 ? 1.25 : 1;
   const [currentModal, setCurrentModal] = React.useState<ModalConfig | null>(null);
   const { updateUserData, userData } = useUserData();
@@ -645,6 +645,122 @@ export default function Game() {
     addRandomMovementEffect
   } = useGameAnimations();
   const sideButtonsOpacity = React.useRef(new Animated.Value(0)).current;
+  // Bounce tap on main card
+  const cardBounce = React.useRef(new Animated.Value(0)).current;
+  const onCardPress = React.useCallback(() => {
+    // Bounce: scale down slightly then up with spring
+    Animated.sequence([
+      Animated.timing(cardBounce, { toValue: 1, duration: 40, useNativeDriver: true }),
+      Animated.spring(cardBounce, { toValue: 0, friction: 5, tension: 120, useNativeDriver: true }),
+    ]).start();
+    // Haptic nudge if available
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+  }, [cardBounce]);
+  const bounceScale = cardBounce.interpolate({ inputRange: [0, 1], outputRange: [1, 0.96] });
+
+  // =====================
+  // Game over particles
+  // =====================
+  type Particle = {
+    id: string;
+    x: number;
+    y: number;
+    size: number;
+    color: string;
+    animX: Animated.Value;
+    animY: Animated.Value;
+    opacity: Animated.Value;
+    scale: Animated.Value;
+    rotate: Animated.Value;
+    rotDeg: number;
+  };
+  const particlesRef = React.useRef<Particle[]>([]);
+  const [particlesTick, setParticlesTick] = React.useState(0);
+  const rerenderParticles = () => setParticlesTick((t) => t + 1);
+  const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
+  const rand = (minN: number, maxN: number) => Math.random() * (maxN - minN) + minN;
+
+  const spawnParticlesAt = React.useCallback((cx: number, cy: number, count: number, palette: string[]) => {
+    const created: Particle[] = [];
+    for (let i = 0; i < count; i++) {
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const size = rand(4, 12);
+      const color = palette[i % palette.length];
+      const animX = new Animated.Value(0);
+      const animY = new Animated.Value(0);
+      const opacity = new Animated.Value(1);
+      const scale = new Animated.Value(1);
+      const rotate = new Animated.Value(0);
+      const rotDeg = rand(180, 900); // spin more for flair
+
+      const angle = rand(-Math.PI, Math.PI);
+      const distance = rand(100, 280);
+      const dx = Math.cos(angle) * distance;
+      const up = rand(100, 240); // initial upward impulse
+      const fall = rand(160, 360); // gravity drop
+
+      const p: Particle = { id, x: cx, y: cy, size, color, animX, animY, opacity, scale, rotate, rotDeg };
+      created.push(p);
+
+      Animated.parallel([
+        // Outward burst (up and sideways)
+        Animated.sequence([
+          Animated.parallel([
+            Animated.timing(animX, { toValue: dx * 0.65, duration: 420, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+            Animated.timing(animY, { toValue: -up, duration: 420, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+          ]),
+          // Gravity pull-down
+          Animated.parallel([
+            Animated.timing(animX, { toValue: dx, duration: 520, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+            Animated.timing(animY, { toValue: -up + fall, duration: 520, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+          ]),
+        ]),
+        // Spin and subtle scale variation
+        Animated.timing(rotate, { toValue: 1, duration: 1100, easing: Easing.linear, useNativeDriver: true }),
+        Animated.timing(scale, { toValue: rand(0.85, 1.2), duration: 700, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0, delay: 800, duration: 500, useNativeDriver: true }),
+      ]).start(() => {
+        const idx = particlesRef.current.findIndex(pp => pp.id === id);
+        if (idx >= 0) {
+          particlesRef.current.splice(idx, 1);
+          rerenderParticles();
+        }
+      });
+    }
+    particlesRef.current.push(...created);
+    rerenderParticles();
+  }, []);
+
+  const launchGameOverEffects = React.useCallback(() => {
+    // Base confetti from center
+  const baseColors = ['#ffd257', Colors.redDots, '#ffffff'];
+  // Center blast, bigger coverage
+  spawnParticlesAt(width * 0.5, height * 0.38, 90, baseColors);
+  // Two side fountains (more spread)
+  spawnParticlesAt(width * 0.12, height * 0.58, 36, baseColors);
+  spawnParticlesAt(width * 0.88, height * 0.58, 36, baseColors);
+
+    // Per-move bursts based on counts (top 5 moves)
+    const entries = Object.entries(moveStats || {}).sort((a, b) => (b[1] as number) - (a[1] as number)).slice(0, 5);
+    const n = entries.length || 1;
+    entries.forEach(([name, count], i) => {
+      const angle = (i / n) * Math.PI * 2;
+      const radius = Math.min(width, height) * 0.18;
+      const cx = width * 0.5 + Math.cos(angle) * radius;
+      const cy = height * 0.5 + Math.sin(angle) * radius;
+  const strength = clamp(8 + Math.floor((count as number) / 1.5), 16, 40);
+      const palette = name.toLowerCase().includes('jab')
+        ? ['#ffd257', '#fff2a1', Colors.redDots]
+        : ['#ffd257', Colors.redDots, '#ffffff'];
+      spawnParticlesAt(cx, cy, strength, palette);
+    });
+  }, [height, moveStats, spawnParticlesAt, width]);
+
+  React.useEffect(() => {
+    if (gameState.isGameOver) {
+      launchGameOverEffects();
+    }
+  }, [gameState.isGameOver, launchGameOverEffects]);
 
   // Countdown state must be declared BEFORE any effects that reference it
   const [isCountdownComplete, setIsCountdownComplete] = React.useState(false);
@@ -1161,19 +1277,23 @@ export default function Game() {
           </Animated.View>
         )}
 
-        <MoveCard
-          move={currentMove?.move || ""}
-          tiltX={tiltX}
-          tiltY={tiltY}
-          scale={scale}
-          moveProgress={moveProgress}
-          timeLeft={gameState.timeLeft}
-          isGameOver={gameState.isGameOver}
-          isRestPeriod={gameState.isRestPeriod}
-          isPaused={gameState.isPaused}
-          animationMode={animationMode}
-          isSouthPaw={stance === 'southpaw'}
-        />
+        <Animated.View style={{ transform: [{ scale: bounceScale }] }}>
+          <Pressable onPress={onCardPress}>
+            <MoveCard
+              move={currentMove?.move || ""}
+              tiltX={tiltX}
+              tiltY={tiltY}
+              scale={scale}
+              moveProgress={moveProgress}
+              timeLeft={gameState.timeLeft}
+              isGameOver={gameState.isGameOver}
+              isRestPeriod={gameState.isRestPeriod}
+              isPaused={gameState.isPaused}
+              animationMode={animationMode}
+              isSouthPaw={stance === 'southpaw'}
+            />
+          </Pressable>
+        </Animated.View>
 
         {/* Skip button (visible only when paused) */}
         {gameState.isRestPeriod && !gameState.isPaused && !gameState.isGameOver && (
@@ -1315,6 +1435,32 @@ export default function Game() {
           }}
         />
       </LinearGradient>
+      {/* Particle overlay */}
+      {particlesRef.current.length > 0 && (
+        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+    {particlesRef.current.map((p) => (
+            <Animated.View
+              key={p.id}
+              style={{
+                position: 'absolute',
+                left: p.x,
+                top: p.y,
+                width: p.size,
+                height: p.size * 1.6,
+                borderRadius: 2,
+                backgroundColor: p.color,
+                opacity: p.opacity,
+                transform: [
+                  { translateX: p.animX },
+                  { translateY: p.animY },
+      { scale: p.scale },
+      { rotateZ: p.rotate.interpolate({ inputRange: [0, 1], outputRange: ['0deg', `${p.rotDeg}deg`] }) },
+                ],
+              }}
+            />
+          ))}
+        </View>
+      )}
     </>
   );
 }

@@ -14,6 +14,8 @@ export const subscriptionPlans: SubscriptionPlan[] = [
     features: [
       '3 Fights a day',
       'Basic training programs',
+      'Random Fight generator',
+      'Combo training',
       'Essential techniques',
       'Progress tracking',
       'Community access'
@@ -21,11 +23,14 @@ export const subscriptionPlans: SubscriptionPlan[] = [
   },
   {
     title: 'Pro',
-    price: '$9.99',
+    price: '$9.70',
     period: 'month',
     features: [
       'Unlimited Fights',
       'Advanced techniques',
+      'Combo training',
+      'Ad-free experience',
+      'Custom Fight builder',
       'Personalized training plans',
       'Priority support',
       'All free features'
@@ -34,15 +39,18 @@ export const subscriptionPlans: SubscriptionPlan[] = [
   },
   {
     title: 'Annual',
-    price: '$39.99',
+    price: '$39.99', // $3.33/month when billed annually 
     period: 'year',
     features: [
-      'Monthly equivalent = $3.33',
-      'All premium features',
+      'Monthly equivalent = $3.33', // Highlighting the monthly equivalent price
       'Unlimited Fights',
+      'Ad-free experience',
+      'Combo training',
+      'Custom Fight builder',
       'Advanced techniques',
       'Personalized training plans',
       'Priority support',
+      'All premium features',
       'All free features'
     ]
   }

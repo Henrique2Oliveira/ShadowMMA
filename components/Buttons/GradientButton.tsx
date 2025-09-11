@@ -80,7 +80,7 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
           {disabled && (
             <MaterialCommunityIcons
               name="lock"
-              size={80}
+              size={60}
               color="#ffffff"
               style={styles.lockIcon}
             />
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
   linearGradientButton: {
     width: '100%',
     maxWidth: 680,
-  height: rs(110, { maxScale: 1.25, minScale: 0.9 }),
+  height: rs(130, { maxScale: 1.25, minScale: 0.9 }),
     backgroundColor: 'transparent',
     borderRadius: 15,
     marginBottom: 10,
