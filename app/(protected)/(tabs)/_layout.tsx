@@ -1,5 +1,5 @@
 import { Colors } from '@/themes/theme';
-import { uiScale } from '@/utils/uiScale';
+import { getDeviceBucket, uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
 import { Tabs, useRouter } from 'expo-router';
@@ -22,18 +22,24 @@ export default function TabsLayout() {
   };
 
   // --- Responsive scaling values ---
+  const deviceBucket = getDeviceBucket();
+  const isNormalPhone = deviceBucket === 'phone';
   const tabBarHeight = uiScale(80, { category: 'button' });
   const tabBarRadius = uiScale(35, { category: 'button' });
   const tabBarPaddingHorizontal = uiScale(10, { category: 'spacing' });
   const tabBarBottom = uiScale(8, { category: 'spacing' });
   const iconSizeHome = uiScale(42, { category: 'icon' });
   const iconSizeGallery = uiScale(42, { category: 'icon' });
-  const iconSizeGame = uiScale(42, { category: 'icon' });
   const iconSizeCombos = uiScale(43, { category: 'icon' });
   const iconSizeProfile = uiScale(38, { category: 'icon' });
-  const fightBtnHeight = uiScale(30, { category: 'button' });
-  const fightFontSize = uiScale(20, { category: 'font' });
+  const fightBtnHeightBase = uiScale(30, { category: 'button' });
+  const fightFontSizeBase = uiScale(20, { category: 'font' });
+  // Slightly larger on normal phones, unchanged on small/x-small; other buckets rely on uiScale
+  const fightBtnHeight = Math.round(fightBtnHeightBase * (isNormalPhone ? 1.2 : 1.1));
+  const fightFontSize = Math.round(fightFontSizeBase * (isNormalPhone ? 1.3 : 1));
   const fightLineHeight = fightFontSize + 4;
+  // Width as a percent of the icon wrapper width so it visually overflows; bump on normal phones only
+  const fightBtnWidthPercent = `${Math.round(160 * (isNormalPhone ? 1.25 : 0.9))}%` as const;
   const iconWrapperHeight = uiScale(50, { category: 'button' });
   const iconWrapperWidth = uiScale(36, { category: 'button' });
 
@@ -103,7 +109,7 @@ export default function TabsLayout() {
             <TouchableOpacity
               onPress={handleFightPress}
               style={{
-                width: '160%',
+                width: fightBtnWidthPercent,
                 height: fightBtnHeight,
                 backgroundColor: focused ? 'white' : '#e6e6e6ff',
                 borderRadius: uiScale(5, { category: 'button' }),
