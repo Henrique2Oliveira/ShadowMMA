@@ -1,4 +1,4 @@
-import { subscriptionPlans, type SubscriptionPlan } from '@/config/subscriptionPlans';
+import { calculateMonthlyEquivalent, subscriptionPlans, type SubscriptionPlan } from '@/config/subscriptionPlans';
 import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
 import { isTablet, rf, rs } from '@/utils/responsive';
@@ -36,6 +36,10 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
     }
     return 'Select Plan';
   }, [userPlan]);
+
+  const getMonthlyEquivalent = (plan: SubscriptionPlan): string | null => {
+    return calculateMonthlyEquivalent(plan.price, plan.period);
+  };
 
   // Static discount badge (67% OFF) for annual plan as requested
   const staticAnnualDiscount = 67;
@@ -77,8 +81,8 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
           <Text style={styles.planPrice}>{plan.price}</Text>
           <Text style={styles.planPeriod}>/{plan.period}</Text>
         </View>
-        {perMonthEquivalent && (
-          <Text style={styles.perMonthText}>{perMonthEquivalent}</Text>
+        {getMonthlyEquivalent(plan) && (
+          <Text style={styles.perMonthText}>{getMonthlyEquivalent(plan)}</Text>
         )}
 
         <View style={styles.divider} />

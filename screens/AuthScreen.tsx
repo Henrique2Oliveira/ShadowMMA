@@ -214,14 +214,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'black',
-    
   },
   content: {
     flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: uiScale(16, { category: 'spacing' }),
-    paddingHorizontal: uiScale(12, { category: 'spacing' }),
+    width: '100%',
+    paddingHorizontal: uiScale(12, { category: 'spacing' }), // Increased horizontal padding
   },
   passwordContainer: {
     marginBottom: 15,
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
   form: {
     width: '100%',
     minWidth: 0,
-    maxWidth: 620,
+    maxWidth: 330, // Increased max width for wider screens
   },
   inputContainer: {
     flexDirection: 'row',
@@ -281,6 +281,7 @@ const styles = StyleSheet.create({
     flex: 1,
     color: '#fff',
     padding: uiScale(14, { category: 'spacing' }),
+    
     paddingLeft: uiScale(10, { category: 'spacing' }),
     fontSize: uiScale(16, { category: 'font' }),
     width: '100%',
@@ -295,7 +296,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
-        width: '100%',
+    width: '100%',
   },
   buttonDisabled: {
     backgroundColor: Colors.button + '80', // Add 50% opacity

@@ -48,88 +48,128 @@ export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
     >
       <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.4)' }]} />
 
-      <View style={styles.headerSection}>
-        <View style={styles.discountBanner}>
-          <MaterialCommunityIcons name="tag" size={16} color="#fff" style={{ marginRight: 6 }} />
-          <Text style={styles.discountBannerText}>Limited-time: 67% OFF Annual</Text>
-        </View>
-        <Text style={styles.title}>Choose Your Plan</Text>
-        <Text style={styles.subtitle}>
-          {quizData
-            ? `Tailored to your ${quizData.goal?.toLowerCase() || 'goal'} training.`
-            : 'Unlock advanced training modes & personalized progression.'}
-        </Text>
-      </View>
-
+      {/* Make entire content scrollable vertically */}
       <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.cardsContainer}
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        bounces
       >
-        {subscriptionPlans.map((plan) => {
-          const isAnnual = plan.title.toLowerCase() === 'annual';
-          return (
-            <View
-              key={plan.title}
-              style={[styles.card, plan.popular && styles.popularCard]}
-            >
-              {plan.popular && (
-                <View style={styles.popularBadge}>
-                  <Text style={styles.popularText}>MOST POPULAR</Text>
-                </View>
-              )}
-              {isAnnual && (
-                <View style={styles.discountBadge}>
-                  <Text style={styles.discountText}>67% OFF</Text>
-                </View>
-              )}
-              <Text style={styles.planTitle}>{plan.title}</Text>
-              <View style={styles.priceContainer}>
-                <Text style={styles.price}>{plan.price}</Text>
-                <Text style={styles.period}>/{plan.period}</Text>
-              </View>
-              <View style={styles.featuresContainer}>
-                {plan.features.slice(0, 4).map((feature, idx) => (
-                  <View key={idx} style={styles.featureRow}>
-                    <MaterialCommunityIcons name="check" size={16} color={Colors.green} />
-                    <Text style={styles.feature}> {feature}</Text>
-                  </View>
-                ))}
-                {plan.features.length > 4 && (
-                  <Pressable onPress={() => setShowPlansModal(true)} hitSlop={8}>
-                    <Text style={styles.moreFeaturesText}>View all features</Text>
-                  </Pressable>
-                )}
-              </View>
-              <Pressable
-                style={[styles.button, plan.popular && styles.popularButton]}
-                onPress={() => handlePlanSelection(plan)}
+        <View style={styles.headerSection}>
+          <View style={styles.discountBanner}>
+            <MaterialCommunityIcons name="tag" size={16} color="#fff" style={{ marginRight: 6 }} />
+            <Text style={styles.discountBannerText}>Limited-time: 67% OFF Annual</Text>
+          </View>
+          <Text style={styles.title}>Choose Your Plan</Text>
+          <Text style={styles.subtitle}>
+            {quizData
+              ? `Tailored to your ${quizData.goal?.toLowerCase() || 'goal'} training.`
+              : 'Unlock advanced training modes & personalized progression.'}
+          </Text>
+        </View>
+
+        {/* Horizontal plans carousel */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.cardsContainer}
+        >
+          {subscriptionPlans.map((plan) => {
+            const isAnnual = plan.title.toLowerCase() === 'annual';
+            return (
+              <View
+                key={plan.title}
+                style={[styles.card, plan.popular && styles.popularCard]}
               >
-                <Text style={styles.buttonText}>
-                  {plan.title === 'Free' ? 'Start Free' : 'Choose Plan'}
-                </Text>
-              </Pressable>
-            </View>
-          );
-        })}
+                {plan.popular && (
+                  <View style={styles.popularBadge}>
+                    <Text style={styles.popularText}>MOST POPULAR</Text>
+                  </View>
+                )}
+                {isAnnual && (
+                  <View style={styles.discountBadge}>
+                    <Text style={styles.discountText}>67% OFF</Text>
+                  </View>
+                )}
+                <Text style={styles.planTitle}>{plan.title}</Text>
+                <View style={styles.priceContainer}>
+                  <Text style={styles.price}>{plan.price}</Text>
+                  <Text style={styles.period}>/{plan.period}</Text>
+                </View>
+                <View style={styles.featuresContainer}>
+                  {plan.features.slice(0, 4).map((feature, idx) => (
+                    <View key={idx} style={styles.featureRow}>
+                      <MaterialCommunityIcons name="check" size={16} color={Colors.green} />
+                      <Text style={styles.feature}> {feature}</Text>
+                    </View>
+                  ))}
+                  {plan.features.length > 4 && (
+                    <Pressable onPress={() => setShowPlansModal(true)} hitSlop={8}>
+                      <Text style={styles.moreFeaturesText}>View all features</Text>
+                    </Pressable>
+                  )}
+                </View>
+                <Pressable
+                  style={[styles.button, plan.popular && styles.popularButton]}
+                  onPress={() => handlePlanSelection(plan)}
+                >
+                  <Text style={styles.buttonText}>
+                    {plan.title === 'Free' ? 'Start Free' : 'Choose Plan'}
+                  </Text>
+                </Pressable>
+              </View>
+            );
+          })}
+        </ScrollView>
+
+        {/* Trust badges */}
+        <View style={styles.trustSection}>
+          <View style={styles.starsRow}>
+            {[...Array(5)].map((_, i) => (
+              <MaterialCommunityIcons key={i} name="star" size={18} color={Colors.text} />
+            ))}
+            <Text style={styles.starsText}> Loved by fighters worldwide</Text>
+          </View>
+          <View style={styles.securityRow}>
+            <MaterialCommunityIcons name="lock" size={16} color={Colors.lightText} />
+            <Text style={styles.securityText}>Secure payments • Cancel anytime</Text>
+          </View>
+        </View>
+
+        {/* Testimonials Section (adapted from Plans) */}
+        <View style={styles.benefitsSection}>
+          <Text style={styles.sectionTitle}>What members say</Text>
+
+          <View style={styles.benefitCard}>
+            <MaterialCommunityIcons name="format-quote-close" size={32} color="#ffffffff" />
+            <Text style={styles.quoteText}>
+              “The premium access has been a complete game changer for me! I have truly seen a difference within myself and my ability!”
+            </Text>
+            <Text style={styles.authorText}>— M.I., California</Text>
+          </View>
+
+          <View style={styles.benefitCard}>
+            <MaterialCommunityIcons name="format-quote-close" size={32} color="#ffffffff" />
+            <Text style={styles.quoteText}>
+              “Within two weeks I was sharper, faster, and more confident. The drills feel like having a coach in my pocket.”
+            </Text>
+            <Text style={styles.authorText}>— Jordan P., New York</Text>
+          </View>
+
+          <View style={styles.benefitCard}>
+            <MaterialCommunityIcons name="format-quote-close" size={32} color="#ffffffff" />
+            <Text style={styles.quoteText}>
+              “As a busy parent, the structured sessions keep me consistent. I’m landing combos I never thought I could.”
+            </Text>
+            <Text style={styles.authorText}>— Sofia R., Texas</Text>
+          </View>
+        </View>
+
+        {/* Skip CTA at the bottom */}
+        <Pressable onPress={onSkip} style={styles.skipButton}>
+          <Text style={styles.skipText}>Continue with Free Plan</Text>
+        </Pressable>
       </ScrollView>
-
-      <View style={styles.trustSection}>
-        <View style={styles.starsRow}>
-          {[...Array(5)].map((_, i) => (
-            <MaterialCommunityIcons key={i} name="star" size={18} color={Colors.green} />
-          ))}
-          <Text style={styles.starsText}> Loved by fighters worldwide</Text>
-        </View>
-        <View style={styles.securityRow}>
-          <MaterialCommunityIcons name="lock" size={16} color={Colors.lightText} />
-          <Text style={styles.securityText}>Secure payments • Cancel anytime</Text>
-        </View>
-      </View>
-
-      <Pressable onPress={onSkip} style={styles.skipButton}>
-        <Text style={styles.skipText}>Continue with Free Plan</Text>
-      </Pressable>
 
       <PlansModal
         visible={showPlansModal}
@@ -148,6 +188,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
     padding: 20,
+  },
+  scrollContent: {
+    paddingBottom: 40,
   },
   bgImage: {
     opacity: 0.25,
@@ -333,5 +376,45 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily,
     color: Colors.lightText,
     fontSize: 16,
+  },
+  // Testimonials styles (adapted from Plans screen)
+  benefitsSection: {
+    marginTop: 20,
+  },
+  sectionTitle: {
+    color: Colors.text,
+    fontSize: 20,
+    fontFamily: Typography.fontFamily,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  benefitCard: {
+    backgroundColor: Colors.cardColor,
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 15,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  quoteText: {
+    color: Colors.text,
+    fontSize: 16,
+    fontFamily: Typography.fontFamily,
+    textAlign: 'center',
+    opacity: 0.95,
+    lineHeight: 22,
+    marginTop: 10,
+    fontStyle: 'italic',
+  },
+  authorText: {
+    color: Colors.text,
+    fontSize: 14,
+    fontFamily: Typography.fontFamily,
+    textAlign: 'center',
+    opacity: 0.75,
+    marginTop: 10,
+    fontWeight: '600',
   },
 });

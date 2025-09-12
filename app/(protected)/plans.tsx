@@ -1,5 +1,5 @@
 import { AlertModal } from '@/components/Modals/AlertModal';
-import { getPlanFeatures, subscriptionPlans, type SubscriptionPlan } from '@/config/subscriptionPlans';
+import { calculateMonthlyEquivalent, getPlanFeatures, subscriptionPlans, type SubscriptionPlan } from '@/config/subscriptionPlans';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
@@ -80,6 +80,10 @@ export default function Plans() {
 
   const currentPlan = getCurrentPlan();
 
+  const getMonthlyEquivalent = (plan: SubscriptionPlan): string | null => {
+    return calculateMonthlyEquivalent(plan.price, plan.period);
+  };
+
   return (
     <ScrollView 
       style={styles.container} 
@@ -153,6 +157,9 @@ export default function Plans() {
                   <Text style={styles.planPrice}>{plan.price}</Text>
                   <Text style={styles.planPeriod}>/{plan.period}</Text>
                 </View>
+                {getMonthlyEquivalent(plan) && (
+                  <Text style={styles.planPeriod}>{getMonthlyEquivalent(plan)}</Text>
+                )}
               </View>
 
               <View style={styles.featuresContainer}>

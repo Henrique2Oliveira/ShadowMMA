@@ -6,6 +6,16 @@ export type SubscriptionPlan = {
   popular?: boolean;
 };
 
+// Helper function to calculate monthly equivalent price
+export const calculateMonthlyEquivalent = (price: string, period: string): string | null => {
+  if (period.toLowerCase() === 'year') {
+    const yearlyPrice = parseFloat(price.replace('$', ''));
+    const monthlyPrice = yearlyPrice / 12;
+    return `$${monthlyPrice.toFixed(2)}/month`;
+  }
+  return null;
+};
+
 export const subscriptionPlans: SubscriptionPlan[] = [
   {
     title: 'Free',
@@ -27,31 +37,25 @@ export const subscriptionPlans: SubscriptionPlan[] = [
     period: 'month',
     features: [
       'Unlimited Fights',
-      'Advanced techniques',
       'Combo training',
       'Ad-free experience',
       'Custom Fight builder',
       'Personalized training plans',
       'Priority support',
-      'All free features'
     ],
     popular: true
   },
   {
     title: 'Annual',
-    price: '$39.99', // $3.33/month when billed annually 
+    price: '$39.99',
     period: 'year',
     features: [
-      'Monthly equivalent = $3.33', // Highlighting the monthly equivalent price
       'Unlimited Fights',
-      'Ad-free experience',
       'Combo training',
+      'Ad-free experience',
       'Custom Fight builder',
-      'Advanced techniques',
       'Personalized training plans',
       'Priority support',
-      'All premium features',
-      'All free features'
     ]
   }
 ];
