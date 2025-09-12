@@ -23,7 +23,10 @@
       "fallbackToCacheTimeout": 0
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "config": {
+        "googleMobileAdsAppId": "ca-app-pub-6678510991963006~8573618144"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -36,7 +39,10 @@
       "versionCode": 1,
       "permissions": [
         "com.android.vending.BILLING"
-      ]
+      ],
+      "config": {
+        "googleMobileAdsAppId": "ca-app-pub-6678510991963006~8573618144"
+      }
     },
     "androidStatusBar": {
       "barStyle": "light-content",
