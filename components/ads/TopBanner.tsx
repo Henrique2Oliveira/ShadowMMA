@@ -4,9 +4,10 @@ import { View } from 'react-native';
 
 type Props = {
 	bottomOffset?: number;
+	inline?: boolean;
 };
 
-export default function FreeUserBanner({ bottomOffset = 96 }: Props) {
+export default function TopBanner({ bottomOffset = 96, inline = false }: Props) {
 	const [AdsComponents, setAdsComponents] = useState<null | {
 		BannerAd: any;
 		BannerAdSize: any;
@@ -30,7 +31,7 @@ export default function FreeUserBanner({ bottomOffset = 96 }: Props) {
 	const { BannerAd, BannerAdSize, TestIds } = AdsComponents;
 
 	// Use Google test banner in dev; replace with your production banner unit ID when ready
-	const unitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-xxxxxxxx/zzzzzzzzzz';
+	const unitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-6678510991963006/6604579282';
 	if (!unitId || unitId.includes('xxxxxxxx')) {
 		// No valid production unit configured yet
 		if (!__DEV__) return null;
@@ -39,12 +40,14 @@ export default function FreeUserBanner({ bottomOffset = 96 }: Props) {
 	return (
 		<View
 			pointerEvents="auto"
-			style={{ position: 'absolute', left: 0, right: 0, bottom: bottomOffset, alignItems: 'center', zIndex: 999 }}
+			style={inline
+				? { alignItems: 'center', width: '100%', marginVertical: 8 }
+				: { position: 'absolute', left: 0, right: 0, bottom: bottomOffset, alignItems: 'center', zIndex: 999 }}
 		>
 			<BannerAd
 				unitId={unitId}
 				size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-				requestOptions={{ requestNonPersonalizedAdsOnly: false }}
+				requestOptions={{ requestNonPersonalizedAdsOnly: true }}
 			/>
 		</View>
 	);

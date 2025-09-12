@@ -1,3 +1,4 @@
+import TopBanner from '@/components/ads/TopBanner';
 import { GradientButton } from '@/components/Buttons/GradientButton';
 import { StartFightButton } from '@/components/Buttons/StartFightButton';
 import { LevelBar } from '@/components/LevelBar';
@@ -98,6 +99,7 @@ export default function Index() {
   const userLevel = Math.floor((userData?.xp || 0) / 100);
   const KICKS_REQUIRED_LEVEL = 7;
   const DEFENSE_REQUIRED_LEVEL = 3;
+  const isFree = (userData?.plan || 'free').toLowerCase() === 'free';
 
   // Helper to filter requested moves to those unlocked
   const getAllowedMoves = useCallback((requested: string[]) => {
@@ -608,6 +610,13 @@ export default function Index() {
             onPress={buttons[6].onPress}
           />
         </View>
+
+        {/* Inline banner ad for free users */}
+        {isFree && (
+          <View style={{ width: '100%', maxWidth: 600, alignSelf: 'center' }}>
+            <TopBanner inline />
+          </View>
+        )}
 
         <View
           style={{

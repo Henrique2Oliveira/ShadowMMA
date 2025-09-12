@@ -1,3 +1,4 @@
+import TopBanner from '@/components/ads/TopBanner';
 import MemoizedComboCard from '@/components/MemoizedComboCard';
 import { AlertModal } from '@/components/Modals/AlertModal';
 import { FightModeModal } from '@/components/Modals/FightModeModal';
@@ -239,22 +240,30 @@ export default function Combos() {
     });
   }, [combos, selectedType, recentComboIds]);
   
+  const isFreeUser = (userData?.plan || 'free') === 'free';
+  
   const deviceBucket = getDeviceBucket();
   const cardVerticalGap = deviceBucket === 'tablet'
     ? uiScale(4, { category: 'spacing' }) // tighter spacing only on tablet
     : uiScale(10, { category: 'spacing' });
 
-  const renderItem = useCallback(({ item }: { item: ComboMeta }) => {
+  const renderItem = useCallback(({ item, index }: { item: ComboMeta; index: number }) => {
+    const showBanner = isFreeUser && index >= 0 && (index + 1) % 14 === 0; // Show banner after every 15 items for free users
     return (
-      <View style={{ marginVertical: cardVerticalGap }}>
-        <MemoizedComboCard
-          item={item}
-          userLevel={userLevel}
-          onPress={handleComboPress}
-        />
+      <View>
+        <View style={{ marginVertical: cardVerticalGap }}>
+          <MemoizedComboCard
+            item={item}
+            userLevel={userLevel}
+            onPress={handleComboPress}
+          />
+        </View>
+        {showBanner ? (
+          <TopBanner inline />
+        ) : null}
       </View>
     );
-  }, [userLevel, handleComboPress, cardVerticalGap]);
+  }, [userLevel, handleComboPress, cardVerticalGap, isFreeUser]);
 
   const keyExtractor = useCallback((item: ComboMeta) => item.id, []);
 
@@ -348,9 +357,9 @@ export default function Combos() {
                     <View style={styles.recentHeader}>
                       <Text style={[styles.recentHeaderText, { fontSize: fs.recentHeader }]}>Most Recent</Text>
                     </View>
-                    {recentCombos.slice(0, MAX_RECENT_COMBOS).map(combo => (
+                    {recentCombos.slice(0, MAX_RECENT_COMBOS).map((combo, idx) => (
                       <TouchableOpacity key={combo.id} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handleComboPress(combo as any, combo.level > (userLevel || 0)); }}>
-                        {renderItem({ item: combo })}
+                        {renderItem({ item: combo as any, index: -1 })}
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -358,7 +367,7 @@ export default function Combos() {
               </View>
             );
           }}
-          renderItem={({ item }) => renderItem({ item })}
+          renderItem={({ item, index }) => renderItem({ item, index })}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); fetchCombos(true); }} tintColor={Colors.text} />}
           maxToRenderPerBatch={10}
           windowSize={5}
