@@ -1,39 +1,52 @@
 import Constants from 'expo-constants';
 import React, { useEffect, useState } from 'react';
-import { Platform, View } from 'react-native';
+import { View } from 'react-native';
 
 type Props = {
-  unitId?: string;
+	bottomOffset?: number;
 };
 
-export default function FreeUserBanner({ unitId }: Props) {
-  const [Ads, setAds] = useState<any>(null);
+export default function FreeUserBanner({ bottomOffset = 96 }: Props) {
+	const [AdsComponents, setAdsComponents] = useState<null | {
+		BannerAd: any;
+		BannerAdSize: any;
+		TestIds: any;
+	}>(null);
 
-  useEffect(() => {
-    let mounted = true;
-    // Only attempt on Android and outside Expo Go (needs Dev Client/Prod)
-    if (Platform.OS === 'android' && Constants.appOwnership !== 'expo') {
-      import('react-native-google-mobile-ads')
-        .then(mod => { if (mounted) setAds(mod); })
-        .catch(() => {});
-    }
-    return () => { mounted = false; };
-  }, []);
+	useEffect(() => {
+		// Avoid importing the native module in Expo Go
+		if (Constants.appOwnership === 'expo') return;
+		let mounted = true;
+		(async () => {
+			try {
+				const mod = (await import('react-native-google-mobile-ads')) as any;
+				if (mounted) setAdsComponents({ BannerAd: mod.BannerAd, BannerAdSize: mod.BannerAdSize, TestIds: mod.TestIds });
+			} catch {}
+		})();
+		return () => { mounted = false; };
+	}, []);
 
-  if (!Ads) return null;
+	if (!AdsComponents) return null;
+	const { BannerAd, BannerAdSize, TestIds } = AdsComponents;
 
-  const bannerUnitId = unitId || (__DEV__ ? Ads.TestIds.BANNER : 'ca-app-pub-xxxxxxxx/zzzzzzzzzz');
+	// Use Google test banner in dev; replace with your production banner unit ID when ready
+	const unitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-xxxxxxxx/zzzzzzzzzz';
+	if (!unitId || unitId.includes('xxxxxxxx')) {
+		// No valid production unit configured yet
+		if (!__DEV__) return null;
+	}
 
-  return (
-    <View style={{ alignItems: 'center', marginVertical: 8 }}>
-      <Ads.BannerAd
-        unitId={bannerUnitId}
-        size={Ads.BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-        requestOptions={{
-          requestNonPersonalizedAdsOnly: false,
-          networkExtras: { collapsible: 'bottom' },
-        }}
-      />
-    </View>
-  );
+	return (
+		<View
+			pointerEvents="auto"
+			style={{ position: 'absolute', left: 0, right: 0, bottom: bottomOffset, alignItems: 'center', zIndex: 999 }}
+		>
+			<BannerAd
+				unitId={unitId}
+				size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+				requestOptions={{ requestNonPersonalizedAdsOnly: false }}
+			/>
+		</View>
+	);
 }
+

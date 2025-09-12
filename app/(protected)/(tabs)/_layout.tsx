@@ -1,3 +1,5 @@
+import FreeUserBanner from '@/components/ads/FreeUserBanner';
+import { useUserData } from '@/contexts/UserDataContext';
 import { Colors } from '@/themes/theme';
 import { getDeviceBucket, uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
@@ -8,6 +10,7 @@ import { Text, TouchableOpacity } from 'react-native';
 
 export default function TabsLayout() {
   const router = useRouter();
+  const { userData } = useUserData();
 
   const [fontsLoaded, fontError] = useFonts({
     'CalSans': require('@/assets/fonts/CalSans-Regular.ttf'),
@@ -43,7 +46,11 @@ export default function TabsLayout() {
   const iconWrapperHeight = uiScale(50, { category: 'button' });
   const iconWrapperWidth = uiScale(36, { category: 'button' });
 
+  const isFree = (userData?.plan || 'free').toLowerCase() === 'free';
+  const bannerBottomOffset = tabBarHeight + tabBarBottom + uiScale(8, { category: 'spacing' });
+
   return (
+    <>
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -68,7 +75,7 @@ export default function TabsLayout() {
           width: iconWrapperWidth,
         },
       }}
-    >
+  >
       <Tabs.Screen
         name="index"
         options={{
@@ -168,6 +175,8 @@ export default function TabsLayout() {
           ),
         }}
       />
-    </Tabs>
+  </Tabs>
+  {isFree ? <FreeUserBanner bottomOffset={bannerBottomOffset} /> : null}
+  </>
   )
 }

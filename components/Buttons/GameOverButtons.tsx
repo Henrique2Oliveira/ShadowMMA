@@ -1,13 +1,16 @@
 import { useUserData } from '@/contexts/UserDataContext';
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { LevelBar } from '../LevelBar';
 
 export const GameOverButtons: React.FC = () => {
   const { userData } = useUserData();
   const [displayXp, setDisplayXp] = useState(userData?.xp || 0);
+  const [busy, setBusy] = useState(false);
+  const navigatedRef = useRef(false);
 
   useEffect(() => {
     // Calculate start and end XP values
@@ -46,6 +49,68 @@ export const GameOverButtons: React.FC = () => {
 
   }, [userData?.xp]);
 
+  const handleReturnPress = useCallback(async () => {
+    if (busy || navigatedRef.current) return;
+    const plan = (userData?.plan || 'free').toLowerCase();
+
+    // Only show interstitial for free users, Android, and not in Expo Go
+    const shouldShowAd = plan === 'free' && Platform.OS === 'android' && Constants.appOwnership !== 'expo';
+
+    const navigateHome = () => {
+      if (navigatedRef.current) return;
+      navigatedRef.current = true;
+      router.push('/');
+    };
+
+    if (!shouldShowAd) {
+      navigateHome();
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const ads = (await import('react-native-google-mobile-ads')) as any;
+      const { InterstitialAd, AdEventType, TestIds } = ads;
+
+      // Use test ID in dev. For production, replace with your real interstitial unit ID
+      const unitId = __DEV__ ? TestIds.INTERSTITIAL : 'ca-app-pub-6678510991963006/5962114285';
+      if (!unitId || unitId.includes('xxxxxxxx')) {
+        // No valid production ID configured -> skip showing ad
+        navigateHome();
+        return;
+      }
+
+      const interstitial = InterstitialAd.createForAdRequest(unitId, { requestNonPersonalizedAdsOnly: false });
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+      const onClosed = () => {
+        if (timeoutId) clearTimeout(timeoutId);
+        navigateHome();
+      };
+      const onError = () => {
+        if (timeoutId) clearTimeout(timeoutId);
+        navigateHome();
+      };
+      const onLoaded = () => {
+        try { interstitial.show(); } catch {
+          onError();
+        }
+      };
+
+      interstitial.addAdEventListener(AdEventType.CLOSED, onClosed);
+      interstitial.addAdEventListener(AdEventType.ERROR, onError);
+      interstitial.addAdEventListener(AdEventType.LOADED, onLoaded);
+
+      // Fallback in case loading is slow
+      timeoutId = setTimeout(onError, 4000);
+      interstitial.load();
+    } catch {
+      navigateHome();
+    } finally {
+      setBusy(false);
+    }
+  }, [busy, userData?.plan]);
+
   return (
     <>
       <View style={styles.levelBarContainer}>
@@ -54,7 +119,8 @@ export const GameOverButtons: React.FC = () => {
       <View style={styles.gameOverButtonsContainer}>
         <TouchableOpacity
           style={styles.gameOverButton}
-          onPress={() => router.push("/")}
+          onPress={handleReturnPress}
+          disabled={busy}
         >
           <Ionicons
             name="arrow-back-outline"
