@@ -109,16 +109,16 @@ const styles = StyleSheet.create({
   loadingText: {
     fontFamily: Typography.fontFamily,
     color: Colors.text,
-  fontSize: uiScale(18, { category: 'font' }),
-  marginTop: uiScale(14, { category: 'spacing' }),
+    fontSize: uiScale(18, { category: 'font' }),
+    marginTop: uiScale(14, { category: 'spacing' }),
     textAlign: 'center',
   },
   title: {
     fontFamily: Typography.fontFamily,
     color: "#fff",
-  fontSize: uiScale(36, { category: 'font' }),
+    fontSize: uiScale(36, { category: 'font' }),
     textAlign: 'center',
-  marginBottom: uiScale(24, { category: 'spacing' }),
+    marginBottom: uiScale(24, { category: 'spacing' }),
   },
   button: {
     backgroundColor: Colors.button,
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontFamily: Typography.fontFamily,
     color: "#fff",
-  fontSize: uiScale(18, { category: 'font' }),
+    fontSize: uiScale(18, { category: 'font' }),
     textAlign: 'center',
   },
 });

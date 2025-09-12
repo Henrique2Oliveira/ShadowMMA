@@ -295,7 +295,7 @@ export default function Combos() {
       </LinearGradient>
 
       {loading && !combos && (
-        <View style={{ padding: 24, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ padding: 24, alignItems: 'center', justifyContent: 'center',    flexGrow: 1 }}>
           <ActivityIndicator color={Colors.text} />
           <Text style={{ color: Colors.text, marginTop: 8, fontFamily: Typography.fontFamily }}>Loading combos…</Text>
         </View>

@@ -2,10 +2,32 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Colors, Typography } from '@/themes/theme';
 import { uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import React, { useState } from 'react';
-import { Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 
 export default function AuthScreen() {
+  const { width } = useWindowDimensions();
+  const isSmallPhone = width < 360;
+  const inputMinHeight = isSmallPhone ? 48 : 52;
+  const inputFontSize = isSmallPhone ? uiScale(16, { category: 'font' }) : uiScale(18, { category: 'font' });
+  const iconSize = isSmallPhone ? uiScale(22, { category: 'icon' }) : uiScale(24, { category: 'icon' });
+
   const [isLogin, setIsLogin] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,6 +36,10 @@ export default function AuthScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { login, register, resetPassword } = useAuth();
+
+  const nameRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
 
   const handleSubmit = async () => {
     setError('');
@@ -36,108 +62,135 @@ export default function AuthScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Image
-          source={require('@/assets/images/img2.png')}
-          style={{ width: uiScale(160, { category: 'icon' }), height: uiScale(160, { category: 'icon' }), marginBottom: uiScale(20, { category: 'spacing' }) }} />
-        <View style={styles.form}>
-          {!isLogin && (
-            <View style={styles.inputContainer}>
-              <MaterialCommunityIcons name="account-outline" size={uiScale(20, { category: 'icon' })} color={Colors.lightgray} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Full Name"
-                placeholderTextColor={Colors.lightgray}
-                value={name}
-                onChangeText={(text) => setName(text.slice(0, 50))}
-                autoCapitalize="words"
-                maxLength={50}
-              />
-            </View>
-          )}
-          <View style={styles.inputContainer}>
-            <MaterialCommunityIcons name="email-outline" size={uiScale(20, { category: 'icon' })} color={Colors.lightgray} style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor={Colors.lightgray}
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <MaterialCommunityIcons name="lock-outline" size={uiScale(20, { category: 'icon' })} color={Colors.lightgray} style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor={Colors.lightgray}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-            />
-            <TouchableOpacity
-              style={styles.eyeButton}
-              onPress={() => setShowPassword(!showPassword)}
-            >
-              <MaterialCommunityIcons
-                name={showPassword ? "eye-off" : "eye"}
-                size={uiScale(20, { category: 'icon' })}
-                color={Colors.lightgray}
-              />
-            </TouchableOpacity>
-          </View>
-          {error ? (
-            <Text style={styles.errorText} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>Problem {error}</Text>
-          ) : null}
+      <SafeAreaView style={{ flex: 1, alignSelf: 'stretch' }}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+            <Image
+              source={require('@/assets/images/img2.png')}
+              style={{ width: uiScale(160, { category: 'icon' }), height: uiScale(160, { category: 'icon' }), marginBottom: uiScale(20, { category: 'spacing' }) }} />
+            <View style={styles.form}>
+              {!isLogin && (
+                <View style={[styles.inputContainer, { minHeight: inputMinHeight }]}>
+                  <MaterialCommunityIcons name="account-outline" size={iconSize} color={Colors.lightgray} style={styles.inputIcon} />
+                  <TextInput
+                    ref={nameRef}
+                    style={[styles.input, { fontSize: inputFontSize, minHeight: inputMinHeight }]}
+                    placeholder="Full Name"
+                    placeholderTextColor={Colors.lightgray}
+                    value={name}
+                    onChangeText={(text) => setName(text.slice(0, 50))}
+                    autoCapitalize="words"
+                    maxLength={30}
+                    returnKeyType="next"
+                    onSubmitEditing={() => emailRef.current?.focus()}
+                    accessibilityLabel="Full name"
+                  />
+                </View>
+              )}
+              <View style={[styles.inputContainer, { minHeight: inputMinHeight }]}>
+                <MaterialCommunityIcons name="email-outline" size={iconSize} color={Colors.lightgray} style={styles.inputIcon} />
+                <TextInput
+                  ref={emailRef}
+                  style={[styles.input, { fontSize: inputFontSize, minHeight: inputMinHeight }]}
+                  placeholder="Email"
+                  placeholderTextColor={Colors.lightgray}
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  autoCorrect={false}
+                  textContentType="emailAddress"
+                  returnKeyType="next"
+                  onSubmitEditing={() => passwordRef.current?.focus()}
+                  accessibilityLabel="Email address"
+                />
+              </View>
+              <View style={[styles.inputContainer, { minHeight: inputMinHeight }]}>
+                <MaterialCommunityIcons name="lock-outline" size={iconSize} color={Colors.lightgray} style={styles.inputIcon} />
+                <TextInput
+                  ref={passwordRef}
+                  style={[styles.input, { fontSize: inputFontSize, minHeight: inputMinHeight }]}
+                  placeholder="Password"
+                  placeholderTextColor={Colors.lightgray}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  textContentType="password"
+                  autoCorrect={false}
+                  returnKeyType="done"
+                  onSubmitEditing={handleSubmit}
+                  accessibilityLabel="Password"
+                />
+                <TouchableOpacity
+                  style={styles.eyeButton}
+                  onPress={() => setShowPassword(!showPassword)}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  accessibilityRole="button"
+                  accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  <MaterialCommunityIcons
+                    name={showPassword ? "eye-off" : "eye"}
+                    size={iconSize}
+                    color={Colors.lightgray}
+                  />
+                </TouchableOpacity>
+              </View>
+              {error ? (
+                <Text style={styles.errorText} numberOfLines={3} adjustsFontSizeToFit minimumFontScale={0.8}>Problem {error}</Text>
+              ) : null}
 
-          <TouchableOpacity
-            style={[styles.button, isSubmitting && styles.buttonDisabled]}
-            onPress={handleSubmit}
-            disabled={isSubmitting}
-          >
-            <Text style={styles.buttonText} adjustsFontSizeToFit numberOfLines={1}>
-              {isSubmitting ? 'Please wait...' : (isLogin ? 'Login' : 'Register')}
-            </Text>
-          </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, isSubmitting && styles.buttonDisabled, { paddingVertical: isSmallPhone ? uiScale(12, { category: 'spacing' }) : uiScale(14, { category: 'spacing' }) }]}
+                onPress={handleSubmit}
+                disabled={isSubmitting}
+                accessibilityRole="button"
+                accessibilityLabel={isLogin ? 'Login' : 'Register'}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  {isSubmitting && <ActivityIndicator size="small" color="#fff" style={{ marginRight: 8 }} />}
+                  <Text style={styles.buttonText} adjustsFontSizeToFit numberOfLines={1}>
+                    {isSubmitting ? 'Please wait...' : (isLogin ? 'Login' : 'Register')}
+                  </Text>
+                </View>
+              </TouchableOpacity>
 
-          {isLogin && (
-            <TouchableOpacity
-              onPress={async () => {
-                if (!email) {
-                  setError('Please enter your email address first');
-                  return;
-                }
-                try {
-                  const result = await resetPassword(email);
-                  if (result.success) {
-                    Alert.alert('Password reset email sent! Check your inbox.');
-                    setError('Password reset email sent! Check your inbox.');
-                  } else if (result.error) {
-                    setError(result.error.message);
-                  }
-                } catch (e) {
-                  setError('Failed to send reset email. Please try again.');
-                }
-              }}
-            >
-              <Text style={styles.forgotPasswordText}>Forgot your password?</Text>
-            </TouchableOpacity>
-          )}
+              {isLogin && (
+                <TouchableOpacity
+                  onPress={async () => {
+                    if (!email) {
+                      setError('Please enter your email address first');
+                      return;
+                    }
+                    try {
+                      const result = await resetPassword(email);
+                      if (result.success) {
+                        Alert.alert('Password reset email sent! Check your inbox.');
+                        setError('Password reset email sent! Check your inbox.');
+                      } else if (result.error) {
+                        setError(result.error.message);
+                      }
+                    } catch (e) {
+                      setError('Failed to send reset email. Please try again.');
+                    }
+                  }}
+                >
+                  <Text style={styles.forgotPasswordText}>Forgot your password?</Text>
+                </TouchableOpacity>
+              )}
 
-          <TouchableOpacity
-            onPress={() => {
-              setIsLogin(!isLogin);
-              setError('');
-            }}
-            disabled={isSubmitting}
-          >
-            <Text style={styles.switchText}>
-              {isLogin ? 'Create an account?' : 'Have an account? Login'}
-            </Text>
-          </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setIsLogin(!isLogin);
+                  setError('');
+                }}
+                disabled={isSubmitting}
+              >
+                <Text style={styles.switchText}>
+                  {isLogin ? 'Create an account?' : 'Have an account? Login'}
+                </Text>
+              </TouchableOpacity>
 
-          {/* <View style={styles.dividerContainer}>
+              {/* <View style={styles.dividerContainer}>
           <View style={styles.divider} />
           <Text style={styles.dividerText}>or login with</Text>
           <View style={styles.divider} />
@@ -147,8 +200,10 @@ export default function AuthScreen() {
           <MaterialCommunityIcons name="google" size={24} color="#fff" />
           <Text style={styles.socialButtonText}>Google</Text>
         </TouchableOpacity> */}
-        </View>
-      </ScrollView>
+            </View>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </SafeAreaView>
     </KeyboardAvoidingView>
   );
 }
@@ -159,6 +214,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'black',
+    
   },
   content: {
     flexGrow: 1,
@@ -182,7 +238,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 5,
     top: '50%',
-    transform: [{ translateY: -22 }],
+    transform: [{ translateY: -16 }],
   },
   errorText: {
     color: '#ff6b6b',
@@ -206,9 +262,9 @@ const styles = StyleSheet.create({
     marginBottom: uiScale(14, { category: 'spacing' }),
   },
   form: {
-    width: '90%',
+    width: '100%',
     minWidth: 0,
-    maxWidth: 520,
+    maxWidth: 620,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -224,9 +280,10 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     color: '#fff',
-    padding: uiScale(12, { category: 'spacing' }),
+    padding: uiScale(14, { category: 'spacing' }),
     paddingLeft: uiScale(10, { category: 'spacing' }),
     fontSize: uiScale(16, { category: 'font' }),
+    width: '100%',
   },
   button: {
     backgroundColor: "#db2020ff",
@@ -238,6 +295,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
+        width: '100%',
   },
   buttonDisabled: {
     backgroundColor: Colors.button + '80', // Add 50% opacity
