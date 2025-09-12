@@ -10,7 +10,12 @@ export default function BannerSample() {
       <BannerAd
         unitId={BANNER_AD_UNIT_ID}
         size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-        requestOptions={{ requestNonPersonalizedAdsOnly: false }}
+        requestOptions={{
+          requestNonPersonalizedAdsOnly: false,
+          networkExtras: {
+            collapsible: "bottom",
+          }
+        }}
       />
     </View>
   );

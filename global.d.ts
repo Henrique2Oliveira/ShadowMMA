@@ -1,5 +1,6 @@
 declare global {
   var showFightModal: (() => void) | undefined;
+  var bannerShownThisSession: boolean | undefined;
 }
 
 export { };

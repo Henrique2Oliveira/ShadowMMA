@@ -23,10 +23,7 @@
       "fallbackToCacheTimeout": 0
     },
     "ios": {
-      "supportsTablet": true,
-      "config": {
-        "googleMobileAdsAppId": "ca-app-pub-6678510991963006~8573618144"
-      }
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
@@ -39,10 +36,7 @@
       "versionCode": 1,
       "permissions": [
         "com.android.vending.BILLING"
-      ],
-      "config": {
-        "googleMobileAdsAppId": "ca-app-pub-6678510991963006~8573618144"
-      }
+      ]
     },
     "androidStatusBar": {
       "barStyle": "light-content",
@@ -65,7 +59,8 @@
       [
         "react-native-google-mobile-ads",
         {
-          "android_app_id": "ca-app-pub-6678510991963006~8573618144"
+          "androidAppId": "ca-app-pub-6678510991963006~8573618144",
+          "iosAppId": "ca-app-pub-6678510991963006~8573618144"
         }
       ],
       [

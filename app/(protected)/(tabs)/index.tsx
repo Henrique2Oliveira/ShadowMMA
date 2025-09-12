@@ -1,3 +1,4 @@
+import FreeUserBanner from '@/components/ads/FreeUserBanner';
 import { GradientButton } from '@/components/Buttons/GradientButton';
 import { StartFightButton } from '@/components/Buttons/StartFightButton';
 import { LevelBar } from '@/components/LevelBar';
@@ -21,6 +22,7 @@ import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } 
 export default function Index() {
   const { user, setStreakUpdateCallback } = useAuth();
   const { userData, refreshUserData } = useUserData();
+  const [showBannerThisSession, setShowBannerThisSession] = useState(false);
 
   const [refreshing, setRefreshing] = React.useState(false);
 
@@ -141,6 +143,11 @@ export default function Index() {
     setNotificationMessage(notificationMessages[Math.floor(Math.random() * notificationMessages.length)]);
     // Also refresh mission settings when screen loads
     loadMissionSettings();
+    // Show banner only once per app session when user first enters Home
+    if (!globalThis.bannerShownThisSession) {
+      setShowBannerThisSession(true);
+      globalThis.bannerShownThisSession = true;
+    }
   }, [user, loadMissionSettings]);
 
   // Set up streak update callback
@@ -476,6 +483,13 @@ export default function Index() {
 
       {/* Content */}
       <View style={styles.container}>
+
+        {/* Free user banner: only for non-pro/annual and only once per session */}
+        {userData?.plan?.toLowerCase() !== 'pro' && userData?.plan?.toLowerCase() !== 'annual' && showBannerThisSession && (
+          <View style={{ width: '100%', maxWidth: 600 }}>
+            <FreeUserBanner />
+          </View>
+        )}
 
         <View
           style={{
