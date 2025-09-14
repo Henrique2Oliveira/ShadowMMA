@@ -73,7 +73,7 @@ export const GameOverButtons: React.FC = () => {
       const { InterstitialAd, AdEventType, TestIds } = ads;
 
       // Use test ID in dev. For production, replace with your real interstitial unit ID
-      const unitId = __DEV__ ? TestIds.INTERSTITIAL : 'ca-app-pub-6678510991963006/5962114285';
+      const unitId = __DEV__ ? TestIds.INTERSTITIAL : 'ca-app-pub-6678510991963006/4151420738';
       if (!unitId || unitId.includes('xxxxxxxx')) {
         // No valid production ID configured -> skip showing ad
         navigateHome();
