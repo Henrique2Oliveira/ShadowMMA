@@ -240,7 +240,7 @@ export const LoadingScreen = () => {
         );
       })}
 
-  {/* Main icon container */}
+      {/* Main icon container */}
       <Animated.View
         style={[
           styles.iconContainer,
@@ -277,7 +277,7 @@ export const LoadingScreen = () => {
       </Animated.Text>
 
       {/* Indeterminate progress bar */}
-  <View style={styles.progressTrack}>
+      <View style={styles.progressTrack}>
         <Animated.View style={[styles.progressBar, { width: progressWidth }]} />
       </View>
 
@@ -352,10 +352,10 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   progressTrack: {
-    width: width * 0.62,
+    width: width * 0.5,
     height: 8,
     borderRadius: 6,
-  backgroundColor: Colors.background + '80',
+    backgroundColor: Colors.background + '80',
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: Colors.redDots + '66',

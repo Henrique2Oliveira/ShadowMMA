@@ -62,8 +62,8 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
           />
           <View style={styles.textContainer}>
             <Text style={[
-              styles.textButton, 
-              { 
+              styles.textButton,
+              {
                 textAlign: 'left',
                 fontSize: rf(fontSize, { maxScale: 1.4 }),
               }
@@ -95,12 +95,12 @@ const styles = StyleSheet.create({
   linearGradientButton: {
     width: '100%',
     maxWidth: 680,
-  height: rs(130, { maxScale: 1.25, minScale: 0.9 }),
+    height: rs(130, { maxScale: 1.25, minScale: 0.9 }),
     backgroundColor: 'transparent',
     borderRadius: 15,
     marginBottom: 10,
-  paddingVertical: isTablet ? 12 : 6,
-  paddingHorizontal: isTablet ? 18 : 14,
+    paddingVertical: isTablet ? 12 : 6,
+    paddingHorizontal: isTablet ? 18 : 14,
     marginVertical: 10,
     overflow: "hidden",
     shadowOffset: { width: 0, height: 2 },
@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     height: '100%',
-  paddingHorizontal: 16,
+    paddingHorizontal: 16,
   },
   proBadgeContainer: {
     position: 'absolute',
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'flex-start',
     justifyContent: 'center',
-  paddingRight: isTablet ? 72 : 56,
+    paddingRight: isTablet ? 72 : 56,
   },
   buttonIcon: {
     marginBottom: 10,
@@ -177,25 +177,26 @@ const styles = StyleSheet.create({
   buttonIconLarge: {
     position: 'absolute',
     overflow: 'hidden',
-  top: isTablet ? 0 : 4,
-  right: isTablet ? -14 : -8,
+    top: isTablet ? 0 : 4,
+    right: isTablet ? -14 : -8,
     transform: [{ rotate: '15deg' }],
   },
   textButton: {
     color: Colors.text,
     textAlign: 'center',
     fontFamily: Typography.fontFamily,
-  fontSize: 22,
+    fontSize: 22,
     textShadowColor: "#000",
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 2,
   },
   subtitleText: {
     color: Colors.text,
-    opacity: 0.9,
+    opacity: 1,
     fontFamily: Typography.fontFamily,
-  fontSize: 12,
+    fontSize: 12,
     marginTop: 2,
+    marginLeft: 5,
     textShadowColor: "#000",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 1,

@@ -506,7 +506,7 @@ export default function Index() {
             const isLockedDefense = button.title === 'Defense' && userLevel < DEFENSE_REQUIRED_LEVEL;
             const locked = isLockedKicks || isLockedDefense;
             const ICON_SIZE = isTablet ? rs(36) : rs(32);
-            const LABEL_FONT = isTablet ? rf(16) : rf(13);
+            // const LABEL_FONT = isTablet ? rf(16) : rf(13);
             return (
               <View
                 key={buttonIndex}
