@@ -6,20 +6,20 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef } from 'react';
 import {
-    Animated,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Animated,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 type AnimatedValue = Animated.Value;
 
 interface CombosModalProps {
   visible: boolean;
-  combos: { name: string; moves: Move[]; level: number}[];
+  combos: { name: string; moves: Move[]; level: number }[];
   onClose: () => void;
   randomFight?: boolean;
 }
@@ -44,7 +44,7 @@ export const CombosModal: React.FC<CombosModalProps> = ({
     if (visible) {
       // Reset animations when modal opens
       slideAnims.forEach((anim: AnimatedValue) => anim.setValue(300));
-      rotateAnims.forEach((anim: AnimatedValue) => anim.setValue(0));
+      rotateAnims.forEach((anim: AnimatedValue) => anim.setValue(1));
       scaleAnims.forEach((anim: AnimatedValue) => anim.setValue(1));
 
       // Create sequential animations with bounce and rotation
@@ -59,7 +59,7 @@ export const CombosModal: React.FC<CombosModalProps> = ({
           Animated.timing(slideAnim, {
             toValue: -20, // Overshoot
             duration: 400,
-            delay: index * 150,
+            delay: index * 400,
             useNativeDriver: true,
           }),
           // Bounce back with rotation and scale
@@ -79,8 +79,13 @@ export const CombosModal: React.FC<CombosModalProps> = ({
                   useNativeDriver: true,
                 }),
                 Animated.timing(scaleAnim, {
-                  toValue: 1.05,
+                  toValue: 1.08,
                   duration: 200,
+                  useNativeDriver: true,
+                }),
+                Animated.timing(rotateAnim, {
+                  toValue: -0.5,
+                  duration: 300,
                   useNativeDriver: true,
                 }),
               ]),
@@ -215,14 +220,14 @@ const styles = StyleSheet.create({
     borderTopRightRadius: uiScale(20, { category: 'spacing' }),
     padding: uiScale(20, { category: 'spacing' }),
     paddingBottom: uiScale(40, { category: 'spacing' }),
-  // Increased base height for better visibility on larger devices
-  minHeight: uiScale(380),
-  maxHeight: '88%',
+    // Increased base height for better visibility on larger devices
+    minHeight: uiScale(380),
+    maxHeight: '88%',
     width: '100%',
   },
   modalTitle: {
     color: Colors.text,
-  fontSize: uiScale(26, { category: 'font' }),
+    fontSize: uiScale(26, { category: 'font' }),
     fontFamily: Typography.fontFamily,
     marginTop: uiScale(20, { category: 'spacing' }),
     marginBottom: uiScale(15, { category: 'spacing' }),
@@ -262,7 +267,7 @@ const styles = StyleSheet.create({
   },
   comboName: {
     color: Colors.text,
-  fontSize: uiScale(16, { category: 'font' }),
+    fontSize: uiScale(16, { category: 'font' }),
     fontFamily: Typography.fontFamily,
     flex: 1,
   },
@@ -282,7 +287,7 @@ const styles = StyleSheet.create({
   },
   levelText: {
     color: Colors.text,
-  fontSize: uiScale(14, { category: 'font' }),
+    fontSize: uiScale(14, { category: 'font' }),
     fontFamily: Typography.fontFamily,
 
   },
@@ -297,9 +302,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#fafafa25',
     padding: uiScale(10, { category: 'spacing' }),
     borderRadius: uiScale(10, { category: 'spacing' }),
-  fontSize: uiScale(16, { category: 'font' }),
+    fontSize: uiScale(16, { category: 'font' }),
     fontFamily: Typography.fontFamily,
-  lineHeight: uiScale(22, { category: 'font' }),
+    lineHeight: uiScale(22, { category: 'font' }),
     flexShrink: 1,
   },
   closeButton: {
@@ -314,19 +319,19 @@ const styles = StyleSheet.create({
     borderRadius: uiScale(10, { category: 'spacing' }),
     marginTop: uiScale(20, { category: 'spacing' }),
     marginHorizontal: uiScale(10, { category: 'spacing' }),
-  borderBottomWidth: 4,
+    borderBottomWidth: 4,
     borderWidth: 2,
     borderColor: '#ff3636ff',
     overflow: 'hidden',
   },
   startButtonGradient: {
-  paddingVertical: uiScale(12, { category: 'spacing' }),
-  padding: uiScale(12, { category: 'spacing' }),
-  paddingBottom: uiScale(14, { category: 'spacing' }),
+    paddingVertical: uiScale(12, { category: 'spacing' }),
+    padding: uiScale(12, { category: 'spacing' }),
+    paddingBottom: uiScale(14, { category: 'spacing' }),
   },
   startButtonText: {
     color: Colors.text,
-  fontSize: uiScale(24, { category: 'font' }),
+    fontSize: uiScale(24, { category: 'font' }),
     fontFamily: Typography.fontFamily,
     textAlign: 'center',
 
@@ -345,15 +350,15 @@ const styles = StyleSheet.create({
   },
   randomInfoTitle: {
     color: Colors.text,
-  fontSize: uiScale(22, { category: 'font' }),
+    fontSize: uiScale(22, { category: 'font' }),
     fontFamily: Typography.fontFamily,
     marginBottom: uiScale(10, { category: 'spacing' }),
   },
   randomInfoText: {
     color: Colors.text,
-  fontSize: uiScale(16, { category: 'font' }),
+    fontSize: uiScale(16, { category: 'font' }),
     fontFamily: Typography.fontFamily,
     textAlign: 'center',
-  lineHeight: uiScale(22, { category: 'font' }),
+    lineHeight: uiScale(22, { category: 'font' }),
   },
 });
