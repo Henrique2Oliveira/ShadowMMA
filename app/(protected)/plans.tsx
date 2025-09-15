@@ -3,14 +3,30 @@ import { calculateMonthlyEquivalent, getPlanFeatures, subscriptionPlans, type Su
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
+import { isTablet as deviceIsTablet, rf } from '@/utils/responsive';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { getAuth } from 'firebase/auth';
-import React, { useState } from 'react';
-import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 
 export default function Plans() {
+  const { width } = useWindowDimensions();
+  const isTablet = deviceIsTablet; // simple boolean from responsive util
+  const layout = useMemo(() => {
+    if (!isTablet) {
+      const maxWidth = 420; // phone single-column cap
+      const containerWidth = Math.min(width - 32, maxWidth);
+      return { columns: 1, cardWidth: containerWidth, containerWidth } as const;
+    }
+    const maxContainer = Math.min(1180, width - 40);
+    const columns = maxContainer > 1040 ? 3 : 2;
+    const gap = 24 * (columns - 1);
+    const cardWidth = (maxContainer - gap) / columns;
+    return { columns, cardWidth, containerWidth: maxContainer } as const;
+  }, [width, isTablet]);
   const { user } = useAuth();
   const { userData, refreshUserData } = useUserData();
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
@@ -261,7 +277,10 @@ export default function Plans() {
         >
           <MaterialCommunityIcons name="arrow-left" size={24} color={Colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Subscription Plans</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.title}>Subscription Plans</Text>
+          <Text style={styles.subtitle}>Unlock premium training and exclusive features</Text>
+        </View>
       </View>
 
       <View style={styles.content}>
@@ -300,63 +319,77 @@ export default function Plans() {
         <View style={styles.allPlansSection}>
           <Text style={styles.sectionTitle}>All Available Plans</Text>
           <Text style={styles.sectionSubtitle}>Choose the plan that fits your training goals</Text>
-          
-          {subscriptionPlans.map((plan) => (
-            <Pressable
-              key={plan.title}
-              style={[
-                styles.planCard,
-                plan.popular && styles.popularCard,
-                plan.title.toLowerCase() === userData?.plan?.toLowerCase() && styles.activePlanCard
-              ]}
-              onPress={() => handleSelectPlan(plan)}
-            >
-              {plan.popular && (
-                <View style={styles.popularBadge}>
-                  <Text style={styles.popularText}>Most Popular</Text>
-                </View>
-              )}
-              
-              {plan.title.toLowerCase() === userData?.plan?.toLowerCase() && (
-                <View style={styles.activeBadge}>
-                  <Text style={styles.activeText}>Current Plan</Text>
-                </View>
-              )}
-
-              <View style={styles.planHeader}>
-                <Text style={styles.planTitle}>{plan.title}</Text>
-                <View style={styles.priceContainer}>
-                  <Text style={styles.planPrice}>{plan.price}</Text>
-                  <Text style={styles.planPeriod}>/{plan.period}</Text>
-                </View>
-                {getMonthlyEquivalent(plan) && (
-                  <Text style={styles.planPeriod}>{getMonthlyEquivalent(plan)}</Text>
-                )}
-              </View>
-
-              <View style={styles.featuresContainer}>
-                {plan.features.map((feature, index) => (
-                  <View key={index} style={styles.featureRow}>
-                    <MaterialCommunityIcons name="check" size={18} color="#4ade80" />
-                    <Text style={styles.featureText}>{feature}</Text>
+          <View style={[
+            styles.cardsWrapper,
+            {
+              width: layout.containerWidth,
+              alignSelf: 'center'
+            },
+            isTablet && {
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              justifyContent: 'center'
+            }
+          ]}>
+            {subscriptionPlans.map((plan) => (
+              <Pressable
+                key={plan.title}
+                style={[{ width: layout.cardWidth }, styles.planOuter, isTablet && { margin: 12 }]} onPress={() => handleSelectPlan(plan)}>
+                <LinearGradient
+                  colors={plan.title.toLowerCase() === userData?.plan?.toLowerCase() ? ['#1b2e1b', '#0d140d'] : plan.popular ? ['#2d1215', '#130607'] : ['#141414', '#0d0d0d']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[
+                    styles.planCard,
+                    plan.popular && styles.popularCard,
+                    plan.title.toLowerCase() === userData?.plan?.toLowerCase() && styles.activePlanCard,
+                  ]}
+                >
+                {plan.popular && (
+                  <View style={styles.popularBadge}>
+                    <Text style={styles.popularText}>Most Popular</Text>
                   </View>
-                ))}
-              </View>
-
-              <TouchableOpacity
-                style={[
-                  styles.selectButton,
-                  getButtonStyle(plan.title)
-                ]}
-                onPress={() => handleSelectPlan(plan)}
-                disabled={plan.title.toLowerCase() === userData?.plan?.toLowerCase()}
-              >
-                <Text style={styles.selectButtonText}>
-                  {getButtonText(plan.title)}
-                </Text>
-              </TouchableOpacity>
-            </Pressable>
-          ))}
+                )}
+                {plan.title.toLowerCase() === userData?.plan?.toLowerCase() && (
+                  <View style={styles.activeBadge}>
+                    <Text style={styles.activeText}>Current Plan</Text>
+                  </View>
+                )}
+                <View style={styles.planHeader}>
+                  <Text style={[styles.planTitle, isTablet && styles.planTitleTablet]}>{plan.title}</Text>
+                  <View style={styles.priceContainer}>
+                    <Text style={[styles.planPrice, isTablet && styles.planPriceTablet]}>{plan.price}</Text>
+                    <Text style={[styles.planPeriod, isTablet && styles.planPeriodTablet]}>/{plan.period}</Text>
+                  </View>
+                  {getMonthlyEquivalent(plan) && (
+                    <Text style={[styles.planPeriod, isTablet && styles.planPeriodTablet]}>{getMonthlyEquivalent(plan)}</Text>
+                  )}
+                </View>
+                <View style={[styles.featuresContainer, isTablet && styles.featuresContainerTablet]}>
+                  {plan.features.map((feature, index) => (
+                    <View key={index} style={styles.featureRow}>
+                      <MaterialCommunityIcons name="check" size={isTablet ? 20 : 18} color="#4ade80" />
+                      <Text style={[styles.featureText, isTablet && styles.featureTextTablet]}>{feature}</Text>
+                    </View>
+                  ))}
+                </View>
+                <TouchableOpacity
+                  style={[
+                    styles.selectButton,
+                    getButtonStyle(plan.title),
+                    isTablet && styles.selectButtonTablet
+                  ]}
+                  onPress={() => handleSelectPlan(plan)}
+                  disabled={plan.title.toLowerCase() === userData?.plan?.toLowerCase()}
+                >
+                  <Text style={[styles.selectButtonText, isTablet && styles.selectButtonTextTablet]}>
+                    {getButtonText(plan.title)}
+                  </Text>
+                </TouchableOpacity>
+                </LinearGradient>
+              </Pressable>
+            ))}
+          </View>
         </View>
 
         {/* Testimonials Section */}
@@ -364,7 +397,7 @@ export default function Plans() {
           <Text style={styles.sectionTitle}>What members say</Text>
 
           <View style={styles.benefitCard}>
-            <MaterialCommunityIcons name="format-quote-close" size={32} color="#c9213a" />
+            <MaterialCommunityIcons name="format-quote-close" size={32} color="#ffffffff" />
             <Text style={styles.quoteText}>
               “The premium access has been a complete game changer for me! I have truly seen a difference within myself and my ability!”
             </Text>
@@ -372,7 +405,7 @@ export default function Plans() {
           </View>
 
           <View style={styles.benefitCard}>
-            <MaterialCommunityIcons name="format-quote-close" size={32} color="#fdd700" />
+            <MaterialCommunityIcons name="format-quote-close" size={32} color="#ffffffff" />
             <Text style={styles.quoteText}>
               “Within two weeks I was sharper, faster, and more confident. The drills feel like having a coach in my pocket.”
             </Text>
@@ -380,13 +413,31 @@ export default function Plans() {
           </View>
 
           <View style={styles.benefitCard}>
-            <MaterialCommunityIcons name="format-quote-close" size={32} color="#4ade80" />
+            <MaterialCommunityIcons name="format-quote-close" size={32} color="#ffffffff" />
             <Text style={styles.quoteText}>
               “As a busy parent, the structured sessions keep me consistent. I’m landing combos I never thought I could.”
             </Text>
             <Text style={styles.authorText}>— Sofia R., Texas</Text>
           </View>
         </View>
+      </View>
+
+      {/* Legal / Billing Disclaimer */}
+      <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 28 }}>
+        {(() => {
+          const proPlan = subscriptionPlans.find(p => p.title.toLowerCase() === 'pro');
+          const annualPlan = subscriptionPlans.find(p => p.title.toLowerCase() === 'annual');
+          const proPrice = proPlan?.price || '$9.99';
+          const annualPrice = annualPlan?.price || '$39.99';
+          const annualMonthlyEq = calculateMonthlyEquivalent(annualPrice, 'year');
+          return (
+            <Text style={styles.disclaimerText}>
+              The subscription gives you unlimited access to all premium training content and future feature releases. Your Google Play account will be charged when you confirm the purchase. Subscriptions renew automatically unless cancelled at least 24 hours before the end of the current period. The Pro plan is billed {proPrice} per month. The Annual plan is billed {annualPrice} per year{annualMonthlyEq ? ` (equivalent to ${annualMonthlyEq})` : ''}. Manage or cancel anytime in your Google Play settings. By subscribing you agree to our
+              <Text style={styles.linkText} onPress={() => Linking.openURL('https://www.shadowmma.com/terms-of-service')}> Terms & Conditions</Text> and
+              <Text style={styles.linkText} onPress={() => Linking.openURL('https://www.shadowmma.com/privacy-policy')}> Privacy Policy</Text>.
+            </Text>
+          );
+        })()}
       </View>
 
       {/* Upgrade Confirmation Modal */}
@@ -444,9 +495,16 @@ const styles = StyleSheet.create({
   },
   title: {
     color: Colors.text,
-    fontSize: 24,
+    fontSize: rf(28),
     fontFamily: Typography.fontFamily,
     fontWeight: 'bold',
+  },
+  subtitle: {
+    color: Colors.text,
+    fontSize: rf(13),
+    fontFamily: Typography.fontFamily,
+    opacity: 0.7,
+    marginTop: 4,
   },
   content: {
     padding: 20,
@@ -456,14 +514,14 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: Colors.text,
-    fontSize: 20,
+    fontSize: rf(22),
     fontFamily: Typography.fontFamily,
     fontWeight: 'bold',
     marginBottom: 15,
   },
   sectionSubtitle: {
     color: Colors.text,
-    fontSize: 14,
+    fontSize: rf(14),
     fontFamily: Typography.fontFamily,
     opacity: 0.7,
     marginBottom: 20,
@@ -483,13 +541,13 @@ const styles = StyleSheet.create({
   },
   currentPlanTitle: {
     color: Colors.text,
-    fontSize: 18,
+    fontSize: rf(18),
     fontFamily: Typography.fontFamily,
     fontWeight: 'bold',
   },
   currentPlanPrice: {
     color: Colors.text,
-    fontSize: 24,
+    fontSize: rf(26),
     fontFamily: Typography.fontFamily,
     fontWeight: 'bold',
   },
@@ -504,13 +562,22 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   planCard: {
-    backgroundColor: '#111',
-    borderRadius: 15,
-    padding: 20,
-    marginBottom: 15,
+    backgroundColor: '#111', // could later swap for LinearGradient if desired
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 18,
     borderWidth: 1,
     borderColor: '#333',
     position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 18,
+    elevation: 8,
+  },
+  planOuter: {
+    marginBottom: 18,
+    borderRadius: 20,
   },
   popularCard: {
     borderColor: '#c9213a',
@@ -555,10 +622,13 @@ const styles = StyleSheet.create({
   },
   planTitle: {
     color: Colors.text,
-    fontSize: 20,
+    fontSize: rf(20),
     fontFamily: Typography.fontFamily,
     fontWeight: 'bold',
     marginBottom: 5,
+  },
+  planTitleTablet: {
+    fontSize: rf(26, { maxScale: 1.4 }),
   },
   priceContainer: {
     flexDirection: 'row',
@@ -566,19 +636,28 @@ const styles = StyleSheet.create({
   },
   planPrice: {
     color: Colors.text,
-    fontSize: 28,
+    fontSize: rf(34),
     fontFamily: Typography.fontFamily,
     fontWeight: 'bold',
   },
+  planPriceTablet: {
+    fontSize: rf(40, { maxScale: 1.45 }),
+  },
   planPeriod: {
     color: Colors.text,
-    fontSize: 16,
+    fontSize: rf(15),
     opacity: 0.8,
     marginLeft: 2,
+  },
+  planPeriodTablet: {
+    fontSize: rf(16, { maxScale: 1.3 }),
   },
   featuresContainer: {
     marginBottom: 20,
     gap: 10,
+  },
+  featuresContainerTablet: {
+    marginBottom: 24,
   },
   featureRow: {
     flexDirection: 'row',
@@ -587,14 +666,21 @@ const styles = StyleSheet.create({
   featureText: {
     color: Colors.text,
     marginLeft: 10,
-    fontSize: 14,
+    fontSize: rf(14),
     fontFamily: Typography.fontFamily,
     flex: 1,
   },
+  featureTextTablet: {
+    fontSize: rf(15, { maxScale: 1.3 }),
+  },
   selectButton: {
-    padding: 15,
-    borderRadius: 10,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 14,
     alignItems: 'center',
+  },
+  selectButtonTablet: {
+    paddingVertical: 22,
   },
   upgradeButton: {
     backgroundColor: '#c9213a',
@@ -604,9 +690,12 @@ const styles = StyleSheet.create({
   },
   selectButtonText: {
     color: Colors.text,
-    fontSize: 16,
+    fontSize: rf(16),
     fontFamily: Typography.fontFamily,
     fontWeight: 'bold',
+  },
+  selectButtonTextTablet: {
+    fontSize: rf(20, { maxScale: 1.35 }),
   },
   benefitsSection: {
     marginTop: 20,
@@ -638,7 +727,7 @@ const styles = StyleSheet.create({
   },
   quoteText: {
     color: Colors.text,
-    fontSize: 16,
+    fontSize: rf(16),
     fontFamily: Typography.fontFamily,
     textAlign: 'center',
     opacity: 0.95,
@@ -648,11 +737,25 @@ const styles = StyleSheet.create({
   },
   authorText: {
     color: Colors.text,
-    fontSize: 14,
+    fontSize: rf(14),
     fontFamily: Typography.fontFamily,
     textAlign: 'center',
     opacity: 0.75,
     marginTop: 10,
     fontWeight: '600',
+  },
+  disclaimerText: {
+    color: Colors.text,
+    fontSize: rf(11),
+    fontFamily: Typography.fontFamily,
+    opacity: 0.6,
+    lineHeight: 16,
+  },
+  cardsWrapper: {
+    width: '100%',
+  },
+  linkText: {
+    color: '#4a9fff',
+    textDecorationLine: 'underline',
   },
 });

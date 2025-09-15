@@ -21,11 +21,19 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const userPlan = userData?.plan?.toLowerCase();
-  // Always horizontal row layout (no grid) per request
-  const containerHorizontalPadding = isTablet ? rs(34) : 20;
-  const cardWidth = useMemo(() => {
-    return isTablet ? Math.min(360, rs(330, { maxScale: 1.35 })) : rs(280, { maxScale: 1.2 });
+  const layout = useMemo(() => {
+    if (!isTablet) {
+      const maxWidth = 420;
+      const containerWidth = Math.min(width - 32, maxWidth);
+      return { columns: 1, cardWidth: containerWidth, containerWidth } as const;
+    }
+    const maxContainer = Math.min(1100, width - 40);
+    const columns = maxContainer > 950 ? 3 : 2;
+    const gap = 24 * (columns - 1);
+    const cardWidth = (maxContainer - gap) / columns;
+    return { columns, cardWidth, containerWidth: maxContainer } as const;
   }, [width]);
+  const containerHorizontalPadding = isTablet ? rs(34) : 20;
 
   const toggleExpand = useCallback((title: string) => {
     setExpanded(prev => ({ ...prev, [title]: !prev[title] }));
@@ -114,80 +122,81 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
     const showExpandToggle = !isTablet && plan.features.length > 3;
     const isAnnual = plan.title.toLowerCase() === 'annual';
     const perMonthEquivalent = isAnnual && plan.features.find(f => f.toLowerCase().includes('monthly equivalent'));
-
     return (
-      <View key={plan.title} style={[styles.planCard, { width: cardWidth }, plan.popular && styles.popularCard, isCurrent && styles.currentOutline]}>
-        {/* Popular & savings badges */}
-        <View style={styles.badgesRow}>
-          {plan.popular && (
-            <LinearGradient colors={[ '#c9213a', '#ff5f5f' ]} style={styles.badgeGradient}>
-              <MaterialCommunityIcons name="fire" size={14} color="#fff" style={{ marginRight: 4 }} />
-              <Text style={styles.badgeText}>Popular</Text>
-            </LinearGradient>
-          )}
-          {isAnnual && (
-            <LinearGradient colors={[ '#148f3d', '#3EB516' ]} style={[styles.badgeGradient, isTablet && styles.badgeGradientTablet, { backgroundColor: 'transparent' }]}> 
-              <MaterialCommunityIcons name="tag" size={isTablet ? 16 : 14} color="#fff" style={{ marginRight: 4 }} />
-              <Text style={[styles.badgeText, isTablet && styles.badgeTextTablet]}>{staticAnnualDiscount}% OFF</Text>
-            </LinearGradient>
-          )}
-          {isCurrent && (
-            <View style={[styles.badgeGradient, { backgroundColor: '#333', paddingHorizontal: 10 }]}> 
-              <MaterialCommunityIcons name="check-decagram" size={14} color="#fff" style={{ marginRight: 4 }} />
-              <Text style={styles.badgeText}>Your Plan</Text>
-            </View>
-          )}
-        </View>
-
-        <Text style={[styles.planTitle, isCurrent && styles.planTitleCurrent]}>{plan.title}</Text>
-        <View style={styles.priceRow}>
-          <Text style={styles.planPrice}>{plan.price}</Text>
-          <Text style={styles.planPeriod}>/{plan.period}</Text>
-        </View>
-        {getMonthlyEquivalent(plan) && (
-          <Text style={styles.perMonthText}>{getMonthlyEquivalent(plan)}</Text>
-        )}
-
-        <View style={styles.divider} />
-        <View style={[styles.featuresContainer, isExpanded && styles.featuresExpanded]}>
-          {featuresToShow.map((feature: string, index: number) => (
-            <View key={index} style={styles.featureRow}>
-              <MaterialCommunityIcons name="check" size={18} color={Colors.green} />
-              <Text style={styles.featureText}>{feature}</Text>
-            </View>
-          ))}
-        </View>
-        {showExpandToggle && (
-          <Pressable onPress={() => toggleExpand(plan.title)} style={styles.expandToggle} hitSlop={8}>
-            <Text style={styles.expandToggleText}>{isExpanded ? 'Show Less' : 'Show All Features'}</Text>
-            <MaterialCommunityIcons name={isExpanded ? 'chevron-up' : 'chevron-down'} size={20} color={Colors.text} />
-          </Pressable>
-        )}
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`${getButtonText(plan.title)} ${plan.title} plan`}
-          onPress={async () => {
-            if (isCurrent) return;
-            const key = plan.title.toLowerCase();
-            if (key === 'free') {
-              // Downgrade: open manage page to cancel
-              const currKey = (userPlan || '').toLowerCase();
-              const sku = SKU_BY_PLAN[currKey];
-              await openManageSubscriptions(sku);
-            } else {
-              const sku = SKU_BY_PLAN[key];
-              if (!sku) { onSelectPlan(plan); return; }
-              await purchaseSubscription(sku);
-            }
-          }}
-          style={[styles.selectButton, isCurrent && styles.currentPlanButton]}
+      <View key={plan.title} style={[styles.planOuter, { width: layout.cardWidth }]}> 
+        <LinearGradient
+          colors={isCurrent ? ['#1b2e1b', '#0d140d'] : plan.popular ? ['#2d1215', '#130607'] : ['#101010', '#080808']}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          style={[styles.planCard, plan.popular && styles.popularCard, isCurrent && styles.currentOutline]}
         >
-          <Text style={[styles.selectButtonText, isCurrent && styles.currentPlanButtonText]}>{getButtonText(plan.title)}</Text>
-          {!isCurrent && (
-            <MaterialCommunityIcons name="arrow-right" size={18} color="#fff" style={{ marginLeft: 6 }} />
+          {/* Badges */}
+          <View style={styles.badgesRow}>
+            {plan.popular && (
+              <LinearGradient colors={['#c9213a', '#ff5f5f']} style={styles.badgeGradient}>
+                <MaterialCommunityIcons name="fire" size={14} color="#fff" style={{ marginRight: 4 }} />
+                <Text style={styles.badgeText}>Popular</Text>
+              </LinearGradient>
+            )}
+            {isAnnual && (
+              <LinearGradient colors={['#148f3d', '#3EB516']} style={[styles.badgeGradient, isTablet && styles.badgeGradientTablet, { backgroundColor: 'transparent' }]}> 
+                <MaterialCommunityIcons name="tag" size={isTablet ? 16 : 14} color="#fff" style={{ marginRight: 4 }} />
+                <Text style={[styles.badgeText, isTablet && styles.badgeTextTablet]}>{staticAnnualDiscount}% OFF</Text>
+              </LinearGradient>
+            )}
+            {isCurrent && (
+              <View style={[styles.badgeGradient, { backgroundColor: '#333', paddingHorizontal: 10 }]}> 
+                <MaterialCommunityIcons name="check-decagram" size={14} color="#fff" style={{ marginRight: 4 }} />
+                <Text style={styles.badgeText}>Your Plan</Text>
+              </View>
+            )}
+          </View>
+          <Text style={[styles.planTitle, isCurrent && styles.planTitleCurrent]}>{plan.title}</Text>
+          <View style={styles.priceRow}>
+            <Text style={styles.planPrice}>{plan.price}</Text>
+            <Text style={styles.planPeriod}>/{plan.period}</Text>
+          </View>
+          {getMonthlyEquivalent(plan) && (
+            <Text style={styles.perMonthText}>{getMonthlyEquivalent(plan)}</Text>
           )}
-        </Pressable>
+          <View style={styles.divider} />
+          <View style={[styles.featuresContainer, isExpanded && styles.featuresExpanded]}>
+            {featuresToShow.map((feature: string, index: number) => (
+              <View key={index} style={styles.featureRow}>
+                <MaterialCommunityIcons name="check" size={18} color={Colors.green} />
+                <Text style={styles.featureText}>{feature}</Text>
+              </View>
+            ))}
+          </View>
+            {showExpandToggle && (
+              <Pressable onPress={() => toggleExpand(plan.title)} style={styles.expandToggle} hitSlop={8}>
+                <Text style={styles.expandToggleText}>{isExpanded ? 'Show Less' : 'Show All Features'}</Text>
+                <MaterialCommunityIcons name={isExpanded ? 'chevron-up' : 'chevron-down'} size={20} color={Colors.text} />
+              </Pressable>
+            )}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${getButtonText(plan.title)} ${plan.title} plan`}
+            onPress={async () => {
+              if (isCurrent) return;
+              const key = plan.title.toLowerCase();
+              if (key === 'free') {
+                const currKey = (userPlan || '').toLowerCase();
+                const sku = SKU_BY_PLAN[currKey];
+                await openManageSubscriptions(sku);
+              } else {
+                const sku = SKU_BY_PLAN[key];
+                if (!sku) { onSelectPlan(plan); return; }
+                await purchaseSubscription(sku);
+              }
+            }}
+            style={[styles.selectButton, isCurrent && styles.currentPlanButton]}
+          >
+            <Text style={[styles.selectButtonText, isCurrent && styles.currentPlanButtonText]}>{getButtonText(plan.title)}</Text>
+            {!isCurrent && (
+              <MaterialCommunityIcons name="arrow-right" size={18} color="#fff" style={{ marginLeft: 6 }} />
+            )}
+          </Pressable>
+        </LinearGradient>
       </View>
     );
   };
@@ -212,14 +221,31 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
             </Pressable>
           </View>
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingRight: 10, paddingLeft: 4 }}
-            style={styles.plansContainer}
-          >
-            {subscriptionPlans.map(RenderPlanCard)}
-          </ScrollView>
+          {isTablet ? (
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                justifyContent: 'center',
+                paddingBottom: 10,
+                width: layout.containerWidth,
+                alignSelf: 'center'
+              }}
+              style={styles.plansContainer}
+            >
+              {subscriptionPlans.map(RenderPlanCard)}
+            </ScrollView>
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingRight: 10, paddingLeft: 4, alignItems: 'stretch' }}
+              style={[styles.plansContainer, { alignSelf: 'center', width: layout.containerWidth }]}
+            >
+              {subscriptionPlans.map(RenderPlanCard)}
+            </ScrollView>
+          )}
         </View>
       </View>
     </Modal>
@@ -279,11 +305,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#101010',
     borderRadius: 18,
     padding: 18,
-    marginRight: 15,
-    marginBottom: 18,
     borderWidth: 1,
     borderColor: '#262626',
     overflow: 'hidden',
+  },
+  planOuter: {
+    marginRight: 15,
+    marginBottom: 18,
+    borderRadius: 18,
   },
   popularCard: {
     borderColor: '#c9213a',
