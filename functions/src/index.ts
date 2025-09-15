@@ -7,6 +7,7 @@ import { setGlobalOptions } from "firebase-functions";
 import { onRequest } from "firebase-functions/https";
 import * as logger from "firebase-functions/logger";
 import { onSchedule } from "firebase-functions/scheduler";
+import { onMessagePublished } from "firebase-functions/v2/pubsub";
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
 
@@ -42,6 +43,22 @@ const MAX_XP = MAX_LEVEL * 100; // e.g. level 100 shows as exactly 100 (no overf
 interface CachedUserData { data: any; etag: string; fetchedAt: number; }
 const userDataCache: Record<string, CachedUserData> = {};
 const USER_CACHE_TTL_MS = 15_000; // 15s server-side TTL (tune as needed)
+
+// --- Subscription plan mapping (Google Play subscriptionId/SKU -> internal plan) ---
+// Adjust these to match your Play Console product IDs
+type AppPlan = 'free' | 'pro' | 'annual';
+const SKU_TO_PLAN: Record<string, AppPlan> = {
+  // examples: replace with your real product IDs from Play Console
+  'pro_monthly': 'pro',
+  'pro_annual': 'annual',
+};
+
+// Helper to map a subscriptionId/SKU to our internal plan
+const planFromSku = (sku?: string | null): AppPlan | null => {
+  if (!sku) return null;
+  const key = String(sku).trim();
+  return SKU_TO_PLAN[key] ?? null;
+};
 
 // --- Time normalization helpers ---
 // We persist all fight time metrics in MINUTES. Some older data might have seconds.
@@ -1087,5 +1104,205 @@ export const getCombosMeta = onRequest(async (req, res) => {
   } catch (error) {
     logger.error("Error in getCombosMeta:", error);
     res.status(500).send("Internal Server Error");
+  }
+});
+
+// --- Google Play Subscriptions Integration ---
+// This function listens to a Pub/Sub topic configured in Google Play Console (RTDN)
+// Topic name should match exactly what you set there (e.g., shadow-mma-subscriptions)
+// Flow: Google Play -> Pub/Sub -> Cloud Function -> Firestore users/plan & subscriptions docs
+
+type RtdnPayload = {
+  version?: string;
+  packageName?: string;
+  eventTimeMillis?: string;
+  subscriptionNotification?: {
+    version?: string;
+    notificationType?: number; // see Google docs for numeric mapping
+    purchaseToken?: string;
+    subscriptionId?: string; // SKU/productId
+  };
+  testNotification?: Record<string, unknown>;
+};
+
+// Map Google notificationType to a semantic status label for storage/logs
+const NOTIFICATION_TYPE_LABEL: Record<number, string> = {
+  1: 'SUBSCRIPTION_RECOVERED',
+  2: 'SUBSCRIPTION_RENEWED',
+  3: 'SUBSCRIPTION_CANCELED',
+  4: 'SUBSCRIPTION_PURCHASED',
+  5: 'SUBSCRIPTION_ON_HOLD',
+  6: 'SUBSCRIPTION_IN_GRACE_PERIOD',
+  7: 'SUBSCRIPTION_RESTARTED',
+  8: 'SUBSCRIPTION_PRICE_CHANGE_CONFIRMED',
+  9: 'SUBSCRIPTION_DEFERRED',
+  10: 'SUBSCRIPTION_PAUSED',
+  11: 'SUBSCRIPTION_PAUSE_SCHEDULE_CHANGED',
+  12: 'SUBSCRIPTION_REVOKED',
+  13: 'SUBSCRIPTION_EXPIRED',
+};
+
+const isActiveType = (t?: number) => t !== undefined && [1, 2, 4, 7].includes(t);
+const isSuspendedType = (t?: number) => t !== undefined && [5, 6, 10, 11].includes(t);
+const isEndedType = (t?: number) => t !== undefined && [12, 13].includes(t);
+
+// Update a user's plan in Firestore safely
+const setUserPlan = async (uid: string, plan: AppPlan) => {
+  try {
+    await db.collection('users').doc(uid).update({ plan });
+  } catch (e) {
+    logger.error('Failed to update user plan', { uid, plan, error: e });
+  }
+};
+
+// Pub/Sub handler for Google Play RTDN
+export const onSubscriptionNotification = onMessagePublished('shadow-mma-subscriptions', async (event: any) => {
+  try {
+    let payload: RtdnPayload | undefined;
+    const anyEvent: any = event as any;
+    const msg = anyEvent?.data?.message;
+    if (msg?.json) {
+      payload = msg.json as RtdnPayload;
+    } else if (msg?.data) {
+      const decoded = Buffer.from(msg.data as string, 'base64').toString('utf8');
+      try { payload = JSON.parse(decoded); } catch (e) {
+        logger.error('Failed to parse RTDN payload JSON', { decoded });
+      }
+    }
+
+    if (!payload) {
+      logger.warn('RTDN event missing payload');
+      return;
+    }
+
+    if (payload.testNotification) {
+      logger.log('Received Google Play testNotification');
+      return;
+    }
+
+    const sn = payload.subscriptionNotification;
+    if (!sn) {
+      logger.warn('RTDN payload without subscriptionNotification', payload);
+      return;
+    }
+
+    const subscriptionId = sn.subscriptionId || '';
+    const purchaseToken = sn.purchaseToken || '';
+    const notificationType = sn.notificationType;
+    const notificationLabel = notificationType ? NOTIFICATION_TYPE_LABEL[notificationType] : 'UNKNOWN';
+
+    if (!purchaseToken) {
+      logger.warn('RTDN without purchaseToken, skipping');
+      return;
+    }
+
+    // Upsert subscriptions/{purchaseToken}
+    const subRef = db.collection('subscriptions').doc(purchaseToken);
+    const subSnap = await subRef.get();
+    const now = FieldValue.serverTimestamp();
+
+    const plan = planFromSku(subscriptionId);
+    let status: 'active' | 'suspended' | 'ended' | 'canceled' | 'unknown' = 'unknown';
+    if (isActiveType(notificationType)) status = 'active';
+    else if (isSuspendedType(notificationType)) status = 'suspended';
+    else if (isEndedType(notificationType)) status = 'ended';
+    else if (notificationType === 3) status = 'canceled'; // canceled but access usually remains until period end
+
+    const eventTimeMillis = payload.eventTimeMillis ? Number(payload.eventTimeMillis) : undefined;
+    const writeData: Record<string, unknown> = {
+      platform: 'google_play',
+      packageName: payload.packageName,
+      subscriptionId,
+      purchaseToken,
+      notificationType,
+      notificationLabel,
+      planHint: plan, // plan we would apply for active events given the SKU
+      status,
+      eventTimeMillis: isFinite(eventTimeMillis as number) ? eventTimeMillis : undefined,
+      updatedAt: now,
+      lastPayload: payload,
+    };
+
+    if (!subSnap.exists) {
+      writeData['createdAt'] = now;
+    }
+
+    await subRef.set(writeData, { merge: true });
+
+    // If already linked to a user, update their plan according to the event
+    const subData = (await subRef.get()).data() as any | undefined;
+    const linkedUid: string | undefined = subData?.userId || subData?.uid;
+    if (linkedUid) {
+      if (isActiveType(notificationType)) {
+        if (plan) await setUserPlan(linkedUid, plan);
+      } else if (isEndedType(notificationType)) {
+        await setUserPlan(linkedUid, 'free');
+      } else if (notificationType === 3) {
+        // CANCELED: per request, revert to free immediately
+        await setUserPlan(linkedUid, 'free');
+        logger.log('Subscription canceled -> plan set to free', { linkedUid, subscriptionId });
+      } else if (isSuspendedType(notificationType)) {
+        // Optional: you may restrict access here. We'll keep plan as-is but mark status in subscriptions doc
+        logger.log('Subscription in suspended state', { linkedUid, status });
+      }
+    } else {
+      logger.log('Subscription not yet linked to a user; stored notification', { purchaseToken });
+    }
+  } catch (error) {
+    logger.error('Error handling onSubscriptionNotification:', error as any);
+  }
+});
+
+// HTTP endpoint for the client to link a Google Play purchase token to the authenticated user
+// Body: { purchaseToken: string, subscriptionId: string }
+export const linkPlayPurchase = onRequest(async (req, res) => {
+  if (req.method !== 'POST') {
+    res.status(405).send('Method Not Allowed');
+    return;
+  }
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      res.status(401).send('Unauthorized: Missing or invalid token');
+      return;
+    }
+    const idToken = authHeader.split('Bearer ')[1];
+    const decoded = await auth.verifyIdToken(idToken);
+    const uid = decoded.uid;
+
+    const { purchaseToken, subscriptionId } = (req.body || {}) as { purchaseToken?: string; subscriptionId?: string };
+    if (!purchaseToken || !subscriptionId) {
+      res.status(400).json({ success: false, error: 'purchaseToken and subscriptionId are required' });
+      return;
+    }
+
+    const plan = planFromSku(subscriptionId);
+    if (!plan) {
+      // Unknown SKU; we still link the token but avoid elevating the plan to prevent abuse
+      logger.warn('Unknown subscriptionId/SKU provided during link', { subscriptionId });
+    }
+
+    const subRef = db.collection('subscriptions').doc(String(purchaseToken));
+    const now = FieldValue.serverTimestamp();
+    await subRef.set({
+      platform: 'google_play',
+      subscriptionId,
+      purchaseToken,
+      userId: uid,
+      linkedAt: now,
+      updatedAt: now,
+      status: 'linked',
+    }, { merge: true });
+
+    // Optionally grant access immediately based on declared SKU.
+    // For production, you should verify the purchase with Google Play Developer API before granting.
+    if (plan) {
+      await setUserPlan(uid, plan);
+    }
+
+    res.status(200).json({ success: true, linked: true, planGranted: plan ?? undefined });
+  } catch (error: any) {
+    logger.error('Error linking Google Play purchase', error);
+    res.status(500).json({ success: false, error: { code: error.code || 'unknown', message: error.message || 'Internal error' } });
   }
 });

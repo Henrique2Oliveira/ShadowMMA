@@ -1,7 +1,9 @@
 import { AlertModal } from '@/components/Modals/AlertModal';
+import CookieConsentModal from '@/components/Modals/CookieConsentModal';
 import { DeleteAccountModal } from '@/components/Modals/DeleteAccountModal';
 import { SelectionModal } from '@/components/Modals/SelectionModal';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdConsent } from '@/contexts/ConsentContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { db } from '@/FirebaseConfig';
 import { Colors, Typography } from '@/themes/theme';
@@ -20,6 +22,7 @@ import { Platform, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View 
 export default function Settings() {
   const { user, resetPassword } = useAuth();
   const { userData } = useUserData();
+  const { status: adConsentStatus, setGranted, setDenied } = useAdConsent();
   const [isLoading, setIsLoading] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
@@ -36,6 +39,7 @@ export default function Settings() {
   const [password, setPassword] = useState('');
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [showPrivacyAdsModal, setShowPrivacyAdsModal] = useState(false);
 
   // Enhanced notification error handling
   const [showNotificationError, setShowNotificationError] = useState(false);
@@ -78,11 +82,11 @@ export default function Settings() {
       try {
         const enhancedEnabled = await AsyncStorage.getItem('enhancedNotificationsEnabled');
         setEnhancedNotificationsEnabled(enhancedEnabled === 'true');
-        
+
         // Load weekly mission settings
         const savedRounds = await AsyncStorage.getItem('weeklyMissionRounds');
         const savedTime = await AsyncStorage.getItem('weeklyMissionTime');
-        
+
         if (savedRounds) setWeeklyMissionRounds(parseInt(savedRounds));
         if (savedTime) setWeeklyMissionTime(parseInt(savedTime));
       } catch (error) {
@@ -100,7 +104,7 @@ export default function Settings() {
 
   const handleResetPassword = async () => {
     if (!user?.email) return;
-    
+
     setIsLoading(true);
     const result = await resetPassword(user.email);
     setIsLoading(false);
@@ -150,7 +154,7 @@ export default function Settings() {
       // Clear password field
       setPassword('');
       setShowDeleteAuth(false);
-      
+
       // Navigate to login screen
       router.replace('/login');
     } catch (error: any) {
@@ -182,16 +186,16 @@ export default function Settings() {
   };
 
   return (
-    <ScrollView 
-      style={styles.container} 
+    <ScrollView
+      style={styles.container}
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
       bounces={true}
     >
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <TouchableOpacity 
-            style={styles.backButton} 
+          <TouchableOpacity
+            style={styles.backButton}
             onPress={() => router.back()}
             accessibilityLabel="Go Back"
             accessibilityRole="button"
@@ -203,8 +207,8 @@ export default function Settings() {
       </View>
 
       <View style={styles.content}>
-        <TouchableOpacity 
-          style={styles.option} 
+        <TouchableOpacity
+          style={styles.option}
           onPress={() => router.push('/(protected)/plans')}
         >
           <MaterialCommunityIcons name="crown" size={isTablet ? 30 : 24} color="#fdd700" />
@@ -212,12 +216,21 @@ export default function Settings() {
           <MaterialCommunityIcons name="chevron-right" size={isTablet ? 30 : 24} color={Colors.text} />
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={styles.option} 
+        <TouchableOpacity
+          style={styles.option}
           onPress={handleChangePassword}
         >
           <MaterialCommunityIcons name="key" size={isTablet ? 30 : 24} color={Colors.text} />
           <Text style={[styles.optionText, isTablet && styles.optionTextTablet]}>Change Password</Text>
+          <MaterialCommunityIcons name="chevron-right" size={isTablet ? 30 : 24} color={Colors.text} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.option}
+          onPress={() => setShowPrivacyAdsModal(true)}
+        >
+          <MaterialCommunityIcons name="shield-check" size={isTablet ? 30 : 24} color={Colors.text} />
+          <Text style={[styles.optionText, isTablet && styles.optionTextTablet]}>Privacy & Ads</Text>
           <MaterialCommunityIcons name="chevron-right" size={isTablet ? 30 : 24} color={Colors.text} />
         </TouchableOpacity>
 
@@ -243,7 +256,7 @@ export default function Settings() {
             }}
           />
         </View>
-        
+
         {showTimePicker && Platform.OS === 'android' && (
           <DateTimePicker
             value={notificationTime}
@@ -261,10 +274,10 @@ export default function Settings() {
             }}
           />
         )}
-        
+
         {notificationsEnabled && (
-          <TouchableOpacity 
-            style={[styles.option, styles.subOption]} 
+          <TouchableOpacity
+            style={[styles.option, styles.subOption]}
             onPress={() => setShowTimePicker(true)}
           >
             <MaterialCommunityIcons name="clock-outline" size={isTablet ? 28 : 24} color={Colors.text} />
@@ -287,7 +300,7 @@ export default function Settings() {
                   if (hasPermission) {
                     setEnhancedNotificationsEnabled(true);
                     await AsyncStorage.setItem('enhancedNotificationsEnabled', 'true');
-                    
+
                     // Schedule enhanced notifications if userData is available
                     if (userData?.loginStreak !== undefined) {
                       await recordLoginAndScheduleNotifications(userData.loginStreak);
@@ -332,16 +345,16 @@ export default function Settings() {
           <MaterialCommunityIcons name="trophy" size={isTablet ? 28 : 20} color="#fdd700" />
           <Text style={[styles.sectionTitle, isTablet && styles.sectionTitleTablet]}>Weekly Mission</Text>
         </View>
-  <Text
-    style={[
-      styles.helperInline,
-      isTablet && { fontSize: rf(14) }
-    ]}
-  >
-    Adjust these goals whenever you want to keep progress realistic.
-  </Text>
+        <Text
+          style={[
+            styles.helperInline,
+            isTablet && { fontSize: rf(14) }
+          ]}
+        >
+          Adjust these goals whenever you want to keep progress realistic.
+        </Text>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.option}
           onPress={() => setShowMissionRoundsModal(true)}
         >
@@ -351,7 +364,7 @@ export default function Settings() {
           <MaterialCommunityIcons name="chevron-right" size={isTablet ? 30 : 24} color={Colors.text} />
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.option}
           onPress={() => setShowMissionTimeModal(true)}
         >
@@ -373,8 +386,8 @@ export default function Settings() {
           <MaterialCommunityIcons name="chevron-right" size={24} color={Colors.text} />
         </TouchableOpacity> */}
 
-        <TouchableOpacity 
-          style={[styles.option, styles.dangerOption]} 
+        <TouchableOpacity
+          style={[styles.option, styles.dangerOption]}
           onPress={handleDeleteAccount}
         >
           <MaterialCommunityIcons name="delete" size={isTablet ? 30 : 24} color="#ff4444" />
@@ -483,6 +496,14 @@ export default function Settings() {
         onSelect={handleUpdateMissionTime}
         onClose={() => setShowMissionTimeModal(false)}
       />
+      {/* Privacy & Ads: revisit cookie consent */}
+      <CookieConsentModal
+        visible={showPrivacyAdsModal}
+        onAccept={() => { setGranted(); setShowPrivacyAdsModal(false); }}
+        onLimit={() => { setDenied(); setShowPrivacyAdsModal(false); }}
+        onRequestClose={() => setShowPrivacyAdsModal(false)}
+      />
+
     </ScrollView>
   );
 }
@@ -519,8 +540,8 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 60,
     backgroundColor: '#0000009f',
-  // centered layout now that extra settings icon removed
-  justifyContent: 'flex-start'
+    // centered layout now that extra settings icon removed
+    justifyContent: 'flex-start'
   },
   headerLeft: {
     flexDirection: 'row',

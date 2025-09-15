@@ -3,10 +3,12 @@ import { GradientButton } from '@/components/Buttons/GradientButton';
 import { StartFightButton } from '@/components/Buttons/StartFightButton';
 import { LevelBar } from '@/components/LevelBar';
 import { AlertModal } from '@/components/Modals/AlertModal';
+import CookieConsentModal from '@/components/Modals/CookieConsentModal';
 import { FightModeModal } from '@/components/Modals/FightModeModal';
 import { StreakCongratulationsModal } from '@/components/Modals/StreakCongratulationsModal';
 import { WeeklyMission } from '@/components/WeeklyMission';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdConsent } from '@/contexts/ConsentContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
 import { checkMissedLoginAndScheduleComeback, recordLoginAndScheduleNotifications, registerForPushNotificationsAsync } from '@/utils/notificationUtils';
@@ -20,6 +22,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function Index() {
+  const { status: adConsentStatus, setGranted, setDenied, loading: consentLoading } = useAdConsent();
   const { user, setStreakUpdateCallback } = useAuth();
   const { userData, refreshUserData } = useUserData();
 
@@ -137,6 +140,7 @@ export default function Index() {
 
   useEffect(() => {
     if (user) {
+      // Ensure userData loads promptly on first mount (prevents UI flicker for consent modal)
       refreshUserData(user.uid);
     }
     // Set a new random notification message every time user enters the screen
@@ -611,8 +615,8 @@ export default function Index() {
           />
         </View>
 
-        {/* Inline banner ad for free users */}
-        {isFree && (
+        {/* Inline banner ad for free users (only after consent decision) */}
+        {isFree && adConsentStatus !== 'unknown' && (
           <View style={{ width: '100%', maxWidth: 600, alignSelf: 'center' }}>
             <TopBanner inline />
           </View>
@@ -724,6 +728,14 @@ export default function Index() {
             await AsyncStorage.setItem(storageKey, 'true');
           }
         }}
+      />
+
+      {/* Cookie Consent - show for all users after userData (plan) is loaded to avoid flicker */}
+      <CookieConsentModal
+        visible={!!userData && !consentLoading && adConsentStatus === 'unknown'}
+        onAccept={() => { setGranted(); }}
+        onLimit={() => { setDenied(); }}
+        onRequestClose={() => { /* force a choice to proceed */ }}
       />
     </ScrollView >
   );

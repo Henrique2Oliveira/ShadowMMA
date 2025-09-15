@@ -1,3 +1,4 @@
+import { useAdConsent } from '@/contexts/ConsentContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
@@ -8,6 +9,7 @@ import { LevelBar } from '../LevelBar';
 
 export const GameOverButtons: React.FC = () => {
   const { userData } = useUserData();
+  const { status: adConsentStatus } = useAdConsent();
   const [displayXp, setDisplayXp] = useState(userData?.xp || 0);
   const [busy, setBusy] = useState(false);
   const navigatedRef = useRef(false);
@@ -62,7 +64,8 @@ export const GameOverButtons: React.FC = () => {
       router.push('/');
     };
 
-    if (!shouldShowAd) {
+    // Only show ad if consent has been decided
+    if (!shouldShowAd || adConsentStatus === 'unknown') {
       navigateHome();
       return;
     }
@@ -80,7 +83,7 @@ export const GameOverButtons: React.FC = () => {
         return;
       }
 
-      const interstitial = InterstitialAd.createForAdRequest(unitId, { requestNonPersonalizedAdsOnly: false });
+  const interstitial = InterstitialAd.createForAdRequest(unitId, { requestNonPersonalizedAdsOnly: adConsentStatus === 'denied' });
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
       const onClosed = () => {

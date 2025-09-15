@@ -33,11 +33,11 @@ export default function QuizScreen({ onComplete }: Props) {
     goal: '',
     stance: 'orthodox',
     notificationsEnabled: false,
-  weeklyMissionRounds: 20,
-  weeklyMissionTime: 60,
-  dailyReminderEnabled: false,
-  dailyReminderHour: 18,
-  dailyReminderMinute: 0,
+    weeklyMissionRounds: 20,
+    weeklyMissionTime: 60,
+    dailyReminderEnabled: false,
+    dailyReminderHour: 18,
+    dailyReminderMinute: 0,
   });
   const [isRequestingPermission, setIsRequestingPermission] = useState(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
@@ -59,8 +59,8 @@ export default function QuizScreen({ onComplete }: Props) {
     }).start();
   }, [step, trackWidth]);
 
-  const roundsOptions = [5,10,15,20,25,30,35,40,50];
-  const timeOptions = [15,30,45,60,90,120,150,180,240];
+  const roundsOptions = [5, 10, 15, 20, 25, 30, 35, 40, 50];
+  const timeOptions = [15, 30, 45, 60, 90, 120, 150, 180, 240];
   const dailyTimeChoices = [
     { label: 'Morning', hour: 8, minute: 0 },
     { label: 'Afternoon', hour: 14, minute: 0 },
@@ -99,7 +99,7 @@ export default function QuizScreen({ onComplete }: Props) {
               speedMultiplier: 1.3,
             }));
           }
-        } catch {}
+        } catch { }
       } catch (e) {
         // silent
       }
@@ -148,7 +148,7 @@ export default function QuizScreen({ onComplete }: Props) {
         return (
           <QuestionBlock
             title="What's your age range?"
-            options={['Under 18','18-24','25-34','35+']}
+            options={['Under 18', '18-24', '25-34', '35+']}
             selected={answers.age}
             onSelect={(v) => handleBasicAnswer('age', v)}
           />
@@ -157,7 +157,7 @@ export default function QuizScreen({ onComplete }: Props) {
         return (
           <QuestionBlock
             title="What's your gender?"
-            options={['Male','Female','Other']}
+            options={['Male', 'Female', 'Other']}
             selected={answers.gender}
             onSelect={(v) => handleBasicAnswer('gender', v)}
           />
@@ -166,7 +166,7 @@ export default function QuizScreen({ onComplete }: Props) {
         return (
           <QuestionBlock
             title="What's your martial arts experience?"
-            options={['Beginner','Some Experience','Advanced','Professional']}
+            options={['Beginner', 'Some Experience', 'Advanced', 'Professional']}
             selected={answers.experience}
             onSelect={(v) => handleBasicAnswer('experience', v)}
           />
@@ -175,7 +175,7 @@ export default function QuizScreen({ onComplete }: Props) {
         return (
           <QuestionBlock
             title="What's your main goal?"
-            options={['Learn Self-Defense','Get in Shape','Compete','Master Techniques']}
+            options={['Learn Self-Defense', 'Get in Shape', 'Compete', 'Master Techniques']}
             selected={answers.goal}
             onSelect={(v) => handleBasicAnswer('goal', v)}
           />
@@ -282,7 +282,7 @@ export default function QuizScreen({ onComplete }: Props) {
                     }}
                   >
                     <Text style={{ fontFamily: Typography.fontFamily, fontSize: 16, color: Colors.text }}>{choice.label}</Text>
-                    <Text style={{ fontFamily: Typography.fontFamily, fontSize: 12, color: Colors.text, opacity: 0.75 }}>{`${choice.hour.toString().padStart(2,'0')}:${choice.minute.toString().padStart(2,'0')}`}</Text>
+                    <Text style={{ fontFamily: Typography.fontFamily, fontSize: 12, color: Colors.text, opacity: 0.75 }}>{`${choice.hour.toString().padStart(2, '0')}:${choice.minute.toString().padStart(2, '0')}`}</Text>
                   </Pressable>
                 );
               })}
@@ -313,9 +313,9 @@ export default function QuizScreen({ onComplete }: Props) {
                 <Text style={{ fontFamily: Typography.fontFamily, fontSize: 16, color: Colors.text }}>Custom Time</Text>
                 {customReminderTime && (
                   <Text style={{ fontFamily: Typography.fontFamily, fontSize: 12, color: Colors.text, opacity: 0.75 }}>
-                    {customReminderTime.getHours().toString().padStart(2,'0')}
+                    {customReminderTime.getHours().toString().padStart(2, '0')}
                     :
-                    {customReminderTime.getMinutes().toString().padStart(2,'0')}
+                    {customReminderTime.getMinutes().toString().padStart(2, '0')}
                   </Text>
                 )}
               </Pressable>

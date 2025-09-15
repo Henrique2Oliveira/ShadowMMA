@@ -1,5 +1,6 @@
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { ConsentProvider } from '@/contexts/ConsentContext';
 import { Colors } from '@/themes/theme';
 import { Stack, usePathname } from 'expo-router';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -32,11 +33,13 @@ export default function RootLayout() {
       }}
     >
       <AuthProvider>
-        <SafeAreaProvider>
-          <SafeAreaView style={{ flex: 1, backgroundColor: getBackgroundColor() }}>
-            <Stack screenOptions={{ headerShown: false }} />
-          </SafeAreaView>
-        </SafeAreaProvider>
+        <ConsentProvider>
+          <SafeAreaProvider>
+            <SafeAreaView style={{ flex: 1, backgroundColor: getBackgroundColor() }}>
+              <Stack screenOptions={{ headerShown: false }} />
+            </SafeAreaView>
+          </SafeAreaProvider>
+        </ConsentProvider>
       </AuthProvider>
     </ErrorBoundary>
   );

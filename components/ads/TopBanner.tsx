@@ -1,3 +1,4 @@
+import { useAdConsent } from '@/contexts/ConsentContext';
 import Constants from 'expo-constants';
 import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
@@ -8,6 +9,7 @@ type Props = {
 };
 
 export default function TopBanner({ bottomOffset = 96, inline = false }: Props) {
+	const { status } = useAdConsent();
 	const [AdsComponents, setAdsComponents] = useState<null | {
 		BannerAd: any;
 		BannerAdSize: any;
@@ -15,8 +17,9 @@ export default function TopBanner({ bottomOffset = 96, inline = false }: Props) 
 	}>(null);
 
 	useEffect(() => {
-		// Avoid importing the native module in Expo Go
+		// Avoid importing the native module in Expo Go or before consent
 		if (Constants.appOwnership === 'expo') return;
+		if (status === 'unknown') return;
 		let mounted = true;
 		(async () => {
 			try {
@@ -25,7 +28,7 @@ export default function TopBanner({ bottomOffset = 96, inline = false }: Props) 
 			} catch {}
 		})();
 		return () => { mounted = false; };
-	}, []);
+	}, [status]);
 
 	if (!AdsComponents) return null;
 	const { BannerAd, BannerAdSize, TestIds } = AdsComponents;
@@ -47,7 +50,7 @@ export default function TopBanner({ bottomOffset = 96, inline = false }: Props) 
 			<BannerAd
 				unitId={unitId}
 				size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-				requestOptions={{ requestNonPersonalizedAdsOnly: true }}
+				requestOptions={{ requestNonPersonalizedAdsOnly: status === 'denied' }}
 			/>
 		</View>
 	);
