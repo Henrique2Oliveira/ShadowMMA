@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    zIndex: 20,
+    zIndex: 30,
   },
   proBadge: {
     flexDirection: 'row',
@@ -133,8 +133,8 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderTopLeftRadius: 6,
     borderTopRightRadius: 6,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
+    borderBottomLeftRadius: 6,
+    borderBottomRightRadius: 6,
     borderWidth: 1,
     borderColor: '#00000055',
   },
@@ -160,7 +160,6 @@ const styles = StyleSheet.create({
     color: '#121212',
     fontFamily: Typography.fontFamily,
     fontSize: 11,
-    fontWeight: '600',
     textTransform: 'uppercase',
   },
   textContainer: {
