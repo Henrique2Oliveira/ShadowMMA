@@ -2,7 +2,7 @@
   "expo": {
     "name": "Shadow MMA",
     "slug": "ShadowMMA",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/adaptive-icon5.png",
     "scheme": "shadowmma",
@@ -32,7 +32,7 @@
         "backgroundImage": "./assets/images/adaptive-icon5.png"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.shadowmma.ShadowMMA",
+      "package": "com.belsonsan.ShadowMMA",
       "versionCode": 1,
       "permissions": [
         "com.android.vending.BILLING"
