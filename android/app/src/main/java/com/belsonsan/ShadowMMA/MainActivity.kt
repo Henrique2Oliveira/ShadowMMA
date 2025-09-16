@@ -1,4 +1,4 @@
-package com.shadowmma.ShadowMMA
+package com.belsonsan.ShadowMMA
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build
