@@ -34,7 +34,8 @@
       "package": "com.belsonsan.ShadowMMA",
       "versionCode": 2,
       "permissions": [
-        "com.android.vending.BILLING"
+        "com.android.vending.BILLING",
+        "com.google.android.gms.permission.AD_ID"
       ]
     },
     "androidStatusBar": {
