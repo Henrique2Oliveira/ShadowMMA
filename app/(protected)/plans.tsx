@@ -7,12 +7,13 @@ import { isTablet as deviceIsTablet, rf } from '@/utils/responsive';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import * as WebBrowser from 'expo-web-browser';
-import { getAuth } from 'firebase/auth';
 import React, { useMemo, useState } from 'react';
-import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 
 export default function Plans() {
+  // NOTE: Subscription logic has been removed in preparation for RevenueCat.
+  // The handlers below only show alerts/console logs.
+  // TODO: Integrate RevenueCat purchase/restore and management here.
   const { width } = useWindowDimensions();
   const isTablet = deviceIsTablet; // simple boolean from responsive util
   const layout = useMemo(() => {
@@ -33,162 +34,15 @@ export default function Plans() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showDowngradeModal, setShowDowngradeModal] = useState(false);
 
-  // Map UI plan titles to Google Play SKUs
-  const SKU_BY_PLAN: Record<string, string> = {
-    pro: 'pro_monthly',
-    annual: 'pro_annual',
-  };
-  // Google Play Licensing public key (Base64, no spaces). Provided by you.
-  const GOOGLE_PLAY_PUBLIC_KEY_BASE64 = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAraQrDwiIGyOdGq/8o/TesoGczBXkXrAjN0HuMMbeEykPg+1d5qcmAz//FTi/dS3wTdkQgu59nE0eRqgcN8X3MRKImp9JtGUNNAMRvR8aEI5/7Uwg9APZ8JTHXYaH+kUhrw3Ea0MCfh2lWSgpxPAALyEJbW3R8DMYHGmZekIO4ImFyeCGuh5AxpjF/Jgmw2Rx969rWUO278v1vhcAPjwBFCqBHzamsyeTlHWeZNTGQis0Xd18K7oYrksEVIk8QUBrdVrPml4iOr8+0R2znZ11sbx0cBridduiDxZSBPj0fHWwBfMM4L1/kZhkG83UQajN7vM4Pd7UhZo5PWJZPtOQNQIDAQAB'.replace(/\s+/g, '');
-  const ANDROID_PACKAGE = 'com.shadowmma.ShadowMMA';
-  const FUNCTIONS_BASE = 'https://us-central1-shadow-mma.cloudfunctions.net';
-
-  const openManageSubscriptions = async (sku?: string) => {
-    if (Platform.OS !== 'android') {
-      Alert.alert('Subscriptions', 'Subscriptions are only available on Android for now.');
-      return;
-    }
-    const url = sku
-      ? `https://play.google.com/store/account/subscriptions?sku=${encodeURIComponent(sku)}&package=${encodeURIComponent(ANDROID_PACKAGE)}`
-      : `https://play.google.com/store/account/subscriptions?package=${encodeURIComponent(ANDROID_PACKAGE)}`;
-    try {
-      const res = await WebBrowser.openBrowserAsync(url, { showInRecents: true, enableBarCollapsing: true });
-      if (res.type === 'dismiss') {
-        // No-op; user returned
-      }
-    } catch {
-      Linking.openURL(url).catch(() => Alert.alert('Error', 'Unable to open Google Play.'));
-    }
+  // Placeholders for future RevenueCat integration
+  const handleManageSubscription = () => {
+    Alert.alert('Subscriptions', 'Placeholder: Subscription management will be handled by RevenueCat.');
+    console.log('[Subscriptions] Manage subscription clicked');
   };
 
-  // Try to purchase using react-native-iap (if present). Fall back to Play Store page if not available
-  const purchaseSubscription = async (sku: string): Promise<{ linked?: boolean; token?: string } | null> => {
-    if (Platform.OS !== 'android') {
-      Alert.alert('Subscriptions', 'Subscriptions are only available on Android for now.');
-      return null;
-    }
-    let RNIap: any;
-    try {
-      // Dynamically require so app still runs if the module isn't installed
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      RNIap = require('react-native-iap');
-    } catch {
-      // Library not installed; open Play Store subscription page
-      await openManageSubscriptions(sku);
-      return null;
-    }
-
-    let purchaseListener: any;
-    let errorListener: any;
-    try {
-      await RNIap.initConnection();
-      // Simple one-shot promise that resolves when a purchase for this sku arrives
-      const result = await new Promise<{ token: string; originalJson?: string; signature?: string }>((resolve, reject) => {
-        const timer = setTimeout(() => reject(new Error('Purchase timed out')), 120000);
-        purchaseListener = RNIap.purchaseUpdatedListener(async (purchase: any) => {
-          try {
-            const productId = purchase?.productId || purchase?.products?.[0];
-            const token = purchase?.purchaseToken;
-            const originalJson = purchase?.originalJson || purchase?.dataAndroid;
-            const signature = purchase?.signature;
-            if (productId === sku && token) {
-              clearTimeout(timer);
-              // Acknowledge/finish the purchase
-              try { await RNIap.finishTransaction(purchase, false); } catch {}
-              resolve({ token, originalJson, signature });
-            }
-          } catch (e) {
-            // ignore
-          }
-        });
-        errorListener = RNIap.purchaseErrorListener((err: any) => {
-          // If user cancelled, just reject gracefully
-          if (err?.code?.toString?.().includes('E_USER_CANCELLED')) {
-            clearTimeout(timer);
-            reject(new Error('Purchase cancelled'));
-          } else {
-            clearTimeout(timer);
-            reject(err);
-          }
-        });
-        // Launch flow
-        RNIap.requestSubscription({ sku });
-      });
-
-      // Optional: Verify signature using Google Play public key if verification lib is available
-      if (result.signature && result.originalJson) {
-        try {
-          // eslint-disable-next-line @typescript-eslint/no-var-requires
-          const { KJUR } = require('jsrsasign');
-          // eslint-disable-next-line @typescript-eslint/no-var-requires
-          const { Buffer } = require('buffer');
-          const pem = `-----BEGIN PUBLIC KEY-----\n${GOOGLE_PLAY_PUBLIC_KEY_BASE64}\n-----END PUBLIC KEY-----`;
-          const pubKey = KJUR.KEYUTIL.getKey(pem);
-          // Try SHA1 then SHA256
-          const tryVerify = (alg: 'SHA1withRSA' | 'SHA256withRSA') => {
-            const sig = new KJUR.crypto.Signature({ alg });
-            sig.init(pubKey);
-            sig.updateString(result.originalJson as string);
-            const sigHex = Buffer.from(result.signature as string, 'base64').toString('hex');
-            return sig.verify(sigHex);
-          };
-          const ok = tryVerify('SHA1withRSA') || tryVerify('SHA256withRSA');
-          if (!ok) throw new Error('Invalid purchase signature');
-        } catch (verr) {
-          const msg = (verr as any)?.message || String(verr);
-          console.warn('Purchase signature verification skipped/failed:', msg);
-          // If verification fails due to env/missing lib, we proceed but you may choose to block here
-        }
-      }
-
-      // Link the token to the logged-in user via Cloud Function
-      if (!user) throw new Error('Not authenticated');
-      const idToken = await getAuth().currentUser?.getIdToken();
-      if (!idToken) throw new Error('Missing auth token');
-      const resp = await fetch(`${FUNCTIONS_BASE}/linkPlayPurchase`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${idToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ purchaseToken: result.token, subscriptionId: sku })
-      });
-      if (!resp.ok) throw new Error('Failed to link purchase');
-      return { linked: true, token: result.token };
-    } catch (e: any) {
-      console.warn('Subscription purchase error:', e?.message || e);
-      Alert.alert('Purchase', e?.message?.includes('cancel') ? 'Purchase cancelled' : 'Unable to complete purchase.');
-      return null;
-    } finally {
-      try { purchaseListener && purchaseListener.remove(); } catch {}
-      try { errorListener && errorListener.remove(); } catch {}
-      try { RNIap?.endConnection?.(); } catch {}
-    }
-  };
-
-  const syncExistingSubscription = async () => {
-    if (Platform.OS !== 'android') return;
-    let RNIap: any;
-    try { RNIap = require('react-native-iap'); } catch { Alert.alert('Install required', 'Sync requires react-native-iap to be installed.'); return; }
-    try {
-      await RNIap.initConnection();
-      const purchases = await RNIap.getAvailablePurchases();
-      const sub = (purchases || []).find((p: any) => p.productId && p.purchaseToken);
-      if (!sub) { Alert.alert('Sync', 'No active subscription found on this device.'); return; }
-      if (!user) throw new Error('Not authenticated');
-      const idToken = await getAuth().currentUser?.getIdToken();
-      if (!idToken) throw new Error('Missing auth token');
-      const resp = await fetch(`${FUNCTIONS_BASE}/linkPlayPurchase`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${idToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ purchaseToken: sub.purchaseToken, subscriptionId: sub.productId })
-      });
-      if (resp.ok) {
-        Alert.alert('Sync', 'Subscription linked to your account.');
-        if (user) await refreshUserData(user.uid);
-      } else {
-        Alert.alert('Sync', 'Failed to link subscription.');
-      }
-    } catch (e: any) {
-      Alert.alert('Sync Error', e?.message || 'Unable to sync.');
-    } finally { try { RNIap?.endConnection?.(); } catch {} }
+  const handleSyncSubscription = () => {
+    Alert.alert('Subscriptions', 'Placeholder: Sync will be handled by RevenueCat SDK.');
+    console.log('[Subscriptions] Sync subscription clicked');
   };
 
   const getCurrentPlan = () => {
@@ -231,29 +85,16 @@ export default function Plans() {
   };
 
   const handleConfirmUpgrade = async () => {
-    try {
-      const planKey = selectedPlan?.title?.toLowerCase();
-      if (!planKey) return;
-      const sku = SKU_BY_PLAN[planKey];
-      if (!sku) {
-        Alert.alert('Plan', 'Selected plan is not purchasable.');
-        setShowUpgradeModal(false);
-        return;
-      }
-      const res = await purchaseSubscription(sku);
-      setShowUpgradeModal(false);
-      if (res?.linked && user) {
-        await refreshUserData(user.uid);
-        Alert.alert('Success', 'Your subscription is active.');
-      }
-    } catch {}
+    // Placeholder action (no real purchase)
+    const planKey = selectedPlan?.title ?? 'Pro';
+    console.log('[Subscriptions] Upgrade confirmed for plan:', planKey);
+    Alert.alert('Upgrade', `Placeholder: Would upgrade to ${planKey} via RevenueCat.`);
+    setShowUpgradeModal(false);
   };
 
   const handleConfirmDowngrade = async () => {
-    // Open Google Play subscriptions page to cancel. Backend will set plan to free upon RTDN.
-    const current = userData?.plan?.toLowerCase();
-    const sku = current ? SKU_BY_PLAN[current] : undefined;
-    await openManageSubscriptions(sku);
+    console.log('[Subscriptions] Downgrade confirmed to Free');
+    Alert.alert('Downgrade', 'Placeholder: Would redirect to manage/cancel via RevenueCat.');
     setShowDowngradeModal(false);
   };
 
@@ -286,10 +127,10 @@ export default function Plans() {
       <View style={styles.content}>
         {/* Manage/Sync actions */}
         <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10, gap: 10 }}>
-          <TouchableOpacity onPress={() => openManageSubscriptions()} style={{ paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#1e1e1e', borderRadius: 8 }}>
-            <Text style={{ color: Colors.text, fontFamily: Typography.fontFamily }}>Manage in Play Store</Text>
+          <TouchableOpacity onPress={handleManageSubscription} style={{ paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#1e1e1e', borderRadius: 8 }}>
+            <Text style={{ color: Colors.text, fontFamily: Typography.fontFamily }}>Manage in Subcriptions</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={syncExistingSubscription} style={{ paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#1e1e1e', borderRadius: 8 }}>
+          <TouchableOpacity onPress={handleSyncSubscription} style={{ paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#1e1e1e', borderRadius: 8 }}>
             <Text style={{ color: Colors.text, fontFamily: Typography.fontFamily }}>Sync Subscription</Text>
           </TouchableOpacity>
         </View>

@@ -4,10 +4,8 @@ import { Colors, Typography } from '@/themes/theme';
 import { isTablet, rf, rs } from '@/utils/responsive';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as WebBrowser from 'expo-web-browser';
-import { getAuth } from 'firebase/auth';
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 type Props = {
   visible: boolean;
@@ -16,6 +14,9 @@ type Props = {
 };
 
 export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
+  // NOTE: Subscription logic has been removed in preparation for RevenueCat.
+  // Button handlers are placeholders only.
+  // TODO: Wire up RevenueCat SDK purchase/restore flows here.
   const { userData } = useUserData();
   const { width, height } = useWindowDimensions();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -54,65 +55,11 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
   // Static discount badge (67% OFF) for annual plan as requested
   const staticAnnualDiscount = 67;
 
-  const SKU_BY_PLAN: Record<string, string> = {
-    pro: 'pro_monthly',
-    annual: 'pro_annual',
-  };
-  const ANDROID_PACKAGE = 'com.shadowmma.ShadowMMA';
-  const FUNCTIONS_BASE = 'https://us-central1-shadow-mma.cloudfunctions.net';
-
-  const openManageSubscriptions = async (sku?: string) => {
-    const url = sku
-      ? `https://play.google.com/store/account/subscriptions?sku=${encodeURIComponent(sku)}&package=${encodeURIComponent(ANDROID_PACKAGE)}`
-      : `https://play.google.com/store/account/subscriptions?package=${encodeURIComponent(ANDROID_PACKAGE)}`;
-    try {
-      const res = await WebBrowser.openBrowserAsync(url, { showInRecents: true, enableBarCollapsing: true });
-      if (res.type === 'dismiss') {}
-    } catch {
-      Linking.openURL(url).catch(() => Alert.alert('Error', 'Unable to open Google Play.'));
-    }
-  };
-
-  const purchaseSubscription = async (sku: string) => {
-    let RNIap: any;
-    try { RNIap = require('react-native-iap'); } catch { await openManageSubscriptions(sku); return; }
-    let purchaseListener: any; let errorListener: any;
-    try {
-      await RNIap.initConnection();
-      const result = await new Promise<{ token: string }>((resolve, reject) => {
-        const timer = setTimeout(() => reject(new Error('Purchase timed out')), 120000);
-        purchaseListener = RNIap.purchaseUpdatedListener(async (purchase: any) => {
-          const productId = purchase?.productId || purchase?.products?.[0];
-          const token = purchase?.purchaseToken;
-          if (productId === sku && token) {
-            clearTimeout(timer);
-            try { await RNIap.finishTransaction(purchase, false); } catch {}
-            resolve({ token });
-          }
-        });
-        errorListener = RNIap.purchaseErrorListener((err: any) => {
-          clearTimeout(timer);
-          reject(err);
-        });
-        RNIap.requestSubscription({ sku });
-      });
-      const auth = getAuth();
-      const idToken = await auth.currentUser?.getIdToken();
-      if (!idToken) return;
-      await fetch(`${FUNCTIONS_BASE}/linkPlayPurchase`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${idToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ purchaseToken: result.token, subscriptionId: sku })
-      });
-      Alert.alert('Success', 'Subscription activated.');
-    } catch (e: any) {
-      const msg = e?.message?.includes('cancel') ? 'Purchase cancelled' : 'Unable to complete purchase.';
-      Alert.alert('Purchase', msg);
-    } finally {
-      try { purchaseListener && purchaseListener.remove(); } catch {}
-      try { errorListener && errorListener.remove(); } catch {}
-      try { RNIap?.endConnection?.(); } catch {}
-    }
+  // Placeholder handlers for upcoming RevenueCat integration
+  const handleSelect = (plan: SubscriptionPlan, isCurrent: boolean) => {
+    if (isCurrent) return;
+    console.log('[Subscriptions] Plan selected:', plan.title);
+    Alert.alert('Select Plan', `Placeholder: Would select ${plan.title} via RevenueCat.`);
   };
 
   const RenderPlanCard = (plan: SubscriptionPlan) => {
@@ -176,19 +123,7 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`${getButtonText(plan.title)} ${plan.title} plan`}
-            onPress={async () => {
-              if (isCurrent) return;
-              const key = plan.title.toLowerCase();
-              if (key === 'free') {
-                const currKey = (userPlan || '').toLowerCase();
-                const sku = SKU_BY_PLAN[currKey];
-                await openManageSubscriptions(sku);
-              } else {
-                const sku = SKU_BY_PLAN[key];
-                if (!sku) { onSelectPlan(plan); return; }
-                await purchaseSubscription(sku);
-              }
-            }}
+            onPress={() => handleSelect(plan, isCurrent)}
             style={[styles.selectButton, isCurrent && styles.currentPlanButton]}
           >
             <Text style={[styles.selectButtonText, isCurrent && styles.currentPlanButtonText]}>{getButtonText(plan.title)}</Text>
