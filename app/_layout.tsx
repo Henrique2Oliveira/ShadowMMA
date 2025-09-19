@@ -3,11 +3,14 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { ConsentProvider } from '@/contexts/ConsentContext';
 import { Colors } from '@/themes/theme';
 import { Stack, usePathname } from 'expo-router';
+import { useEffect } from 'react';
+import { Platform } from 'react-native';
+import Purchases, { LOG_LEVEL } from 'react-native-purchases';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RootLayout() {
-  const pathname = usePathname();
 
+  const pathname = usePathname();
 
   const getBackgroundColor = () => {
     switch (pathname) {
@@ -25,6 +28,30 @@ export default function RootLayout() {
         return Colors.background;
     }
   };
+
+  useEffect(() => {
+    Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
+
+    if (Platform.OS === 'android') {
+      Purchases.configure({ apiKey: "goog_WKPrTYSCxEvIzYhRBIXwOOsIJmY" });
+    }
+    else {
+      console.warn("Purchases is only configured for Android in this app.");
+    }
+
+    getCustomerInfo();
+  }, []);
+
+  async function getCustomerInfo() {
+    try {
+      const customerInfo = await Purchases.getCustomerInfo();
+      console.log("Customer Info:", customerInfo);
+    } catch (error) {
+      console.error("Error fetching customer info");
+    }
+  }
+
+
   return (
     <ErrorBoundary
       onError={(error, errorInfo) => {
