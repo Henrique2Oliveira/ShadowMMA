@@ -28,11 +28,11 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#000",
-        "backgroundImage": "./assets/images/adaptive-icon5.png"
+        "foregroundImage": "./assets/images/adaptive-icon5.png" 
       },
       "edgeToEdgeEnabled": true,
       "package": "com.belsonsan.ShadowMMA",
-      "versionCode": 4,
+      "versionCode": 5,
       "permissions": [
         "com.android.vending.BILLING",
         "com.google.android.gms.permission.AD_ID"

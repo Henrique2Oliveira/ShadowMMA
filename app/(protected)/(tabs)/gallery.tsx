@@ -83,7 +83,7 @@ export default function Gallery() {
       case 'Defense':
         return ['#00c6ff', '#0072ff']; // light blue → deep blue
       case 'Footwork':
-        return ['#fceabb', '#f8b500']; // pale gold → amber
+        return ['#817218ff', '#daa61aff']; // pale gold → amber
       default:
         return ['#434343', '#000000'];
     }

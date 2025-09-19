@@ -28,19 +28,17 @@ export const subscriptionPlans: SubscriptionPlan[] = [
       'Combo training',
       'Essential techniques',
       'Progress tracking',
-      'Community access'
     ]
   },
   {
-    title: 'Pro',
+    title: 'Monthly',
     price: '$9.70',
     period: 'month',
     features: [
       'Unlimited Fights',
       'Combo training',
       'Ad-free experience',
-      'Custom Fight builder',
-      'Personalized training plans',
+      'Custom Combat builder',
       'Priority support',
     ],
     popular: true
@@ -53,8 +51,7 @@ export const subscriptionPlans: SubscriptionPlan[] = [
       'Unlimited Fights',
       'Combo training',
       'Ad-free experience',
-      'Custom Fight builder',
-      'Personalized training plans',
+      'Custom Combat builder',
       'Priority support',
     ]
   }
