@@ -4,10 +4,9 @@
     "slug": "ShadowMMA",
     "version": "1.1",
     "orientation": "portrait",
-    "icon": "./assets/images/adaptive-icon5.png",
+    "icon": "./assets/images/playstore-icon-official.png",
     "scheme": "shadowmma",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
@@ -28,7 +27,7 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#000",
-        "foregroundImage": "./assets/images/adaptive-icon5.png" 
+        "foregroundImage": "./assets/images/playstore-icon-official.png" 
       },
       "edgeToEdgeEnabled": true,
       "package": "com.belsonsan.ShadowMMA",
