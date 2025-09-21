@@ -6,11 +6,12 @@
     "orientation": "portrait",
     "icon": "./assets/images/playstore-icon-official.png",
     "scheme": "shadowmma",
+    "newArchEnabled": false,
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#000"
+      "backgroundColor": "#000000"
     },
     "assetBundlePatterns": [
       "assets/**/*"
@@ -26,12 +27,12 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#000",
-        "foregroundImage": "./assets/images/playstore-icon-official.png" 
+        "backgroundColor": "#000000",
+        "foregroundImage": "./assets/images/playstore-icon-official.png"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.belsonsan.ShadowMMA",
-      "versionCode": 5,
+      "versionCode": 6,
       "permissions": [
         "com.android.vending.BILLING",
         "com.google.android.gms.permission.AD_ID"
@@ -39,13 +40,12 @@
     },
     "androidStatusBar": {
       "barStyle": "light-content",
-      "backgroundColor": "#000",
+      "backgroundColor": "#000000",
       "translucent": false
     },
     "androidNavigationBar": {
       "barStyle": "light-content",
-      "backgroundColor": "#000",
-      "visible": true
+      "backgroundColor": "#000000"
     },
     "web": {
       "bundler": "metro",
@@ -68,7 +68,7 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#000"
+          "backgroundColor": "#000000"
         }
       ],
       [
