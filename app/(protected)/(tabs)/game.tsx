@@ -29,6 +29,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { Animated, AppState, Easing, Pressable, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 
+
 // Pre-game tips (shown once before the user presses Start)
 const PRE_GAME_TIPS = [
   'Remember to breathe – controlled exhales on every strike.',
@@ -66,6 +67,8 @@ type ModalConfig = {
 };
 
 export default function Game() {
+  // Global cap for any speed effect (including boosts)
+  const MAX_SPEED = 2.5;
   const { width, height } = useWindowDimensions();
   const scaleUp = width >= 1024 ? 1.5 : width >= 768 ? 1.25 : 1;
   const [currentModal, setCurrentModal] = React.useState<ModalConfig | null>(null);
@@ -242,7 +245,10 @@ export default function Game() {
   // LevelBar animations handled internally by shared component (DRY)
 
   // Speed multiplier: default param OR 1.0, but we will bump first-time users to 1.5x below
-  const [speedMultiplier, setSpeedMultiplier] = React.useState(parseFloat(params.moveSpeed || '1'));
+  // Clamp any incoming param to MAX_SPEED
+  const [speedMultiplier, setSpeedMultiplier] = React.useState(
+    Math.min(MAX_SPEED, parseFloat(params.moveSpeed || '1'))
+  );
   const [animationMode, setAnimationMode] = React.useState<'none' | 'old' | 'new'>('new');
   const [showComboCarousel, setShowComboCarousel] = React.useState(true); // Default to true
   // Random pre-start tip
@@ -256,7 +262,8 @@ export default function Game() {
         setStance(prefs.stance);
         setShowComboCarousel(prefs.showComboCarousel !== undefined ? prefs.showComboCarousel : true);
         if (prefs.speedMultiplier !== undefined) {
-          setSpeedMultiplier(prefs.speedMultiplier);
+          // Clamp saved preference to MAX_SPEED
+          setSpeedMultiplier(Math.min(MAX_SPEED, prefs.speedMultiplier));
         }
       } else {
   // First time: set a friendlier slightly faster pace (1.5x) and persist in storage for speed 
@@ -299,13 +306,13 @@ export default function Game() {
   // Power-up: Speed Boost (random 25% chance to appear, lasts 30s)
   const BOOST_CHANCE = 0.25; // 25% chance per check
   const BOOST_DURATION_MS = 30_000; // 30 seconds
-  const BOOST_MULTIPLIER = 1.35; // 1.3x speed (pause time reduced)
+  const BOOST_MULTIPLIER = 1.35; // 1.35x speed (pause time reduced)
   const BOOST_CHECK_INTERVAL_MS = 20_000; // check every 20s while fighting
 
   const [isBoostActive, setIsBoostActive] = React.useState(false);
   const [boostRemainingMs, setBoostRemainingMs] = React.useState(0);
   const effectiveSpeedMultiplier = React.useMemo(
-    () => speedMultiplier * (isBoostActive ? BOOST_MULTIPLIER : 1),
+    () => Math.min(MAX_SPEED, speedMultiplier * (isBoostActive ? BOOST_MULTIPLIER : 1)),
     [speedMultiplier, isBoostActive]
   );
 
@@ -903,7 +910,8 @@ export default function Game() {
 
   const handleSpeedSliderChange = React.useCallback((newSpeed: number) => {
     if (!gameState.isPaused) return;
-    setSpeedMultiplier(newSpeed);
+    // Enforce MAX cap on manual slider input
+    setSpeedMultiplier(Math.min(MAX_SPEED, newSpeed));
   }, [gameState.isPaused]);
 
   const handleAnimationModeChange = React.useCallback(() => {
