@@ -12,7 +12,8 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
+  useWindowDimensions
 } from 'react-native';
 
 type AnimatedValue = Animated.Value;
@@ -30,6 +31,10 @@ export const CombosModal: React.FC<CombosModalProps> = ({
   onClose,
   randomFight = false,
 }) => {
+  const { height, width } = useWindowDimensions();
+  const isSmallHeight = height < 700;
+  const modalMaxHeight = Math.min(height * 0.82, uiScale(720));
+
   const slideAnims = useRef<AnimatedValue[]>(
     combos.map(() => new Animated.Value(300))
   ).current;
@@ -119,7 +124,17 @@ export const CombosModal: React.FC<CombosModalProps> = ({
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
+        <View
+          style={[
+            styles.modalContent,
+            {
+              maxHeight: modalMaxHeight,
+              padding: uiScale(isSmallHeight ? 16 : 20, { category: 'spacing' }),
+              paddingBottom: uiScale(isSmallHeight ? 28 : 40, { category: 'spacing' }),
+              backgroundColor: 'rgba(0,0,0,0.9)', // subtle translucency for glassy look
+            },
+          ]}
+        >
           <TouchableOpacity
             style={styles.closeButton}
             onPress={onClose}
@@ -127,7 +142,10 @@ export const CombosModal: React.FC<CombosModalProps> = ({
             <MaterialCommunityIcons name="close" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.modalTitle}>{randomFight ? 'Random Fight' : 'Combos'}</Text>
-          <ScrollView style={styles.optionsContainer}>
+          <ScrollView
+            style={styles.optionsContainer}
+            contentContainerStyle={{ paddingBottom: uiScale(20, { category: 'spacing' }) }}
+          >
             {randomFight ? (
               <View style={styles.randomInfoContainer}>
                 <MaterialCommunityIcons name="shuffle" size={34} color={Colors.text} style={{ marginBottom: 12 }} />
@@ -156,7 +174,7 @@ export const CombosModal: React.FC<CombosModalProps> = ({
                 ]}
               >
                 <LinearGradient
-                  colors={['#1a1a1aff', 'rgba(54, 15, 15, 1)']}
+                  colors={['rgba(26,26,26,0.8)', 'rgba(54, 15, 15, 0.9)']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 0, y: 1 }}
                   style={styles.comboGradient}
@@ -194,7 +212,7 @@ export const CombosModal: React.FC<CombosModalProps> = ({
             onPress={onClose}
           >
             <LinearGradient
-              colors={['#5a1515', '#3e1010']}
+              colors={['rgba(90,21,21,0.9)', 'rgba(62,16,16,0.85)']}
               start={{ x: 0, y: 0 }}
               end={{ x: 0, y: 1 }}
               style={styles.startButtonGradient}
@@ -215,15 +233,21 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: "#000000ff",
+    backgroundColor: 'rgba(0,0,0,0.92)',
     borderTopLeftRadius: uiScale(20, { category: 'spacing' }),
     borderTopRightRadius: uiScale(20, { category: 'spacing' }),
     padding: uiScale(20, { category: 'spacing' }),
     paddingBottom: uiScale(40, { category: 'spacing' }),
     // Increased base height for better visibility on larger devices
-    minHeight: uiScale(380),
-    maxHeight: '88%',
+    minHeight: uiScale(320),
+    maxHeight: '72%',
     width: '100%',
+    // subtle shadow for separation
+    shadowColor: '#000',
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: -2 },
+    elevation: 8,
   },
   modalTitle: {
     color: Colors.text,
@@ -244,8 +268,14 @@ const styles = StyleSheet.create({
     marginHorizontal: uiScale(10, { category: 'spacing' }),
     borderBottomWidth: 6,
     borderWidth: 2,
-    borderColor: '#edededff',
+    borderColor: 'rgba(237, 237, 237, 0.6)',
     overflow: 'hidden',
+    // slight elevation for card
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
   },
   comboGradient: {
     padding: uiScale(15, { category: 'spacing' }),
@@ -276,12 +306,12 @@ const styles = StyleSheet.create({
     right: -5,
     top: -5,
     zIndex: 1,
-    backgroundColor: "#6c1818fd",
+    backgroundColor: 'rgba(108, 24, 24, 0.95)',
     paddingHorizontal: uiScale(10, { category: 'spacing' }),
     paddingVertical: uiScale(4, { category: 'spacing' }),
     borderRadius: uiScale(12, { category: 'spacing' }),
     marginLeft: uiScale(10, { category: 'spacing' }),
-    borderColor: '#b82929ff',
+    borderColor: 'rgba(184, 41, 41, 0.9)',
     borderWidth: 2,
     borderBottomWidth: 4,
   },
@@ -298,8 +328,8 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start', //maybe remove this if not needed
   },
   moveText: {
-    color: "white",
-    backgroundColor: '#fafafa25',
+    color: 'white',
+    backgroundColor: 'rgba(250, 250, 250, 0.15)',
     padding: uiScale(10, { category: 'spacing' }),
     borderRadius: uiScale(10, { category: 'spacing' }),
     fontSize: uiScale(16, { category: 'font' }),
@@ -321,8 +351,14 @@ const styles = StyleSheet.create({
     marginHorizontal: uiScale(10, { category: 'spacing' }),
     borderBottomWidth: 4,
     borderWidth: 2,
-    borderColor: '#ff3636ff',
+    borderColor: 'rgba(255, 54, 54, 0.9)',
     overflow: 'hidden',
+    // elevation for button prominence
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
   },
   startButtonGradient: {
     paddingVertical: uiScale(12, { category: 'spacing' }),
@@ -342,11 +378,11 @@ const styles = StyleSheet.create({
     padding: uiScale(20, { category: 'spacing' }),
     marginHorizontal: uiScale(10, { category: 'spacing' }),
     marginVertical: uiScale(20, { category: 'spacing' }),
-    backgroundColor: '#1a1a1aff',
+    backgroundColor: 'rgba(26, 26, 26, 0.85)',
     borderRadius: uiScale(14, { category: 'spacing' }),
     borderWidth: 2,
     borderBottomWidth: 6,
-    borderColor: '#edededff',
+    borderColor: 'rgba(237, 237, 237, 0.6)',
   },
   randomInfoTitle: {
     color: Colors.text,

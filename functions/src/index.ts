@@ -11,6 +11,10 @@ import { onMessagePublished } from "firebase-functions/v2/pubsub";
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
 
+
+//firebase deploy --only function  - deploy only functions 
+
+
 // For cost control, you can set the maximum number of containers that can be
 // running at the same time. This helps mitigate the impact of unexpected
 // traffic spikes by instead downgrading performance. This limit is a
@@ -116,7 +120,7 @@ export const getUserData = onRequest(async (req, res) => {
       name: userData?.name || 'Warrior',
   xp: safeXp || 120,
       plan: userData?.plan || 'free',
-      fightsLeft: userData?.fightsLeft || 3,
+      fightsLeft: userData?.fightsLeft || 0, // default 0 fight for free users show on profile when reaching 0 (problem)
       loginStreak: userData?.loginStreak || 0,
       maxLoginStreak: userData?.maxLoginStreak || userData?.loginStreak || 0,
       currentFightRound,
