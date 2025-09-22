@@ -14,7 +14,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
- 
+
 type Props = {
   visible: boolean;
   onAccept: () => void; // personalized ads
@@ -24,7 +24,6 @@ type Props = {
 
 export const CookieConsentModal: React.FC<Props> = ({ visible, onAccept, onLimit, onRequestClose }) => {
   const { width, height } = useWindowDimensions();
-  const isSmall = width < 360;
   const cardMaxWidth = Math.min(width - uiScale(24, { category: 'spacing' }) * 2, 640);
   const cardMaxHeight = Math.min(height * 0.88, 700);
 
@@ -90,7 +89,7 @@ export const CookieConsentModal: React.FC<Props> = ({ visible, onAccept, onLimit
             </View>
           </ScrollView>
 
-          <View style={[styles.buttonsRow, isSmall && styles.buttonsColumn]}>
+          <View style={styles.buttonsCol}>
             <Pressable
               onPress={onLimit}
               android_ripple={{ color: 'rgba(255,255,255,0.1)' }}
@@ -205,15 +204,15 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily,
     fontSize: uiScale(12, { category: 'font' }),
   },
-  buttonsRow: {
-    flexDirection: 'row',
+  buttonsCol: {
     gap: 10,
     marginTop: 15,
-    marginBottom: 6,
-  },
-  buttonsColumn: {
+    marginBottom: 16,
     flexDirection: 'column',
+    paddingHorizontal: 20,
+    paddingBottom: 70,
   },
+
   secondaryBtn: {
     flex: 1,
     minHeight: uiScale(46, { category: 'button' }),
