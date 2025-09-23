@@ -4,8 +4,9 @@ import { Colors, Typography } from '@/themes/theme';
 import { isTablet, rf, rs } from '@/utils/responsive';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import Purchases from 'react-native-purchases';
 
 type Props = {
   visible: boolean;
@@ -20,6 +21,9 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
   const { userData } = useUserData();
   const { width, height } = useWindowDimensions();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [rcPlans, setRcPlans] = useState<SubscriptionPlan[]>([]);
 
   const userPlan = userData?.plan?.toLowerCase();
   const layout = useMemo(() => {
@@ -61,6 +65,68 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
     console.log('[Subscriptions] Plan selected:', plan.title);
     Alert.alert('Select Plan', `Placeholder: Would select ${plan.title} via RevenueCat.`);
   };
+
+  // Fetch RevenueCat offerings when modal is shown
+  const fetchOfferings = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const offerings: any = await Purchases.getOfferings();
+      const current = offerings?.current;
+      const packages: any[] = current?.availablePackages ?? [];
+
+      // Map RC packages -> our SubscriptionPlan shape, using config features as a source of truth
+      const proConfig = subscriptionPlans.find(p => p.title.toLowerCase() === 'pro');
+      const annualConfig = subscriptionPlans.find(p => p.title.toLowerCase() === 'annual');
+
+      const mapped: SubscriptionPlan[] = packages.map((pkg: any) => {
+        const type: string = (pkg?.packageType || pkg?.identifier || '').toString().toLowerCase();
+        const isAnnual = type.includes('annual') || type.includes('year') || type.includes('annualy') || pkg?.packageType === 'ANNUAL';
+        const isMonthly = type.includes('month') || pkg?.packageType === 'MONTHLY';
+
+        const title = isAnnual ? 'Annual' : isMonthly ? 'Pro' : (pkg?.product?.title || 'Pro');
+        const priceStr = pkg?.product?.priceString ?? pkg?.product?.price_formatted ?? (isAnnual ? annualConfig?.price : proConfig?.price) ?? '$0.00';
+        const period = isAnnual ? 'year' : 'month';
+        const features = (isAnnual ? annualConfig?.features : proConfig?.features) ?? [];
+
+        return {
+          title,
+          price: priceStr,
+          period,
+          features,
+          popular: isAnnual || false,
+        } as SubscriptionPlan;
+      });
+
+      // Ensure unique by title and stable order: Annual first, then Pro
+      const uniqueByTitle = new Map<string, SubscriptionPlan>();
+      for (const plan of mapped) {
+        const key = plan.title.toLowerCase();
+        if (!uniqueByTitle.has(key)) uniqueByTitle.set(key, plan);
+      }
+      const ordered = ['annual', 'pro']
+        .map(k => uniqueByTitle.get(k))
+        .filter(Boolean) as SubscriptionPlan[];
+
+      // Always include Free plan from config at the end for discoverability
+      const freeConfig = subscriptionPlans.find(p => p.title.toLowerCase() === 'free');
+      const finalPlans = freeConfig ? [...ordered, freeConfig] : ordered;
+
+      setRcPlans(finalPlans);
+    } catch (e: any) {
+      console.error('[RevenueCat] Failed to fetch offerings:', e);
+      setError('Unable to load live plans. Showing defaults.');
+      setRcPlans([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (visible) {
+      fetchOfferings();
+    }
+  }, [visible, fetchOfferings]);
 
   const RenderPlanCard = (plan: SubscriptionPlan) => {
     const isCurrent = plan.title.toLowerCase() === userPlan;
@@ -136,6 +202,8 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
     );
   };
 
+  const plansData: SubscriptionPlan[] = rcPlans.length ? rcPlans : subscriptionPlans;
+
   return (
     <Modal
       animationType={isTablet ? 'fade' : 'slide'}
@@ -151,10 +219,31 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
               <Text style={styles.title}>Choose Your Plan</Text>
               <Text style={styles.subtitle}>Unlock advanced training modes & personalized progression.</Text>
             </View>
-            <Pressable onPress={onClose} style={styles.closeButton} accessibilityRole="button" accessibilityLabel="Close plans modal">
-              <MaterialCommunityIcons name="close" size={isTablet ? 30 : 24} color={Colors.text} />
-            </Pressable>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Pressable
+                onPress={fetchOfferings}
+                style={[styles.iconButton, { marginRight: 6 }]}
+                accessibilityRole="button"
+                accessibilityLabel="Refresh plans"
+              >
+                {loading ? (
+                  <ActivityIndicator color={Colors.text} size={isTablet ? 'small' : 'small'} />
+                ) : (
+                  <MaterialCommunityIcons name="refresh" size={isTablet ? 26 : 22} color={Colors.text} />
+                )}
+              </Pressable>
+              <Pressable onPress={onClose} style={styles.closeButton} accessibilityRole="button" accessibilityLabel="Close plans modal">
+                <MaterialCommunityIcons name="close" size={isTablet ? 30 : 24} color={Colors.text} />
+              </Pressable>
+            </View>
           </View>
+
+          {!!error && (
+            <View style={styles.bannerWarning}>
+              <MaterialCommunityIcons name="cloud-alert" size={18} color="#ffb84d" />
+              <Text style={styles.bannerWarningText}>{error}</Text>
+            </View>
+          )}
 
           {isTablet ? (
             <ScrollView
@@ -168,8 +257,17 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
                 alignSelf: 'center'
               }}
               style={styles.plansContainer}
+              refreshControl={
+                <RefreshControl tintColor={Colors.text} refreshing={loading} onRefresh={fetchOfferings} />
+              }
             >
-              {subscriptionPlans.map(RenderPlanCard)}
+              {loading && !rcPlans.length ? (
+                <View style={{ paddingVertical: 24 }}>
+                  <ActivityIndicator size="small" color={Colors.text} />
+                </View>
+              ) : (
+                plansData.map(RenderPlanCard)
+              )}
             </ScrollView>
           ) : (
             <ScrollView
@@ -178,7 +276,13 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
               contentContainerStyle={{ paddingRight: 10, paddingLeft: 4, alignItems: 'stretch' }}
               style={[styles.plansContainer, { alignSelf: 'center', width: layout.containerWidth }]}
             >
-              {subscriptionPlans.map(RenderPlanCard)}
+              {loading && !rcPlans.length ? (
+                <View style={{ width: layout.cardWidth, justifyContent: 'center', alignItems: 'center', paddingVertical: 24 }}>
+                  <ActivityIndicator size="small" color={Colors.text} />
+                </View>
+              ) : (
+                plansData.map(RenderPlanCard)
+              )}
             </ScrollView>
           )}
         </View>
@@ -232,8 +336,29 @@ const styles = StyleSheet.create({
   closeButton: {
     padding: 8,
   },
+  iconButton: {
+    padding: 8,
+  },
   plansContainer: {
     flexGrow: 0,
+  },
+  bannerWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: '#332b16',
+    borderWidth: 1,
+    borderColor: '#5c4718',
+    marginBottom: 8,
+  },
+  bannerWarningText: {
+    color: '#ffdb99',
+    fontSize: rf(12),
+    fontFamily: Typography.fontFamily,
+    flexShrink: 1,
   },
   // gridWrapper removed since layout is always horizontal now
   planCard: {

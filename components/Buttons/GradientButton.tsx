@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily,
     fontSize: 22,
     textShadowColor: "#000",
-    textShadowOffset: { width: 0, height: 2 },
+    textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
   subtitleText: {

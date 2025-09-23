@@ -9,6 +9,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import Purchases from 'react-native-purchases';
+
 
 export default function Plans() {
   // NOTE: Subscription logic has been removed in preparation for RevenueCat.
@@ -33,7 +35,15 @@ export default function Plans() {
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showDowngradeModal, setShowDowngradeModal] = useState(false);
-
+  
+  async function getOfferings() {
+    try {
+      const offerings = await Purchases.getOfferings();
+      console.log("Offerings:", JSON.stringify(offerings));
+    } catch (error) {
+      console.error("Error fetching offerings");
+    }
+  }
   // Placeholders for future RevenueCat integration
   const handleManageSubscription = () => {
     Alert.alert('Subscriptions', 'Placeholder: Subscription management will be handled by RevenueCat.');
@@ -105,15 +115,15 @@ export default function Plans() {
   };
 
   return (
-    <ScrollView 
-      style={styles.container} 
+    <ScrollView
+      style={styles.container}
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
       bounces={true}
     >
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
+        <TouchableOpacity
+          style={styles.backButton}
           onPress={() => router.back()}
         >
           <MaterialCommunityIcons name="arrow-left" size={24} color={Colors.text} />
@@ -186,47 +196,47 @@ export default function Plans() {
                     plan.title.toLowerCase() === userData?.plan?.toLowerCase() && styles.activePlanCard,
                   ]}
                 >
-                {plan.popular && (
-                  <View style={styles.popularBadge}>
-                    <Text style={styles.popularText}>Most Popular</Text>
-                  </View>
-                )}
-                {plan.title.toLowerCase() === userData?.plan?.toLowerCase() && (
-                  <View style={styles.activeBadge}>
-                    <Text style={styles.activeText}>Current Plan</Text>
-                  </View>
-                )}
-                <View style={styles.planHeader}>
-                  <Text style={[styles.planTitle, isTablet && styles.planTitleTablet]}>{plan.title}</Text>
-                  <View style={styles.priceContainer}>
-                    <Text style={[styles.planPrice, isTablet && styles.planPriceTablet]}>{plan.price}</Text>
-                    <Text style={[styles.planPeriod, isTablet && styles.planPeriodTablet]}>/{plan.period}</Text>
-                  </View>
-                  {getMonthlyEquivalent(plan) && (
-                    <Text style={[styles.planPeriod, isTablet && styles.planPeriodTablet]}>{getMonthlyEquivalent(plan)}</Text>
-                  )}
-                </View>
-                <View style={[styles.featuresContainer, isTablet && styles.featuresContainerTablet]}>
-                  {plan.features.map((feature, index) => (
-                    <View key={index} style={styles.featureRow}>
-                      <MaterialCommunityIcons name="check" size={isTablet ? 20 : 18} color="#4ade80" />
-                      <Text style={[styles.featureText, isTablet && styles.featureTextTablet]}>{feature}</Text>
+                  {plan.popular && (
+                    <View style={styles.popularBadge}>
+                      <Text style={styles.popularText}>Most Popular</Text>
                     </View>
-                  ))}
-                </View>
-                <TouchableOpacity
-                  style={[
-                    styles.selectButton,
-                    getButtonStyle(plan.title),
-                    isTablet && styles.selectButtonTablet
-                  ]}
-                  onPress={() => handleSelectPlan(plan)}
-                  disabled={plan.title.toLowerCase() === userData?.plan?.toLowerCase()}
-                >
-                  <Text style={[styles.selectButtonText, isTablet && styles.selectButtonTextTablet]}>
-                    {getButtonText(plan.title)}
-                  </Text>
-                </TouchableOpacity>
+                  )}
+                  {plan.title.toLowerCase() === userData?.plan?.toLowerCase() && (
+                    <View style={styles.activeBadge}>
+                      <Text style={styles.activeText}>Current Plan</Text>
+                    </View>
+                  )}
+                  <View style={styles.planHeader}>
+                    <Text style={[styles.planTitle, isTablet && styles.planTitleTablet]}>{plan.title}</Text>
+                    <View style={styles.priceContainer}>
+                      <Text style={[styles.planPrice, isTablet && styles.planPriceTablet]}>{plan.price}</Text>
+                      <Text style={[styles.planPeriod, isTablet && styles.planPeriodTablet]}>/{plan.period}</Text>
+                    </View>
+                    {getMonthlyEquivalent(plan) && (
+                      <Text style={[styles.planPeriod, isTablet && styles.planPeriodTablet]}>{getMonthlyEquivalent(plan)}</Text>
+                    )}
+                  </View>
+                  <View style={[styles.featuresContainer, isTablet && styles.featuresContainerTablet]}>
+                    {plan.features.map((feature, index) => (
+                      <View key={index} style={styles.featureRow}>
+                        <MaterialCommunityIcons name="check" size={isTablet ? 20 : 18} color="#4ade80" />
+                        <Text style={[styles.featureText, isTablet && styles.featureTextTablet]}>{feature}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  <TouchableOpacity
+                    style={[
+                      styles.selectButton,
+                      getButtonStyle(plan.title),
+                      isTablet && styles.selectButtonTablet
+                    ]}
+                    onPress={() => handleSelectPlan(plan)}
+                    disabled={plan.title.toLowerCase() === userData?.plan?.toLowerCase()}
+                  >
+                    <Text style={[styles.selectButtonText, isTablet && styles.selectButtonTextTablet]}>
+                      {getButtonText(plan.title)}
+                    </Text>
+                  </TouchableOpacity>
                 </LinearGradient>
               </Pressable>
             ))}

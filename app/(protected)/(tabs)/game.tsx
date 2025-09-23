@@ -27,7 +27,7 @@ import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
-import { Animated, AppState, Easing, Pressable, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { Animated, AppState, Pressable, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 
 
 // Pre-game tips (shown once before the user presses Start)
@@ -81,6 +81,7 @@ export default function Game() {
     require('@/assets/audio/sfx/swoosh1.mp3'),
     require('@/assets/audio/sfx/swoosh2.mp3'),
     require('@/assets/audio/sfx/swoosh3.mp3'),
+    // require('@/assets/audio/sfx/kickbag.mp3'), adicionar mais tarde se quiser
   ];
 
   const [bellSound, setBellSound] = React.useState<Audio.Sound | null>(null);
@@ -198,7 +199,7 @@ export default function Game() {
     movesMode: string;
     category: string;
     comboId?: string;
-  selectedComboIds?: string; // comma-separated when custom fight
+    selectedComboIds?: string; // comma-separated when custom fight
     randomFight?: string;
     timestamp: string;
   }>();
@@ -266,7 +267,7 @@ export default function Game() {
           setSpeedMultiplier(Math.min(MAX_SPEED, prefs.speedMultiplier));
         }
       } else {
-  // First time: set a friendlier slightly faster pace (1.5x) and persist in storage for speed 
+        // First time: set a friendlier slightly faster pace (1.5x) and persist in storage for speed 
         setSpeedMultiplier(1.5);
         saveGamePreferences({
           isMuted: false,
@@ -291,7 +292,7 @@ export default function Game() {
       if (currentLevel > previousLevel && previousLevel > 0) {
         // If backend already provided the combos list, prefer that over the generic banner
         let t: ReturnType<typeof setTimeout> | null = null;
-  if (!newUnlockedCombos || newUnlockedCombos.length === 0) {
+        if (!newUnlockedCombos || newUnlockedCombos.length === 0) {
           setShowNewCombo(true);
           t = setTimeout(() => setShowNewCombo(false), 5000);
         }
@@ -412,7 +413,7 @@ export default function Game() {
     setBoostRemainingMs(0);
     if (lastBoostTickRef) lastBoostTickRef.current = null;
 
-  const fetchMoves = async () => {
+    const fetchMoves = async () => {
       setIsLoading(true);
       try {
         const auth = getAuth(app);
@@ -420,7 +421,7 @@ export default function Game() {
         if (!user) throw new Error('No user');
         const idToken = await user.getIdToken();
 
-    const response = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/startFight', {
+        const response = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/startFight', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -434,10 +435,10 @@ export default function Game() {
               .join(',') || 'Punches',
             comboId: params.comboId || undefined,
             randomFight: params.randomFight === 'true',
-      selectedComboIds: params.selectedComboIds || undefined,
-      // Pass fight config so backend saves the right minutes
-      fightRounds: totalRounds,
-      fightTimePerRound: parseFloat(params.roundDuration || '1'),
+            selectedComboIds: params.selectedComboIds || undefined,
+            // Pass fight config so backend saves the right minutes
+            fightRounds: totalRounds,
+            fightTimePerRound: parseFloat(params.roundDuration || '1'),
           })
         });
         // Reset animations when new game starts
@@ -449,7 +450,7 @@ export default function Game() {
           if (response.status === 403) {
             // Attempt to parse error to distinguish reasons
             let payload: any = null;
-            try { payload = await response.json(); } catch {}
+            try { payload = await response.json(); } catch { }
             const isProRequired = payload?.error === 'pro-required';
             if (isProRequired) {
               setCurrentModal({
@@ -634,9 +635,9 @@ export default function Game() {
       }
     };
 
-  // Reset game-over guard for a fresh session
-  gameOverSentRef.current = false;
-  fetchMoves();
+    // Reset game-over guard for a fresh session
+    gameOverSentRef.current = false;
+    fetchMoves();
 
   }, [params.roundDuration, params.numRounds, params.restTime, params.moveSpeed, params.timestamp, params.category, params.movesMode, params.comboId]);
 
@@ -661,113 +662,10 @@ export default function Game() {
       Animated.spring(cardBounce, { toValue: 0, friction: 5, tension: 120, useNativeDriver: true }),
     ]).start();
     // Haptic nudge if available
-    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch { }
   }, [cardBounce]);
   const bounceScale = cardBounce.interpolate({ inputRange: [0, 1], outputRange: [1, 0.96] });
 
-  // =====================
-  // Game over particles
-  // =====================
-  type Particle = {
-    id: string;
-    x: number;
-    y: number;
-    size: number;
-    color: string;
-    animX: Animated.Value;
-    animY: Animated.Value;
-    opacity: Animated.Value;
-    scale: Animated.Value;
-    rotate: Animated.Value;
-    rotDeg: number;
-  };
-  const particlesRef = React.useRef<Particle[]>([]);
-  const [particlesTick, setParticlesTick] = React.useState(0);
-  const rerenderParticles = () => setParticlesTick((t) => t + 1);
-  const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
-  const rand = (minN: number, maxN: number) => Math.random() * (maxN - minN) + minN;
-
-  const spawnParticlesAt = React.useCallback((cx: number, cy: number, count: number, palette: string[]) => {
-    const created: Particle[] = [];
-    for (let i = 0; i < count; i++) {
-      const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      const size = rand(4, 12);
-      const color = palette[i % palette.length];
-      const animX = new Animated.Value(0);
-      const animY = new Animated.Value(0);
-      const opacity = new Animated.Value(1);
-      const scale = new Animated.Value(1);
-      const rotate = new Animated.Value(0);
-      const rotDeg = rand(180, 900); // spin more for flair
-
-      const angle = rand(-Math.PI, Math.PI);
-      const distance = rand(100, 280);
-      const dx = Math.cos(angle) * distance;
-      const up = rand(100, 240); // initial upward impulse
-      const fall = rand(160, 360); // gravity drop
-
-      const p: Particle = { id, x: cx, y: cy, size, color, animX, animY, opacity, scale, rotate, rotDeg };
-      created.push(p);
-
-      Animated.parallel([
-        // Outward burst (up and sideways)
-        Animated.sequence([
-          Animated.parallel([
-            Animated.timing(animX, { toValue: dx * 0.65, duration: 420, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-            Animated.timing(animY, { toValue: -up, duration: 420, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-          ]),
-          // Gravity pull-down
-          Animated.parallel([
-            Animated.timing(animX, { toValue: dx, duration: 520, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-            Animated.timing(animY, { toValue: -up + fall, duration: 520, easing: Easing.in(Easing.quad), useNativeDriver: true }),
-          ]),
-        ]),
-        // Spin and subtle scale variation
-        Animated.timing(rotate, { toValue: 1, duration: 1100, easing: Easing.linear, useNativeDriver: true }),
-        Animated.timing(scale, { toValue: rand(0.85, 1.2), duration: 700, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 0, delay: 800, duration: 500, useNativeDriver: true }),
-      ]).start(() => {
-        const idx = particlesRef.current.findIndex(pp => pp.id === id);
-        if (idx >= 0) {
-          particlesRef.current.splice(idx, 1);
-          rerenderParticles();
-        }
-      });
-    }
-    particlesRef.current.push(...created);
-    rerenderParticles();
-  }, []);
-
-  const launchGameOverEffects = React.useCallback(() => {
-    // Base confetti from center
-  const baseColors = ['#ffd257', Colors.redDots, '#ffffff'];
-  // Center blast, bigger coverage
-  spawnParticlesAt(width * 0.5, height * 0.38, 90, baseColors);
-  // Two side fountains (more spread)
-  spawnParticlesAt(width * 0.12, height * 0.58, 36, baseColors);
-  spawnParticlesAt(width * 0.88, height * 0.58, 36, baseColors);
-
-    // Per-move bursts based on counts (top 5 moves)
-    const entries = Object.entries(moveStats || {}).sort((a, b) => (b[1] as number) - (a[1] as number)).slice(0, 5);
-    const n = entries.length || 1;
-    entries.forEach(([name, count], i) => {
-      const angle = (i / n) * Math.PI * 2;
-      const radius = Math.min(width, height) * 0.18;
-      const cx = width * 0.5 + Math.cos(angle) * radius;
-      const cy = height * 0.5 + Math.sin(angle) * radius;
-  const strength = clamp(8 + Math.floor((count as number) / 1.5), 16, 40);
-      const palette = name.toLowerCase().includes('jab')
-        ? ['#ffd257', '#fff2a1', Colors.redDots]
-        : ['#ffd257', Colors.redDots, '#ffffff'];
-      spawnParticlesAt(cx, cy, strength, palette);
-    });
-  }, [height, moveStats, spawnParticlesAt, width]);
-
-  React.useEffect(() => {
-    if (gameState.isGameOver) {
-      launchGameOverEffects();
-    }
-  }, [gameState.isGameOver, launchGameOverEffects]);
 
   // Countdown state must be declared BEFORE any effects that reference it
   const [isCountdownComplete, setIsCountdownComplete] = React.useState(false);
@@ -833,10 +731,10 @@ export default function Game() {
         }
 
         // Final round over -> game over
-  const auth = getAuth(app);
+        const auth = getAuth(app);
         const user = auth.currentUser;
-  if (user && !gameOverSentRef.current) {
-    gameOverSentRef.current = true; // ensure we only send once
+        if (user && !gameOverSentRef.current) {
+          gameOverSentRef.current = true; // ensure we only send once
           user.getIdToken().then(idToken => {
             fetch('https://us-central1-shadow-mma.cloudfunctions.net/handleGameOver', {
               method: 'POST',
@@ -1443,32 +1341,6 @@ export default function Game() {
           }}
         />
       </LinearGradient>
-      {/* Particle overlay */}
-      {particlesRef.current.length > 0 && (
-        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-    {particlesRef.current.map((p) => (
-            <Animated.View
-              key={p.id}
-              style={{
-                position: 'absolute',
-                left: p.x,
-                top: p.y,
-                width: p.size,
-                height: p.size * 1.6,
-                borderRadius: 2,
-                backgroundColor: p.color,
-                opacity: p.opacity,
-                transform: [
-                  { translateX: p.animX },
-                  { translateY: p.animY },
-      { scale: p.scale },
-      { rotateZ: p.rotate.interpolate({ inputRange: [0, 1], outputRange: ['0deg', `${p.rotDeg}deg`] }) },
-                ],
-              }}
-            />
-          ))}
-        </View>
-      )}
     </>
   );
 }
@@ -1681,7 +1553,7 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily,
   },
   upgradeButton: {
-  backgroundColor: Colors.bgGameDark,
+    backgroundColor: Colors.bgGameDark,
   },
   upgradeButtonText: {
     color: '#fff',

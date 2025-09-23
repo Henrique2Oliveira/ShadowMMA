@@ -39,18 +39,17 @@ export default function RootLayout() {
       console.warn("Purchases is only configured for Android in this app.");
     }
 
-    getCustomerInfo();
+    // getCustomerInfo();
   }, []);
 
   async function getCustomerInfo() {
     try {
       const customerInfo = await Purchases.getCustomerInfo();
-      console.log("Customer Info:", customerInfo);
+      console.log("Customer Info:", JSON.stringify(customerInfo));
     } catch (error) {
       console.error("Error fetching customer info");
     }
   }
-
 
   return (
     <ErrorBoundary

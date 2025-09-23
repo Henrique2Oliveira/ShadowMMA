@@ -592,8 +592,7 @@ export default function Index() {
             title={buttons[5].title}
             iconName="boxing-glove"
             iconSize={96}
-            fontSize={30}
-            subtitle="Single Combos to master like a pro"
+            fontSize={35}
             disabled={buttons[5].disabled}
             onPress={buttons[5].onPress}
           />
@@ -650,8 +649,7 @@ export default function Index() {
             title={buttons[8].title}
             iconName="tune"
             iconSize={88}
-            fontSize={20}
-            subtitle="Customize rounds, rest, and moves"
+            fontSize={30}
             proOnly
             disabled={buttons[8].disabled}
             onPress={buttons[8].onPress}
