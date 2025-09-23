@@ -1,11 +1,13 @@
-import { calculateMonthlyEquivalent, subscriptionPlans, type SubscriptionPlan } from '@/config/subscriptionPlans';
-import { useUserData } from '@/contexts/UserDataContext';
+import { AlertModal } from '@/components/Modals/AlertModal';
+import { calculateMonthlyEquivalent, mapOfferingsToPlans, subscriptionPlans, type SubscriptionPlan } from '@/config/subscriptionPlans';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserData, useUserData as useUserDataCtx } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
 import { isTablet, rf, rs } from '@/utils/responsive';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Purchases from 'react-native-purchases';
 
 type Props = {
@@ -20,10 +22,17 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
   // TODO: Wire up RevenueCat SDK purchase/restore flows here.
   const { userData } = useUserData();
   const { width, height } = useWindowDimensions();
+  const { user } = useAuth();
+  const { refreshUserData } = useUserDataCtx();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rcPlans, setRcPlans] = useState<SubscriptionPlan[]>([]);
+  const [purchaseModalVisible, setPurchaseModalVisible] = useState(false);
+  const [purchaseModalTitle, setPurchaseModalTitle] = useState('');
+  const [purchaseModalMessage, setPurchaseModalMessage] = useState('');
+  const [purchaseModalType, setPurchaseModalType] = useState<'success' | 'error' | 'warning' | 'info'>('info');
+  const [closePlansAfterModal, setClosePlansAfterModal] = useState(false);
 
   const userPlan = userData?.plan?.toLowerCase();
   const layout = useMemo(() => {
@@ -44,9 +53,13 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
     setExpanded(prev => ({ ...prev, [title]: !prev[title] }));
   }, []);
 
+  const normalize = (t?: string | null) => (t || '').toLowerCase().replace('pro', 'monthly');
+
   const getButtonText = useCallback((planTitle: string) => {
-    if (planTitle.toLowerCase() === userPlan) return 'Current Plan';
-    if (userPlan === 'pro' || userPlan === 'annual') {
+    const normalizedUser = normalize(userPlan);
+    const normalizedPlan = normalize(planTitle);
+    if (normalizedPlan === normalizedUser) return 'Current Plan';
+    if (normalizedUser === 'monthly' || normalizedUser === 'annual') {
       return planTitle.toLowerCase() === 'free' ? 'Downgrade' : 'Switch Plan';
     }
     return 'Select Plan';
@@ -59,11 +72,60 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
   // Static discount badge (67% OFF) for annual plan as requested
   const staticAnnualDiscount = 67;
 
-  // Placeholder handlers for upcoming RevenueCat integration
-  const handleSelect = (plan: SubscriptionPlan, isCurrent: boolean) => {
+  // Purchase handler via RevenueCat
+  const handleSelect = async (plan: SubscriptionPlan, isCurrent: boolean) => {
     if (isCurrent) return;
-    console.log('[Subscriptions] Plan selected:', plan.title);
-    Alert.alert('Select Plan', `Placeholder: Would select ${plan.title} via RevenueCat.`);
+    try {
+      setLoading(true);
+      // Fetch latest offerings to ensure package reference exists
+      const offerings: any = await Purchases.getOfferings();
+      const current = offerings?.current;
+      const packages: any[] = current?.availablePackages ?? [];
+
+      // Try to match by package identifier or period
+      const pick = packages.find((p: any) =>
+        p?.identifier === plan.rcPackageId ||
+        (plan.period === 'month' && (p?.packageType === 'MONTHLY' || /month/i.test(p?.identifier))) ||
+        (plan.period === 'year' && (p?.packageType === 'ANNUAL' || /annual|year/i.test(p?.identifier)))
+      ) || packages[0];
+
+      if (!pick) {
+        setPurchaseModalTitle('Unavailable');
+        setPurchaseModalMessage('This plan is not available at the moment. Please try again later.');
+        setPurchaseModalType('warning');
+        setPurchaseModalVisible(true);
+        return;
+      }
+
+      const result = await Purchases.purchasePackage(pick);
+
+      // result.customerInfo contains entitlements; check active
+      const active = (result?.customerInfo?.entitlements?.active) || {};
+      const hasPro = Object.keys(active).length > 0;
+      if (hasPro) {
+        setPurchaseModalTitle('Purchase Successful');
+        setPurchaseModalMessage('Your purchase was successful. Enjoy premium features!');
+        setPurchaseModalType('success');
+        setClosePlansAfterModal(true);
+        setPurchaseModalVisible(true);
+        try { await refreshUserData(user?.uid ?? ''); } catch {}
+      }
+    } catch (e: any) {
+      // Detect cancellation
+      const code = e?.userCancelled || e?.code === 'PURCHASE_CANCELLED_ERROR' || e?.code === '1';
+      if (code) {
+        // user cancelled; do nothing
+        return;
+      }
+  console.error('[RevenueCat] Purchase error:', e);
+  setPurchaseModalTitle('Purchase Failed');
+  setPurchaseModalMessage('We could not complete your purchase. Please try again later.');
+  setPurchaseModalType('error');
+  setClosePlansAfterModal(false);
+  setPurchaseModalVisible(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Fetch RevenueCat offerings when modal is shown
@@ -72,47 +134,8 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
     setError(null);
     try {
       const offerings: any = await Purchases.getOfferings();
-      const current = offerings?.current;
-      const packages: any[] = current?.availablePackages ?? [];
-
-      // Map RC packages -> our SubscriptionPlan shape, using config features as a source of truth
-      const proConfig = subscriptionPlans.find(p => p.title.toLowerCase() === 'pro');
-      const annualConfig = subscriptionPlans.find(p => p.title.toLowerCase() === 'annual');
-
-      const mapped: SubscriptionPlan[] = packages.map((pkg: any) => {
-        const type: string = (pkg?.packageType || pkg?.identifier || '').toString().toLowerCase();
-        const isAnnual = type.includes('annual') || type.includes('year') || type.includes('annualy') || pkg?.packageType === 'ANNUAL';
-        const isMonthly = type.includes('month') || pkg?.packageType === 'MONTHLY';
-
-        const title = isAnnual ? 'Annual' : isMonthly ? 'Pro' : (pkg?.product?.title || 'Pro');
-        const priceStr = pkg?.product?.priceString ?? pkg?.product?.price_formatted ?? (isAnnual ? annualConfig?.price : proConfig?.price) ?? '$0.00';
-        const period = isAnnual ? 'year' : 'month';
-        const features = (isAnnual ? annualConfig?.features : proConfig?.features) ?? [];
-
-        return {
-          title,
-          price: priceStr,
-          period,
-          features,
-          popular: isAnnual || false,
-        } as SubscriptionPlan;
-      });
-
-      // Ensure unique by title and stable order: Annual first, then Pro
-      const uniqueByTitle = new Map<string, SubscriptionPlan>();
-      for (const plan of mapped) {
-        const key = plan.title.toLowerCase();
-        if (!uniqueByTitle.has(key)) uniqueByTitle.set(key, plan);
-      }
-      const ordered = ['annual', 'pro']
-        .map(k => uniqueByTitle.get(k))
-        .filter(Boolean) as SubscriptionPlan[];
-
-      // Always include Free plan from config at the end for discoverability
-      const freeConfig = subscriptionPlans.find(p => p.title.toLowerCase() === 'free');
-      const finalPlans = freeConfig ? [...ordered, freeConfig] : ordered;
-
-      setRcPlans(finalPlans);
+      const plans = mapOfferingsToPlans(offerings);
+      setRcPlans(plans);
     } catch (e: any) {
       console.error('[RevenueCat] Failed to fetch offerings:', e);
       setError('Unable to load live plans. Showing defaults.');
@@ -129,7 +152,7 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
   }, [visible, fetchOfferings]);
 
   const RenderPlanCard = (plan: SubscriptionPlan) => {
-    const isCurrent = plan.title.toLowerCase() === userPlan;
+    const isCurrent = normalize(plan.title) === normalize(userPlan);
     const isExpanded = expanded[plan.title];
     const featuresToShow = isExpanded || isTablet ? plan.features : plan.features.slice(0, 3);
     const showExpandToggle = !isTablet && plan.features.length > 3;
@@ -205,6 +228,7 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
   const plansData: SubscriptionPlan[] = rcPlans.length ? rcPlans : subscriptionPlans;
 
   return (
+    <>
     <Modal
       animationType={isTablet ? 'fade' : 'slide'}
       transparent
@@ -288,6 +312,30 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
         </View>
       </View>
     </Modal>
+    <AlertModal
+      visible={purchaseModalVisible}
+      title={purchaseModalTitle}
+      message={purchaseModalMessage}
+      type={purchaseModalType}
+      primaryButton={{
+        text: 'OK',
+        onPress: () => {
+          setPurchaseModalVisible(false);
+          if (closePlansAfterModal) {
+            setClosePlansAfterModal(false);
+            onClose?.();
+          }
+        }
+      }}
+      onClose={() => {
+        setPurchaseModalVisible(false);
+        if (closePlansAfterModal) {
+          setClosePlansAfterModal(false);
+          onClose?.();
+        }
+      }}
+    />
+    </>
   );
 }
 

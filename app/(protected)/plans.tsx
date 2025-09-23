@@ -1,5 +1,5 @@
 import { AlertModal } from '@/components/Modals/AlertModal';
-import { calculateMonthlyEquivalent, getPlanFeatures, subscriptionPlans, type SubscriptionPlan } from '@/config/subscriptionPlans';
+import { calculateMonthlyEquivalent, getPlanFeatures, mapOfferingsToPlans, subscriptionPlans, type SubscriptionPlan } from '@/config/subscriptionPlans';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
@@ -7,8 +7,8 @@ import { isTablet as deviceIsTablet, rf } from '@/utils/responsive';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import React, { useMemo, useState } from 'react';
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, Linking, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import Purchases from 'react-native-purchases';
 
 
@@ -33,73 +33,162 @@ export default function Plans() {
   const { user } = useAuth();
   const { userData, refreshUserData } = useUserData();
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showDowngradeModal, setShowDowngradeModal] = useState(false);
-  
+  const [rcPlans, setRcPlans] = useState<SubscriptionPlan[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [purchaseModalVisible, setPurchaseModalVisible] = useState(false);
+  const [purchaseModalTitle, setPurchaseModalTitle] = useState('');
+  const [purchaseModalMessage, setPurchaseModalMessage] = useState('');
+  const [purchaseModalType, setPurchaseModalType] = useState<'success' | 'error' | 'warning' | 'info'>('info');
+  const normalize = (t?: string | null) => (t || '').toLowerCase().replace('pro', 'monthly');
+
   async function getOfferings() {
+    setLoading(true);
+    setError(null);
     try {
       const offerings = await Purchases.getOfferings();
-      console.log("Offerings:", JSON.stringify(offerings));
+      const plans = mapOfferingsToPlans(offerings);
+      setRcPlans(plans);
     } catch (error) {
-      console.error("Error fetching offerings");
+      console.error('[RevenueCat] Error fetching offerings', error);
+      setError('Unable to load live plans. Showing defaults.');
+      setRcPlans([]);
+    } finally {
+      setLoading(false);
     }
   }
+
+  useEffect(() => {
+    // Load on mount
+    getOfferings();
+  }, []);
   // Placeholders for future RevenueCat integration
-  const handleManageSubscription = () => {
-    Alert.alert('Subscriptions', 'Placeholder: Subscription management will be handled by RevenueCat.');
-    console.log('[Subscriptions] Manage subscription clicked');
+  const handleManageSubscription = async () => {
+    try {
+      // Prefer Customer Center if available in SDK
+      // @ts-ignore: guard for older SDKs
+      if (typeof (Purchases as any).presentCustomerCenter === 'function') {
+        // @ts-ignore
+        await (Purchases as any).presentCustomerCenter();
+        return;
+      }
+      // Otherwise attempt to use managementURL from CustomerInfo
+      const info = await Purchases.getCustomerInfo();
+      const url = (info as any)?.managementURL as string | undefined;
+      if (url) {
+        await Linking.openURL(url);
+        return;
+      }
+      // Fallback: open store-specific subscriptions page
+      const fallback = Platform.select({
+        android: 'https://play.google.com/store/account/subscriptions',
+        ios: 'https://apps.apple.com/account/subscriptions',
+        default: 'https://support.google.com/googleplay/answer/7018481',
+      }) as string;
+      await Linking.openURL(fallback);
+    } catch (err) {
+      console.error('[Subscriptions] Manage subscription error', err);
+      Alert.alert('Subscriptions', 'Unable to open subscription management. Please try again later.');
+    }
   };
 
-  const handleSyncSubscription = () => {
-    Alert.alert('Subscriptions', 'Placeholder: Sync will be handled by RevenueCat SDK.');
-    console.log('[Subscriptions] Sync subscription clicked');
+  const handleSyncSubscription = async () => {
+    try {
+      setLoading(true);
+      const offerings = await Purchases.getOfferings();
+      const plans = mapOfferingsToPlans(offerings);
+      setRcPlans(plans);
+      // Optionally refresh local profile/state
+  try { await refreshUserData?.(user?.uid ?? ''); } catch {}
+      Alert.alert('Subscriptions', 'Subscription data synced.');
+    } catch (err) {
+      console.error('[Subscriptions] Sync error', err);
+      Alert.alert('Subscriptions', 'Failed to sync subscription data.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getCurrentPlan = () => {
-    const userPlan = userData?.plan?.toLowerCase();
-    return subscriptionPlans.find(plan => plan.title.toLowerCase() === userPlan) || subscriptionPlans[0];
+    const userPlan = normalize(userData?.plan);
+    const pool = rcPlans.length ? rcPlans : subscriptionPlans;
+    return pool.find(plan => normalize(plan.title) === userPlan) || pool[0];
   };
 
   const getButtonText = (planTitle: string) => {
-    const userPlan = userData?.plan?.toLowerCase();
-    if (planTitle.toLowerCase() === userPlan) {
+    const userPlan = normalize(userData?.plan);
+    const p = normalize(planTitle);
+    if (p === userPlan) {
       return 'Current Plan';
     }
-    if (userPlan === 'annual' || userPlan === 'pro') {
-      return planTitle.toLowerCase() === 'free' ? 'Downgrade' : 'Switch Plan';
+    if (userPlan === 'annual' || userPlan === 'monthly') {
+      return p === 'free' ? 'Downgrade' : 'Switch Plan';
     }
     return 'Upgrade';
   };
 
   const getButtonStyle = (planTitle: string) => {
-    const userPlan = userData?.plan?.toLowerCase();
-    if (planTitle.toLowerCase() === userPlan) {
+    const userPlan = normalize(userData?.plan);
+    if (normalize(planTitle) === userPlan) {
       return styles.currentPlanButton;
     }
     return styles.upgradeButton;
   };
 
-  const handleSelectPlan = (plan: SubscriptionPlan) => {
-    const userPlan = userData?.plan?.toLowerCase();
-    setSelectedPlan(plan);
-
-    if (plan.title.toLowerCase() === userPlan) {
+  const handleSelectPlan = async (plan: SubscriptionPlan) => {
+    const userPlan = normalize(userData?.plan);
+    if (normalize(plan.title) === userPlan) {
       return; // Already current plan
     }
 
-    if (plan.title.toLowerCase() === 'free' && (userPlan === 'pro' || userPlan === 'annual')) {
+    if (normalize(plan.title) === 'free' && (userPlan === 'monthly' || userPlan === 'annual')) {
+      setSelectedPlan(plan);
       setShowDowngradeModal(true);
     } else {
-      setShowUpgradeModal(true);
-    }
-  };
+      // Direct purchase flow (no confirmation modal)
+      try {
+        setLoading(true);
+        const offerings: any = await Purchases.getOfferings();
+        const current = offerings?.current;
+        const packages: any[] = current?.availablePackages ?? [];
 
-  const handleConfirmUpgrade = async () => {
-    // Placeholder action (no real purchase)
-    const planKey = selectedPlan?.title ?? 'Pro';
-    console.log('[Subscriptions] Upgrade confirmed for plan:', planKey);
-    Alert.alert('Upgrade', `Placeholder: Would upgrade to ${planKey} via RevenueCat.`);
-    setShowUpgradeModal(false);
+        const pick = packages.find((p: any) =>
+          p?.identifier === plan.rcPackageId ||
+          (plan.period === 'month' && (p?.packageType === 'MONTHLY' || /month/i.test(p?.identifier))) ||
+          (plan.period === 'year' && (p?.packageType === 'ANNUAL' || /annual|year/i.test(p?.identifier)))
+        ) || packages[0];
+
+        if (!pick) {
+          setPurchaseModalTitle('Unavailable');
+          setPurchaseModalMessage('This plan is not available at the moment. Please try again later.');
+          setPurchaseModalType('warning');
+          setPurchaseModalVisible(true);
+          return;
+        }
+
+        const result = await Purchases.purchasePackage(pick);
+        const active = (result?.customerInfo?.entitlements?.active) || {};
+        const hasPro = Object.keys(active).length > 0;
+        if (hasPro) {
+          setPurchaseModalTitle('Purchase Successful');
+          setPurchaseModalMessage('Your purchase was successful. Enjoy premium features!');
+          setPurchaseModalType('success');
+          setPurchaseModalVisible(true);
+          try { await refreshUserData(user?.uid ?? ''); } catch {}
+        }
+      } catch (e: any) {
+        const cancelled = e?.userCancelled || e?.code === 'PURCHASE_CANCELLED_ERROR' || e?.code === '1';
+        if (cancelled) return;
+        console.error('[RevenueCat] Purchase error:', e);
+        setPurchaseModalTitle('Purchase Failed');
+        setPurchaseModalMessage('We could not complete your purchase. Please try again later.');
+        setPurchaseModalType('error');
+        setPurchaseModalVisible(true);
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   const handleConfirmDowngrade = async () => {
@@ -120,6 +209,7 @@ export default function Plans() {
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
       bounces={true}
+      refreshControl={<RefreshControl tintColor={Colors.text} refreshing={loading} onRefresh={getOfferings} />}
     >
       <View style={styles.header}>
         <TouchableOpacity
@@ -135,10 +225,22 @@ export default function Plans() {
       </View>
 
       <View style={styles.content}>
+        {!!error && (
+          <View style={styles.bannerWarning}>
+            <MaterialCommunityIcons name="cloud-alert" size={18} color="#ffb84d" />
+            <Text style={styles.bannerWarningText}>{error}</Text>
+          </View>
+        )}
+        {loading && (
+          <View style={styles.bannerInfo}>
+            <ActivityIndicator size="small" color={Colors.text} />
+            <Text style={styles.bannerInfoText}>Refreshing…</Text>
+          </View>
+        )}
         {/* Manage/Sync actions */}
         <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10, gap: 10 }}>
           <TouchableOpacity onPress={handleManageSubscription} style={{ paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#1e1e1e', borderRadius: 8 }}>
-            <Text style={{ color: Colors.text, fontFamily: Typography.fontFamily }}>Manage in Subcriptions</Text>
+            <Text style={{ color: Colors.text, fontFamily: Typography.fontFamily }}>Manage in Subscriptions</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleSyncSubscription} style={{ paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#1e1e1e', borderRadius: 8 }}>
             <Text style={{ color: Colors.text, fontFamily: Typography.fontFamily }}>Sync Subscription</Text>
@@ -182,18 +284,18 @@ export default function Plans() {
               justifyContent: 'center'
             }
           ]}>
-            {subscriptionPlans.map((plan) => (
+            {(rcPlans.length ? rcPlans : subscriptionPlans).map((plan) => (
               <Pressable
                 key={plan.title}
                 style={[{ width: layout.cardWidth }, styles.planOuter, isTablet && { margin: 12 }]} onPress={() => handleSelectPlan(plan)}>
                 <LinearGradient
-                  colors={plan.title.toLowerCase() === userData?.plan?.toLowerCase() ? ['#1b2e1b', '#0d140d'] : plan.popular ? ['#2d1215', '#130607'] : ['#141414', '#0d0d0d']}
+                  colors={normalize(plan.title) === normalize(userData?.plan) ? ['#1b2e1b', '#0d140d'] : plan.popular ? ['#2d1215', '#130607'] : ['#141414', '#0d0d0d']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={[
                     styles.planCard,
                     plan.popular && styles.popularCard,
-                    plan.title.toLowerCase() === userData?.plan?.toLowerCase() && styles.activePlanCard,
+                    normalize(plan.title) === normalize(userData?.plan) && styles.activePlanCard,
                   ]}
                 >
                   {plan.popular && (
@@ -201,7 +303,7 @@ export default function Plans() {
                       <Text style={styles.popularText}>Most Popular</Text>
                     </View>
                   )}
-                  {plan.title.toLowerCase() === userData?.plan?.toLowerCase() && (
+                  {normalize(plan.title) === normalize(userData?.plan) && (
                     <View style={styles.activeBadge}>
                       <Text style={styles.activeText}>Current Plan</Text>
                     </View>
@@ -231,7 +333,7 @@ export default function Plans() {
                       isTablet && styles.selectButtonTablet
                     ]}
                     onPress={() => handleSelectPlan(plan)}
-                    disabled={plan.title.toLowerCase() === userData?.plan?.toLowerCase()}
+                    disabled={normalize(plan.title) === normalize(userData?.plan)}
                   >
                     <Text style={[styles.selectButtonText, isTablet && styles.selectButtonTextTablet]}>
                       {getButtonText(plan.title)}
@@ -243,6 +345,45 @@ export default function Plans() {
           </View>
         </View>
 
+        {/* Legal / Billing Disclaimer */}
+        <View style={{ paddingHorizontal: 5, paddingTop: 4, paddingBottom: 28 }}>
+          {(() => {
+            const proPlan = (rcPlans.length ? rcPlans : subscriptionPlans).find(p => p.title.toLowerCase() === 'monthly');
+            const annualPlan = subscriptionPlans.find(p => p.title.toLowerCase() === 'annual');
+            const proPrice = proPlan?.price || '$9.70';
+            const annualPrice = annualPlan?.price || '$39.99';
+            const annualMonthlyEq = calculateMonthlyEquivalent(annualPrice, 'year');
+            return (
+              <>
+                <Text style={styles.disclaimerText}>
+                  The subscription gives you unlimited access to all premium training content and future feature releases. Your Google Play account will be charged when you confirm the purchase. Subscriptions renew automatically unless cancelled at least 24 hours before the end of the current period.
+                </Text>
+
+                {(() => {
+                  const monthlyRcPlan = rcPlans.find(p => normalize(p.title) === 'monthly' || p.period?.toLowerCase() === 'month');
+                  const annualRcPlan = rcPlans.find(p => normalize(p.title) === 'annual' || p.period?.toLowerCase() === 'year');
+                  const showPrices = Boolean(monthlyRcPlan?.price && annualRcPlan?.price);
+                  const annualMonthlyEq = showPrices ? calculateMonthlyEquivalent(annualRcPlan!.price, 'year') : null;
+
+                  if (!showPrices) return null;
+
+                  return (
+                    <Text style={styles.disclaimerText}>
+                      The Pro plan is billed {monthlyRcPlan!.price} per month. The Annual plan is billed {annualRcPlan!.price} per year{annualMonthlyEq ? ` (equivalent to ${annualMonthlyEq})` : ''}.
+                    </Text>
+                  );
+                })()}
+
+                <Text style={styles.disclaimerText}>
+                  Manage or cancel anytime in your Google Play settings. By subscribing you agree to our
+                  <Text style={styles.linkText} onPress={() => Linking.openURL('https://www.shadowmma.com/terms-of-service')}> Terms & Conditions</Text> and
+                  <Text style={styles.linkText} onPress={() => Linking.openURL('https://www.shadowmma.com/privacy-policy')}> Privacy Policy</Text>.
+                </Text>
+              </>
+            );
+          })()}
+        </View>
+
         {/* Testimonials Section */}
         <View style={styles.benefitsSection}>
           <Text style={styles.sectionTitle}>What members say</Text>
@@ -250,9 +391,9 @@ export default function Plans() {
           <View style={styles.benefitCard}>
             <MaterialCommunityIcons name="format-quote-close" size={32} color="#ffffffff" />
             <Text style={styles.quoteText}>
-              “The premium access has been a complete game changer for me! I have truly seen a difference within myself and my ability!”
+              “The sessions are intense but motivating. I feel faster and ready for the next challenge.”
             </Text>
-            <Text style={styles.authorText}>— M.I., California</Text>
+            <Text style={styles.authorText}>— Marcus, Arizona</Text>
           </View>
 
           <View style={styles.benefitCard}>
@@ -266,46 +407,13 @@ export default function Plans() {
           <View style={styles.benefitCard}>
             <MaterialCommunityIcons name="format-quote-close" size={32} color="#ffffffff" />
             <Text style={styles.quoteText}>
-              “As a busy parent, the structured sessions keep me consistent. I’m landing combos I never thought I could.”
+              “This app makes training way more fun. The drills push me to go harder and I can actually see my progress.”
             </Text>
-            <Text style={styles.authorText}>— Sofia R., Texas</Text>
+            <Text style={styles.authorText}>— Ethan, Illinois</Text>
           </View>
         </View>
       </View>
 
-      {/* Legal / Billing Disclaimer */}
-      <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 28 }}>
-        {(() => {
-          const proPlan = subscriptionPlans.find(p => p.title.toLowerCase() === 'pro');
-          const annualPlan = subscriptionPlans.find(p => p.title.toLowerCase() === 'annual');
-          const proPrice = proPlan?.price || '$9.99';
-          const annualPrice = annualPlan?.price || '$39.99';
-          const annualMonthlyEq = calculateMonthlyEquivalent(annualPrice, 'year');
-          return (
-            <Text style={styles.disclaimerText}>
-              The subscription gives you unlimited access to all premium training content and future feature releases. Your Google Play account will be charged when you confirm the purchase. Subscriptions renew automatically unless cancelled at least 24 hours before the end of the current period. The Pro plan is billed {proPrice} per month. The Annual plan is billed {annualPrice} per year{annualMonthlyEq ? ` (equivalent to ${annualMonthlyEq})` : ''}. Manage or cancel anytime in your Google Play settings. By subscribing you agree to our
-              <Text style={styles.linkText} onPress={() => Linking.openURL('https://www.shadowmma.com/terms-of-service')}> Terms & Conditions</Text> and
-              <Text style={styles.linkText} onPress={() => Linking.openURL('https://www.shadowmma.com/privacy-policy')}> Privacy Policy</Text>.
-            </Text>
-          );
-        })()}
-      </View>
-
-      {/* Upgrade Confirmation Modal */}
-      <AlertModal
-        visible={showUpgradeModal}
-        title="Upgrade Plan"
-        message={`Are you sure you want to upgrade to ${selectedPlan?.title} for ${selectedPlan?.price}/${selectedPlan?.period}?`}
-        type="info"
-        primaryButton={{
-          text: "Upgrade Now",
-          onPress: handleConfirmUpgrade,
-        }}
-        secondaryButton={{
-          text: "Cancel",
-          onPress: () => setShowUpgradeModal(false),
-        }}
-      />
 
       {/* Downgrade Confirmation Modal */}
       <AlertModal
@@ -322,6 +430,16 @@ export default function Plans() {
           onPress: () => setShowDowngradeModal(false),
         }}
       />
+
+      {/* Purchase Feedback Modal */}
+      <AlertModal
+        visible={purchaseModalVisible}
+        title={purchaseModalTitle}
+        message={purchaseModalMessage}
+        type={purchaseModalType}
+        primaryButton={{ text: 'OK', onPress: () => setPurchaseModalVisible(false) }}
+        onClose={() => setPurchaseModalVisible(false)}
+      />
     </ScrollView>
   );
 }
@@ -333,6 +451,42 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingBottom: 40,
+  },
+  bannerWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: '#332b16',
+    borderWidth: 1,
+    borderColor: '#5c4718',
+    marginBottom: 8,
+  },
+  bannerWarningText: {
+    color: '#ffdb99',
+    fontSize: rf(12),
+    fontFamily: Typography.fontFamily,
+    flexShrink: 1,
+  },
+  bannerInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: '#1b1b1b',
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
+    marginBottom: 8,
+  },
+  bannerInfoText: {
+    color: Colors.text,
+    fontSize: rf(12),
+    fontFamily: Typography.fontFamily,
+    opacity: 0.9,
   },
   header: {
     flexDirection: 'row',
@@ -410,7 +564,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   allPlansSection: {
-    marginBottom: 30,
+    marginBottom: 15,
   },
   planCard: {
     backgroundColor: '#111', // could later swap for LinearGradient if desired
@@ -597,6 +751,7 @@ const styles = StyleSheet.create({
   },
   disclaimerText: {
     color: Colors.text,
+    textAlign: 'justify',
     fontSize: rf(11),
     fontFamily: Typography.fontFamily,
     opacity: 0.6,

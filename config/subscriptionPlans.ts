@@ -4,6 +4,10 @@ export type SubscriptionPlan = {
   period: string;
   features: string[];
   popular?: boolean;
+  // Optional RevenueCat linkage (present only for live offerings)
+  rcPackageId?: string;
+  rcProductId?: string;
+  rcPackageType?: string; // e.g., 'MONTHLY' | 'ANNUAL'
 };
 
 // Helper function to calculate monthly equivalent price
@@ -64,4 +68,57 @@ export const getPlanFeatures = (plan: SubscriptionPlan, displayType: 'full' | 'c
     return plan.features.slice(0, 3);
   }
   return plan.features;
+};
+
+// Map RevenueCat offerings to our local SubscriptionPlan model, preserving config features and pricing as fallbacks.
+export const mapOfferingsToPlans = (offerings: any): SubscriptionPlan[] => {
+  try {
+    const current = offerings?.current;
+    const packages: any[] = current?.availablePackages ?? [];
+
+    const freeConfig = subscriptionPlans.find(p => p.title.toLowerCase() === 'free');
+    const monthlyConfig = subscriptionPlans.find(p => p.title.toLowerCase() === 'monthly');
+    const annualConfig = subscriptionPlans.find(p => p.title.toLowerCase() === 'annual');
+
+    const mapped: SubscriptionPlan[] = packages.map((pkg: any) => {
+      const type: string = (pkg?.packageType || pkg?.identifier || '').toString().toLowerCase();
+      const isAnnual = type.includes('annual') || type.includes('year') || pkg?.packageType === 'ANNUAL';
+      const isMonthly = type.includes('month') || pkg?.packageType === 'MONTHLY';
+
+      const title = isAnnual ? 'Annual' : isMonthly ? 'Monthly' : (pkg?.product?.title?.includes('Year') ? 'Annual' : 'Monthly');
+      const priceStr = pkg?.product?.priceString ?? pkg?.product?.price_formatted ?? (isAnnual ? annualConfig?.price : monthlyConfig?.price) ?? '$0.00';
+      const period = isAnnual ? 'year' : 'month';
+      const baseConfig = isAnnual ? annualConfig : monthlyConfig;
+      const features = baseConfig?.features ?? [];
+      const popular = baseConfig?.popular ?? false;
+
+      return {
+        title,
+        price: priceStr,
+        period,
+        features,
+        popular,
+        rcPackageId: pkg?.identifier,
+        rcProductId: pkg?.product?.identifier ?? pkg?.product?.productId,
+        rcPackageType: pkg?.packageType,
+      } as SubscriptionPlan;
+    });
+
+    // Deduplicate by title and ensure stable order: Annual, Monthly
+    const uniqueByTitle = new Map<string, SubscriptionPlan>();
+    for (const plan of mapped) {
+      const key = plan.title.toLowerCase();
+      if (!uniqueByTitle.has(key)) uniqueByTitle.set(key, plan);
+    }
+    const ordered = ['annual', 'monthly']
+      .map(k => uniqueByTitle.get(k))
+      .filter(Boolean) as SubscriptionPlan[];
+
+    // Always include Free plan at the end for discoverability
+    const finalPlans = freeConfig ? [...ordered, freeConfig] : ordered;
+    return finalPlans;
+  } catch (e) {
+    // Fallback to config on any mapping error
+    return subscriptionPlans;
+  }
 };

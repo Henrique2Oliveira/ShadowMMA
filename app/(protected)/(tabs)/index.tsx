@@ -632,7 +632,7 @@ export default function Index() {
             iconName="arrow-up-bold-circle"
             iconSize={90}
             fontSize={22}
-            subtitle="Advance to the next level"
+            subtitle="Train Smarter, Get Stronger"
             proOnly
             disabled={buttons[7].disabled}
             onPress={buttons[7].onPress}
@@ -665,6 +665,7 @@ export default function Index() {
               iconName="run"
               iconSize={96}
               fontSize={24}
+              subtitle="in progress... coming soon"
               disabled={buttons[9].disabled}
               onPress={buttons[9].onPress}
             />
