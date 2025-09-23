@@ -11,9 +11,7 @@ import { onMessagePublished } from "firebase-functions/v2/pubsub";
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
 
-
-//firebase deploy --only function  - deploy only functions 
-
+//firebase deploy --only function  :: code to :: deploy only functions 
 
 // For cost control, you can set the maximum number of containers that can be
 // running at the same time. This helps mitigate the impact of unexpected
