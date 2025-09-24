@@ -7,7 +7,7 @@ import { isTablet, rf, rs } from '@/utils/responsive';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Linking, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Purchases from 'react-native-purchases';
 
 type Props = {
@@ -33,6 +33,10 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
   const [purchaseModalMessage, setPurchaseModalMessage] = useState('');
   const [purchaseModalType, setPurchaseModalType] = useState<'success' | 'error' | 'warning' | 'info'>('info');
   const [closePlansAfterModal, setClosePlansAfterModal] = useState(false);
+  // Downgrade state (for when free plan selected while on paid)
+  const [showDowngradeModal, setShowDowngradeModal] = useState(false);
+  const [downgradeExpiration, setDowngradeExpiration] = useState<string | null>(null);
+  const [downgradeLoading, setDowngradeLoading] = useState(false);
 
   const userPlan = userData?.plan?.toLowerCase();
   const layout = useMemo(() => {
@@ -75,8 +79,39 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
   // Purchase handler via RevenueCat
   const handleSelect = async (plan: SubscriptionPlan, isCurrent: boolean) => {
     if (isCurrent) return;
+    const normalizedUser = normalize(userPlan);
+    const normalizedPlan = normalize(plan.title);
+    // Intercept downgrade to free
+    if (normalizedPlan === 'free' && (normalizedUser === 'monthly' || normalizedUser === 'annual')) {
+      // Preload expiration date
+      try {
+        setDowngradeLoading(true);
+        try { if (user?.uid) { await Purchases.logIn(user.uid); } } catch {}
+        const info: any = await Purchases.getCustomerInfo();
+        const actives = info?.entitlements?.active || {};
+        const firstKey = Object.keys(actives)[0];
+        if (firstKey) {
+          const ent = actives[firstKey];
+          const dateStr = ent?.expirationDate;
+          if (dateStr) {
+            const d = new Date(dateStr);
+            if (!isNaN(d.getTime())) {
+              setDowngradeExpiration(d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }));
+            }
+          }
+        }
+      } catch {
+        setDowngradeExpiration(null);
+      } finally {
+        setDowngradeLoading(false);
+      }
+      setShowDowngradeModal(true);
+      return;
+    }
     try {
       setLoading(true);
+      // Ensure identity is linked to Firebase UID before purchase
+      try { if (user?.uid) { await Purchases.logIn(user.uid); } } catch {}
       // Fetch latest offerings to ensure package reference exists
       const offerings: any = await Purchases.getOfferings();
       const current = offerings?.current;
@@ -128,11 +163,59 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
     }
   };
 
+  const handleConfirmDowngrade = async () => {
+    setDowngradeLoading(true);
+    try {
+      try { if (user?.uid) { await Purchases.logIn(user.uid); } } catch {}
+      // @ts-ignore
+      if (typeof (Purchases as any).presentCustomerCenter === 'function') {
+        // @ts-ignore
+        await (Purchases as any).presentCustomerCenter();
+      } else if (typeof (Purchases as any).manageSubscriptions === 'function') {
+        // @ts-ignore
+        await (Purchases as any).manageSubscriptions();
+      } else {
+        const info: any = await Purchases.getCustomerInfo();
+        const url = info?.managementURL;
+        if (url) {
+          await Linking.openURL(url);
+        } else {
+          const fallback = Platform.select({
+            android: 'https://play.google.com/store/account/subscriptions',
+            ios: 'https://apps.apple.com/account/subscriptions',
+            default: 'https://support.google.com/googleplay/answer/7018481'
+          }) as string;
+          await Linking.openURL(fallback);
+        }
+      }
+      setShowDowngradeModal(false);
+      setPurchaseModalTitle('Manage Subscription');
+      setPurchaseModalType('info');
+      setPurchaseModalMessage(
+        downgradeExpiration
+          ? `Your subscription remains active until ${downgradeExpiration}. After it expires, you'll automatically move to the Free plan. You can re-upgrade anytime.`
+          : 'Cancel the subscription on the store page that opened. You keep Pro access until the billing period ends, then move to Free automatically.'
+      );
+      setPurchaseModalVisible(true);
+      setTimeout(() => { try { refreshUserData?.(user?.uid ?? ''); } catch {} }, 2500);
+    } catch (err) {
+      console.error('[RevenueCat] Downgrade/manage error', err);
+      setPurchaseModalTitle('Unable to Open');
+      setPurchaseModalType('error');
+      setPurchaseModalMessage('Could not open subscription management. Try again later or use the system subscription settings.');
+      setPurchaseModalVisible(true);
+    } finally {
+      setDowngradeLoading(false);
+    }
+  };
+
   // Fetch RevenueCat offerings when modal is shown
   const fetchOfferings = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
+      // Ensure identity is linked before fetching offerings
+      try { if (user?.uid) { await Purchases.logIn(user.uid); } } catch {}
       const offerings: any = await Purchases.getOfferings();
       const plans = mapOfferingsToPlans(offerings);
       setRcPlans(plans);
@@ -334,6 +417,25 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
           onClose?.();
         }
       }}
+    />
+    <AlertModal
+      visible={showDowngradeModal}
+      title="Downgrade to Free"
+      type="info"
+      message={downgradeLoading
+        ? 'Loading your subscription status…'
+        : downgradeExpiration
+          ? `Your subscription will remain active until ${downgradeExpiration}. After that, you’ll be automatically moved to the Free plan and lose Pro features.`
+          : 'You will keep Pro benefits until the end of the current billing period. After it ends you will automatically move to the Free plan.'}
+      primaryButton={{
+        text: downgradeLoading ? 'Please wait…' : 'Open Cancellation Page',
+        onPress: downgradeLoading ? () => {} : handleConfirmDowngrade,
+      }}
+      secondaryButton={{
+        text: 'Close',
+        onPress: () => setShowDowngradeModal(false),
+      }}
+      onClose={() => setShowDowngradeModal(false)}
     />
     </>
   );

@@ -10,6 +10,7 @@ import {
 } from 'firebase/auth';
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
+import Purchases from 'react-native-purchases';
 import { AlertModal } from '../components/Modals/AlertModal';
 import { firebaseConfig } from '../FirebaseConfig.js';
 import { UserDataProvider } from './UserDataContext';
@@ -175,8 +176,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+  const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (mounted) {
+        // Link/Unlink RevenueCat identity outside of setState
+        try {
+          if (firebaseUser) {
+            await Purchases.logIn(firebaseUser.uid);
+          } else {
+            await Purchases.logOut();
+          }
+        } catch (e) {
+          // non-fatal
+        }
+
         setUser((prevUser) => {
           // Apenas atualize se o usuário mudou
           if (prevUser?.uid !== firebaseUser?.uid) {

@@ -1,5 +1,5 @@
 import { AlertModal } from '@/components/Modals/AlertModal';
-import { calculateMonthlyEquivalent, getPlanFeatures, mapOfferingsToPlans, subscriptionPlans, type SubscriptionPlan } from '@/config/subscriptionPlans';
+import { calculateMonthlyEquivalent, mapOfferingsToPlans, subscriptionPlans, type SubscriptionPlan } from '@/config/subscriptionPlans';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
@@ -8,7 +8,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Linking, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import Purchases from 'react-native-purchases';
 
 
@@ -41,15 +41,116 @@ export default function Plans() {
   const [purchaseModalTitle, setPurchaseModalTitle] = useState('');
   const [purchaseModalMessage, setPurchaseModalMessage] = useState('');
   const [purchaseModalType, setPurchaseModalType] = useState<'success' | 'error' | 'warning' | 'info'>('info');
+  // General purpose status modal (replaces Alert.alert)
+  const [statusModalVisible, setStatusModalVisible] = useState(false);
+  const [statusModalTitle, setStatusModalTitle] = useState('');
+  const [statusModalMessage, setStatusModalMessage] = useState('');
+  const [statusModalType, setStatusModalType] = useState<'success' | 'error' | 'warning' | 'info'>('info');
+  const statusQueue = React.useRef<{ title: string; message: string; type: 'success' | 'error' | 'warning' | 'info' }[]>([]);
+  const showStatus = (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+    if (statusModalVisible) {
+      statusQueue.current.push({ title, message, type });
+      return;
+    }
+    setStatusModalTitle(title);
+    setStatusModalMessage(message);
+    setStatusModalType(type);
+    setStatusModalVisible(true);
+  };
+  const closeStatus = () => {
+    setStatusModalVisible(false);
+    setTimeout(() => {
+      const next = statusQueue.current.shift();
+      if (next) {
+        setStatusModalTitle(next.title);
+        setStatusModalMessage(next.message);
+        setStatusModalType(next.type);
+        setStatusModalVisible(true);
+      }
+    }, 150);
+  };
+  // Switch (paid <-> paid) state
+  const [switchModalVisible, setSwitchModalVisible] = useState(false);
+  const [switchTargetPlan, setSwitchTargetPlan] = useState<SubscriptionPlan | null>(null);
+  const [switchMode, setSwitchMode] = useState<'upgrade' | 'downgrade' | null>(null);
+  const [switchMessage, setSwitchMessage] = useState('');
+  const [switchLoading, setSwitchLoading] = useState(false);
+  // Downgrade flow state
+  const [currentExpiration, setCurrentExpiration] = useState<string | null>(null);
+  const [downgradeLoading, setDowngradeLoading] = useState(false);
   const normalize = (t?: string | null) => (t || '').toLowerCase().replace('pro', 'monthly');
+  // Detailed subscription info (expiration, renewal status, etc.)
+  const [subInfo, setSubInfo] = useState<{
+    status: 'free' | 'active' | 'scheduled_cancel' | 'billing_issue';
+    willRenew?: boolean;
+    expirationDate?: string | null; // raw ISO
+    expirationDateFormatted?: string | null;
+    daysRemaining?: number | null;
+    latestPurchaseDate?: string | null;
+    latestPurchaseDateFormatted?: string | null;
+    productId?: string | null;
+    store?: string | null;
+    managementURL?: string | null;
+  }>({ status: 'free' });
+
+  const formatDate = (iso?: string | null) => {
+    if (!iso) return null;
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return null;
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
+  const fetchSubscriptionDetails = async () => {
+    try {
+      try { if (user?.uid) await Purchases.logIn(user.uid); } catch {}
+      const info: any = await Purchases.getCustomerInfo();
+      const actives = info?.entitlements?.active || {};
+      const firstKey = Object.keys(actives)[0];
+      if (!firstKey) {
+        setSubInfo({ status: normalize(userData?.plan) === 'free' ? 'free' : 'free' });
+        return;
+      }
+      const ent = actives[firstKey];
+      const expiration = ent?.expirationDate || info?.latestExpirationDate || null;
+      const latestPurchase = ent?.latestPurchaseDate || info?.latestPurchaseDate || null;
+      const willRenew = !!ent?.willRenew;
+      const billingIssue = !!ent?.billingIssueDetectedAt;
+      const unsubscribeDetected = !!ent?.unsubscribeDetectedAt;
+      let status: 'active' | 'scheduled_cancel' | 'billing_issue' = 'active';
+      if (billingIssue) status = 'billing_issue';
+      else if (!willRenew || unsubscribeDetected) status = 'scheduled_cancel';
+      let daysRemaining: number | null = null;
+      if (expiration) {
+        const diffMs = new Date(expiration).getTime() - Date.now();
+        daysRemaining = diffMs > 0 ? Math.ceil(diffMs / (1000 * 60 * 60 * 24)) : 0;
+      }
+      setSubInfo({
+        status,
+        willRenew,
+        expirationDate: expiration,
+        expirationDateFormatted: formatDate(expiration),
+        daysRemaining,
+        latestPurchaseDate: latestPurchase,
+        latestPurchaseDateFormatted: formatDate(latestPurchase),
+        productId: ent?.productIdentifier || null,
+        store: ent?.store || null,
+        managementURL: info?.managementURL || null,
+      });
+    } catch (err) {
+      console.warn('[Subscriptions] Unable to fetch subscription details', err);
+    }
+  };
 
   async function getOfferings() {
     setLoading(true);
     setError(null);
     try {
+      // Ensure RevenueCat identity is linked to Firebase UID
+      try { if (user?.uid) await Purchases.logIn(user.uid); } catch {}
       const offerings = await Purchases.getOfferings();
       const plans = mapOfferingsToPlans(offerings);
       setRcPlans(plans);
+      fetchSubscriptionDetails();
     } catch (error) {
       console.error('[RevenueCat] Error fetching offerings', error);
       setError('Unable to load live plans. Showing defaults.');
@@ -62,10 +163,12 @@ export default function Plans() {
   useEffect(() => {
     // Load on mount
     getOfferings();
+    fetchSubscriptionDetails();
   }, []);
   // Placeholders for future RevenueCat integration
   const handleManageSubscription = async () => {
     try {
+      try { if (user?.uid) await Purchases.logIn(user.uid); } catch {}
       // Prefer Customer Center if available in SDK
       // @ts-ignore: guard for older SDKs
       if (typeof (Purchases as any).presentCustomerCenter === 'function') {
@@ -89,22 +192,24 @@ export default function Plans() {
       await Linking.openURL(fallback);
     } catch (err) {
       console.error('[Subscriptions] Manage subscription error', err);
-      Alert.alert('Subscriptions', 'Unable to open subscription management. Please try again later.');
+      showStatus('Subscriptions', 'Unable to open subscription management. Please try again later.', 'error');
     }
   };
 
   const handleSyncSubscription = async () => {
     try {
       setLoading(true);
+      try { if (user?.uid) await Purchases.logIn(user.uid); } catch {}
       const offerings = await Purchases.getOfferings();
       const plans = mapOfferingsToPlans(offerings);
       setRcPlans(plans);
       // Optionally refresh local profile/state
   try { await refreshUserData?.(user?.uid ?? ''); } catch {}
-      Alert.alert('Subscriptions', 'Subscription data synced.');
+      showStatus('Subscriptions', 'Subscription data synced.', 'success');
+      fetchSubscriptionDetails();
     } catch (err) {
       console.error('[Subscriptions] Sync error', err);
-      Alert.alert('Subscriptions', 'Failed to sync subscription data.');
+      showStatus('Subscriptions', 'Failed to sync subscription data.', 'error');
     } finally {
       setLoading(false);
     }
@@ -143,12 +248,88 @@ export default function Plans() {
     }
 
     if (normalize(plan.title) === 'free' && (userPlan === 'monthly' || userPlan === 'annual')) {
+      // Prefetch expiration date to show user what will happen
+      try {
+        setDowngradeLoading(true);
+        try { if (user?.uid) await Purchases.logIn(user.uid); } catch {}
+        const info: any = await Purchases.getCustomerInfo();
+        let expiry: string | null = null;
+        // Attempt to read first active entitlement expiration
+        const actives = info?.entitlements?.active || {};
+        const firstKey = Object.keys(actives)[0];
+        if (firstKey) {
+          const ent = actives[firstKey];
+          const dateStr = ent?.expirationDate; // ISO string
+            if (dateStr) {
+              const d = new Date(dateStr);
+              if (!isNaN(d.getTime())) {
+                expiry = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+              }
+            }
+        }
+        setCurrentExpiration(expiry);
+      } catch (e) {
+        setCurrentExpiration(null);
+      } finally {
+        setDowngradeLoading(false);
+      }
       setSelectedPlan(plan);
       setShowDowngradeModal(true);
+      return;
     } else {
+      // Paid <-> Paid switching: monthly <-> annual
+      const isCurrentMonthly = userPlan === 'monthly';
+      const isCurrentAnnual = userPlan === 'annual';
+      const isNewMonthly = normalize(plan.title) === 'monthly';
+      const isNewAnnual = normalize(plan.title) === 'annual';
+
+      if ((isCurrentMonthly && isNewAnnual) || (isCurrentAnnual && isNewMonthly)) {
+        if (isCurrentMonthly && isNewAnnual) {
+          // Immediate switch (upgrade) with proration credit
+          setSwitchMode('upgrade');
+          setSwitchTargetPlan(plan);
+          setSwitchMessage('Your new annual plan starts today. Your unused monthly days will be automatically credited by Google Play.');
+          setSwitchModalVisible(true);
+          return;
+        }
+        if (isCurrentAnnual && isNewMonthly) {
+          // Scheduled switch after annual expiry
+          setSwitchMode('downgrade');
+          setSwitchTargetPlan(plan);
+          try {
+            setSwitchLoading(true);
+            try { if (user?.uid) await Purchases.logIn(user.uid); } catch {}
+            const info: any = await Purchases.getCustomerInfo();
+            const actives = info?.entitlements?.active || {};
+            let expiry: string | undefined;
+            const firstKey = Object.keys(actives)[0];
+            if (firstKey) {
+              const ent = actives[firstKey];
+              const dateStr = ent?.expirationDate;
+              if (dateStr) {
+                const d = new Date(dateStr);
+                if (!isNaN(d.getTime())) {
+                  expiry = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+                }
+              }
+            }
+            setSwitchMessage(expiry
+              ? `Your annual subscription remains active until ${expiry}. After that, your monthly plan will start automatically.`
+              : 'Your annual subscription remains active until the end of the current billing period. After it ends, your monthly plan will start automatically.'
+            );
+          } catch {
+            setSwitchMessage('Your annual subscription remains active until the end of the current billing period. After it ends, your monthly plan will start automatically.');
+          } finally {
+            setSwitchLoading(false);
+          }
+          setSwitchModalVisible(true);
+          return;
+        }
+      }
       // Direct purchase flow (no confirmation modal)
       try {
         setLoading(true);
+        try { if (user?.uid) await Purchases.logIn(user.uid); } catch {}
         const offerings: any = await Purchases.getOfferings();
         const current = offerings?.current;
         const packages: any[] = current?.availablePackages ?? [];
@@ -191,10 +372,140 @@ export default function Plans() {
     }
   };
 
+  const performUpgradePurchase = async () => {
+    if (!switchTargetPlan) return;
+    setSwitchModalVisible(false);
+    try {
+      setLoading(true);
+      try { if (user?.uid) await Purchases.logIn(user.uid); } catch {}
+      const offerings: any = await Purchases.getOfferings();
+      const current = offerings?.current;
+      const packages: any[] = current?.availablePackages ?? [];
+      const pick = packages.find((p: any) =>
+        p?.identifier === switchTargetPlan.rcPackageId ||
+        (switchTargetPlan.period === 'month' && (p?.packageType === 'MONTHLY' || /month/i.test(p?.identifier))) ||
+        (switchTargetPlan.period === 'year' && (p?.packageType === 'ANNUAL' || /annual|year/i.test(p?.identifier)))
+      ) || packages[0];
+      if (!pick) {
+        setPurchaseModalTitle('Unavailable');
+        setPurchaseModalMessage('This plan is not available right now. Please try again later.');
+        setPurchaseModalType('warning');
+        setPurchaseModalVisible(true);
+        return;
+      }
+      const result = await Purchases.purchasePackage(pick);
+      const active = (result?.customerInfo?.entitlements?.active) || {};
+      const hasPro = Object.keys(active).length > 0;
+      if (hasPro) {
+        setPurchaseModalTitle('Upgrade Complete');
+        setPurchaseModalMessage('Your annual plan is now active. Enjoy extended access!');
+        setPurchaseModalType('success');
+        setPurchaseModalVisible(true);
+        try { await refreshUserData(user?.uid ?? ''); } catch {}
+      }
+    } catch (e: any) {
+      const cancelled = e?.userCancelled || e?.code === 'PURCHASE_CANCELLED_ERROR' || e?.code === '1';
+      if (cancelled) return;
+      console.error('[RevenueCat] Upgrade purchase error:', e);
+      setPurchaseModalTitle('Upgrade Failed');
+      setPurchaseModalMessage('We could not complete the upgrade. Please try again later.');
+      setPurchaseModalType('error');
+      setPurchaseModalVisible(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const scheduleDowngradeSwitch = async () => {
+    setSwitchModalVisible(false);
+    try {
+      setSwitchLoading(true);
+      try { if (user?.uid) await Purchases.logIn(user.uid); } catch {}
+      // Show management so user can change on store side
+      // @ts-ignore
+      if (typeof (Purchases as any).presentCustomerCenter === 'function') {
+        // @ts-ignore
+        await (Purchases as any).presentCustomerCenter();
+      } else if (typeof (Purchases as any).manageSubscriptions === 'function') {
+        // @ts-ignore
+        await (Purchases as any).manageSubscriptions();
+      } else {
+        const info: any = await Purchases.getCustomerInfo();
+        const url = info?.managementURL;
+        if (url) {
+          await Linking.openURL(url);
+        } else {
+          const fallback = Platform.select({
+            android: 'https://play.google.com/store/account/subscriptions',
+            ios: 'https://apps.apple.com/account/subscriptions',
+            default: 'https://support.google.com/googleplay/answer/7018481'
+          }) as string;
+          await Linking.openURL(fallback);
+        }
+      }
+      setPurchaseModalTitle('Switch Scheduled');
+      setPurchaseModalType('info');
+      setPurchaseModalMessage(switchMessage || 'Your monthly plan will begin after your current annual period ends.');
+      setPurchaseModalVisible(true);
+      setTimeout(() => { try { refreshUserData?.(user?.uid ?? ''); } catch {} }, 2500);
+    } catch (err) {
+      console.error('[Subscriptions] Schedule switch error', err);
+      setPurchaseModalTitle('Could Not Open');
+      setPurchaseModalType('error');
+      setPurchaseModalMessage('We could not open subscription management. Please try again later.');
+      setPurchaseModalVisible(true);
+    } finally {
+      setSwitchLoading(false);
+    }
+  };
+
   const handleConfirmDowngrade = async () => {
-    console.log('[Subscriptions] Downgrade confirmed to Free');
-    Alert.alert('Downgrade', 'Placeholder: Would redirect to manage/cancel via RevenueCat.');
-    setShowDowngradeModal(false);
+    setDowngradeLoading(true);
+    try {
+      try { if (user?.uid) await Purchases.logIn(user.uid); } catch {}
+      // Prefer RevenueCat Customer Center if available
+      // @ts-ignore
+      if (typeof (Purchases as any).presentCustomerCenter === 'function') {
+        // @ts-ignore
+        await (Purchases as any).presentCustomerCenter();
+      } else if (typeof (Purchases as any).manageSubscriptions === 'function') {
+        // @ts-ignore
+        await (Purchases as any).manageSubscriptions();
+      } else {
+        const info: any = await Purchases.getCustomerInfo();
+        const url = info?.managementURL;
+        if (url) {
+          await Linking.openURL(url);
+        } else {
+          // Fallback to platform subscription settings
+          const fallback = Platform.select({
+            android: 'https://play.google.com/store/account/subscriptions',
+            ios: 'https://apps.apple.com/account/subscriptions',
+            default: 'https://support.google.com/googleplay/answer/7018481'
+          }) as string;
+          await Linking.openURL(fallback);
+        }
+      }
+      setShowDowngradeModal(false);
+      setPurchaseModalTitle('Manage Subscription');
+      setPurchaseModalType('info');
+      setPurchaseModalMessage(
+        currentExpiration
+          ? `Your subscription remains active until ${currentExpiration}. After it expires, you'll be automatically moved to the Free plan. If you changed your mind before then, you can re-subscribe anytime.`
+          : 'Cancel the subscription on the store page that just opened. You will keep Pro access until the end of the current billing period; after that you will automatically move to the Free plan.'
+      );
+      setPurchaseModalVisible(true);
+      // Refresh local user data after a short delay (gives store time)
+      setTimeout(() => { try { refreshUserData?.(user?.uid ?? ''); } catch {} }, 2500);
+    } catch (err) {
+      console.error('[Subscriptions] Downgrade/manage error', err);
+      setPurchaseModalTitle('Unable to Open');
+      setPurchaseModalType('error');
+      setPurchaseModalMessage('We could not open the subscription management page. Please try again later from the Manage Subscriptions button.');
+      setPurchaseModalVisible(true);
+    } finally {
+      setDowngradeLoading(false);
+    }
   };
 
   const currentPlan = getCurrentPlan();
@@ -257,13 +568,47 @@ export default function Plans() {
                 <Text style={styles.currentPlanPeriod}>/{currentPlan.period}</Text>
               </Text>
             </View>
-            <View style={styles.currentPlanFeatures}>
-              {getPlanFeatures(currentPlan, 'compact').map((feature, index) => (
-                <View key={index} style={styles.featureRow}>
-                  <MaterialCommunityIcons name="check-circle" size={20} color="#4ade80" />
-                  <Text style={styles.featureText}>{feature}</Text>
-                </View>
-              ))}
+            {/* Feature list removed per request (hide features on current plan card) */}
+            {/* Subscription meta info */}
+            <View style={styles.subscriptionMetaBox}>
+              {normalize(userData?.plan) === 'free' || subInfo.status === 'free' ? (
+                <Text style={styles.metaValue}>You are on the Free plan. Upgrade to unlock all premium drills and advanced tracking.</Text>
+              ) : (
+                <>
+                  <View style={styles.metaRow}>
+                    <Text style={styles.metaLabel}>Status</Text>
+                    <View style={styles.metaValueRow}>
+                      <View style={
+                        subInfo.status === 'billing_issue' ? styles.statusPillIssue :
+                        subInfo.status === 'scheduled_cancel' ? styles.statusPillCancel :
+                        styles.statusPillActive
+                      }>
+                        <Text style={styles.statusPillText}>
+                          {subInfo.status === 'billing_issue' ? 'Billing Issue' : subInfo.status === 'scheduled_cancel' ? 'Cancels at period end' : 'Active'}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                  <View style={styles.metaRow}>
+                    <Text style={styles.metaLabel}>{subInfo.willRenew ? 'Renews' : 'Expires'}</Text>
+                    <Text style={styles.metaValue}>{subInfo.expirationDateFormatted || '—'}</Text>
+                  </View>
+                  <View style={styles.metaRow}>
+                    <Text style={styles.metaLabel}>Days Left</Text>
+                    <Text style={styles.metaValue}>{typeof subInfo.daysRemaining === 'number' ? subInfo.daysRemaining : '—'}</Text>
+                  </View>
+                  <View style={styles.metaRow}>
+                    <Text style={styles.metaLabel}>Started</Text>
+                    <Text style={styles.metaValue}>{subInfo.latestPurchaseDateFormatted || '—'}</Text>
+                  </View>
+                  {/* Product identifier row removed per request */}
+                  <View style={[styles.metaRow, { marginTop: 6 }]}> 
+                    <TouchableOpacity onPress={handleManageSubscription} style={styles.manageLinkBtn}>
+                      <Text style={styles.manageLinkText}>Manage Subscription</Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
             </View>
           </View>
         </View>
@@ -299,13 +644,15 @@ export default function Plans() {
                   ]}
                 >
                   {plan.popular && (
-                    <View style={styles.popularBadge}>
-                      <Text style={styles.popularText}>Most Popular</Text>
+                    <View style={[styles.badgeBase, styles.popularBadge]}>
+                      <MaterialCommunityIcons name="star" size={14} color="#ffc14d" style={{ marginRight: 4 }} />
+                      <Text style={[styles.badgeText, styles.popularBadgeText]}>MOST POPULAR</Text>
                     </View>
                   )}
                   {normalize(plan.title) === normalize(userData?.plan) && (
-                    <View style={styles.activeBadge}>
-                      <Text style={styles.activeText}>Current Plan</Text>
+                    <View style={[styles.badgeBase, styles.activeBadge]}>
+                      <MaterialCommunityIcons name="check-circle" size={14} color="#4ade80" style={{ marginRight: 4 }} />
+                      <Text style={[styles.badgeText, styles.activeBadgeText]}>CURRENT PLAN</Text>
                     </View>
                   )}
                   <View style={styles.planHeader}>
@@ -419,11 +766,17 @@ export default function Plans() {
       <AlertModal
         visible={showDowngradeModal}
         title="Downgrade Plan"
-        message={`Are you sure you want to downgrade to ${selectedPlan?.title}? You will lose access to Pro features.`}
-        type="warning"
+        message={
+          downgradeLoading
+            ? 'Loading your subscription details…'
+            : currentExpiration
+              ? `Your subscription will remain active until ${currentExpiration}. After that, you’ll be automatically moved to the Free plan. Until then you still keep all Pro features.`
+              : 'You will keep Pro access until the end of the current billing period. After it expires you will automatically move to the Free plan.'
+        }
+        type="info"
         primaryButton={{
-          text: "Confirm Downgrade",
-          onPress: handleConfirmDowngrade,
+          text: downgradeLoading ? 'Please wait…' : 'Open Cancellation Page',
+          onPress: downgradeLoading ? () => {} : handleConfirmDowngrade,
         }}
         secondaryButton={{
           text: "Cancel",
@@ -439,6 +792,30 @@ export default function Plans() {
         type={purchaseModalType}
         primaryButton={{ text: 'OK', onPress: () => setPurchaseModalVisible(false) }}
         onClose={() => setPurchaseModalVisible(false)}
+      />
+
+      {/* Status Modal (replaces system Alert.alert for consistent styling) */}
+      <AlertModal
+        visible={statusModalVisible}
+        title={statusModalTitle}
+        message={statusModalMessage}
+        type={statusModalType}
+        primaryButton={{ text: 'OK', onPress: closeStatus }}
+        onClose={closeStatus}
+      />
+
+      {/* Switch between paid plans modal */}
+      <AlertModal
+        visible={switchModalVisible}
+        title={switchMode === 'upgrade' ? 'Confirm Annual Upgrade' : 'Schedule Plan Change'}
+        message={switchLoading ? 'Loading subscription details…' : switchMessage}
+        type={switchMode === 'upgrade' ? 'warning' : 'info'}
+        primaryButton={{
+          text: switchLoading ? 'Please wait…' : switchMode === 'upgrade' ? 'Upgrade Now' : 'Open Management',
+          onPress: switchLoading ? () => {} : (switchMode === 'upgrade' ? performUpgradePurchase : scheduleDowngradeSwitch)
+        }}
+        secondaryButton={{ text: 'Cancel', onPress: () => setSwitchModalVisible(false) }}
+        onClose={() => setSwitchModalVisible(false)}
       />
     </ScrollView>
   );
@@ -594,12 +971,16 @@ const styles = StyleSheet.create({
   },
   popularBadge: {
     position: 'absolute',
-    top: 15,
-    right: 15,
-    backgroundColor: '#c9213a',
-    paddingHorizontal: 12,
+    top: 14,
+    right: 14,
+    backgroundColor: '#2a1719',
+    paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 12,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: '#c9213af5',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   popularText: {
     color: Colors.text,
@@ -609,18 +990,39 @@ const styles = StyleSheet.create({
   },
   activeBadge: {
     position: 'absolute',
-    top: 55,
-    right: 15,
-    backgroundColor: '#4ade80',
-    paddingHorizontal: 12,
+    top: 52,
+    right: 14,
+    backgroundColor: '#102318',
+    paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 12,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: '#4ade80aa',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   activeText: {
-    color: '#000',
-    fontSize: 12,
+    color: '#4ade80',
+    fontSize: 11,
     fontFamily: Typography.fontFamily,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  badgeBase: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  badgeText: {
+    fontSize: 11,
+    fontFamily: Typography.fontFamily,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  popularBadgeText: {
+    color: '#ffb3c1',
+  },
+  activeBadgeText: {
+    color: '#4ade80',
   },
   planHeader: {
     marginBottom: 20,
@@ -656,6 +1058,85 @@ const styles = StyleSheet.create({
   },
   planPeriodTablet: {
     fontSize: rf(16, { maxScale: 1.3 }),
+  },
+  subscriptionMetaBox: {
+    marginTop: 20,
+    backgroundColor: '#0d1a10',
+    borderWidth: 1,
+    borderColor: '#1f3d29',
+    padding: 14,
+    borderRadius: 12,
+    gap: 6,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  metaLabel: {
+    color: '#b5cbbd',
+    fontSize: rf(12),
+    fontFamily: Typography.fontFamily,
+    opacity: 0.85,
+  },
+  metaValue: {
+    color: Colors.text,
+    fontSize: rf(13),
+    fontFamily: Typography.fontFamily,
+    fontWeight: '500',
+    textAlign: 'right',
+    flexShrink: 1,
+    marginLeft: 10,
+  },
+  metaValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  statusPillActive: {
+    backgroundColor: '#16351f',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#2e6b3a',
+  },
+  statusPillCancel: {
+    backgroundColor: '#332814',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#7a561a',
+  },
+  statusPillIssue: {
+    backgroundColor: '#3a1414',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#a83232',
+  },
+  statusPillText: {
+    color: Colors.text,
+    fontSize: rf(11),
+    fontFamily: Typography.fontFamily,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
+  manageLinkBtn: {
+    backgroundColor: '#1e1e1e',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
+  },
+  manageLinkText: {
+    color: Colors.text,
+    fontSize: rf(12),
+    fontFamily: Typography.fontFamily,
   },
   featuresContainer: {
     marginBottom: 20,

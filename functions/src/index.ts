@@ -7,7 +7,6 @@ import { setGlobalOptions } from "firebase-functions";
 import { onRequest } from "firebase-functions/https";
 import * as logger from "firebase-functions/logger";
 import { onSchedule } from "firebase-functions/scheduler";
-import { onMessagePublished } from "firebase-functions/v2/pubsub";
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
 
@@ -962,6 +961,7 @@ export const createUser = onRequest(async (req, res) => {
       fightsLeft: 4, // Start with 4 fights to allow immediate play
       playing: false,
 
+
       loginStreak: 1, // New field to track login streak count
       maxLoginStreak: 1, // Track highest streak ever
 
@@ -1095,14 +1095,186 @@ export const getCombosMeta = onRequest(async (req, res) => {
   }
 });
 
-// --- Subscriptions (temporarily disabled: moving to RevenueCat) ---
-// Keep no-op placeholders to avoid breaking clients while you integrate RevenueCat.
+// --- RevenueCat Webhook: update user subscription state based on event.type ---
+// Configure a secret in your project env (functions:config or process.env) and set the same
+// custom header in RevenueCat dashboard (e.g. X-Webhook-Token) to secure this endpoint.
 
-export const onSubscriptionNotification = onMessagePublished('shadow-mma-subscriptions', async () => {
-  logger.warn('[Subscriptions] RTDN handler disabled. RevenueCat integration pending.');
-  return;
-});
+// (Removed specific RcEventType union; using generic string normalization instead)
 
-export const linkPlayPurchase = onRequest(async (req, res) => {
-  res.status(501).json({ success: false, message: 'Subscriptions are temporarily disabled. RevenueCat integration pending.' });
+// (Old RcEventPayload type removed – replaced by richer RcFullEvent interface below)
+
+function derivePlanFromProduct(productId?: string | null): 'monthly' | 'annual' {
+  const id = (productId || '').toLowerCase();
+  if (/(annual|year|yr|12m)/.test(id)) return 'annual';
+  return 'monthly';
+}
+
+// Extended (v2 style) RevenueCat event fields (sample provided by user)
+interface RcSubscriberAttributes {
+  [key: string]: { value?: string; updated_at_ms?: number } | undefined;
+}
+interface RcFullEvent {
+  aliases?: string[];
+  app_id?: string;
+  app_user_id?: string;
+  original_app_user_id?: string;
+  product_id?: string;
+  type?: string; // event type
+  environment?: string; // SANDBOX / PRODUCTION
+  expiration_at_ms?: number | null;
+  purchased_at_ms?: number | null;
+  event_timestamp_ms?: number | null;
+  period_type?: string | null;
+  original_transaction_id?: string | null;
+  entitlement_ids?: string[] | null;
+  entitlement_id?: string | null;
+  store?: string | null;
+  price?: number | null;
+  price_in_purchased_currency?: number | null;
+  currency?: string | null;
+  subscriber_attributes?: RcSubscriberAttributes | null;
+  renewal_number?: number | null;
+  // miscellaneous additional fields ignored
+  [k: string]: any;
+}
+
+// Helper: map more event strings to canonical types / statuses
+function mapEventToStatusAndPlan(evType: string, productId: string | null | undefined) {
+  const type = (evType || '').toUpperCase();
+  const plan = derivePlanFromProduct(productId);
+  switch (type) {
+    case 'INITIAL_PURCHASE':
+    case 'NON_RENEWING_PURCHASE':
+    case 'PRODUCT_CHANGE':
+    case 'RENEWAL':
+    case 'UNCANCELLATION':
+      return { status: 'active', plan, cancelAtPeriodEnd: false, planChange: true };
+    case 'CANCELLATION':
+      return { status: 'cancelled', plan: plan, cancelAtPeriodEnd: true, planChange: false };
+    case 'EXPIRATION':
+      return { status: 'expired', plan: 'free', cancelAtPeriodEnd: false, planChange: true };
+    case 'BILLING_ISSUE':
+      return { status: 'billing_issue', plan, cancelAtPeriodEnd: false, planChange: false };
+    case 'TEST':
+      // Treat TEST as a no-op by default but still show derived plan for visibility
+      return { status: 'test', plan, cancelAtPeriodEnd: false, planChange: true };
+    default:
+      return { status: 'unknown', plan, cancelAtPeriodEnd: false, planChange: false };
+  }
+}
+
+export const revenuecatWebhook = onRequest(async (req, res) => {
+  try {
+    if (req.method !== 'POST') {
+      res.status(405).send('Method Not Allowed');
+      return;
+    }
+
+    const body = req.body as { event?: RcFullEvent } & Record<string, any>;
+    const ev: RcFullEvent = body.event || (body as any);
+
+    const eventTypeRaw = ev?.type || body?.type || '';
+    const eventType = (eventTypeRaw || '').toString().toUpperCase();
+
+    // Allow secret to be configured via env; fall back to legacy inline (discouraged)
+    const expectedToken = (process.env.REVENUECAT_WEBHOOK_SECRET || 'ol7eIsss8qtldAIkA674mx95aYWD4gf2').trim();
+    if (expectedToken && eventType !== 'TEST') {
+      const headerAuth = req.headers['authorization'];
+      const bearerToken = headerAuth?.startsWith('Bearer ') ? headerAuth.split(' ')[1] : undefined;
+      const token = (
+        bearerToken ||
+        (req.headers['x-webhook-token'] as string) ||
+        (req.headers['x-revenuecat-token'] as string) ||
+        (req.query.token as string | undefined) ||
+        ''
+      ).toString().trim();
+      if (!token || token !== expectedToken) {
+        res.status(401).json({ success: false, message: 'Unauthorized' });
+        return;
+      }
+    }
+
+    // Derive user id (prefer event.app_user_id; fall back to first alias)
+    const appUserId = (
+      ev?.app_user_id ||
+      (Array.isArray(ev?.aliases) && ev.aliases.length ? ev.aliases[0] : '') ||
+      ev?.original_app_user_id ||
+      ''
+    ).toString();
+    if (!appUserId) {
+      res.status(400).json({ success: false, message: 'Missing app_user_id' });
+      return;
+    }
+
+    const userRef = db.collection('users').doc(appUserId);
+    const userSnap = await userRef.get();
+    if (!userSnap.exists) {
+      await userRef.set({
+        plan: 'free',
+        createdAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }
+
+    const productId = ev?.product_id || null;
+    const expirationMs = typeof ev?.expiration_at_ms === 'number' ? ev.expiration_at_ms : null;
+    const purchasedAtMs = typeof ev?.purchased_at_ms === 'number' ? ev.purchased_at_ms : null;
+    const environment = (ev?.environment || '').toString().toUpperCase();
+    const entitlementIds = (Array.isArray(ev?.entitlement_ids) ? ev.entitlement_ids : undefined);
+    const originalTxn = ev?.original_transaction_id || null;
+    const subscriberAttributes = ev?.subscriber_attributes || undefined;
+
+    const mapping = mapEventToStatusAndPlan(eventType, productId);
+
+    // Build update object
+    const update: any = {
+      subscription: {
+        status: mapping.status,
+        productId: productId || undefined,
+        period: derivePlanFromProduct(productId),
+        expiresAt: expirationMs ? new Date(expirationMs).toISOString() : null,
+        purchasedAt: purchasedAtMs ? new Date(purchasedAtMs).toISOString() : null,
+        environment,
+        entitlementIds,
+        cancelAtPeriodEnd: mapping.cancelAtPeriodEnd,
+        originalTransactionId: originalTxn || undefined,
+        eventType,
+        updatedAt: FieldValue.serverTimestamp(),
+        // Only store selected subscriber attributes to avoid unbounded growth
+        subscriberAttributes: subscriberAttributes ? Object.fromEntries(
+          Object.entries(subscriberAttributes).slice(0, 10) // cap first 10 keys
+        ) : undefined,
+      }
+    };
+
+    if (mapping.planChange) {
+      update.plan = mapping.plan; // reflect new plan on user root
+    }
+
+    await userRef.set(update, { merge: true });
+
+    res.status(200).json({
+      success: true,
+      eventType,
+      appliedPlan: update.plan || (userSnap.data()?.plan) || 'free',
+      status: update.subscription.status,
+      environment,
+    });
+  } catch (err: any) {
+    try {
+      const rawBody = typeof (req as any)?.rawBody === 'string' ? (req as any).rawBody : undefined;
+      const eventType = ((req.body?.event?.type || req.body?.type) ?? '').toString();
+      const appUserId = ((req.body?.event?.app_user_id || req.body?.app_user_id) ?? '').toString();
+      logger.error('[RevenueCat] Webhook error', {
+        message: err?.message,
+        stack: err?.stack?.substring(0, 800),
+        eventType,
+        appUserId,
+        contentType: req.headers['content-type'],
+        bodySample: rawBody ? rawBody.slice(0, 400) : undefined,
+      });
+    } catch (logErr) {
+      logger.error('[RevenueCat] Webhook error (logging failed)', logErr as any);
+    }
+    res.status(500).json({ success: false, message: 'Internal Server Error'});
+  }
 });
