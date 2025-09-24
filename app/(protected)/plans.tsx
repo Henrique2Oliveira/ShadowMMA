@@ -78,6 +78,7 @@ export default function Plans() {
   // Downgrade flow state
   const [currentExpiration, setCurrentExpiration] = useState<string | null>(null);
   const [downgradeLoading, setDowngradeLoading] = useState(false);
+  const [restoreLoading, setRestoreLoading] = useState(false);
   const normalize = (t?: string | null) => (t || '').toLowerCase().replace('pro', 'monthly');
   // Detailed subscription info (expiration, renewal status, etc.)
   const [subInfo, setSubInfo] = useState<{
@@ -212,6 +213,32 @@ export default function Plans() {
       showStatus('Subscriptions', 'Failed to sync subscription data.', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRestorePurchases = async () => {
+    if (restoreLoading) return;
+    setRestoreLoading(true);
+    try {
+      try { if (user?.uid) await Purchases.logIn(user.uid); } catch {}
+      const info: any = await Purchases.restorePurchases();
+      const actives = info?.entitlements?.active || {};
+      const hasActive = Object.keys(actives).length > 0;
+      if (hasActive) {
+        showStatus('Restore', 'Your subscription has been restored successfully.', 'success');
+        try { await refreshUserData?.(user?.uid ?? ''); } catch {}
+        fetchSubscriptionDetails();
+      } else {
+        showStatus('Restore', 'No previous purchases were found for this account.', 'info');
+      }
+    } catch (err: any) {
+      const cancelled = err?.userCancelled || err?.code === 'PURCHASE_CANCELLED_ERROR' || err?.code === '1';
+      if (!cancelled) {
+        console.error('[Subscriptions] Restore error', err);
+        showStatus('Restore', 'Could not restore purchases. Please try again later.', 'error');
+      }
+    } finally {
+      setRestoreLoading(false);
     }
   };
 
@@ -549,7 +576,11 @@ export default function Plans() {
           </View>
         )}
         {/* Manage/Sync actions */}
-        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10, gap: 10 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10, gap: 10, flexWrap: 'wrap' }}>
+          <TouchableOpacity onPress={handleRestorePurchases} disabled={restoreLoading} style={{ paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#1e1e1e', borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
+            {restoreLoading && <ActivityIndicator size="small" color={Colors.text} style={{ marginRight: 6 }} />}
+            <Text style={{ color: Colors.text, fontFamily: Typography.fontFamily }}>{restoreLoading ? 'Restoring…' : 'Restore Purchases'}</Text>
+          </TouchableOpacity>
           <TouchableOpacity onPress={handleManageSubscription} style={{ paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#1e1e1e', borderRadius: 8 }}>
             <Text style={{ color: Colors.text, fontFamily: Typography.fontFamily }}>Manage in Subscriptions</Text>
           </TouchableOpacity>
@@ -571,7 +602,7 @@ export default function Plans() {
             {/* Feature list removed per request (hide features on current plan card) */}
             {/* Subscription meta info */}
             <View style={styles.subscriptionMetaBox}>
-              {normalize(userData?.plan) === 'free' || subInfo.status === 'free' ? (
+              {normalize(userData?.plan) === 'free' ? (
                 <Text style={styles.metaValue}>You are on the Free plan. Upgrade to unlock all premium drills and advanced tracking.</Text>
               ) : (
                 <>

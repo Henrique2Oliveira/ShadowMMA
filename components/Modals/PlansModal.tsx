@@ -37,6 +37,34 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
   const [showDowngradeModal, setShowDowngradeModal] = useState(false);
   const [downgradeExpiration, setDowngradeExpiration] = useState<string | null>(null);
   const [downgradeLoading, setDowngradeLoading] = useState(false);
+  const [restoreLoading, setRestoreLoading] = useState(false);
+  const [statusModalVisible, setStatusModalVisible] = useState(false);
+  const [statusModalTitle, setStatusModalTitle] = useState('');
+  const [statusModalMessage, setStatusModalMessage] = useState('');
+  const [statusModalType, setStatusModalType] = useState<'success' | 'error' | 'warning' | 'info'>('info');
+  const statusQueue = React.useRef<{ title: string; message: string; type: 'success' | 'error' | 'warning' | 'info' }[]>([]);
+  const showStatus = (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+    if (statusModalVisible) {
+      statusQueue.current.push({ title, message, type });
+      return;
+    }
+    setStatusModalTitle(title);
+    setStatusModalMessage(message);
+    setStatusModalType(type);
+    setStatusModalVisible(true);
+  };
+  const closeStatus = () => {
+    setStatusModalVisible(false);
+    setTimeout(() => {
+      const next = statusQueue.current.shift();
+      if (next) {
+        setStatusModalTitle(next.title);
+        setStatusModalMessage(next.message);
+        setStatusModalType(next.type);
+        setStatusModalVisible(true);
+      }
+    }, 150);
+  };
 
   const userPlan = userData?.plan?.toLowerCase();
   const layout = useMemo(() => {
@@ -228,6 +256,31 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
     }
   }, []);
 
+  const handleRestore = async () => {
+    if (restoreLoading) return;
+    setRestoreLoading(true);
+    try {
+      try { if (user?.uid) { await Purchases.logIn(user.uid); } } catch {}
+      const info: any = await Purchases.restorePurchases();
+      const actives = info?.entitlements?.active || {};
+      const hasActive = Object.keys(actives).length > 0;
+      if (hasActive) {
+        showStatus('Restore', 'Your subscription has been restored.', 'success');
+        try { await refreshUserData?.(user?.uid ?? ''); } catch {}
+      } else {
+        showStatus('Restore', 'No previous purchases found for this account.', 'info');
+      }
+    } catch (err: any) {
+      const cancelled = err?.userCancelled || err?.code === 'PURCHASE_CANCELLED_ERROR' || err?.code === '1';
+      if (!cancelled) {
+        console.error('[RevenueCat] Restore error', err);
+        showStatus('Restore', 'Could not restore purchases. Please try again later.', 'error');
+      }
+    } finally {
+      setRestoreLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (visible) {
       fetchOfferings();
@@ -328,6 +381,18 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Pressable
+                onPress={handleRestore}
+                style={[styles.iconButton, { marginRight: 6 }]}
+                accessibilityRole="button"
+                accessibilityLabel="Restore purchases"
+              >
+                {restoreLoading ? (
+                  <ActivityIndicator color={Colors.text} size={isTablet ? 'small' : 'small'} />
+                ) : (
+                  <MaterialCommunityIcons name="backup-restore" size={isTablet ? 26 : 22} color={Colors.text} />
+                )}
+              </Pressable>
+              <Pressable
                 onPress={fetchOfferings}
                 style={[styles.iconButton, { marginRight: 6 }]}
                 accessibilityRole="button"
@@ -395,6 +460,14 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
         </View>
       </View>
     </Modal>
+    <AlertModal
+      visible={statusModalVisible}
+      title={statusModalTitle}
+      message={statusModalMessage}
+      type={statusModalType}
+      primaryButton={{ text: 'OK', onPress: closeStatus }}
+      onClose={closeStatus}
+    />
     <AlertModal
       visible={purchaseModalVisible}
       title={purchaseModalTitle}
