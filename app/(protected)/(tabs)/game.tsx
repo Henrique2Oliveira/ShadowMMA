@@ -1126,7 +1126,7 @@ export default function Game() {
           // Fallback small banner if we detected level-up via xp watcher but didn't get list yet
           showNewCombo && (
             <View style={styles.newComboMessageContainer}>
-              <Text style={styles.newComboMessageText}>🔥 New Combo Unlocked!</Text>
+              <Text style={styles.newComboMessageText}>🔥 Great Fight!</Text>
             </View>
           )
         )}

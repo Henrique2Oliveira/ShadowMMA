@@ -28,10 +28,10 @@ export const subscriptionPlans: SubscriptionPlan[] = [
     features: [
       '3 Fights a day',
       'Basic training programs',
-      'Random Fight generator',
-      'Combo training',
+      // 'Random Fight generator',
+      // 'Combo training',
       'Essential techniques',
-      'Progress tracking',
+      // 'Progress tracking',
     ]
   },
   {

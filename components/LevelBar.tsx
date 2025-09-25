@@ -15,7 +15,7 @@ interface LevelBarProps {
 export const LevelBar: React.FC<LevelBarProps> = ({ 
   xp, 
   containerStyle,
-  levelUpHoldMs = 300,
+  levelUpHoldMs = 1000,
   suppressInitialLevelUpAnimation = true,
   showPrevLevelDuringLevelUp = false
 }) => {

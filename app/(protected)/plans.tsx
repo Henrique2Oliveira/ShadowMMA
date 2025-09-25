@@ -581,9 +581,9 @@ export default function Plans() {
             {restoreLoading && <ActivityIndicator size="small" color={Colors.text} style={{ marginRight: 6 }} />}
             <Text style={{ color: Colors.text, fontFamily: Typography.fontFamily }}>{restoreLoading ? 'Restoring…' : 'Restore Purchases'}</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleManageSubscription} style={{ paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#1e1e1e', borderRadius: 8 }}>
+          {/* <TouchableOpacity onPress={handleManageSubscription} style={{ paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#1e1e1e', borderRadius: 8 }}>
             <Text style={{ color: Colors.text, fontFamily: Typography.fontFamily }}>Manage in Subscriptions</Text>
-          </TouchableOpacity>
+          </TouchableOpacity>  //redudant */}
           <TouchableOpacity onPress={handleSyncSubscription} style={{ paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#1e1e1e', borderRadius: 8 }}>
             <Text style={{ color: Colors.text, fontFamily: Typography.fontFamily }}>Sync Subscription</Text>
           </TouchableOpacity>
@@ -620,6 +620,19 @@ export default function Plans() {
                       </View>
                     </View>
                   </View>
+                  {/* Explicit auto-renew state */}
+                  <View style={styles.metaRow}>
+                    <Text style={styles.metaLabel}>Auto-Renew</Text>
+                    <View style={styles.metaValueRow}>
+                      {typeof subInfo.willRenew === 'boolean' ? (
+                        <View style={subInfo.willRenew ? styles.statusPillActive : styles.statusPillCancel}>
+                          <Text style={styles.statusPillText}>{subInfo.willRenew ? 'On' : 'Off'}</Text>
+                        </View>
+                      ) : (
+                        <Text style={styles.metaValue}>—</Text>
+                      )}
+                    </View>
+                  </View>
                   <View style={styles.metaRow}>
                     <Text style={styles.metaLabel}>{subInfo.willRenew ? 'Renews' : 'Expires'}</Text>
                     <Text style={styles.metaValue}>{subInfo.expirationDateFormatted || '—'}</Text>
@@ -632,6 +645,18 @@ export default function Plans() {
                     <Text style={styles.metaLabel}>Started</Text>
                     <Text style={styles.metaValue}>{subInfo.latestPurchaseDateFormatted || '—'}</Text>
                   </View>
+                  {/* Contextual hint about renewal state */}
+                  {typeof subInfo.willRenew === 'boolean' && (
+                    <Text style={styles.metaHint}>
+                      {subInfo.willRenew
+                        ? (subInfo.expirationDateFormatted
+                            ? `Auto-renew is ON. Next charge on ${subInfo.expirationDateFormatted}.`
+                            : 'Auto-renew is ON.')
+                        : (subInfo.expirationDateFormatted
+                            ? `Auto-renew is OFF. Access ends on ${subInfo.expirationDateFormatted}.`
+                            : 'Auto-renew is OFF.')}
+                    </Text>
+                  )}
                   {/* Product identifier row removed per request */}
                   <View style={[styles.metaRow, { marginTop: 6 }]}> 
                     <TouchableOpacity onPress={handleManageSubscription} style={styles.manageLinkBtn}>
@@ -684,6 +709,13 @@ export default function Plans() {
                     <View style={[styles.badgeBase, styles.activeBadge]}>
                       <MaterialCommunityIcons name="check-circle" size={14} color="#4ade80" style={{ marginRight: 4 }} />
                       <Text style={[styles.badgeText, styles.activeBadgeText]}>CURRENT PLAN</Text>
+                    </View>
+                  )}
+                  {/* Badge when current plan has auto-renew turned off */}
+                  {normalize(plan.title) === normalize(userData?.plan) && subInfo.willRenew === false && (
+                    <View style={[styles.badgeBase, styles.autoRenewBadge]}>
+                      <MaterialCommunityIcons name="clock-alert" size={14} color="#ffcc66" style={{ marginRight: 4 }} />
+                      <Text style={[styles.badgeText, styles.autoRenewBadgeText]}>AUTO-RENEW OFF</Text>
                     </View>
                   )}
                   <View style={styles.planHeader}>
@@ -1055,6 +1087,22 @@ const styles = StyleSheet.create({
   activeBadgeText: {
     color: '#4ade80',
   },
+  autoRenewBadge: {
+    position: 'absolute',
+    top: 90,
+    right: 14,
+    backgroundColor: '#2f2614',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: '#8a6a1a',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  autoRenewBadgeText: {
+    color: '#ffdb99',
+  },
   planHeader: {
     marginBottom: 20,
   },
@@ -1155,6 +1203,13 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily,
     fontWeight: '600',
     letterSpacing: 0.3,
+  },
+  metaHint: {
+    color: '#b5cbbd',
+    fontSize: rf(11),
+    fontFamily: Typography.fontFamily,
+    opacity: 0.8,
+    marginTop: 4,
   },
   manageLinkBtn: {
     backgroundColor: '#1e1e1e',

@@ -377,7 +377,7 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
               <Text style={styles.title}>Choose Your Plan</Text>
-              <Text style={styles.subtitle}>Unlock advanced training modes & personalized progression.</Text>
+              <Text style={styles.subtitle}>Unlock advanced training modes.</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Pressable
