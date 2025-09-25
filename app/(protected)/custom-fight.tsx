@@ -13,8 +13,8 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { getAuth as getClientAuth } from 'firebase/auth';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, FlatList, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, FlatList, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Match ComboMeta shape from combos.tsx
@@ -50,7 +50,7 @@ export default function CustomFight() {
     headerTitle: font(30),
     headerSubtitle: font(14),
     selectionText: font(16),
-    clearBtn: font(14),
+    clearBtn: font(12),
     startHint: font(15),
     startButton: font(22),
   overlayTitle: font(26),
@@ -220,6 +220,18 @@ export default function CustomFight() {
     return selected.some(s => s.id === String(id));
   }, [selected]);
 
+  // Fast removal helpers and memoized lookup maps for selected chips UX
+  const idToCombo = useMemo(() => {
+    const map = new Map<string, ComboMeta>();
+    (combos || []).forEach(c => map.set(String(c.id), c));
+    return map;
+  }, [combos]);
+
+  const removeSelection = useCallback((id: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelected(prev => prev.filter(s => s.id !== String(id)));
+  }, []);
+
   // Quick select by type (adds multiple at once up to MAX_SELECT)
   const selectByType = useCallback((type: string) => {
     // Respect level gating for move types
@@ -265,34 +277,22 @@ export default function CustomFight() {
   const SelectableComboItem = useCallback(({ item }: { item: ComboMeta }) => {
     const locked = item.level > userLevel;
     const selected = isSelected(item);
-    const scale = useRef(new Animated.Value(1)).current;
-    const overlayOpacity = useRef(new Animated.Value(0)).current;
-
-    useEffect(() => {
-      if (selected) {
-        Animated.spring(scale, { toValue: 1.02, useNativeDriver: true, friction: 6, tension: 80 }).start();
-        Animated.timing(overlayOpacity, { toValue: 1, duration: 180, useNativeDriver: true }).start();
-      } else {
-        Animated.spring(scale, { toValue: 1, useNativeDriver: true, friction: 6, tension: 80 }).start();
-        Animated.timing(overlayOpacity, { toValue: 0, duration: 150, useNativeDriver: true }).start();
-      }
-    }, [selected, scale, overlayOpacity]);
 
     return (
-  <Animated.View style={[styles.cardWrapper, { transform: [{ scale }], marginVertical: uiScale(4, { category: 'spacing' }) }]}>        
+      <View style={[styles.cardWrapper, { marginVertical: uiScale(4, { category: 'spacing' }) }]}>        
         <MemoizedComboCard
           item={item}
           userLevel={userLevel}
           onPress={() => toggleSelect(item, locked)}
         />
-        <Animated.View pointerEvents="none" style={[styles.fullOverlay, { opacity: overlayOpacity }]}>          
+        <View pointerEvents="none" style={[styles.fullOverlay, { opacity: selected ? 1 : 0 }]}>          
           <LinearGradient colors={["rgba(0,0,0,0.05)", "rgba(0,0,0,0.8)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.overlayInner}>
-            <MaterialCommunityIcons name="check" size={overlayCheckSize} color="#ffffffff" style={{ marginBottom: spacing(4) }} />
+            {/* <MaterialCommunityIcons name="check" size={overlayCheckSize} color="#ffffffff" style={{ marginBottom: spacing(4) }} /> */}
             <Text style={[styles.overlayTitle, { fontSize: fs.overlayTitle, maxWidth: '85%', textAlign: 'center' }]}>SELECTED</Text>
             <Text style={[styles.overlaySub, { fontSize: fs.overlaySub, maxWidth: '85%', textAlign: 'center' }]}>Tap again to remove</Text>
           </LinearGradient>
-        </Animated.View>
-      </Animated.View>
+        </View>
+      </View>
     );
   }, [isSelected, toggleSelect, userLevel]);
 
@@ -362,46 +362,49 @@ export default function CustomFight() {
             ListHeaderComponent={() => (
               <View>
                 <View style={styles.selectionHeader}>
-                  <Text style={[styles.selectionText, { fontSize: fs.selectionText }]}>Selected: {selected.length}/{MAX_SELECT}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={[styles.selectionText, { fontSize: fs.selectionText, marginRight: 8 }]}>Selected</Text>
+                    <View style={styles.selectionCountPill}>
+                      <Text style={styles.selectionCountText}>{selected.length}/{MAX_SELECT}</Text>
+                    </View>
+                  </View>
                   <TouchableOpacity
                     onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelected([]); }}
                     disabled={selected.length === 0}
                     style={[styles.clearBtn, selected.length === 0 && { opacity: 0.5 }]}
                   >
-                    <MaterialCommunityIcons name="trash-can-outline" size={18} color={Colors.background} />
-                    <Text style={[styles.clearBtnText, { fontSize: fs.clearBtn }]}>Clear</Text>
+                    <MaterialCommunityIcons name="trash-can-outline" size={18} color="#ffc14d" style={{ marginRight: 6 }} />
+                    <Text style={[styles.clearBtnText, { fontSize: fs.clearBtn }]}>CLEAR ALL</Text>
                   </TouchableOpacity>
                 </View>
-                {availableTypes.length > 0 && (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.typeChips}>
-                    {availableTypes.map(t => {
-                      const locked = (t === 'Kicks' && userLevel < KICKS_REQUIRED_LEVEL) || (t === 'Defense' && userLevel < DEFENSE_REQUIRED_LEVEL);
+                {/* Quick removal chips for selected combos */}
+                {selected.length > 0 && (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.selectedChips}
+                  >
+                    {selected.map(s => {
+                      const meta = idToCombo.get(String(s.id));
+                      const label = meta?.name || `#${s.id}`;
                       return (
                         <TouchableOpacity
-                          key={t}
-                          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); selectByType(t); }}
-                          disabled={locked}
-                          style={[styles.chip, locked && { opacity: 0.45, borderColor: '#555' }]}
+                          key={`sel-${s.id}`}
+                          onPress={() => removeSelection(String(s.id))}
+                          style={styles.selectedChip}
                         >
-                          <MaterialCommunityIcons
-                            name={t === 'Punches' ? 'hand-back-right' : t === 'Kicks' ? 'foot-print' : 'shield'}
-                            size={18}
-                            color={Colors.background}
-                            style={{ marginRight: 6 }}
-                          />
-                          <Text style={[styles.chipText, { fontSize: fs.chip }]}>Add {t}</Text>
-                          {locked && (
-                            <View style={{ marginLeft: 8, backgroundColor: '#222', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
-                              <Text style={{ color: '#ffdd55', fontSize: fs.lockedLevel, fontFamily: Typography.fontFamily }}>
-                                Lv {t === 'Kicks' ? KICKS_REQUIRED_LEVEL : DEFENSE_REQUIRED_LEVEL}
-                              </Text>
-                            </View>
-                          )}
+                          <MaterialCommunityIcons name="check-circle" size={16} color="#4ade80" style={{ marginRight: 6 }} />
+                          <Text style={[styles.selectedChipText, { fontSize: fs.chip }]} numberOfLines={1}>
+                            {label}
+                          </Text>
+                          <MaterialCommunityIcons name="close" size={16} color="#4ade80" style={{ marginLeft: 8, opacity: 0.95 }} />
                         </TouchableOpacity>
                       );
                     })}
                   </ScrollView>
                 )}
+                {/* Removed Add {type} chips row as requested */}
+                {/* Removed quick remove-by-type row as requested */}
               </View>
             )}
             ListFooterComponent={() => (
@@ -508,15 +511,35 @@ const styles = StyleSheet.create({
   clearBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.text,
-    paddingHorizontal: uiScale(10, { category: 'spacing' }),
-    paddingVertical: uiScale(6, { category: 'spacing' }),
-    borderRadius: uiScale(8, { category: 'button' }),
+    marginBottom: 2,
+    backgroundColor: '#332b16',
+    paddingHorizontal: uiScale(12, { category: 'spacing' }),
+    paddingVertical: uiScale(8, { category: 'spacing' }),
+    borderRadius: uiScale(20, { category: 'button' }),
+    borderWidth: 1,
+    borderColor: '#5c4718',
   },
   clearBtnText: {
-    color: Colors.background,
-    marginLeft: 6,
+    color: '#ffdb99',
+    marginLeft: 2,
     fontFamily: Typography.fontFamily,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  selectionCountPill: {
+    backgroundColor: '#2f2614',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#8a6a1a',
+  },
+  selectionCountText: {
+    color: '#ffdb99',
+    fontFamily: Typography.fontFamily,
+    fontWeight: '700',
+    fontSize: uiScale(12, { category: 'font' }),
+    letterSpacing: 0.3,
   },
   footerSpace: { height: uiScale(120, { category: 'spacing' }) },
   startBar: {
@@ -599,5 +622,27 @@ const styles = StyleSheet.create({
   chipText: {
     color: Colors.background,
     fontFamily: Typography.fontFamily,
+  },
+  // Selected item chips row
+  selectedChips: {
+    paddingHorizontal: uiScale(8, { category: 'spacing' }),
+    paddingBottom: uiScale(8, { category: 'spacing' }),
+    gap: uiScale(8, { category: 'spacing' }),
+  },
+  selectedChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#102318',
+    paddingVertical: uiScale(6, { category: 'spacing' }),
+    paddingHorizontal: uiScale(10, { category: 'spacing' }),
+    borderRadius: uiScale(16, { category: 'button' }),
+    marginRight: uiScale(8, { category: 'spacing' }),
+    borderWidth: 1,
+    borderColor: '#2e6b3a',
+  },
+  selectedChipText: {
+    color: '#d9f7e3',
+    fontFamily: Typography.fontFamily,
+    maxWidth: uiScale(140, { category: 'spacing' }),
   },
 });
