@@ -603,7 +603,7 @@ export default function Plans() {
             {/* Subscription meta info */}
             <View style={styles.subscriptionMetaBox}>
               {normalize(userData?.plan) === 'free' ? (
-                <Text style={styles.metaValue}>You are on the Free plan. Upgrade to unlock all premium drills and advanced tracking.</Text>
+                <Text style={styles.metaValue}>You are on the Free plan. Upgrade to unlock all premium and advanced features.</Text>
               ) : (
                 <>
                   <View style={styles.metaRow}>
@@ -766,7 +766,7 @@ export default function Plans() {
             return (
               <>
                 <Text style={styles.disclaimerText}>
-                  The subscription gives you unlimited access to all premium training content and future feature releases. Your Google Play account will be charged when you confirm the purchase. Subscriptions renew automatically unless cancelled at least 24 hours before the end of the current period.
+                  The subscription gives you unlimited access to all premium training and future feature releases. Your Google Play account will be charged when you confirm the purchase. Subscriptions renew automatically unless cancelled at least 24 hours before the end of the current period.
                 </Text>
 
                 {(() => {
