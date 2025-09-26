@@ -24,6 +24,19 @@ type UserData = {
   lifetimeFightTime?: number;
 };
 
+// Simple avatar options we let users tweak (subset of DiceBear open-peeps)
+type AvatarOptions = {
+  head?: string;
+  skinColor?: string; // hex without '#'
+  accessories?: string;
+  facialHair?: string;
+  face?: string;
+  backgroundColor?: string; // hex without '#'
+  headContrastColor?: string; // hair color hex without '#'
+  clothingColor?: string; // hex without '#'
+  gender?: 'auto' | 'male' | 'female';
+};
+
 export default function Profile() {
   const { width } = useWindowDimensions();
   const deviceScale = width >= 1024 ? 1.45 : width >= 768 ? 1.25 : width >= 600 ? 1.1 : 1;
@@ -44,11 +57,19 @@ export default function Profile() {
     fightsNumber: font(isTablet ? 34 : 28),
     statNumber: font(isTablet ? 30 : 24),
   };
+  const avatarSize = uiScale(isTablet ? 140 : 110);
+  const modalPreviewSize = uiScale(isTablet ? 140 : 110);
   const { logout, user } = useAuth();
   const { userData, refreshUserData } = useUserData();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
+  // Client-side avatar seed (DiceBear open-peeps)
+  const [avatarSeed, setAvatarSeed] = useState<string>('');
+  const [avatarModalVisible, setAvatarModalVisible] = useState(false);
+  const [tempAvatarSeed, setTempAvatarSeed] = useState<string>('');
+  const [avatarOptions, setAvatarOptions] = useState<AvatarOptions>({});
+  const [tempAvatarOptions, setTempAvatarOptions] = useState<AvatarOptions>({});
   // Generic new badge state supporting both streak and rounds categories
   const [newBadge, setNewBadge] = useState<{ id: number; type: 'streak' | 'rounds' } | null>(null);
   const [badgeQueue, setBadgeQueue] = useState<{ id: number; type: 'streak' | 'rounds' }[]>([]);
@@ -188,6 +209,102 @@ export default function Profile() {
     loadData();
   }, [user]);
 
+  // Load saved avatar seed + options (client-side only); default to user's name if none saved
+  useEffect(() => {
+    const run = async () => {
+      if (!user) return;
+      try {
+        const key = `avatarSeed_${user.uid}`;
+        const optKey = `avatarOptions_${user.uid}`;
+        const saved = await AsyncStorage.getItem(key);
+        if (saved) {
+          setAvatarSeed(saved);
+        } else {
+          const fallback = (userData?.name || 'Anonymous').toString();
+          setAvatarSeed(fallback);
+          await AsyncStorage.setItem(key, fallback);
+        }
+        const savedOptsRaw = await AsyncStorage.getItem(optKey);
+        if (savedOptsRaw) {
+          try {
+            const parsed = JSON.parse(savedOptsRaw) as AvatarOptions;
+            setAvatarOptions(parsed || {});
+          } catch { }
+        }
+      } catch (e) {
+        console.warn('Failed to load avatar seed', e);
+      }
+    };
+    run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid]);
+
+  // DiceBear v9.x endpoint builder with selected options
+  const avatarUrl = (seed: string, opts?: AvatarOptions) => {
+    const params: string[] = [];
+    const s = encodeURIComponent(seed || 'Anonymous');
+    params.push(`seed=${s}`);
+    if (opts?.head) params.push(`head=${encodeURIComponent(opts.head)}`);
+    if (opts?.skinColor) params.push(`skinColor=${encodeURIComponent(opts.skinColor)}`);
+    if (opts?.headContrastColor) params.push(`headContrastColor=${encodeURIComponent(opts.headContrastColor)}`);
+    if (opts?.clothingColor) params.push(`clothingColor=${encodeURIComponent(opts.clothingColor)}`);
+    if (opts?.accessories) {
+      params.push(`accessories=${encodeURIComponent(opts.accessories)}`);
+      params.push(`accessoriesProbability=100`);
+    } else {
+      params.push(`accessoriesProbability=0`);
+    }
+    if (opts?.facialHair) {
+      params.push(`facialHair=${encodeURIComponent(opts.facialHair)}`);
+      params.push(`facialHairProbability=100`);
+    } else {
+      params.push(`facialHairProbability=0`);
+    }
+    if (opts?.face) params.push(`face=${encodeURIComponent(opts.face)}`);
+    if (opts?.backgroundColor) params.push(`backgroundColor=${encodeURIComponent(opts.backgroundColor)}`);
+    // radius to get rounded corners on the image (we still mask circle in RN)
+    params.push('radius=50');
+    return `https://api.dicebear.com/9.x/open-peeps/png?${params.join('&')}`;
+  };
+
+  const saveAvatarSeed = async (newSeedRaw?: string) => {
+    if (!user) return;
+    const newSeed = (newSeedRaw ?? tempAvatarSeed).trim() || 'Anonymous';
+    try {
+      const key = `avatarSeed_${user.uid}`;
+      const optsKey = `avatarOptions_${user.uid}`;
+      await AsyncStorage.setItem(key, newSeed);
+      await AsyncStorage.setItem(optsKey, JSON.stringify(tempAvatarOptions || {}));
+      setAvatarSeed(newSeed);
+      setAvatarOptions(tempAvatarOptions || {});
+      setAvatarModalVisible(false);
+    } catch (e) {
+      console.warn('Failed to save avatar seed', e);
+    }
+  };
+
+  const randomizeAvatar = () => {
+    const rand = Math.random().toString(36).slice(2, 10);
+    setTempAvatarSeed(rand);
+    // Randomize simple options
+    const pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
+    const maybe = <T,>(arr: T[], probability = 0.6): T | undefined => (Math.random() < probability ? pick(arr) : undefined);
+    const gender = tempAvatarOptions.gender || 'auto';
+    const headPool = gender === 'male' ? MALE_HEAD_OPTIONS : gender === 'female' ? FEMALE_HEAD_OPTIONS : HEAD_OPTIONS;
+    const facialHairPick = gender === 'female' ? maybe(FACIAL_HAIR_OPTIONS, 0.1) : maybe(FACIAL_HAIR_OPTIONS, 0.45);
+    setTempAvatarOptions({
+      ...tempAvatarOptions,
+      head: pick(headPool),
+      skinColor: pick(SKIN_OPTIONS),
+      accessories: maybe(ACCESSORIES_OPTIONS, 0.4),
+      facialHair: facialHairPick,
+      face: pick(FACE_OPTIONS),
+      backgroundColor: maybe(BG_OPTIONS, 0.3),
+      headContrastColor: pick(HAIR_COLOR_OPTIONS),
+      clothingColor: pick(CLOTHING_COLOR_OPTIONS),
+    });
+  };
+
   // Update loading state when userData changes
   useEffect(() => {
     if (userData) {
@@ -206,8 +323,8 @@ export default function Profile() {
   if (loading) {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
-  <MaterialCommunityIcons name="loading" size={iconSize(50)} color={Colors.text} />
-  <Text style={[styles.loadingText, { fontSize: font(16) }]}>Loading profile...</Text>
+        <MaterialCommunityIcons name="loading" size={iconSize(50)} color={Colors.background} />
+        <Text style={[styles.loadingText, { fontSize: font(16) }]}>Loading profile...</Text>
       </View>
     );
   }
@@ -245,22 +362,49 @@ export default function Profile() {
               <MaterialCommunityIcons name="cog-outline" size={iconSize(26)} color={Colors.text} />
             </TouchableOpacity>
           </View>
-          <View style={styles.header}>
-            {/* <View style={styles.avatarContainer}>
-              <MaterialCommunityIcons name="account-circle" size={100} color={Colors.text} />
-            </View> */}
-            <Text style={[styles.name, { fontSize: font(isTablet ? 40 : 32) }]}>{userData?.name || 'Anonymous'}</Text>
-            <Text style={[styles.subtitle, { fontSize: font(isTablet ? 22 : 18) }]}>{userData?.plan !== 'free' ? 'Pro Member' : 'Free Member'}</Text>
+          <View style={[styles.header, { flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1 }]}>
+            <View style={[styles.avatarContainer, { marginBottom: spacing(12) }]}>
+              <TouchableOpacity
+                onPress={() => {
+                  setTempAvatarSeed(avatarSeed || userData?.name || 'Anonymous');
+                  setTempAvatarOptions(avatarOptions || {});
+                  setAvatarModalVisible(true);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Change avatar"
+                style={{ alignItems: 'center', justifyContent: 'center' }}
+                hitSlop={{ top: spacing(6), bottom: spacing(6), left: spacing(6), right: spacing(6) }}
+              >
+                <View style={[styles.avatarCircle, { width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 }]}>
+                  {avatarSeed ? (
+                    <Image
+                      source={{ uri: avatarUrl(avatarSeed, avatarOptions) }}
+                      style={styles.avatarImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <MaterialCommunityIcons name="account" size={iconSize(48)} color={Colors.text} />
+                  )}
+                </View>
+                <View style={styles.avatarEditBadge}>
+                  <MaterialCommunityIcons name="pencil" size={iconSize(16)} color={Colors.text} />
+                </View>
+              </TouchableOpacity>
+            </View>
+            <View style={{ alignItems: 'center' }}>
+              <Text style={[styles.name, { fontSize: font(isTablet ? 40 : 32) }]}>{userData?.name || 'Anonymous'}</Text>
+              <Text style={[styles.subtitle, { fontSize: font(isTablet ? 22 : 18) }]}>{userData?.plan !== 'free' ? 'Pro Member' : 'Free Member'}</Text>
+            </View>
           </View>
           {/* Lifetime Stats Section (moved above badges) */}
-          <View style={[styles.lifetimeSection, { marginTop: dyn.sectionMarginTop, paddingVertical: spacing(isTablet ? 22 : 18) }] }>
-    <Text style={[styles.lifetimeTitle, { fontSize: font(isTablet ? 30 : 24) }]}>Lifetime Stats</Text>
-    <Text style={[styles.lifetimeSubtitle, { fontSize: font(isTablet ? 16 : 13) }]}>Your all–time progress in Shadow MMA</Text>
+          <View style={[styles.lifetimeSection, { marginTop: dyn.sectionMarginTop, paddingVertical: spacing(isTablet ? 22 : 18) }]}>
+            <Text style={[styles.lifetimeTitle, { fontSize: font(isTablet ? 30 : 24) }]}>Lifetime Stats</Text>
+            <Text style={[styles.lifetimeSubtitle, { fontSize: font(isTablet ? 16 : 13) }]}>Your all–time progress in Shadow MMA</Text>
             <View style={styles.statsContainer}>
               <View style={styles.statBox}>
                 <View style={styles.statRow}>
-      <MaterialCommunityIcons name="boxing-glove" size={iconSize(20)} color={Colors.text} style={styles.statIcon} />
-                  <Text style={[styles.statNumber, { fontSize: dyn.statNumber }] }>
+                  <MaterialCommunityIcons name="boxing-glove" size={iconSize(20)} color={Colors.text} style={styles.statIcon} />
+                  <Text style={[styles.statNumber, { fontSize: dyn.statNumber }]}>
                     {userData?.lifetimeFightRounds ? formatNumber(userData.lifetimeFightRounds) : "-"}
                   </Text>
                 </View>
@@ -268,12 +412,12 @@ export default function Profile() {
               </View>
               <View style={styles.statBox}>
                 <View style={styles.statRow}>
-      <MaterialCommunityIcons name="timer" size={iconSize(20)} color={Colors.text} style={styles.statIcon} />
-                  <Text style={[styles.statNumber, { fontSize: dyn.statNumber }] }>
+                  <MaterialCommunityIcons name="timer" size={iconSize(20)} color={Colors.text} style={styles.statIcon} />
+                  <Text style={[styles.statNumber, { fontSize: dyn.statNumber }]}>
                     {userData?.lifetimeFightTime ? formatTime(userData.lifetimeFightTime).value : "-"}
                   </Text>
                 </View>
-                <Text style={[styles.statLabel, { fontSize: dyn.smallText(14) }] }>
+                <Text style={[styles.statLabel, { fontSize: dyn.smallText(14) }]}>
                   {userData?.lifetimeFightTime ? formatTime(userData.lifetimeFightTime).unit : "Total Time"}
                 </Text>
               </View>
@@ -334,7 +478,7 @@ export default function Profile() {
                 <Text style={[styles.nextBadgeLabel, { textAlign: 'center', marginBottom: 8 }]}>Rounds</Text>
                 <View style={[styles.badgesRow, earnedRoundBadges.length === 1 && styles.badgesRowSingle]}>
                   {earnedRoundBadges.map(r => (
-                    <View key={`rounds-${r}`} style={[styles.badgeWrapper, { width: dyn.badgeWrapperWidth }] }>
+                    <View key={`rounds-${r}`} style={[styles.badgeWrapper, { width: dyn.badgeWrapperWidth }]}>
                       <View style={[styles.badgeBg, { width: dyn.badgeSize, height: dyn.badgeSize, borderRadius: uiScale(18) }]}>
                         <Image source={roundBadgeImages[r]} style={[styles.badgeImage, { width: dyn.badgeImage, height: dyn.badgeImage }]} resizeMode="contain" />
                       </View>
@@ -465,6 +609,174 @@ export default function Profile() {
           setShowPaywall(false);
         }}
       />
+      {/* Avatar edit modal (client-side only) */}
+      <Modal visible={avatarModalVisible} transparent animationType="fade" onRequestClose={() => setAvatarModalVisible(false)}>
+        <View style={styles.badgeModalOverlay}>
+          <View style={[styles.badgeModalContent, styles.avatarModal, { maxWidth: isTablet ? 520 : 420, width: '90%' }]}>
+            <TouchableOpacity style={styles.badgeModalClose} onPress={() => setAvatarModalVisible(false)}>
+              <MaterialCommunityIcons name="close" size={iconSize(24)} color={Colors.text} />
+            </TouchableOpacity>
+            <Text style={[styles.badgeModalTitle, { fontSize: font(20), marginBottom: 8 }]}>Customize Avatar</Text>
+            <View style={[styles.avatarCircle, { width: modalPreviewSize, height: modalPreviewSize, borderRadius: modalPreviewSize / 2, marginBottom: 8 }]}>
+              <Image source={{ uri: avatarUrl(tempAvatarSeed || avatarSeed || userData?.name || 'Anonymous', tempAvatarOptions) }} style={styles.avatarImage} />
+            </View>
+            <View style={styles.scrollHintRow}>
+              <MaterialCommunityIcons name="chevron-down" size={iconSize(16)} color={Colors.text} />
+              <Text style={styles.scrollHintText}>Scroll down for more options</Text>
+            </View>
+            <ScrollView
+              style={{ maxHeight: uiScale(isTablet ? 280 : 220), width: '100%' }}
+              contentContainerStyle={{ paddingBottom: 8 }}
+              showsVerticalScrollIndicator
+            >
+              {/* Appearance section */}
+              <Text style={styles.avatarSectionTitle}>Appearance</Text>
+              {/* Gender */}
+              <TouchableOpacity
+                style={styles.avatarRowBtn}
+                onPress={() => setTempAvatarOptions(prev => {
+                  const sequence: AvatarOptions['gender'][] = ['auto', 'male', 'female'];
+                  const idx = sequence.indexOf(prev.gender || 'auto');
+                  const next = sequence[(idx + 1) % sequence.length] as NonNullable<AvatarOptions['gender']>;
+                  const result: AvatarOptions = { ...prev, gender: next };
+                  if (next === 'male' && (!prev.head || !MALE_HEAD_OPTIONS.includes(prev.head))) {
+                    result.head = MALE_HEAD_OPTIONS[0];
+                  } else if (next === 'female') {
+                    if (!prev.head || !FEMALE_HEAD_OPTIONS.includes(prev.head)) result.head = FEMALE_HEAD_OPTIONS[0];
+                    result.facialHair = undefined;
+                  }
+                  return result;
+                })}
+              >
+                <Text style={styles.avatarRowLabel}>Gender</Text>
+                <View style={styles.avatarRowRight}>
+                  <Text style={styles.avatarRowValue}>{(tempAvatarOptions.gender || 'auto').replace(/^\w/, c => c.toUpperCase())}</Text>
+                  <MaterialCommunityIcons name="chevron-right" size={iconSize(16)} color={Colors.text} />
+                </View>
+              </TouchableOpacity>
+              {/* Hair / Head - cycle */}
+              <TouchableOpacity
+                style={styles.avatarRowBtn}
+                onPress={() => setTempAvatarOptions(prev => {
+                  const pool = prev.gender === 'male' ? MALE_HEAD_OPTIONS : prev.gender === 'female' ? FEMALE_HEAD_OPTIONS : HEAD_OPTIONS;
+                  return { ...prev, head: cycleNext(pool, prev.head) };
+                })}
+              >
+                <Text style={styles.avatarRowLabel}>Hair</Text>
+                <View style={styles.avatarRowRight}>
+                  <Text style={styles.avatarRowValue}>{pretty(tempAvatarOptions.head || HEAD_OPTIONS[0])}</Text>
+                  <MaterialCommunityIcons name="chevron-right" size={iconSize(16)} color={Colors.text} />
+                </View>
+              </TouchableOpacity>
+
+              {/* Hair Color - cycle */}
+              <TouchableOpacity
+                style={styles.avatarRowBtn}
+                onPress={() => setTempAvatarOptions(prev => ({ ...prev, headContrastColor: cycleNext(HAIR_COLOR_OPTIONS, prev.headContrastColor) }))}
+              >
+                <Text style={styles.avatarRowLabel}>Hair Color</Text>
+                <View style={[styles.avatarRowRight, { gap: 6 }]}>
+                  <View style={[styles.swatchSmall, { backgroundColor: `#${tempAvatarOptions.headContrastColor || HAIR_COLOR_OPTIONS[0]}` }]} />
+                  <Text style={styles.avatarRowValue}>{`#${(tempAvatarOptions.headContrastColor || HAIR_COLOR_OPTIONS[0]).toUpperCase()}`}</Text>
+                  <MaterialCommunityIcons name="chevron-right" size={iconSize(16)} color={Colors.text} />
+                </View>
+              </TouchableOpacity>
+
+              {/* Skin - cycle colors */}
+              <TouchableOpacity
+                style={styles.avatarRowBtn}
+                onPress={() => setTempAvatarOptions(prev => ({ ...prev, skinColor: cycleNext(SKIN_OPTIONS, prev.skinColor) }))}
+              >
+                <Text style={styles.avatarRowLabel}>Skin</Text>
+                <View style={[styles.avatarRowRight, { gap: 6 }]}>
+                  <View style={[styles.swatchSmall, { backgroundColor: `#${tempAvatarOptions.skinColor || SKIN_OPTIONS[0]}` }]} />
+                  <Text style={styles.avatarRowValue}>{`#${(tempAvatarOptions.skinColor || SKIN_OPTIONS[0]).toUpperCase()}`}</Text>
+                  <MaterialCommunityIcons name="chevron-right" size={iconSize(16)} color={Colors.text} />
+                </View>
+              </TouchableOpacity>
+
+              <View style={styles.sectionDivider} />
+              <Text style={styles.avatarSectionTitle}>Face</Text>
+              {/* Expression - cycle incl None */}
+              <TouchableOpacity
+                style={styles.avatarRowBtn}
+                onPress={() => setTempAvatarOptions(prev => ({ ...prev, face: cycleNext(FACE_OPTIONS, prev.face, true) }))}
+              >
+                <Text style={styles.avatarRowLabel}>Expression</Text>
+                <View style={styles.avatarRowRight}>
+                  <Text style={styles.avatarRowValue}>{tempAvatarOptions.face ? pretty(tempAvatarOptions.face) : 'None'}</Text>
+                  <MaterialCommunityIcons name="chevron-right" size={iconSize(16)} color={Colors.text} />
+                </View>
+              </TouchableOpacity>
+              {/* Facial Hair - cycle incl None */}
+              <TouchableOpacity
+                style={styles.avatarRowBtn}
+                onPress={() => setTempAvatarOptions(prev => ({ ...prev, facialHair: cycleNext(FACIAL_HAIR_OPTIONS, prev.facialHair, true) }))}
+              >
+                <Text style={styles.avatarRowLabel}>Facial Hair</Text>
+                <View style={styles.avatarRowRight}>
+                  <Text style={styles.avatarRowValue}>{tempAvatarOptions.facialHair ? pretty(tempAvatarOptions.facialHair) : 'None'}</Text>
+                  <MaterialCommunityIcons name="chevron-right" size={iconSize(16)} color={Colors.text} />
+                </View>
+              </TouchableOpacity>
+
+              <View style={styles.sectionDivider} />
+              <Text style={styles.avatarSectionTitle}>Style</Text>
+              {/* Accessories - cycle incl None */}
+              <TouchableOpacity
+                style={styles.avatarRowBtn}
+                onPress={() => setTempAvatarOptions(prev => ({ ...prev, accessories: cycleNext(ACCESSORIES_OPTIONS, prev.accessories, true) }))}
+              >
+                <Text style={styles.avatarRowLabel}>Accessories</Text>
+                <View style={styles.avatarRowRight}>
+                  <Text style={styles.avatarRowValue}>{tempAvatarOptions.accessories ? pretty(tempAvatarOptions.accessories) : 'None'}</Text>
+                  <MaterialCommunityIcons name="chevron-right" size={iconSize(16)} color={Colors.text} />
+                </View>
+              </TouchableOpacity>
+
+              {/* Clothing Color - cycle */}
+              <TouchableOpacity
+                style={styles.avatarRowBtn}
+                onPress={() => setTempAvatarOptions(prev => ({ ...prev, clothingColor: cycleNext(CLOTHING_COLOR_OPTIONS, prev.clothingColor) }))}
+              >
+                <Text style={styles.avatarRowLabel}>Clothing</Text>
+                <View style={[styles.avatarRowRight, { gap: 6 }]}>
+                  <View style={[styles.swatchSmall, { backgroundColor: `#${tempAvatarOptions.clothingColor || CLOTHING_COLOR_OPTIONS[0]}` }]} />
+                  <Text style={styles.avatarRowValue}>{`#${(tempAvatarOptions.clothingColor || CLOTHING_COLOR_OPTIONS[0]).toUpperCase()}`}</Text>
+                  <MaterialCommunityIcons name="chevron-right" size={iconSize(16)} color={Colors.text} />
+                </View>
+              </TouchableOpacity>
+
+              {/* Background - cycle incl None */}
+              <TouchableOpacity
+                style={styles.avatarRowBtn}
+                onPress={() => setTempAvatarOptions(prev => ({ ...prev, backgroundColor: cycleNext(BG_OPTIONS, prev.backgroundColor, true) }))}
+              >
+                <Text style={styles.avatarRowLabel}>Background</Text>
+                <View style={[styles.avatarRowRight, { gap: 6 }]}>
+                  {tempAvatarOptions.backgroundColor ? (
+                    <View style={[styles.swatchSmall, { backgroundColor: `#${tempAvatarOptions.backgroundColor}` }]} />
+                  ) : (
+                    <View style={[styles.swatchSmall, { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#555' }]} />
+                  )}
+                  <Text style={styles.avatarRowValue}>{tempAvatarOptions.backgroundColor ? `#${tempAvatarOptions.backgroundColor.toUpperCase()}` : 'None'}</Text>
+                  <MaterialCommunityIcons name="chevron-right" size={iconSize(16)} color={Colors.text} />
+                </View>
+              </TouchableOpacity>
+            </ScrollView>
+            <View style={{ flexDirection: 'row', marginTop: 8, width: '100%', justifyContent: 'space-between' }}>
+              <TouchableOpacity style={[styles.avatarActionBtn, { flex: 1 }]} onPress={randomizeAvatar}>
+                <MaterialCommunityIcons name="dice-5-outline" size={iconSize(18)} color={Colors.text} />
+                <Text style={styles.avatarActionText}>Random</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.avatarActionBtn, { marginLeft: 8, flex: 1 }]} onPress={() => saveAvatarSeed()}>
+                <MaterialCommunityIcons name="content-save" size={iconSize(18)} color={Colors.text} />
+                <Text style={styles.avatarActionText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
       <Modal visible={badgeModalVisible} transparent animationType="fade" onRequestClose={() => setBadgeModalVisible(false)}>
         <View style={styles.badgeModalOverlay}>
           <View style={styles.badgeModalContent}>
@@ -527,9 +839,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: Colors.text,
+    color: Colors.background,
     marginTop: 15,
-    fontSize: 16,
+    fontSize: 22,
     fontFamily: Typography.fontFamily,
   },
   buttonList: {
@@ -655,7 +967,142 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   avatarContainer: {
-    marginBottom: 15,
+    marginTop: 10,
+    marginBottom: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarCircle: {
+    backgroundColor: '#000000be',
+    borderWidth: 4,
+    borderColor: '#ffffffff',
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarEditBadge: {
+    position: 'absolute',
+    right: uiScale(6),
+    bottom: uiScale(4),
+    backgroundColor: '#00000099',
+    borderRadius: 14,
+    padding: 6,
+    borderWidth: 1,
+    borderColor: '#ffffff33'
+  },
+  avatarInput: {
+    width: '100%',
+    backgroundColor: '#1a1a1a',
+    borderWidth: 1,
+    borderColor: '#333',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: Colors.text,
+    fontFamily: Typography.fontFamily,
+  },
+  avatarActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff22',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ffffff33'
+  },
+  avatarActionText: {
+    color: Colors.text,
+    fontFamily: Typography.fontFamily,
+    fontSize: 14,
+    marginLeft: 6,
+  },
+  avatarSectionTitle: {
+    color: Colors.text,
+    fontFamily: Typography.fontFamily,
+    fontSize: 14,
+    opacity: 0.9,
+    alignSelf: 'flex-start',
+    marginTop: 12,
+    marginBottom: 6,
+  },
+  rowScroll: {
+    paddingVertical: 2,
+  },
+  rowWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  chip: {
+    borderWidth: 1,
+    borderColor: '#555',
+    backgroundColor: '#1a1a1a',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  chipSelected: {
+    backgroundColor: '#2b2b2b',
+    borderColor: Colors.text,
+  },
+  chipText: {
+    color: Colors.text,
+    fontFamily: Typography.fontFamily,
+    fontSize: 12,
+  },
+  swatch: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  swatchSelected: {
+    borderColor: Colors.text,
+    borderWidth: 2,
+  },
+  swatchSmall: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    marginRight: 6,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  avatarRowBtn: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#303030',
+    backgroundColor: '#1a1a1a',
+    marginBottom: 8,
+  },
+  avatarRowLabel: {
+    color: Colors.text,
+    fontFamily: Typography.fontFamily,
+    fontSize: 13,
+    opacity: 0.9,
+  },
+  avatarRowValue: {
+    color: Colors.text,
+    fontFamily: Typography.fontFamily,
+    fontSize: 13,
+  },
+  avatarRowValueWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   name: {
     color: Colors.text,
@@ -799,10 +1246,14 @@ const styles = StyleSheet.create({
     maxWidth: 360,
     backgroundColor: '#111',
     borderRadius: 20,
-    padding: 25,
+    padding: 18,
     alignItems: 'center',
     borderWidth: 2,
     borderColor: Colors.text
+  },
+  avatarModal: {
+    paddingTop: 12,
+    paddingBottom: 12,
   },
   badgeModalClose: {
     position: 'absolute',
@@ -889,6 +1340,20 @@ const styles = StyleSheet.create({
     marginTop: 6,
     opacity: 0.85,
   },
+  scrollHintRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+    opacity: 0.7,
+  },
+  scrollHintText: {
+    color: Colors.text,
+    fontFamily: Typography.fontFamily,
+    fontSize: 12,
+    marginLeft: 4,
+  },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -901,5 +1366,59 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ffffff22'
   },
+  avatarRowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sectionDivider: {
+    height: 1,
+    backgroundColor: '#ffffff22',
+    width: '100%',
+    marginVertical: 6,
+    borderRadius: 1,
+  },
 });
+
+// ---- Avatar UI option sets ----
+const HEAD_OPTIONS = [
+  'afro', 'bangs', 'bangs2', 'bantuKnots', 'bear', 'bun', 'bun2', 'buns', 'cornrows', 'cornrows2', 'dreads1', 'dreads2', 'flatTop', 'flatTopLong', 'grayBun', 'grayMedium', 'grayShort', 'hatBeanie', 'hatHip', 'hijab', 'long', 'longAfro', 'longBangs', 'longCurly', 'medium1', 'medium2', 'medium3', 'mediumBangs', 'mediumBangs2', 'mediumBangs3', 'mediumStraight', 'mohawk', 'mohawk2', 'noHair1', 'noHair2', 'short1', 'short2', 'short3', 'short4'
+];
+const SKIN_OPTIONS = ['694d3d', 'ae5d29', 'd08b5b', 'edb98a', 'ffdbb4'];
+const ACCESSORIES_OPTIONS = ['eyepatch', 'glasses', 'glasses2', 'glasses3', 'glasses4', 'glasses5', 'sunglasses', 'sunglasses2'];
+const FACIAL_HAIR_OPTIONS = ['chin', 'full', 'goatee1', 'moustache1', 'moustache2', 'moustache3'];
+const FACE_OPTIONS = ['smile', 'smileTeethGap', 'smileBig', 'smileLOL', 'serious', 'angryWithFang', 'cute', 'eyesClosed', 'awe'];
+const BG_OPTIONS = ['b6e3f4', 'c0aede', 'd1d4f9', 'ffd5dc', 'ffdfbf'];
+const HAIR_COLOR_OPTIONS = ['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'c93305', 'd6b370', 'e8e1e1', 'ecdcbf', 'f59797'];
+const CLOTHING_COLOR_OPTIONS = ['8fa7df', '9ddadb', '78e185', 'e279c7', 'e78276', 'fdea6b', 'ffcf77'];
+const MALE_HEAD_OPTIONS = [
+  'noHair1', 'noHair2', 'afro', 'flatTop', 'flatTopLong', 'mohawk', 'mohawk2', 'short1', 'short2', 'short3', 'short4', 'cornrows', 'cornrows2', 'dreads1', 'dreads2', 'hatBeanie', 'hatHip'
+];
+const FEMALE_HEAD_OPTIONS = [
+  'bun', 'bun2', 'buns', 'long', 'longAfro', 'longBangs', 'longCurly', 'medium1', 'medium2', 'medium3', 'mediumStraight', 'mediumBangs', 'mediumBangs2', 'mediumBangs3', 'grayBun', 'grayMedium', 'grayShort', 'hijab'
+];
+
+function pretty(key: string) {
+  return key
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/\d+/g, (m) => ` ${m}`)
+    .replace(/-/g, ' ')
+    .replace(/^\s+|\s+$/g, '')
+    .replace(/^\w/, (c) => c.toUpperCase());
+}
+
+function cycleNext<T>(arr: T[], current?: T, includeNone = false): T | undefined {
+  // includeNone cycles an extra step where value becomes undefined (None)
+  const list = arr.slice();
+  if (includeNone) {
+    // represent None as undefined by stepping through arr length + 1
+    if (current === undefined) return list[0];
+    const idx = list.indexOf(current);
+    if (idx === -1) return list[0];
+    if (idx === list.length - 1) return undefined;
+    return list[idx + 1];
+  } else {
+    const idx = current ? list.indexOf(current) : -1;
+    return list[(idx + 1) % list.length];
+  }
+}
 

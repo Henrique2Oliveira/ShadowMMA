@@ -107,7 +107,7 @@ export const WeeklyMission: React.FC<WeeklyMissionProps> = ({
           <View style={styles.completionMessage}>
             <MaterialCommunityIcons name="star" size={rs(22)} color="#fdd700" />
             <Text style={styles.completionText}>
-              Amazing work! You've crushed this week's goals! 🥊
+              Amazing work! You&apos;ve crushed this week&apos;s goals! 🥊
             </Text>
             <MaterialCommunityIcons name="star" size={rs(22)} color="#fdd700" />
           </View>
