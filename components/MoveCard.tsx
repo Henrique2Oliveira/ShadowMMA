@@ -4,14 +4,14 @@ import { transformMoveForStance } from '@/utils/stance';
 import { formatTime } from '@/utils/time';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Animated as RNAnimated, Easing as RNEasing, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 interface MoveCardProps {
   move: string;
-  tiltX: Animated.Value;
-  tiltY: Animated.Value;
-  scale: Animated.Value;
-  moveProgress: Animated.Value;
+  tiltX: RNAnimated.Value;
+  tiltY: RNAnimated.Value;
+  scale: RNAnimated.Value;
+  moveProgress: RNAnimated.Value;
   timeLeft: number;
   isGameOver: boolean;
   isRestPeriod: boolean;
@@ -19,6 +19,7 @@ interface MoveCardProps {
   animationMode: 'none' | 'old' | 'new';
   isSouthPaw?: boolean; // backward compat; prefer stance prop below
   stance?: 'orthodox' | 'southpaw';
+  selectedTrigger?: number; // increments when user selects/taps the card to trigger sheen slice
 }
 
 export const MoveCard: React.FC<MoveCardProps> = ({
@@ -34,159 +35,49 @@ export const MoveCard: React.FC<MoveCardProps> = ({
   animationMode,
   isSouthPaw = false,
   stance,
+  selectedTrigger,
 }) => {
   // Responsive sizing for larger screens (e.g., tablets)
   const { width } = useWindowDimensions();
   const scaleUp = width >= 1024 ? 1.8 : width >= 768 ? 1.8 : 1;
 
-  // Enhanced animation values for move transitions (new and old modes)
-  const slideAnim = useRef(new Animated.Value(0)).current;
-  const rotateAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const oldRotateAnim = useRef(new Animated.Value(0)).current;
-  const oldScaleAnim = useRef(new Animated.Value(1)).current;
   const prevMove = useRef(move);
+  // Outer card slide value for the 'new' (slide) animation
+  const outerSlideX = useRef(new RNAnimated.Value(0)).current;
 
-  // Trigger enhanced animation when move changes (new mode)
+  // On move change, apply animation per mode
   useEffect(() => {
-    if (animationMode === 'new' && move !== prevMove.current && move && !isGameOver && !isRestPeriod) {
-      prevMove.current = move;
-      
-      // Reset animation values
-      slideAnim.setValue(300);
-      rotateAnim.setValue(0);
-      scaleAnim.setValue(1);
+    if (!move || isGameOver || isRestPeriod) return;
+    if (move === prevMove.current) return;
+    prevMove.current = move;
 
-      // Create the enhanced animation sequence
-      const animation = Animated.sequence([
-        // Initial slide in with overshoot
-        Animated.timing(slideAnim, {
-          toValue: -20, // Overshoot
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        // Bounce back with rotation and scale
-        Animated.parallel([
-          Animated.spring(slideAnim, {
-            toValue: 0,
-            tension: 100,
-            friction: 8,
-            useNativeDriver: true,
-          }),
-          Animated.sequence([
-            // Rotate and scale up
-            Animated.parallel([
-              Animated.timing(rotateAnim, {
-                toValue: 1,
-                duration: 150,
-                useNativeDriver: true,
-              }),
-              Animated.timing(scaleAnim, {
-                toValue: 1.05,
-                duration: 150,
-                useNativeDriver: true,
-              }),
-            ]),
-            // Return to normal
-            Animated.parallel([
-              Animated.timing(rotateAnim, {
-                toValue: 0,
-                duration: 250,
-                useNativeDriver: true,
-              }),
-              Animated.timing(scaleAnim, {
-                toValue: 1,
-                duration: 250,
-                useNativeDriver: true,
-              }),
-            ]),
-          ]),
-        ]),
-      ]);
-
-      animation.start();
+    // Mode-specific behavior
+    if (animationMode === 'new') {
+      // Slide the entire card from off-screen right into place
+      outerSlideX.setValue(width);
+      RNAnimated.timing(outerSlideX, {
+        toValue: 0,
+        duration: 360,
+        easing: RNEasing.out(RNEasing.cubic),
+        useNativeDriver: true,
+      }).start();
+    } else {
+      // Ensure card is at rest for 'old' (tilt only) and 'none'
+      outerSlideX.stopAnimation();
+      outerSlideX.setValue(0);
     }
-  }, [move, animationMode, isGameOver, isRestPeriod]);
+  }, [move, isGameOver, isRestPeriod, animationMode, outerSlideX, width]);
 
-  // Trigger fluid animation for old mode
+  // Reset on game over/rest to keep static
   useEffect(() => {
-    if (animationMode === 'old' && move !== prevMove.current && move && !isGameOver && !isRestPeriod) {
-      prevMove.current = move;
-      
-      // Reset old animation values
-      oldRotateAnim.setValue(0);
-      oldScaleAnim.setValue(1);
-
-      // Create a bouncy, fluid animation for old mode
-      const oldAnimation = Animated.parallel([
-        // Bouncy rotation sequence
-        Animated.sequence([
-          // Initial quick rotation with spring
-          Animated.spring(oldRotateAnim, {
-            toValue: 1,
-            tension: 120,
-            friction: 6,
-            useNativeDriver: true,
-          }),
-          // Bounce back with overshoot
-          Animated.spring(oldRotateAnim, {
-            toValue: -0.4,
-            tension: 100,
-            friction: 7,
-            useNativeDriver: true,
-          }),
-          // Final settle with gentle bounce
-          Animated.spring(oldRotateAnim, {
-            toValue: 0,
-            tension: 80,
-            friction: 8,
-            useNativeDriver: true,
-          }),
-        ]),
-        // Scale animation for extra fluidity
-        Animated.sequence([
-          // Quick scale up
-          Animated.spring(oldScaleAnim, {
-            toValue: 1.04,
-            tension: 150,
-            friction: 6,
-            useNativeDriver: true,
-          }),
-          // Gentle bounce back
-          Animated.spring(oldScaleAnim, {
-            toValue: 1,
-            tension: 90,
-            friction: 8,
-            useNativeDriver: true,
-          }),
-        ]),
-      ]);
-
-      oldAnimation.start();
+    if (isGameOver || isRestPeriod) {
+      outerSlideX.stopAnimation();
+      outerSlideX.setValue(0);
     }
-  }, [move, animationMode, isGameOver, isRestPeriod]);
-
-  // When the game is over, hard stop and reset all internal animations to keep the card static
-  useEffect(() => {
-    if (isGameOver) {
-      // Stop any ongoing animations
-      slideAnim.stopAnimation();
-      rotateAnim.stopAnimation();
-      scaleAnim.stopAnimation();
-      oldRotateAnim.stopAnimation();
-      oldScaleAnim.stopAnimation();
-
-      // Reset values to neutral so no transform is applied even if styles are recalculated
-      slideAnim.setValue(0);
-      rotateAnim.setValue(0);
-      scaleAnim.setValue(1);
-      oldRotateAnim.setValue(0);
-      oldScaleAnim.setValue(1);
-    }
-  }, [isGameOver, slideAnim, rotateAnim, scaleAnim, oldRotateAnim, oldScaleAnim]);
+  }, [isGameOver, isRestPeriod, outerSlideX]);
 
   return (
-    <Animated.View
+      <RNAnimated.View
       style={[
         styles.card,
         {
@@ -195,66 +86,50 @@ export const MoveCard: React.FC<MoveCardProps> = ({
           borderRadius: rs(20) * scaleUp,
         },
         {
-          transform: animationMode !== 'none' && !isGameOver
-            ? [
-                ...(animationMode === 'new' ? [{ translateX: slideAnim }] : []),
-                {
-                  rotateX: tiltX.interpolate({
-                    inputRange: [-0.4, 0, 0.4],
-                    outputRange: ['-40deg', '0deg', '40deg'],
-                  }),
-                },
-                {
-                  rotateY: tiltY.interpolate({
-                    inputRange: [-0.4, 0, 0.4],
-                    outputRange: ['-40deg', '0deg', '40deg'],
-                  }),
-                },
-                ...(animationMode === 'new'
-                  ? [
-                      {
-                        rotateZ: rotateAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: ['0deg', '2deg'],
-                        }),
-                      },
-                    ]
-                  : []),
-                ...(animationMode === 'old'
-                  ? [
-                      {
-                        rotateZ: oldRotateAnim.interpolate({
-                          inputRange: [-1, 0, 1],
-                          outputRange: ['-2.5deg', '0deg', '2.5deg'],
-                        }),
-                      },
-                    ]
-                  : []),
-                {
-                  scale: animationMode === 'new'
-                    ? Animated.multiply(scale, scaleAnim)
-                    : animationMode === 'old'
-                    ? Animated.multiply(scale, oldScaleAnim)
-                    : scale,
-                },
-              ]
-            : [],
+          transform: [
+            // Mode: 'new' -> slide card from right; 'old' -> tilt only; 'none' -> static
+            ...(animationMode === 'new'
+              ? [{ translateX: outerSlideX }]
+              : []),
+            ...(animationMode === 'old'
+              ? [
+                  {
+                    rotateX: tiltX.interpolate({
+                      inputRange: [-0.4, 0, 0.4],
+                      outputRange: ['-40deg', '0deg', '40deg'],
+                    }),
+                  },
+                  {
+                    rotateY: tiltY.interpolate({
+                      inputRange: [-0.4, 0, 0.4],
+                      outputRange: ['-40deg', '0deg', '40deg'],
+                    }),
+                  },
+                  { scale },
+                ]
+              : []),
+          ],
         },
       ]}
     >
-      <LinearGradient
-        colors={['#171717ff', '#1a1a1aff']}
-        style={[
-          styles.gradientBackground,
-          {
-            paddingHorizontal: rs(16) * scaleUp,
-            paddingVertical: rs(16) * scaleUp,
-          },
-        ]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-      >
-        <Text
+      {/* Inner content: no extra animation; obeys mode via outer transforms */}
+      <View style={[{ width: '100%', height: '100%' }]}>
+        <LinearGradient
+          colors={['#171717ff', '#1a1a1aff']}
+          style={[
+            styles.gradientBackground,
+            {
+              paddingHorizontal: rs(16) * scaleUp,
+              paddingVertical: rs(16) * scaleUp,
+              borderRadius: rs(20) * scaleUp,
+            },
+          ]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+        >
+        {/* Center area for the move text (and optional progress bar / rest time) */}
+        <View style={{ flexGrow: 1, width: '100%', justifyContent: 'center', alignItems: 'center' }}>
+          <Text
           style={[
             styles.text,
             {
@@ -265,48 +140,53 @@ export const MoveCard: React.FC<MoveCardProps> = ({
           ]}
           numberOfLines={2}
           adjustsFontSizeToFit
+          minimumFontScale={0.6}
         >
           {isGameOver
             ? 'FIGHT OVER!'
             : transformMoveForStance(move || '', (stance || (isSouthPaw ? 'southpaw' : 'orthodox')))}
-        </Text>
-
-        {isRestPeriod && (
-          <Text
-            style={[
-              styles.restTimeText,
-              { fontSize: rf(26) * scaleUp, marginTop: rs(8) * scaleUp },
-            ]}
-          >
-            {formatTime(timeLeft)}
           </Text>
-        )}
 
-        {!isPaused && !isGameOver && !isRestPeriod && (
-          <View
-            style={[
-              styles.progressBarContainer,
-              {
-                height: Math.max(rs(6) * scaleUp, 6),
-                marginTop: rs(8) * scaleUp,
-              },
-            ]}
-          >
-            <Animated.View
+          {/* Progress bar right below the text when active round */}
+          {!isPaused && !isGameOver && !isRestPeriod && (
+            <View
               style={[
-                styles.progressBar,
+                styles.progressBarContainer,
                 {
-                  width: moveProgress.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: ['0%', '100%']
-                  })
-                }
+                  height: Math.max(rs(6) * scaleUp, 6),
+                  marginTop: rs(6) * scaleUp,
+                },
               ]}
-            />
-          </View>
-        )}
-      </LinearGradient>
-    </Animated.View>
+            >
+              <RNAnimated.View
+                style={[
+                  styles.progressBar,
+                  {
+                    width: moveProgress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0%', '100%']
+                    })
+                  }
+                ]}
+              />
+            </View>
+          )}
+
+          {/* Rest time below text when resting */}
+          {isRestPeriod && (
+            <Text
+              style={[
+                styles.restTimeText,
+                { fontSize: rf(26) * scaleUp, marginTop: rs(8) * scaleUp },
+              ]}
+            >
+              {formatTime(timeLeft)}
+            </Text>
+          )}
+        </View>
+        </LinearGradient>
+      </View>
+      </RNAnimated.View>
   );
 };
 
@@ -314,43 +194,43 @@ const styles = StyleSheet.create({
   card: {
     justifyContent: 'center',
     alignItems: 'center',
-  width: 260,
-  height: 200,
-  borderRadius: 20,
+    width: 260,
+    height: 200,
+    borderRadius: 20,
     overflow: 'hidden',
   },
   gradientBackground: {
     width: '100%',
     height: '100%',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
-  paddingHorizontal: 16,
-  paddingVertical: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
   },
   text: {
     color: Colors.text,
-  fontSize: 36,
+    fontSize: 36,
     textAlign: 'center',
     width: '100%',
-  lineHeight: 44, // Increased line height
+    lineHeight: 44, // Increased line height
     fontFamily: Typography.fontFamily,
     flexShrink: 1,
     flexWrap: 'wrap',
-  padding: 4 // Added padding
+    padding: 4 // Added padding
   },
   restTimeText: {
     fontFamily: Typography.fontFamily,
     color: '#ffffff',
-  fontSize: 26,
-  marginTop: 8,
+    fontSize: 26,
+    marginTop: 8,
   },
   progressBarContainer: {
     width: '80%',
-  height: 6,
+    height: 6,
     backgroundColor: '#000000ff',
     borderRadius: 3,
     overflow: 'hidden',
-  marginTop: 8,
+    marginTop: 8,
   },
   progressBar: {
     height: '100%',

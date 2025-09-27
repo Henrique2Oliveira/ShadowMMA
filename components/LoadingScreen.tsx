@@ -301,18 +301,9 @@ const styles = StyleSheet.create({
   },
   glowBackground: {
     position: 'absolute',
-    width: width * 0.8,
-    height: width * 0.8,
-    borderRadius: width * 0.4,
+    width: width * 1.5,
+    height: "100%",
     backgroundColor: Colors.background,
-    shadowColor: Colors.redDots,
-    shadowOffset: {
-      width: 0,
-      height: 0,
-    },
-    shadowOpacity: 0.8,
-    shadowRadius: 50,
-    elevation: 20,
   },
   iconContainer: {
     width: 110,

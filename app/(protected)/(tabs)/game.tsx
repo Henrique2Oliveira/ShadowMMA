@@ -27,7 +27,7 @@ import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
-import { Animated, AppState, Pressable, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { Animated, AppState, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 
 
 // Pre-game tips (shown once before the user presses Start)
@@ -67,7 +67,7 @@ type ModalConfig = {
 };
 
 export default function Game() {
-  // Global cap for any speed effect (including boosts)
+  // Global cap for speed
   const MAX_SPEED = 2.5;
   const { width, height } = useWindowDimensions();
   const scaleUp = width >= 1024 ? 1.5 : width >= 768 ? 1.25 : 1;
@@ -304,75 +304,7 @@ export default function Game() {
 
   // No animations for unlocked combos UI
 
-  // Power-up: Speed Boost (random 25% chance to appear, lasts 30s)
-  const BOOST_CHANCE = 0.25; // 25% chance per check
-  const BOOST_DURATION_MS = 30_000; // 30 seconds
-  const BOOST_MULTIPLIER = 1.35; // 1.35x speed (pause time reduced)
-  const BOOST_CHECK_INTERVAL_MS = 20_000; // check every 20s while fighting
-
-  const [isBoostActive, setIsBoostActive] = React.useState(false);
-  const [boostRemainingMs, setBoostRemainingMs] = React.useState(0);
-  const effectiveSpeedMultiplier = React.useMemo(
-    () => Math.min(MAX_SPEED, speedMultiplier * (isBoostActive ? BOOST_MULTIPLIER : 1)),
-    [speedMultiplier, isBoostActive]
-  );
-
-  // Bubble pulse animation while boost is active
-  const boostPulse = React.useRef(new Animated.Value(0)).current;
-  React.useEffect(() => {
-    if (!isBoostActive) return;
-    boostPulse.setValue(0);
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(boostPulse, { toValue: 1, duration: 800, useNativeDriver: true }),
-        Animated.timing(boostPulse, { toValue: 0, duration: 800, useNativeDriver: true }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [isBoostActive, boostPulse]);
-
-  // Tick remaining time only while actively fighting (pauses during pause/rest/game over)
-  const lastBoostTickRef = React.useRef<number | null>(null);
-  const canTickBoost = !gameState.isPaused && !gameState.isRestPeriod && !gameState.isGameOver;
-  React.useEffect(() => {
-    if (!isBoostActive || !canTickBoost) {
-      lastBoostTickRef.current = null;
-      return;
-    }
-    const id = setInterval(() => {
-      const now = Date.now();
-      const last = lastBoostTickRef.current ?? now;
-      const delta = now - last;
-      lastBoostTickRef.current = now;
-      setBoostRemainingMs(prev => {
-        const next = Math.max(0, prev - delta);
-        if (next <= 0) {
-          setIsBoostActive(false);
-        }
-        return next;
-      });
-    }, 100);
-    return () => clearInterval(id);
-  }, [isBoostActive, canTickBoost]);
-
-  // Randomly trigger boost while fighting (not paused/rest/game over)
-  React.useEffect(() => {
-    if (gameState.isPaused || gameState.isRestPeriod || gameState.isGameOver) return;
-    let checkTimer: ReturnType<typeof setInterval> | null = null;
-    // Skip if already active
-    if (!isBoostActive) {
-      checkTimer = setInterval(() => {
-        if (Math.random() < BOOST_CHANCE) {
-          setIsBoostActive(true);
-          setBoostRemainingMs(BOOST_DURATION_MS);
-        }
-      }, BOOST_CHECK_INTERVAL_MS);
-    }
-    return () => {
-      if (checkTimer) clearInterval(checkTimer);
-    };
-  }, [gameState.isPaused, gameState.isRestPeriod, gameState.isGameOver, isBoostActive]);
+  // Removed Speed Boost feature
 
   // Track moves for stats
   const trackMove = React.useCallback((move: Move) => {
@@ -408,10 +340,7 @@ export default function Game() {
 
     // Don't reset speed multiplier - preserve user's saved preference
     // setSpeedMultiplier(parseFloat(params.moveSpeed || '1'));
-    // Reset Speed Boost state on new game
-    setIsBoostActive(false);
-    setBoostRemainingMs(0);
-    if (lastBoostTickRef) lastBoostTickRef.current = null;
+  // Removed Speed Boost state reset
 
     const fetchMoves = async () => {
       setIsLoading(true);
@@ -653,18 +582,6 @@ export default function Game() {
     addRandomMovementEffect
   } = useGameAnimations();
   const sideButtonsOpacity = React.useRef(new Animated.Value(0)).current;
-  // Bounce tap on main card
-  const cardBounce = React.useRef(new Animated.Value(0)).current;
-  const onCardPress = React.useCallback(() => {
-    // Bounce: scale down slightly then up with spring
-    Animated.sequence([
-      Animated.timing(cardBounce, { toValue: 1, duration: 40, useNativeDriver: true }),
-      Animated.spring(cardBounce, { toValue: 0, friction: 5, tension: 120, useNativeDriver: true }),
-    ]).start();
-    // Haptic nudge if available
-    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch { }
-  }, [cardBounce]);
-  const bounceScale = cardBounce.interpolate({ inputRange: [0, 1], outputRange: [1, 0.96] });
 
 
   // Countdown state must be declared BEFORE any effects that reference it
@@ -823,10 +740,10 @@ export default function Game() {
 
   const updateMoveProg = React.useCallback(() => {
     if (currentMove) {
-      return updateMoveProgress(currentMove.pauseTime, effectiveSpeedMultiplier);
+      return updateMoveProgress(currentMove.pauseTime, speedMultiplier);
     }
     return null;
-  }, [currentMove, effectiveSpeedMultiplier, updateMoveProgress]);
+  }, [currentMove, speedMultiplier, updateMoveProgress]);
 
   React.useEffect(() => {
     let animation: Animated.CompositeAnimation | null = null;
@@ -1003,10 +920,10 @@ export default function Game() {
 
   React.useEffect(() => {
     if (currentMove) {
-      const timer = setInterval(updateMove, currentMove.pauseTime / effectiveSpeedMultiplier);
+      const timer = setInterval(updateMove, currentMove.pauseTime / speedMultiplier);
       return () => clearInterval(timer);
     }
-  }, [currentMove, effectiveSpeedMultiplier, updateMove]);
+  }, [currentMove, speedMultiplier, updateMove]);
 
   const handlePress = () => {
     setGameState(prev => {
@@ -1150,56 +1067,23 @@ export default function Game() {
           />
         )}
 
-        {/* Speed Boost bubble indicator - placed below combo name */}
-        {isBoostActive && !gameState.isRestPeriod && !gameState.isGameOver && (
-          <Animated.View
-            style={[
-              styles.boostBubble,
-              {
-                bottom: 190 * scaleUp,
-                paddingHorizontal: 18 * scaleUp,
-                paddingVertical: 6 * scaleUp,
-                borderRadius: 20 * scaleUp,
-                transform: [
-                  {
-                    scale: boostPulse.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [1, 1.08],
-                    }),
-                  },
-                ],
-              },
-            ]}
-          >
-            <MaterialCommunityIcons name="lightning-bolt-outline" size={18 * scaleUp} color="#e8c916ff" style={{ marginRight: 4 * scaleUp }} />
-            <Animated.Text style={[styles.boostText, { fontSize: 14 * scaleUp }]}>
-              Speed Boost
-            </Animated.Text>
-            {boostRemainingMs > 0 && (
-              <Animated.Text style={[styles.boostTime, { fontSize: 14 * scaleUp }]}>
-                {Math.ceil(boostRemainingMs / 1000)}s
-              </Animated.Text>
-            )}
-          </Animated.View>
-        )}
+        {/* Speed Boost feature removed */}
 
-        <Animated.View style={{ transform: [{ scale: bounceScale }] }}>
-          <Pressable onPress={onCardPress}>
-            <MoveCard
-              move={currentMove?.move || ""}
-              tiltX={tiltX}
-              tiltY={tiltY}
-              scale={scale}
-              moveProgress={moveProgress}
-              timeLeft={gameState.timeLeft}
-              isGameOver={gameState.isGameOver}
-              isRestPeriod={gameState.isRestPeriod}
-              isPaused={gameState.isPaused}
-              animationMode={animationMode}
-              isSouthPaw={stance === 'southpaw'}
-            />
-          </Pressable>
-        </Animated.View>
+        <View>
+          <MoveCard
+            move={currentMove?.move || ""}
+            tiltX={tiltX}
+            tiltY={tiltY}
+            scale={scale}
+            moveProgress={moveProgress}
+            timeLeft={gameState.timeLeft}
+            isGameOver={gameState.isGameOver}
+            isRestPeriod={gameState.isRestPeriod}
+            isPaused={gameState.isPaused}
+            animationMode={animationMode}
+            isSouthPaw={stance === 'southpaw'}
+          />
+        </View>
 
         {/* Skip button (visible only when paused) */}
         {gameState.isRestPeriod && !gameState.isPaused && !gameState.isGameOver && (
@@ -1465,32 +1349,6 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily,
     fontWeight: '700',
     letterSpacing: 0.3,
-  },
-  boostBubble: {
-    position: 'absolute',
-    bottom: 190,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
-    borderRadius: 20,
-    paddingHorizontal: 18,
-    paddingVertical: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 8,
-  },
-  boostText: {
-    color: '#ffffffff',
-    fontFamily: Typography.fontFamily,
-  },
-  boostTime: {
-    color: '#ffffffff',
-    marginLeft: 6,
-    fontFamily: Typography.fontFamily,
   },
   skipButton: {
     position: 'absolute',

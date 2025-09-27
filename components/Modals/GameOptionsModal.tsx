@@ -1,7 +1,7 @@
 import { Colors, Typography } from '@/themes/theme';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Easing, Modal, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 
 interface GameOptionsModalProps {
   visible: boolean;
@@ -38,11 +38,26 @@ export const GameOptionsModal: React.FC<GameOptionsModalProps> = ({
   showComboCarousel,
   onToggleComboCarousel,
 }) => {
+  const { width } = useWindowDimensions();
+  const slideX = React.useRef(new Animated.Value(0)).current;
+
+  // Slide modal content from the right when opening
+  React.useEffect(() => {
+    if (visible) {
+      slideX.setValue(width); // start off-screen to the right
+      Animated.timing(slideX, {
+        toValue: 0,
+        duration: 280,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [visible, width, slideX]);
   const getAnimationModeLabel = (mode: 'none' | 'old' | 'new') => {
     switch (mode) {
       case 'none': return 'Animations: None';
       case 'old': return 'Animations: Old';
-      case 'new': return 'Animations: New (Slide)';
+      case 'new': return 'Animations: Slide';
       default: return 'Animations: Old';
     }
   };
@@ -102,7 +117,7 @@ export const GameOptionsModal: React.FC<GameOptionsModalProps> = ({
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
+        <Animated.View style={[styles.modalContent, { transform: [{ translateX: slideX }] }]}>
           <TouchableOpacity
             style={styles.closeButton}
             onPress={onClose}
@@ -132,7 +147,7 @@ export const GameOptionsModal: React.FC<GameOptionsModalProps> = ({
               </TouchableOpacity>
             ))}
           </View>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
