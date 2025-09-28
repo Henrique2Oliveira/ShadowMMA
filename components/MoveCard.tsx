@@ -3,7 +3,7 @@ import { rf, rs } from '@/utils/responsive';
 import { transformMoveForStance } from '@/utils/stance';
 import { formatTime } from '@/utils/time';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Animated as RNAnimated, Easing as RNEasing, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 interface MoveCardProps {
@@ -44,6 +44,8 @@ export const MoveCard: React.FC<MoveCardProps> = ({
   const prevMove = useRef(move);
   // Outer card slide value for the 'new' (slide) animation
   const outerSlideX = useRef(new RNAnimated.Value(0)).current;
+  // Progress bar width (measured) to anchor scale from left using translateX compensation
+  const [progressBarWidthNum, setProgressBarWidthNum] = useState(0);
 
   // On move change, apply animation per mode
   useEffect(() => {
@@ -157,16 +159,27 @@ export const MoveCard: React.FC<MoveCardProps> = ({
                   marginTop: rs(6) * scaleUp,
                 },
               ]}
+              onLayout={(e) => {
+                const w = e.nativeEvent.layout.width;
+                setProgressBarWidthNum(w);
+              }}
             >
               <RNAnimated.View
                 style={[
                   styles.progressBar,
                   {
-                    width: moveProgress.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: ['0%', '100%']
-                    })
-                  }
+                    width: progressBarWidthNum,
+                    transform: [
+                      // translateX = (s - 1) * W / 2 to anchor left when scaling
+                      {
+                        translateX: RNAnimated.multiply(
+                          RNAnimated.subtract(moveProgress, 1),
+                          progressBarWidthNum / 2
+                        ),
+                      },
+                      { scaleX: moveProgress },
+                    ],
+                  },
                 ]}
               />
             </View>
@@ -231,10 +244,15 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     overflow: 'hidden',
     marginTop: 8,
+    // Ensure the fill grows from the left
+    alignItems: 'flex-start',
+    justifyContent: 'center',
   },
   progressBar: {
     height: '100%',
     backgroundColor: '#ffffffff',
     borderRadius: 3,
+    // width is set dynamically via onLayout measurement
+    transform: [{ scaleX: 0 }],
   },
 });

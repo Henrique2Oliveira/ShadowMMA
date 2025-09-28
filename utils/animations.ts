@@ -57,17 +57,21 @@ export const addRandomMovement = (scale: Animated.Value) => {
   });
 };
 
-export const startMoveProgress = ( // TRY to smoothly animate the move progress
+export const startMoveProgress = (
   moveProgress: Animated.Value,
   pauseTime: number,
-  speedMultiplier: number
+  speedMultiplier: number,
+  onComplete?: () => void
 ) => {
+  // Drive progress from 0 -> 1 using native driver (paired with transform-based UI)
   moveProgress.setValue(0);
   const animation = Animated.timing(moveProgress, {
     toValue: 1,
-    duration: pauseTime / speedMultiplier,
-    useNativeDriver: false,
+    duration: Math.max(0, pauseTime / Math.max(0.0001, speedMultiplier)),
+    useNativeDriver: true,
   });
-  animation.start();
+  animation.start(({ finished }) => {
+    if (finished) onComplete?.();
+  });
   return animation;
 };

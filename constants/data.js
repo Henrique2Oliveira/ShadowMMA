@@ -7,26 +7,16 @@ export const combinationSets = [{
       {
         "comboId": 0,
         "level": 1,
-        "name": "1-2 (Jab Cross)",
+        "name": "Classic One-Two",
         "moves": [
-          {
-            "move": "JAB",
-            "pauseTime": 1100,
-            "direction": "left",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "CROSS",
-            "pauseTime": 1100,
-            "direction": "right",
-            "tiltValue": 0.3
-          }
+          { "move": "JAB", "pauseTime": 1100, "direction": "left", "tiltValue": 0.3 },
+          { "move": "CROSS", "pauseTime": 1100, "direction": "right", "tiltValue": 0.3 }
         ]
       },
       {
         "comboId": 1,
         "level": 1,
-        "name": "Cross Jab (2-1)",
+        "name": "Reverse Entry",
         "moves": [
           {
             "move": "CROSS",
@@ -45,7 +35,7 @@ export const combinationSets = [{
       {
         "comboId": 2,
         "level": 1,
-        "name": "Double Jab",
+        "name": "Twin Sting",
         "moves": [
           {
             "move": "JAB",
@@ -64,7 +54,7 @@ export const combinationSets = [{
       {
         "comboId": 3,
         "level": 1,
-        "name": "1-2-1 (Jab Cross Jab)",
+        "name": "Triple Threat",
         "moves": [
           {
             "move": "JAB",
@@ -89,7 +79,7 @@ export const combinationSets = [{
       {
         "comboId": 4,
         "level": 1,
-        "name": "Double Jab Cross",
+        "name": "Jab Jab Boom",
         "moves": [
           {
             "move": "JAB",
@@ -113,8 +103,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 5,
-        "level": 1,
-        "name": "1-2-3",
+        "level": 2,
+        "name": "Hooked on Power",
         "moves": [
           {
             "move": "JAB",
@@ -138,8 +128,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 6,
-        "level": 4,
-        "name": "1-2-3-2",
+        "level": 3,
+        "name": "Quad Strike",
         "moves": [
           {
             "move": "JAB",
@@ -169,8 +159,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 7,
-        "level": 5,
-        "name": "Jab Cross Uppercut",
+        "level": 4,
+        "name": "Uppercut Surprise",
         "moves": [
           {
             "move": "JAB",
@@ -194,8 +184,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 8,
-        "level": 1,
-        "name": "Jab Body Cross",
+        "level": 2,
+        "name": "Body Sniper",
         "moves": [
           {
             "move": "JAB",
@@ -213,8 +203,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 9,
-        "level": 1,
-        "name": "Cross Body Jab",
+        "level": 2,
+        "name": "Body Reversal",
         "moves": [
           {
             "move": "CROSS BODY",
@@ -232,8 +222,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 10,
-        "level": 2,
-        "name": "Double Body Hook",
+        "level": 3,
+        "name": "Body Barrage",
         "moves": [
           {
             "move": "LEFT HOOK BODY",
@@ -250,9 +240,48 @@ export const combinationSets = [{
         ]
       },
       {
+        "comboId": 101,
+        "level": 7,
+        "name": "Body Barrage II",
+        "moves": [
+          { "move": "LEFT HOOK BODY", "pauseTime": 1000, "direction": "left", "tiltValue": 0.4 },
+          { "move": "RIGHT HOOK BODY", "pauseTime": 1100, "direction": "right", "tiltValue": 0.4 },
+          { "move": "LEFT HOOK BODY", "pauseTime": 1000, "direction": "left", "tiltValue": 0.4 },
+          { "move": "RIGHT HOOK BODY", "pauseTime": 1100, "direction": "right", "tiltValue": 0.4 }
+        ]
+      },
+      {
+        "comboId": 102,
+        "level": 12,
+        "name": "Body Barrage III",
+        "moves": [
+          { "move": "LEFT HOOK BODY", "pauseTime": 1000, "direction": "left", "tiltValue": 0.4 },
+          { "move": "RIGHT HOOK BODY", "pauseTime": 1100, "direction": "right", "tiltValue": 0.4 },
+          { "move": "LEFT HOOK BODY", "pauseTime": 1000, "direction": "left", "tiltValue": 0.4 },
+          { "move": "RIGHT HOOK BODY", "pauseTime": 1100, "direction": "right", "tiltValue": 0.4 },
+          { "move": "LEFT HOOK BODY", "pauseTime": 1000, "direction": "left", "tiltValue": 0.4 },
+          { "move": "RIGHT HOOK BODY", "pauseTime": 1100, "direction": "right", "tiltValue": 0.4 }
+        ]
+      },
+      {
+        "comboId": 103,
+        "level": 20,
+        "name": "Body Barrage IV",
+        "moves": [
+          { "move": "LEFT HOOK BODY", "pauseTime": 1000, "direction": "left", "tiltValue": 0.4 },
+          { "move": "RIGHT HOOK BODY", "pauseTime": 1100, "direction": "right", "tiltValue": 0.4 },
+          { "move": "LEFT HOOK BODY", "pauseTime": 1000, "direction": "left", "tiltValue": 0.4 },
+          { "move": "RIGHT HOOK BODY", "pauseTime": 1100, "direction": "right", "tiltValue": 0.4 },
+          { "move": "LEFT HOOK BODY", "pauseTime": 1000, "direction": "left", "tiltValue": 0.4 },
+          { "move": "RIGHT HOOK BODY", "pauseTime": 1100, "direction": "right", "tiltValue": 0.4 },
+          { "move": "LEFT HOOK BODY", "pauseTime": 1000, "direction": "left", "tiltValue": 0.4 },
+          { "move": "RIGHT HOOK BODY", "pauseTime": 1100, "direction": "right", "tiltValue": 0.4 }
+        ]
+      },
+      {
         "comboId": 11,
-        "level": 3,
-        "name": "Head Body Head",
+        "level": 5,
+        "name": "Sandwich Combo",
         "moves": [
           {
             "move": "JAB",
@@ -276,8 +305,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 12,
-        "level": 4,
-        "name": "Body Blitz",
+        "level": 6,
+        "name": "Blitz to the Body",
         "moves": [
           {
             "move": "JAB BODY",
@@ -301,8 +330,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 13,
-        "level": 5,
-        "name": "Mixed Level Attack",
+        "level": 6,
+        "name": "Level Mixer",
         "moves": [
           {
             "move": "JAB",
@@ -332,8 +361,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 14,
-        "level": 2,
-        "name": "LEFT Hook Cross",
+        "level": 7,
+        "name": "Southpaw Snap",
         "moves": [
           {
             "move": "LEFT HOOK",
@@ -351,8 +380,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 15,
-        "level": 3,
-        "name": "Cross LEFT Upper",
+        "level": 7,
+        "name": "Uppercut Switch",
         "moves": [
           {
             "move": "CROSS",
@@ -370,8 +399,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 16,
-        "level": 3,
-        "name": "Basic Slip Counter",
+        "level": 8,
+        "name": "Slip and Strike",
         "moves": [
           {
             "move": "SLIP LEFT",
@@ -388,9 +417,48 @@ export const combinationSets = [{
         ]
       },
       {
+        "comboId": 301,
+        "level": 13,
+        "name": "Slip and Strike II",
+        "moves": [
+          { "move": "SLIP LEFT", "pauseTime": 800, "direction": "left", "tiltValue": 0.3 },
+          { "move": "CROSS", "pauseTime": 900, "direction": "right", "tiltValue": 0.4 },
+          { "move": "SLIP RIGHT", "pauseTime": 800, "direction": "right", "tiltValue": 0.3 },
+          { "move": "JAB", "pauseTime": 900, "direction": "left", "tiltValue": 0.3 }
+        ]
+      },
+      {
+        "comboId": 302,
+        "level": 18,
+        "name": "Slip and Strike III",
+        "moves": [
+          { "move": "SLIP LEFT", "pauseTime": 800, "direction": "left", "tiltValue": 0.3 },
+          { "move": "CROSS", "pauseTime": 900, "direction": "right", "tiltValue": 0.4 },
+          { "move": "SLIP RIGHT", "pauseTime": 800, "direction": "right", "tiltValue": 0.3 },
+          { "move": "JAB", "pauseTime": 900, "direction": "left", "tiltValue": 0.3 },
+          { "move": "SLIP LEFT", "pauseTime": 800, "direction": "left", "tiltValue": 0.3 },
+          { "move": "CROSS", "pauseTime": 900, "direction": "right", "tiltValue": 0.4 }
+        ]
+      },
+      {
+        "comboId": 303,
+        "level": 24,
+        "name": "Slip and Strike IV",
+        "moves": [
+          { "move": "SLIP LEFT", "pauseTime": 800, "direction": "left", "tiltValue": 0.3 },
+          { "move": "CROSS", "pauseTime": 900, "direction": "right", "tiltValue": 0.4 },
+          { "move": "SLIP RIGHT", "pauseTime": 800, "direction": "right", "tiltValue": 0.3 },
+          { "move": "JAB", "pauseTime": 900, "direction": "left", "tiltValue": 0.3 },
+          { "move": "SLIP LEFT", "pauseTime": 800, "direction": "left", "tiltValue": 0.3 },
+          { "move": "CROSS", "pauseTime": 900, "direction": "right", "tiltValue": 0.4 },
+          { "move": "SLIP RIGHT", "pauseTime": 800, "direction": "right", "tiltValue": 0.3 },
+          { "move": "JAB", "pauseTime": 900, "direction": "left", "tiltValue": 0.3 }
+        ]
+      },
+      {
         "comboId": 17,
-        "level": 4,
-        "name": "Hook Upper Hook",
+        "level": 9,
+        "name": "Hookstorm",
         "moves": [
           {
             "move": "LEFT HOOK",
@@ -413,9 +481,57 @@ export const combinationSets = [{
         ]
       },
       {
+        "comboId": 201,
+        "level": 14,
+        "name": "Hookstorm II",
+        "moves": [
+          { "move": "LEFT HOOK", "pauseTime": 900, "direction": "left", "tiltValue": 0.4 },
+          { "move": "LEFT UPPERCUT", "pauseTime": 1000, "direction": "up", "tiltValue": 0.4 },
+          { "move": "RIGHT HOOK", "pauseTime": 1100, "direction": "right", "tiltValue": 0.4 },
+          { "move": "LEFT HOOK", "pauseTime": 900, "direction": "left", "tiltValue": 0.4 },
+          { "move": "LEFT UPPERCUT", "pauseTime": 1000, "direction": "up", "tiltValue": 0.4 },
+          { "move": "RIGHT HOOK", "pauseTime": 1100, "direction": "right", "tiltValue": 0.4 }
+        ]
+      },
+      {
+        "comboId": 202,
+        "level": 19,
+        "name": "Hookstorm III",
+        "moves": [
+          { "move": "LEFT HOOK", "pauseTime": 900, "direction": "left", "tiltValue": 0.4 },
+          { "move": "LEFT UPPERCUT", "pauseTime": 1000, "direction": "up", "tiltValue": 0.4 },
+          { "move": "RIGHT HOOK", "pauseTime": 1100, "direction": "right", "tiltValue": 0.4 },
+          { "move": "LEFT HOOK", "pauseTime": 900, "direction": "left", "tiltValue": 0.4 },
+          { "move": "LEFT UPPERCUT", "pauseTime": 1000, "direction": "up", "tiltValue": 0.4 },
+          { "move": "RIGHT HOOK", "pauseTime": 1100, "direction": "right", "tiltValue": 0.4 },
+          { "move": "LEFT HOOK", "pauseTime": 900, "direction": "left", "tiltValue": 0.4 },
+          { "move": "LEFT UPPERCUT", "pauseTime": 1000, "direction": "up", "tiltValue": 0.4 },
+          { "move": "RIGHT HOOK", "pauseTime": 1100, "direction": "right", "tiltValue": 0.4 }
+        ]
+      },
+      {
+        "comboId": 203,
+        "level": 25,
+        "name": "Hookstorm IV",
+        "moves": [
+          { "move": "LEFT HOOK", "pauseTime": 900, "direction": "left", "tiltValue": 0.4 },
+          { "move": "LEFT UPPERCUT", "pauseTime": 1000, "direction": "up", "tiltValue": 0.4 },
+          { "move": "RIGHT HOOK", "pauseTime": 1100, "direction": "right", "tiltValue": 0.4 },
+          { "move": "LEFT HOOK", "pauseTime": 900, "direction": "left", "tiltValue": 0.4 },
+          { "move": "LEFT UPPERCUT", "pauseTime": 1000, "direction": "up", "tiltValue": 0.4 },
+          { "move": "RIGHT HOOK", "pauseTime": 1100, "direction": "right", "tiltValue": 0.4 },
+          { "move": "LEFT HOOK", "pauseTime": 900, "direction": "left", "tiltValue": 0.4 },
+          { "move": "LEFT UPPERCUT", "pauseTime": 1000, "direction": "up", "tiltValue": 0.4 },
+          { "move": "RIGHT HOOK", "pauseTime": 1100, "direction": "right", "tiltValue": 0.4 },
+          { "move": "LEFT HOOK", "pauseTime": 900, "direction": "left", "tiltValue": 0.4 },
+          { "move": "LEFT UPPERCUT", "pauseTime": 1000, "direction": "up", "tiltValue": 0.4 },
+          { "move": "RIGHT HOOK", "pauseTime": 1100, "direction": "right", "tiltValue": 0.4 }
+        ]
+      },
+      {
         "comboId": 18,
-        "level": 6,
-        "name": "Slip Jab Cross",
+        "level": 10,
+        "name": "Slipstream Entry",
         "moves": [
           {
             "move": "SLIP RIGHT",
@@ -439,8 +555,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 19,
-        "level": 5,
-        "name": "Level Change Combo",
+        "level": 10,
+        "name": "Level Changer",
         "moves": [
           {
             "move": "JAB",
@@ -470,8 +586,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 20,
-        "level": 3,
-        "name": "Cross Double Jab",
+        "level": 11,
+        "name": "Double Tap Return",
         "moves": [
           {
             "move": "CROSS",
@@ -495,8 +611,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 21,
-        "level": 3,
-        "name": "1-2-1",
+        "level": 12,
+        "name": "Jab Sandwich",
         "moves": [
           {
             "move": "JAB",
@@ -520,8 +636,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 22,
-        "level": 4,
-        "name": "Cross Hook Cross",
+        "level": 13,
+        "name": "Crossfire",
         "moves": [
           {
             "move": "CROSS",
@@ -545,8 +661,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 23,
-        "level": 5,
-        "name": "1-2-5",
+        "level": 14,
+        "name": "Uppercut Insertion",
         "moves": [
           {
             "move": "JAB",
@@ -570,8 +686,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 24,
-        "level": 5,
-        "name": "1-6-3",
+        "level": 15,
+        "name": "Upper-Hook Flow",
         "moves": [
           {
             "move": "JAB",
@@ -595,8 +711,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 25,
-        "level": 6,
-        "name": "Double Cross Combo",
+        "level": 16,
+        "name": "Double Trouble",
         "moves": [
           {
             "move": "CROSS",
@@ -606,7 +722,7 @@ export const combinationSets = [{
           },
           {
             "move": "CROSS",
-            "pauseTime": 900,
+            "pauseTime": 800,
             "direction": "right",
             "tiltValue": 0.3
           },
@@ -620,18 +736,18 @@ export const combinationSets = [{
       },
       {
         "comboId": 26,
-        "level": 2,
-        "name": "Jab Hook",
+        "level": 17,
+        "name": "Jab & Swing",
         "moves": [
           {
             "move": "JAB",
-            "pauseTime": 900,
+            "pauseTime": 1200,
             "direction": "left",
             "tiltValue": 0.3
           },
           {
             "move": "LEFT HOOK",
-            "pauseTime": 1100,
+            "pauseTime": 1000,
             "direction": "left",
             "tiltValue": 0.4
           }
@@ -639,8 +755,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 27,
-        "level": 3,
-        "name": "Cross Upper Cross",
+        "level": 18,
+        "name": "Uppercut Sandwich",
         "moves": [
           {
             "move": "CROSS",
@@ -664,8 +780,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 28,
-        "level": 4,
-        "name": "Body Head Combo",
+        "level": 19,
+        "name": "Body-Head Switch",
         "moves": [
           {
             "move": "CROSS BODY",
@@ -683,8 +799,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 29,
-        "level": 5,
-        "name": "Upper Hook Cross",
+        "level": 20,
+        "name": "Uppercut Hookdown",
         "moves": [
           {
             "move": "LEFT UPPERCUT",
@@ -708,8 +824,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 30,
-        "level": 6,
-        "name": "Jab Slip Cross",
+        "level": 20,
+        "name": "Jab & Weave",
         "moves": [
           {
             "move": "JAB",
@@ -733,8 +849,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 31,
-        "level": 4,
-        "name": "1-2-3-6",
+        "level": 20,
+        "name": "Combo Cascade",
         "moves": [
           {
             "move": "JAB",
@@ -764,8 +880,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 32,
-        "level": 5,
-        "name": "2-3-2",
+        "level": 21,
+        "name": "Cross-Hook-Cross",
         "moves": [
           {
             "move": "CROSS",
@@ -789,8 +905,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 33,
-        "level": 5,
-        "name": "5-6 Combo",
+        "level": 22,
+        "name": "Uppercut Twins",
         "moves": [
           {
             "move": "LEFT UPPERCUT",
@@ -808,8 +924,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 34,
-        "level": 6,
-        "name": "Body Cross Hook",
+        "level": 23,
+        "name": "Body Crossfire",
         "moves": [
           {
             "move": "CROSS BODY",
@@ -827,8 +943,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 35,
-        "level": 6,
-        "name": "Uppercut Blitz",
+        "level": 24,
+        "name": "Blitzing Uppers",
         "moves": [
           {
             "move": "LEFT UPPERCUT",
@@ -852,8 +968,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 36,
-        "level": 4,
-        "name": "Jab Cross Body Hook",
+        "level": 25,
+        "name": "Body Breaker",
         "moves": [
           {
             "move": "JAB",
@@ -877,8 +993,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 37,
-        "level": 5,
-        "name": "Slip Hook Cross",
+        "level": 26,
+        "name": "Slip & Rip",
         "moves": [
           {
             "move": "SLIP RIGHT",
@@ -902,8 +1018,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 38,
-        "level": 6,
-        "name": "Duck Upper Hook",
+        "level": 27,
+        "name": "Duck and Deliver",
         "moves": [
           {
             "move": "DUCK",
@@ -927,8 +1043,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 39,
-        "level": 2,
-        "name": "Triple Jab",
+        "level": 27,
+        "name": "Jab Machine",
         "moves": [
           {
             "move": "JAB",
@@ -952,8 +1068,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 40,
-        "level": 2,
-        "name": "1-2-3 Body",
+        "level": 29,
+        "name": "Body Cascade",
         "moves": [
           {
             "move": "JAB",
@@ -977,8 +1093,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 41,
-        "level": 3,
-        "name": "Double Cross Jab",
+        "level": 30,
+        "name": "Crossed Up",
         "moves": [
           {
             "move": "CROSS",
@@ -1002,8 +1118,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 42,
-        "level": 4,
-        "name": "Hook Cross Hook",
+        "level": 31,
+        "name": "Hook Sandwich",
         "moves": [
           {
             "move": "LEFT HOOK",
@@ -1027,8 +1143,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 43,
-        "level": 5,
-        "name": "Slip Cross Hook",
+        "level": 32,
+        "name": "Slip and Swing",
         "moves": [
           {
             "move": "SLIP LEFT",
@@ -1052,8 +1168,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 44,
-        "level": 6,
-        "name": "Upper Cross Hook",
+        "level": 33,
+        "name": "Uppercut Crossfire",
         "moves": [
           {
             "move": "RIGHT UPPERCUT",
@@ -1077,8 +1193,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 45,
-        "level": 3,
-        "name": "1-2 Slip Cross",
+        "level": 34,
+        "name": "Slipstream Combo",
         "moves": [
           {
             "move": "JAB",
@@ -1108,8 +1224,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 46,
-        "level": 4,
-        "name": "Double Jab Hook",
+        "level": 34,
+        "name": "Jab Jab Swing",
         "moves": [
           {
             "move": "JAB",
@@ -1133,8 +1249,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 47,
-        "level": 5,
-        "name": "Cross Upper Hook Cross",
+        "level": 35,
+        "name": "Crossed Up Uppers",
         "moves": [
           {
             "move": "CROSS",
@@ -1164,8 +1280,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 48,
-        "level": 2,
-        "name": "Jab Body Hook",
+        "level": 36,
+        "name": "Jab to the Core",
         "moves": [
           {
             "move": "JAB",
@@ -1183,8 +1299,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 49,
-        "level": 6,
-        "name": "Slip Double Cross",
+        "level": 37,
+        "name": "Slip and Double Down",
         "moves": [
           {
             "move": "SLIP LEFT",
@@ -1208,8 +1324,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 40,
-        "level": 2,
-        "name": "Jab Right Overhand",
+        "level": 38,
+        "name": "Overhand Entry",
         "moves": [
           {
             "move": "JAB",
@@ -1227,8 +1343,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 41,
-        "level": 2,
-        "name": "Cross Left Overhand",
+        "level": 39,
+        "name": "Southpaw Overhand",
         "moves": [
           {
             "move": "CROSS",
@@ -1246,8 +1362,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 42,
-        "level": 3,
-        "name": "Double Jab Overhand",
+        "level": 40,
+        "name": "Jab Jab Overhand",
         "moves": [
           {
             "move": "JAB",
@@ -1271,8 +1387,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 43,
-        "level": 3,
-        "name": "Overhand Cross",
+        "level": 41,
+        "name": "Overhand Return",
         "moves": [
           {
             "move": "LEFT OVERHAND",
@@ -1290,8 +1406,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 44,
-        "level": 4,
-        "name": "Jab Cross Overhand",
+        "level": 42,
+        "name": "Overhand Finisher",
         "moves": [
           {
             "move": "JAB",
@@ -1315,8 +1431,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 45,
-        "level": 4,
-        "name": "Overhand Hook Cross",
+        "level": 44,
+        "name": "Overhand Sandwich",
         "moves": [
           {
             "move": "RIGHT OVERHAND",
@@ -1340,8 +1456,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 46,
-        "level": 5,
-        "name": "Overhand Uppercut Hook",
+        "level": 45,
+        "name": "Overhand Uppercut Surprise",
         "moves": [
           {
             "move": "LEFT OVERHAND",
@@ -1365,8 +1481,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 47,
-        "level": 5,
-        "name": "Jab Cross Left Overhand",
+        "level": 46,
+        "name": "Left Overhand Entry",
         "moves": [
           {
             "move": "JAB",
@@ -1390,8 +1506,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 48,
-        "level": 6,
-        "name": "Slip Cross Overhand",
+        "level": 47,
+        "name": "Slip and Overhand",
         "moves": [
           {
             "move": "SLIP LEFT",
@@ -1415,8 +1531,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 49,
-        "level": 6,
-        "name": "Overhand Double Hook",
+        "level": 48,
+        "name": "Overhand Double Down",
         "moves": [
           {
             "move": "RIGHT OVERHAND",
@@ -1440,8 +1556,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 50,
-        "level": 6,
-        "name": "Jab Cross Hook Overhand",
+        "level": 50,
+        "name": "Overhand Storm",
         "moves": [
           {
             "move": "JAB",
@@ -1471,8 +1587,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 51,
-        "level": 7,
-        "name": "Double Jab Overhand Cross",
+        "level": 51,
+        "name": "Jab Jab Overhand Cross",
         "moves": [
           {
             "move": "JAB",
@@ -1502,8 +1618,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 52,
-        "level": 7,
-        "name": "Overhand Duck Hook",
+        "level": 52,
+        "name": "Overhand Duck & Hook",
         "moves": [
           {
             "move": "LEFT OVERHAND",
@@ -1527,8 +1643,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 53,
-        "level": 7,
-        "name": "Slip Overhand Cross",
+        "level": 53,
+        "name": "Slip and Overhand Cross",
         "moves": [
           {
             "move": "SLIP RIGHT",
@@ -1552,8 +1668,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 54,
-        "level": 8,
-        "name": "Overhand Cross Uppercut",
+        "level": 54,
+        "name": "Overhand Uppercut Combo",
         "moves": [
           {
             "move": "RIGHT OVERHAND",
@@ -1577,8 +1693,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 55,
-        "level": 8,
-        "name": "Triple Attack Overhand",
+        "level": 55,
+        "name": "Triple Threat Overhand",
         "moves": [
           {
             "move": "JAB",
@@ -1602,8 +1718,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 56,
-        "level": 4,
-        "name": "Jab Cross Overhand Right",
+        "level": 56,
+        "name": "Right Overhand Entry",
         "moves": [
           {
             "move": "JAB",
@@ -1627,8 +1743,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 57,
-        "level": 5,
-        "name": "Slip Jab Cross Hook",
+        "level": 57,
+        "name": "Slip and Combo",
         "moves": [
           {
             "move": "SLIP LEFT",
@@ -1658,8 +1774,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 58,
-        "level": 5,
-        "name": "Double Jab Cross Hook Body",
+        "level": 58,
+        "name": "Body Combo Machine",
         "moves": [
           {
             "move": "JAB",
@@ -1689,8 +1805,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 59,
-        "level": 6,
-        "name": "Cross Hook Cross Uppercut",
+        "level": 59,
+        "name": "Cross-Hook-Upper",
         "moves": [
           {
             "move": "CROSS",
@@ -1720,8 +1836,8 @@ export const combinationSets = [{
       },
       {
         "comboId": 60,
-        "level": 7,
-        "name": "Duck Cross Hook Overhand Left",
+        "level": 60,
+        "name": "Left Overhand Finale",
         "moves": [
           {
             "move": "DUCK",
@@ -1751,490 +1867,190 @@ export const combinationSets = [{
       },
       {
         "comboId": 61,
-        "level": 4,
-        "name": "Jab Cross Body Hook",
+        "level": 30,
+        "name": "Elbow Body Breaker",
         "moves": [
-          {
-            "move": "JAB",
-            "pauseTime": 900,
-            "direction": "left",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "CROSS",
-            "pauseTime": 1000,
-            "direction": "right",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "LEFT HOOK BODY",
-            "pauseTime": 1100,
-            "direction": "left",
-            "tiltValue": 0.4
-          }
+          { "move": "JAB", "pauseTime": 900, "direction": "left", "tiltValue": 0.3 },
+          { "move": "CROSS", "pauseTime": 1000, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT HOOK BODY", "pauseTime": 1100, "direction": "left", "tiltValue": 0.4 },
+          { "move": "RIGHT ELBOW", "pauseTime": 900, "direction": "right", "tiltValue": 0.4 }
         ]
       },
       {
         "comboId": 62,
-        "level": 5,
-        "name": "Double Jab Cross Slip Right",
+        "level": 32,
+        "name": "Elbow Slip Machine",
         "moves": [
-          {
-            "move": "JAB",
-            "pauseTime": 800,
-            "direction": "left",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "JAB",
-            "pauseTime": 800,
-            "direction": "left",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "CROSS",
-            "pauseTime": 1000,
-            "direction": "right",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "SLIP RIGHT",
-            "pauseTime": 800,
-            "direction": "right",
-            "tiltValue": 0.3
-          }
+          { "move": "JAB", "pauseTime": 800, "direction": "left", "tiltValue": 0.3 },
+          { "move": "JAB", "pauseTime": 800, "direction": "left", "tiltValue": 0.3 },
+          { "move": "CROSS", "pauseTime": 1000, "direction": "right", "tiltValue": 0.3 },
+          { "move": "SLIP RIGHT", "pauseTime": 800, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT ELBOW", "pauseTime": 900, "direction": "left", "tiltValue": 0.4 }
         ]
       },
       {
         "comboId": 63,
-        "level": 5,
-        "name": "Hook Body Hook Cross",
+        "level": 33,
+        "name": "Elbow Hookstorm",
         "moves": [
-          {
-            "move": "LEFT HOOK BODY",
-            "pauseTime": 900,
-            "direction": "left",
-            "tiltValue": 0.4
-          },
-          {
-            "move": "LEFT HOOK",
-            "pauseTime": 1000,
-            "direction": "left",
-            "tiltValue": 0.4
-          },
-          {
-            "move": "CROSS",
-            "pauseTime": 1000,
-            "direction": "right",
-            "tiltValue": 0.3
-          }
+          { "move": "LEFT HOOK BODY", "pauseTime": 900, "direction": "left", "tiltValue": 0.4 },
+          { "move": "LEFT HOOK", "pauseTime": 1000, "direction": "left", "tiltValue": 0.4 },
+          { "move": "CROSS", "pauseTime": 1000, "direction": "right", "tiltValue": 0.3 },
+          { "move": "RIGHT ELBOW", "pauseTime": 900, "direction": "right", "tiltValue": 0.4 }
         ]
       },
       {
         "comboId": 64,
-        "level": 6,
-        "name": "Jab Uppercut Cross Hook",
+        "level": 34,
+        "name": "Elbow Upper Blitz",
         "moves": [
-          {
-            "move": "JAB",
-            "pauseTime": 900,
-            "direction": "left",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "RIGHT UPPERCUT",
-            "pauseTime": 1000,
-            "direction": "up",
-            "tiltValue": 0.5
-          },
-          {
-            "move": "CROSS",
-            "pauseTime": 1000,
-            "direction": "right",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "LEFT HOOK",
-            "pauseTime": 1000,
-            "direction": "left",
-            "tiltValue": 0.4
-          }
+          { "move": "JAB", "pauseTime": 900, "direction": "left", "tiltValue": 0.3 },
+          { "move": "RIGHT UPPERCUT", "pauseTime": 1000, "direction": "up", "tiltValue": 0.5 },
+          { "move": "CROSS", "pauseTime": 1000, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT HOOK", "pauseTime": 1000, "direction": "left", "tiltValue": 0.4 },
+          { "move": "LEFT ELBOW", "pauseTime": 900, "direction": "left", "tiltValue": 0.4 }
         ]
       },
       {
         "comboId": 65,
-        "level": 6,
-        "name": "Slip Cross Hook Body Hook",
+        "level": 35,
+        "name": "Elbow Slip & Rip",
         "moves": [
-          {
-            "move": "SLIP LEFT",
-            "pauseTime": 800,
-            "direction": "left",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "CROSS",
-            "pauseTime": 900,
-            "direction": "right",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "LEFT HOOK",
-            "pauseTime": 1000,
-            "direction": "left",
-            "tiltValue": 0.4
-          },
-          {
-            "move": "RIGHT HOOK BODY",
-            "pauseTime": 1100,
-            "direction": "right",
-            "tiltValue": 0.4
-          }
+          { "move": "SLIP LEFT", "pauseTime": 800, "direction": "left", "tiltValue": 0.3 },
+          { "move": "CROSS", "pauseTime": 900, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT HOOK", "pauseTime": 1000, "direction": "left", "tiltValue": 0.4 },
+          { "move": "RIGHT HOOK BODY", "pauseTime": 1100, "direction": "right", "tiltValue": 0.4 },
+          { "move": "RIGHT ELBOW", "pauseTime": 900, "direction": "right", "tiltValue": 0.4 }
         ]
       },
       {
         "comboId": 66,
-        "level": 6,
-        "name": "Jab Cross Duck Cross",
+        "level": 36,
+        "name": "Elbow Duck & Cross",
         "moves": [
-          {
-            "move": "JAB",
-            "pauseTime": 900,
-            "direction": "left",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "CROSS",
-            "pauseTime": 900,
-            "direction": "right",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "DUCK",
-            "pauseTime": 800,
-            "direction": "down",
-            "tiltValue": 0.5
-          },
-          {
-            "move": "CROSS",
-            "pauseTime": 1000,
-            "direction": "right",
-            "tiltValue": 0.3
-          }
+          { "move": "JAB", "pauseTime": 900, "direction": "left", "tiltValue": 0.3 },
+          { "move": "CROSS", "pauseTime": 900, "direction": "right", "tiltValue": 0.3 },
+          { "move": "DUCK", "pauseTime": 800, "direction": "down", "tiltValue": 0.5 },
+          { "move": "CROSS", "pauseTime": 1000, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT ELBOW", "pauseTime": 900, "direction": "left", "tiltValue": 0.4 }
         ]
       },
       {
         "comboId": 67,
-        "level": 7,
-        "name": "Uppercut Hook Cross Overhand Right",
+        "level": 38,
+        "name": "Elbow Overhand Barrage",
         "moves": [
-          {
-            "move": "LEFT UPPERCUT",
-            "pauseTime": 900,
-            "direction": "up",
-            "tiltValue": 0.5
-          },
-          {
-            "move": "RIGHT HOOK",
-            "pauseTime": 1000,
-            "direction": "right",
-            "tiltValue": 0.4
-          },
-          {
-            "move": "CROSS",
-            "pauseTime": 1000,
-            "direction": "right",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "OVERHAND RIGHT",
-            "pauseTime": 1100,
-            "direction": "right",
-            "tiltValue": 0.5
-          }
+          { "move": "LEFT UPPERCUT", "pauseTime": 900, "direction": "up", "tiltValue": 0.5 },
+          { "move": "RIGHT HOOK", "pauseTime": 1000, "direction": "right", "tiltValue": 0.4 },
+          { "move": "CROSS", "pauseTime": 1000, "direction": "right", "tiltValue": 0.3 },
+          { "move": "OVERHAND RIGHT", "pauseTime": 1100, "direction": "right", "tiltValue": 0.5 },
+          { "move": "RIGHT ELBOW", "pauseTime": 900, "direction": "right", "tiltValue": 0.4 }
         ]
       },
       {
         "comboId": 68,
-        "level": 7,
-        "name": "Jab Cross Hook Slip Left Cross",
+        "level": 39,
+        "name": "Elbow Slipstream",
         "moves": [
-          {
-            "move": "JAB",
-            "pauseTime": 900,
-            "direction": "left",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "CROSS",
-            "pauseTime": 900,
-            "direction": "right",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "LEFT HOOK",
-            "pauseTime": 1000,
-            "direction": "left",
-            "tiltValue": 0.4
-          },
-          {
-            "move": "SLIP LEFT",
-            "pauseTime": 800,
-            "direction": "left",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "CROSS",
-            "pauseTime": 1000,
-            "direction": "right",
-            "tiltValue": 0.3
-          }
+          { "move": "JAB", "pauseTime": 900, "direction": "left", "tiltValue": 0.3 },
+          { "move": "CROSS", "pauseTime": 900, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT HOOK", "pauseTime": 1000, "direction": "left", "tiltValue": 0.4 },
+          { "move": "SLIP LEFT", "pauseTime": 800, "direction": "left", "tiltValue": 0.3 },
+          { "move": "CROSS", "pauseTime": 1000, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT ELBOW", "pauseTime": 900, "direction": "left", "tiltValue": 0.4 }
         ]
       },
       {
         "comboId": 69,
-        "level": 7,
-        "name": "Double Jab Cross Uppercut Hook",
+        "level": 40,
+        "name": "Elbow Combo Machine",
         "moves": [
-          {
-            "move": "JAB",
-            "pauseTime": 800,
-            "direction": "left",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "JAB",
-            "pauseTime": 800,
-            "direction": "left",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "CROSS",
-            "pauseTime": 900,
-            "direction": "right",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "RIGHT UPPERCUT",
-            "pauseTime": 1000,
-            "direction": "up",
-            "tiltValue": 0.5
-          },
-          {
-            "move": "LEFT HOOK",
-            "pauseTime": 1000,
-            "direction": "left",
-            "tiltValue": 0.4
-          }
+          { "move": "JAB", "pauseTime": 800, "direction": "left", "tiltValue": 0.3 },
+          { "move": "JAB", "pauseTime": 800, "direction": "left", "tiltValue": 0.3 },
+          { "move": "CROSS", "pauseTime": 900, "direction": "right", "tiltValue": 0.3 },
+          { "move": "RIGHT UPPERCUT", "pauseTime": 1000, "direction": "up", "tiltValue": 0.5 },
+          { "move": "LEFT HOOK", "pauseTime": 1000, "direction": "left", "tiltValue": 0.4 },
+          { "move": "RIGHT ELBOW", "pauseTime": 900, "direction": "right", "tiltValue": 0.4 }
         ]
       },
       {
         "comboId": 70,
-        "level": 8,
-        "name": "Slip Duck Cross Hook Cross",
+        "level": 41,
+        "name": "Elbow Duckstorm",
         "moves": [
-          {
-            "move": "SLIP RIGHT",
-            "pauseTime": 800,
-            "direction": "right",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "DUCK",
-            "pauseTime": 800,
-            "direction": "down",
-            "tiltValue": 0.5
-          },
-          {
-            "move": "CROSS",
-            "pauseTime": 900,
-            "direction": "right",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "LEFT HOOK",
-            "pauseTime": 1000,
-            "direction": "left",
-            "tiltValue": 0.4
-          },
-          {
-            "move": "CROSS",
-            "pauseTime": 1000,
-            "direction": "right",
-            "tiltValue": 0.3
-          }
+          { "move": "SLIP RIGHT", "pauseTime": 800, "direction": "right", "tiltValue": 0.3 },
+          { "move": "DUCK", "pauseTime": 800, "direction": "down", "tiltValue": 0.5 },
+          { "move": "CROSS", "pauseTime": 900, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT HOOK", "pauseTime": 1000, "direction": "left", "tiltValue": 0.4 },
+          { "move": "CROSS", "pauseTime": 1000, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT ELBOW", "pauseTime": 900, "direction": "left", "tiltValue": 0.4 }
         ]
       },
       {
         "comboId": 71,
-        "level": 5,
-        "name": "Body Jab Cross Hook Cross",
+        "level": 71,
+        "name": "Elbow Body Cascade",
         "moves": [
-          {
-            "move": "JAB BODY",
-            "pauseTime": 900,
-            "direction": "left",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "CROSS",
-            "pauseTime": 1000,
-            "direction": "right",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "LEFT HOOK",
-            "pauseTime": 1000,
-            "direction": "left",
-            "tiltValue": 0.4
-          },
-          {
-            "move": "CROSS",
-            "pauseTime": 1000,
-            "direction": "right",
-            "tiltValue": 0.3
-          }
+          { "move": "JAB BODY", "pauseTime": 900, "direction": "left", "tiltValue": 0.3 },
+          { "move": "CROSS", "pauseTime": 1000, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT HOOK", "pauseTime": 1000, "direction": "left", "tiltValue": 0.4 },
+          { "move": "CROSS", "pauseTime": 1000, "direction": "right", "tiltValue": 0.3 },
+          { "move": "RIGHT ELBOW", "pauseTime": 900, "direction": "right", "tiltValue": 0.4 }
         ]
       },
       {
         "comboId": 72,
-        "level": 6,
-        "name": "Jab Cross Uppercut Slip Left Hook",
+        "level": 72,
+        "name": "Elbow Uppercut Slip",
         "moves": [
-          {
-            "move": "JAB",
-            "pauseTime": 900,
-            "direction": "left",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "CROSS",
-            "pauseTime": 900,
-            "direction": "right",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "RIGHT UPPERCUT",
-            "pauseTime": 1000,
-            "direction": "up",
-            "tiltValue": 0.5
-          },
-          {
-            "move": "SLIP LEFT",
-            "pauseTime": 800,
-            "direction": "left",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "LEFT HOOK",
-            "pauseTime": 1000,
-            "direction": "left",
-            "tiltValue": 0.4
-          }
+          { "move": "JAB", "pauseTime": 900, "direction": "left", "tiltValue": 0.3 },
+          { "move": "CROSS", "pauseTime": 900, "direction": "right", "tiltValue": 0.3 },
+          { "move": "RIGHT UPPERCUT", "pauseTime": 1000, "direction": "up", "tiltValue": 0.5 },
+          { "move": "SLIP LEFT", "pauseTime": 800, "direction": "left", "tiltValue": 0.3 },
+          { "move": "LEFT HOOK", "pauseTime": 1000, "direction": "left", "tiltValue": 0.4 },
+          { "move": "RIGHT ELBOW", "pauseTime": 900, "direction": "right", "tiltValue": 0.4 }
         ]
       },
       {
         "comboId": 73,
-        "level": 6,
-        "name": "Cross Hook Uppercut Hook",
+        "level": 73,
+        "name": "Elbow Cross-Hook Fury",
         "moves": [
-          {
-            "move": "CROSS",
-            "pauseTime": 900,
-            "direction": "right",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "LEFT HOOK",
-            "pauseTime": 1000,
-            "direction": "left",
-            "tiltValue": 0.4
-          },
-          {
-            "move": "RIGHT UPPERCUT",
-            "pauseTime": 1000,
-            "direction": "up",
-            "tiltValue": 0.5
-          },
-          {
-            "move": "RIGHT HOOK",
-            "pauseTime": 1000,
-            "direction": "right",
-            "tiltValue": 0.4
-          }
+          { "move": "CROSS", "pauseTime": 900, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT HOOK", "pauseTime": 1000, "direction": "left", "tiltValue": 0.4 },
+          { "move": "RIGHT UPPERCUT", "pauseTime": 1000, "direction": "up", "tiltValue": 0.5 },
+          { "move": "RIGHT HOOK", "pauseTime": 1000, "direction": "right", "tiltValue": 0.4 },
+          { "move": "LEFT ELBOW", "pauseTime": 900, "direction": "left", "tiltValue": 0.4 }
         ]
       },
       {
         "comboId": 74,
-        "level": 7,
-        "name": "Duck Cross Hook Body Cross",
+        "level": 74,
+        "name": "Elbow Duck & Body",
         "moves": [
-          {
-            "move": "DUCK",
-            "pauseTime": 800,
-            "direction": "down",
-            "tiltValue": 0.5
-          },
-          {
-            "move": "CROSS",
-            "pauseTime": 900,
-            "direction": "right",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "LEFT HOOK",
-            "pauseTime": 1000,
-            "direction": "left",
-            "tiltValue": 0.4
-          },
-          {
-            "move": "CROSS BODY",
-            "pauseTime": 1100,
-            "direction": "right",
-            "tiltValue": 0.3
-          }
+          { "move": "DUCK", "pauseTime": 800, "direction": "down", "tiltValue": 0.5 },
+          { "move": "CROSS", "pauseTime": 900, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT HOOK", "pauseTime": 1000, "direction": "left", "tiltValue": 0.4 },
+          { "move": "CROSS BODY", "pauseTime": 1100, "direction": "right", "tiltValue": 0.3 },
+          { "move": "LEFT ELBOW", "pauseTime": 900, "direction": "left", "tiltValue": 0.4 }
         ]
       },
       {
         "comboId": 75,
-        "level": 7,
-        "name": "Jab Cross Slip Right Uppercut Hook",
+        "level": 75,
+        "name": "Elbow Slip & Combo",
         "moves": [
-          {
-            "move": "JAB",
-            "pauseTime": 900,
-            "direction": "left",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "CROSS",
-            "pauseTime": 900,
-            "direction": "right",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "SLIP RIGHT",
-            "pauseTime": 800,
-            "direction": "right",
-            "tiltValue": 0.3
-          },
-          {
-            "move": "RIGHT UPPERCUT",
-            "pauseTime": 1000,
-            "direction": "up",
-            "tiltValue": 0.5
-          },
-          {
-            "move": "LEFT HOOK",
-            "pauseTime": 1000,
-            "direction": "left",
-            "tiltValue": 0.4
-          }
+          { "move": "JAB", "pauseTime": 900, "direction": "left", "tiltValue": 0.3 },
+          { "move": "CROSS", "pauseTime": 900, "direction": "right", "tiltValue": 0.3 },
+          { "move": "SLIP RIGHT", "pauseTime": 800, "direction": "right", "tiltValue": 0.3 },
+          { "move": "RIGHT UPPERCUT", "pauseTime": 1000, "direction": "up", "tiltValue": 0.5 },
+          { "move": "LEFT HOOK", "pauseTime": 1000, "direction": "left", "tiltValue": 0.4 },
+          { "move": "RIGHT ELBOW", "pauseTime": 900, "direction": "right", "tiltValue": 0.4 }
         ]
       },
       {
         "comboId": 76,
-        "level": 7,
+        "level": 76,
         "name": "Cross Hook Cross Overhand Left",
         "moves": [
           {
@@ -2265,7 +2081,7 @@ export const combinationSets = [{
       },
       {
         "comboId": 77,
-        "level": 8,
+        "level": 77,
         "name": "Slip Jab Cross Hook Duck Cross",
         "moves": [
           {
@@ -2308,7 +2124,7 @@ export const combinationSets = [{
       },
       {
         "comboId": 78,
-        "level": 8,
+        "level": 78,
         "name": "Double Jab Cross Hook Uppercut Cross",
         "moves": [
           {
@@ -2351,7 +2167,7 @@ export const combinationSets = [{
       },
       {
         "comboId": 79,
-        "level": 8,
+        "level": 79,
         "name": "Slip Cross Hook Body Hook Cross",
         "moves": [
           {
@@ -2388,7 +2204,7 @@ export const combinationSets = [{
       },
       {
         "comboId": 80,
-        "level": 9,
+        "level": 80,
         "name": "Duck Slip Cross Hook Uppercut Overhand",
         "moves": [
           {
@@ -2431,7 +2247,7 @@ export const combinationSets = [{
       },
       {
         "comboId": 81,
-        "level": 6,
+        "level": 81,
         "name": "Power Surge",
         "moves": [
           {
@@ -2474,7 +2290,7 @@ export const combinationSets = [{
       },
       {
         "comboId": 82,
-        "level": 6,
+        "level": 82,
         "name": "Body Blitz",
         "moves": [
           {
@@ -2517,7 +2333,7 @@ export const combinationSets = [{
       },
       {
         "comboId": 83,
-        "level": 7,
+        "level": 83,
         "name": "Slipstorm",
         "moves": [
           {
@@ -2566,7 +2382,7 @@ export const combinationSets = [{
       },
       {
         "comboId": 84,
-        "level": 7,
+        "level": 84,
         "name": "Duck & Strike",
         "moves": [
           {
@@ -2615,7 +2431,7 @@ export const combinationSets = [{
       },
       {
         "comboId": 85,
-        "level": 7,
+        "level": 85,
         "name": "Hook Wave",
         "moves": [
           {
@@ -2658,7 +2474,7 @@ export const combinationSets = [{
       },
       {
         "comboId": 86,
-        "level": 8,
+        "level": 86,
         "name": "Slipstream",
         "moves": [
           {
@@ -2707,7 +2523,7 @@ export const combinationSets = [{
       },
       {
         "comboId": 87,
-        "level": 8,
+        "level": 87,
         "name": "Blitz Barrage",
         "moves": [
           {
@@ -2756,7 +2572,7 @@ export const combinationSets = [{
       },
       {
         "comboId": 88,
-        "level": 8,
+        "level": 88,
         "name": "Rising Storm",
         "moves": [
           {
@@ -2799,7 +2615,7 @@ export const combinationSets = [{
       },
       {
         "comboId": 89,
-        "level": 8,
+        "level": 89,
         "name": "Iron Fist",
         "moves": [
           {
@@ -2842,7 +2658,7 @@ export const combinationSets = [{
       },
       {
         "comboId": 90,
-        "level": 9,
+        "level": 90,
         "name": "Phantom Strike",
         "moves": [
           {
@@ -2891,7 +2707,7 @@ export const combinationSets = [{
       },
       {
         "comboId": 91,
-        "level": 9,
+        "level": 91,
         "name": "Cyclone",
         "moves": [
           {
@@ -2934,7 +2750,7 @@ export const combinationSets = [{
       },
       {
         "comboId": 92,
-        "level": 9,
+        "level": 92,
         "name": "Thunderclap",
         "moves": [
           {
@@ -2977,7 +2793,7 @@ export const combinationSets = [{
       },
       {
         "comboId": 93,
-        "level": 10,
+        "level": 93,
         "name": "Vortex",
         "moves": [
           {
@@ -3026,7 +2842,7 @@ export const combinationSets = [{
       },
       {
         "comboId": 94,
-        "level": 10,
+        "level": 94,
         "name": "Iron Curtain",
         "moves": [
           {
@@ -3069,7 +2885,7 @@ export const combinationSets = [{
       },
       {
         "comboId": 95,
-        "level": 10,
+        "level": 95,
         "name": "Stormbreaker",
         "moves": [
           {
@@ -3118,7 +2934,7 @@ export const combinationSets = [{
       },
       {
         "comboId": 96,
-        "level": 10,
+        "level": 96,
         "name": "Tempest",
         "moves": [
           {
@@ -3167,7 +2983,7 @@ export const combinationSets = [{
       },
       {
         "comboId": 97,
-        "level": 10,
+        "level": 97,
         "name": "Thunderbolt",
         "moves": [
           {
@@ -3216,7 +3032,7 @@ export const combinationSets = [{
       },
       {
         "comboId": 98,
-        "level": 10,
+        "level": 98,
         "name": "Iron Gale",
         "moves": [
           {
@@ -3265,7 +3081,7 @@ export const combinationSets = [{
       },
       {
         "comboId": 99,
-        "level": 10,
+        "level": 99,
         "name": "Blade Rush",
         "moves": [
           {
@@ -3314,7 +3130,7 @@ export const combinationSets = [{
       },
       {
         "comboId": 100,
-        "level": 10,
+        "level": 100,
         "name": "Storm Breaker",
         "moves": [
           {

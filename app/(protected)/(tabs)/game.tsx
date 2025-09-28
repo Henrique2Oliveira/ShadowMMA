@@ -738,21 +738,6 @@ export default function Game() {
     });
   }, [gameState.isPaused]);
 
-  const updateMoveProg = React.useCallback(() => {
-    if (currentMove) {
-      return updateMoveProgress(currentMove.pauseTime, speedMultiplier);
-    }
-    return null;
-  }, [currentMove, speedMultiplier, updateMoveProgress]);
-
-  React.useEffect(() => {
-    let animation: Animated.CompositeAnimation | null = null;
-    if (!gameState.isPaused) {
-      animation = updateMoveProg();
-    }
-    return () => animation?.stop();
-  }, [gameState.isPaused, updateMoveProg,]);
-
   // (moved isCountdownComplete state above for correct ordering)
 
   const updateMove = React.useCallback(() => {
@@ -882,6 +867,21 @@ export default function Game() {
       }
     }
   }, [currentMove, moves, gameState.isPaused, gameState.isRestPeriod, tiltX, tiltY, scale, sounds, isMuted, isCountdownComplete, stance]);
+
+  React.useEffect(() => {
+    let animation: Animated.CompositeAnimation | null = null;
+    if (!gameState.isPaused && !gameState.isRestPeriod && currentMove) {
+      const thisMove = currentMove;
+      animation = updateMoveProgress(thisMove.pauseTime, speedMultiplier, () => {
+        // Only advance if still on the same move and not paused/resting
+        if (!gameState.isPaused && !gameState.isRestPeriod && currentMove === thisMove) {
+          updateMove();
+        }
+      });
+    }
+    return () => animation?.stop();
+  }, [gameState.isPaused, gameState.isRestPeriod, currentMove, speedMultiplier, updateMove, updateMoveProgress]);
+  
   // Track current move for stats
   React.useEffect(() => {
     if (currentMove && !gameState.isPaused && !gameState.isRestPeriod) {
@@ -918,12 +918,7 @@ export default function Game() {
     };
   }, [gameState.isPaused, gameState.isRestPeriod, gameState.isGameOver, addRandomMovementEffect]);
 
-  React.useEffect(() => {
-    if (currentMove) {
-      const timer = setInterval(updateMove, currentMove.pauseTime / speedMultiplier);
-      return () => clearInterval(timer);
-    }
-  }, [currentMove, speedMultiplier, updateMove]);
+  // Removed interval-based move updates; handled by native-driver animation completion above
 
   const handlePress = () => {
     setGameState(prev => {
@@ -1112,7 +1107,7 @@ export default function Game() {
           <GameOverButtons />
         )}
 
-        {/* Upgrade CTA when free plan and no fights left */}
+        {/* Upgrade CTA when free plan and no fights left , separete in a different compoent and add close button*/}
         {gameState.isGameOver && (userData?.plan || 'free').toLowerCase() === 'free' && (userData?.fightsLeft ?? 0) <= 0 && (
           <View
             style={[

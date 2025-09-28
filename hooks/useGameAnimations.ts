@@ -34,8 +34,12 @@ export const useGameAnimations = () => {
     animate3DMove(move, tiltX, tiltY, scale);
   }, [tiltX, tiltY, scale]);
 
-  const updateMoveProgress = useCallback((pauseTime: number, speedMultiplier: number) => {
-    return startMoveProgress(moveProgress, pauseTime, speedMultiplier);
+  const updateMoveProgress = useCallback((
+    pauseTime: number,
+    speedMultiplier: number,
+    onComplete?: () => void
+  ) => {
+    return startMoveProgress(moveProgress, pauseTime, speedMultiplier, onComplete);
   }, [moveProgress]);
 
   const animateRestPeriod = useCallback(() => {
