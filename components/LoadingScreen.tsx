@@ -41,10 +41,32 @@ export const LoadingScreen = () => {
       'Exhale on impact for sharper strikes.',
       'Flow between stances to open angles.',
       'Maintain rhythm—hands return to base.',
+      'Remember to breathe – controlled exhales on every strike.',
+      'Hands up, chin tucked. Protect before you attack.',
+      'Relax your shoulders – tension slows you down.',
+      'Pivot your feet to add power and protect your knees.',
+      'See the target. Strike with intent, not just motion.',
+      'Stay light on your feet – movement is your best defense.',
+      'Focus on technique, not just speed.',
+      'Keep your core engaged for better balance and power.',
+      'Recover quickly between rounds – shake out your arms and legs.',
+      'Aim for clean, precise strikes over wild swings.',
+      'Use your hips to generate more force in every punch or kick.',
+      'Consistency beats intensity – keep a steady pace.',
+      'Warm up before you start to prevent injuries.',
+      'Cool down and stretch after your workout.',
+      'Track your progress and celebrate small wins.',
+      'Stay hydrated throughout your session.',
+      'Enjoy the process – improvement comes with practice!',
+      'Visualize your moves before executing them.',
+      'Maintain a slight bend in your knees for better mobility.',
+      'Listen to your body – rest if you feel pain or excessive fatigue.',
+      'Incorporate footwork drills to enhance agility.',
+      'Listen to music while training to keep you motivated.',
     ],
     []
   );
-  const [tipIndex, setTipIndex] = useState(0);
+  const [tipIndex, setTipIndex] = useState(() => Math.floor(Math.random() * TIPS.length));
   const tipFade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {

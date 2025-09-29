@@ -128,6 +128,10 @@ export const MoveCard: React.FC<MoveCardProps> = ({
     textScale.value = withSpring(1, { damping: 18, stiffness: 180, mass: 0.8 });
 
     // Mode-specific behavior
+    // Respect southpaw/stance: mirror horizontal directions so animation strength matches tilt inversion
+    const effectiveDirection = (stance === 'southpaw' || isSouthPaw)
+      ? (direction === 'left' ? 'right' : direction === 'right' ? 'left' : direction)
+      : direction;
     if (animationMode === 'new') {
       // Slide the entire card from off-screen right into place with a soft landing bump
       slideX.value = width;
@@ -140,7 +144,7 @@ export const MoveCard: React.FC<MoveCardProps> = ({
           // compute randomized recoil values on the JS thread and bake into the springs
         }
       });
-      // Deterministic recoil values derived from the move `direction` (no randomness)
+      // Deterministic recoil values derived from the move `effectiveDirection` (no randomness)
       // values chosen to feel like a hit recoil: rotateX (tilt forward/back),
       // rotateY (tilt left/right), translateX/Y small nudge in that direction
       let rx = 0; // rotateX degrees
@@ -149,7 +153,7 @@ export const MoveCard: React.FC<MoveCardProps> = ({
       let ty = 0; // translateY px
       // Stronger effect for 'new' animationMode, smaller for 'old'
       const strength = animationMode === 'new' ? 1 : 0.55;
-      switch (direction) {
+  switch (effectiveDirection) {
         case 'right':
           // rotateY sign inverted so the right edge dips back visually
           ry = -14 * strength;
@@ -224,7 +228,7 @@ export const MoveCard: React.FC<MoveCardProps> = ({
       let ryOld = 0;
       let txOld = 0;
       let tyOld = 0;
-      switch (direction) {
+  switch (effectiveDirection) {
         case 'right':
           ryOld = -14 * oldStrength; // match visual right tilt
           txOld = 8 * oldStrength;
@@ -380,15 +384,18 @@ export const MoveCard: React.FC<MoveCardProps> = ({
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
         >
-        {/* Center area for the move text (and optional progress bar / rest time) */}
-        <View style={{ flexGrow: 1, width: '100%', justifyContent: 'center', alignItems: 'center' }}>
+        {/* Center area for the move text (and optional progress bar / rest time)
+            Note: Avoid flexGrow here so the block stays tight (no extra vertical gap).
+        */}
+        <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center' }}>
           <Animated.Text
           style={[
             styles.text,
             {
               fontSize: rf(36) * scaleUp,
-              lineHeight: rf(44) * scaleUp,
-              padding: rs(4) * scaleUp,
+              // Tighter line height to keep multi-line titles compact
+              lineHeight: Math.round(rf(36) * scaleUp * 1.12),
+              padding: rs(2) * scaleUp,
             },
           ,
             // Animate the move text slightly for 'old' and 'new'; keep static on 'none'
@@ -410,7 +417,7 @@ export const MoveCard: React.FC<MoveCardProps> = ({
                 styles.progressBarContainer,
                 {
                   height: Math.max(rs(6) * scaleUp, 6),
-                  marginTop: rs(6) * scaleUp,
+                  marginTop: rs(4) * scaleUp,
                 },
               ]}
               onLayout={(e) => {
@@ -455,7 +462,7 @@ const styles = StyleSheet.create({
   gradientBackground: {
     width: '100%',
     height: '100%',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
@@ -469,7 +476,9 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily,
     flexShrink: 1,
     flexWrap: 'wrap',
-    padding: 4 // Added padding
+    padding: 4, // Added padding
+    includeFontPadding: false, // tighter vertical metrics on Android
+    textAlignVertical: 'center',
   },
   restTimeText: {
     fontFamily: Typography.fontFamily,

@@ -48,7 +48,10 @@ const PRE_GAME_TIPS = [
   'Cool down and stretch after your workout.',
   'Track your progress and celebrate small wins.',
   'Stay hydrated throughout your session.',
-  'Enjoy the process – improvement comes with practice!'
+  'Enjoy the process – improvement comes with practice!',
+  'Visualize your moves before executing them.',
+  'Maintain a slight bend in your knees for better mobility.',
+  'Listen to your body – rest if you feel pain or excessive fatigue.',
 ];
 
 type ModalConfig = {
