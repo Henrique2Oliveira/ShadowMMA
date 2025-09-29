@@ -1,4 +1,5 @@
 import { VerticalSpeedSlider } from '@/components/VerticalSpeedSlider';
+import { VerticalVolumeSlider } from '@/components/VerticalVolumeSlider';
 import { Colors, Typography } from '@/themes/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -8,11 +9,13 @@ import { Animated, StyleSheet, TouchableOpacity, View, useWindowDimensions } fro
 interface GameControlsProps {
   isPaused: boolean;
   isMuted: boolean;
+  volume?: number; // 0..1, optional for backward compatibility
   animationMode: 'none' | 'old' | 'new';
   speedMultiplier: number;
   sideButtonsOpacity: Animated.Value;
   onPauseToggle: () => void;
   onMuteToggle: () => void;
+  onVolumeChange?: (newVolume: number) => void;
   onSpeedChange: () => void;
   onSpeedSliderChange: (newSpeed: number) => void;
   onOptionsPress: () => void;
@@ -22,11 +25,13 @@ interface GameControlsProps {
 export const GameControls: React.FC<GameControlsProps> = ({
   isPaused,
   isMuted,
+  volume = 1,
   animationMode,
   speedMultiplier,
   sideButtonsOpacity,
   onPauseToggle,
   onMuteToggle,
+  onVolumeChange,
   onSpeedChange,
   onSpeedSliderChange,
   onOptionsPress,
@@ -52,6 +57,17 @@ export const GameControls: React.FC<GameControlsProps> = ({
   return (
     <View style={[styles.buttonsContainer, { bottom: 40 * scaleUp, paddingHorizontal: 30 * scaleUp }]}>
       <Animated.View style={{ opacity: sideButtonsOpacity }}>
+
+        {/* Volume Slider (includes mute at 0) */}
+        <VerticalVolumeSlider
+          volume={volume}
+          isMuted={isMuted}
+          onVolumeChange={(v) => onVolumeChange?.(v)}
+          onMuteToggle={onMuteToggle}
+          isPaused={isPaused}
+          opacity={sideButtonsOpacity}
+        />
+
         {/* Home Button */}
         <TouchableOpacity
           style={[styles.sideButton, sideBtn, !isPaused && styles.disabledButton]}
@@ -59,19 +75,6 @@ export const GameControls: React.FC<GameControlsProps> = ({
         >
           <Ionicons name="home" size={iconSide} color={Colors.bgDark} />
         </TouchableOpacity>
-
-        {/* Sound Toggle Button */}
-        <TouchableOpacity
-          style={[styles.sideButton, sideBtn, !isPaused && styles.disabledButton]}
-          onPress={onMuteToggle}
-        >
-          <Ionicons
-            name={isMuted ? "volume-mute" : "volume-high"}
-            size={iconSide}
-            color={Colors.bgDark}
-          />
-        </TouchableOpacity>
-
       </Animated.View>
 
       {/* Pause/Play Button - Hidden when fight is over */}

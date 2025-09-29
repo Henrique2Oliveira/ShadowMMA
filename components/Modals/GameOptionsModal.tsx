@@ -8,6 +8,8 @@ interface GameOptionsModalProps {
   onClose: () => void;
   onMuteToggle: () => void;
   isMuted: boolean;
+  volume?: number;
+  onVolumeChange?: (v: number) => void;
   onSpeedChange: () => void;
   speedMultiplier: number;
   onAnimationModeChange: () => void;
@@ -27,6 +29,8 @@ export const GameOptionsModal: React.FC<GameOptionsModalProps> = ({
   onClose,
   onMuteToggle,
   isMuted,
+  volume = 1,
+  onVolumeChange,
   onSpeedChange,
   speedMultiplier,
   onAnimationModeChange,
@@ -72,11 +76,6 @@ export const GameOptionsModal: React.FC<GameOptionsModalProps> = ({
   };
 
   const options = [
-    {
-      icon: isMuted ? 'volume-off' : 'volume-high',
-      label: isMuted ? 'Unmute' : 'Mute',
-      onPress: onMuteToggle,
-    },
     {
       icon: 'flash-outline',
       label: `Speed: ${speedMultiplier.toFixed(1)}x`,
@@ -126,6 +125,44 @@ export const GameOptionsModal: React.FC<GameOptionsModalProps> = ({
           </TouchableOpacity>
 
           <Text style={styles.title}>Options</Text>
+
+          {/* Volume control row with inline adjustments */}
+          <View style={[styles.optionRow, styles.optionButtonBorder]}>
+            <Ionicons
+              name={(isMuted || volume <= 0) ? 'volume-mute' : volume < 0.5 ? 'volume-low' : 'volume-high'}
+              size={24}
+              color={Colors.text}
+              style={styles.optionIcon}
+            />
+            <Text style={[styles.optionText, { flex: 1 }]}>
+              {isMuted || volume <= 0 ? 'Muted' : `Volume: ${Math.round(volume * 100)}%`}
+            </Text>
+            <TouchableOpacity
+              onPress={onMuteToggle}
+              style={[styles.pillButton, { backgroundColor: 'rgba(255,255,255,0.08)' }]}
+            >
+              <Text style={styles.pillButtonText}>{isMuted || volume <= 0 ? 'Unmute' : 'Mute'}</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Volume slider-like bar with +/- nudge buttons */}
+          <View style={[styles.volumeAdjustRow, styles.optionButtonBorder]}>
+            <TouchableOpacity
+              onPress={() => onVolumeChange && onVolumeChange(Math.max(0, Math.round((volume - 0.1) * 10) / 10))}
+              style={[styles.nudgeBtn, { marginRight: 10 }]}
+            >
+              <Text style={styles.nudgeBtnText}>-</Text>
+            </TouchableOpacity>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${Math.min(100, Math.max(0, Math.round(volume * 100)))}%` }]} />
+            </View>
+            <TouchableOpacity
+              onPress={() => onVolumeChange && onVolumeChange(Math.min(1, Math.round((volume + 0.1) * 10) / 10))}
+              style={[styles.nudgeBtn, { marginLeft: 10 }]}
+            >
+              <Text style={styles.nudgeBtnText}>+</Text>
+            </TouchableOpacity>
+          </View>
 
           <View style={styles.optionsList}>
             {options.map((option, index) => (
@@ -183,6 +220,11 @@ const styles = StyleSheet.create({
   optionsList: {
     width: '100%',
   },
+  optionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
   optionButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -199,5 +241,44 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily,
     fontSize: 16,
     color: Colors.text,
+  },
+  pillButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  pillButtonText: {
+    color: Colors.text,
+    fontFamily: Typography.fontFamily,
+    fontSize: 14,
+  },
+  volumeAdjustRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  nudgeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.08)'
+  },
+  nudgeBtnText: {
+    color: Colors.text,
+    fontSize: 18,
+    fontFamily: Typography.fontFamily,
+  },
+  progressTrack: {
+    flex: 1,
+    height: 10,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255,255,255,0.12)'
+  },
+  progressFill: {
+    height: 10,
+    backgroundColor: Colors.redDots,
+    borderRadius: 6,
   },
 });

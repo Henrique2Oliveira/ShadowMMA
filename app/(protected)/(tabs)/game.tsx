@@ -80,6 +80,7 @@ export default function Game() {
   // Load sound effects
   const [sounds, setSounds] = React.useState<Audio.Sound[]>([]);
   const [isMuted, setIsMuted] = React.useState(false);
+  const [volume, setVolume] = React.useState<number>(1);
   const soundFiles = [
     require('@/assets/audio/sfx/swoosh1.mp3'),
     require('@/assets/audio/sfx/swoosh2.mp3'),
@@ -88,6 +89,7 @@ export default function Game() {
   ];
 
   const [bellSound, setBellSound] = React.useState<Audio.Sound | null>(null);
+  const previousVolumeRef = React.useRef<number>(1);
 
   const playBellSound = React.useCallback(() => {
     if (!isMuted && bellSound) {
@@ -271,6 +273,10 @@ export default function Game() {
           // Clamp saved preference to MAX_SPEED
           setSpeedMultiplier(Math.min(MAX_SPEED, prefs.speedMultiplier));
         }
+        if (typeof (prefs as any).volume === 'number') {
+          setVolume((prefs as any).volume);
+          previousVolumeRef.current = (prefs as any).volume || 1;
+        }
       } else {
         // First time: set a friendlier slightly faster pace (1.5x) and persist in storage for speed 
         setSpeedMultiplier(1.5);
@@ -280,6 +286,7 @@ export default function Game() {
           stance: 'orthodox',
           showComboCarousel: true,
           speedMultiplier: 1.5,
+          volume: 1,
         });
       }
     });
@@ -287,8 +294,49 @@ export default function Game() {
 
   // Save preferences to AsyncStorage when changed
   React.useEffect(() => {
-    saveGamePreferences({ isMuted, animationMode, stance, showComboCarousel, speedMultiplier });
-  }, [isMuted, animationMode, stance, showComboCarousel, speedMultiplier]);
+    saveGamePreferences({ isMuted, animationMode, stance, showComboCarousel, speedMultiplier, volume });
+  }, [isMuted, animationMode, stance, showComboCarousel, speedMultiplier, volume]);
+
+  // Apply volume/mute to all loaded sounds
+  React.useEffect(() => {
+    const applyVolume = async () => {
+      const v = isMuted ? 0 : volume;
+      try {
+        await Promise.all([
+          ...sounds.map((s) => s.setStatusAsync({ volume: v })),
+          bellSound ? bellSound.setStatusAsync({ volume: v }) : Promise.resolve(),
+        ]);
+      } catch (e) {
+        console.warn('Error applying volume', e);
+      }
+    };
+    if (sounds.length > 0 || bellSound) {
+      applyVolume();
+    }
+  }, [sounds, bellSound, isMuted, volume]);
+
+  // Unified handlers for mute/volume
+  const handleMuteToggle = React.useCallback(() => {
+    if (!gameState.isPaused) return;
+    setIsMuted((prev) => {
+      const next = !prev;
+      if (next) {
+        if (volume > 0) previousVolumeRef.current = volume;
+        setVolume(0);
+      } else {
+        const restore = previousVolumeRef.current > 0 ? previousVolumeRef.current : 1;
+        setVolume(restore);
+      }
+      return next;
+    });
+  }, [gameState.isPaused, volume]);
+
+  const handleVolumeChange = React.useCallback((v: number) => {
+    if (!gameState.isPaused) return;
+    setVolume(v);
+    if (v > 0) previousVolumeRef.current = v;
+    setIsMuted(v <= 0);
+  }, [gameState.isPaused]);
 
   // Handle new combo unlock detection (XP bar animation handled in LevelBar component)
   React.useEffect(() => {
@@ -1125,11 +1173,13 @@ export default function Game() {
         <GameControls
           isPaused={gameState.isPaused}
           isMuted={isMuted}
+          volume={volume}
           animationMode={animationMode}
           speedMultiplier={speedMultiplier}
           sideButtonsOpacity={sideButtonsOpacity}
           onPauseToggle={handlePress}
-          onMuteToggle={() => gameState.isPaused && setIsMuted(!isMuted)}
+          onMuteToggle={handleMuteToggle}
+          onVolumeChange={handleVolumeChange}
           onSpeedChange={handleSpeedChange}
           onSpeedSliderChange={handleSpeedSliderChange}
           onOptionsPress={() => gameState.isPaused && setIsOptionsModalVisible(true)}
@@ -1148,7 +1198,9 @@ export default function Game() {
           visible={isOptionsModalVisible}
           onClose={() => setIsOptionsModalVisible(false)}
           isMuted={isMuted}
-          onMuteToggle={() => setIsMuted((prev) => !prev)}
+          onMuteToggle={handleMuteToggle}
+          volume={volume}
+          onVolumeChange={handleVolumeChange}
           speedMultiplier={speedMultiplier}
           onSpeedChange={handleSpeedChange}
           animationMode={animationMode}

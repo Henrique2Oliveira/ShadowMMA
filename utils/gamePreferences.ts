@@ -8,6 +8,8 @@ export interface GamePreferences {
   stance: 'orthodox' | 'southpaw';
   showComboCarousel: boolean;
   speedMultiplier: number;
+  // New: persisted master volume (0.0 - 1.0)
+  volume?: number;
 }
 
 export async function saveGamePreferences(prefs: GamePreferences) {
