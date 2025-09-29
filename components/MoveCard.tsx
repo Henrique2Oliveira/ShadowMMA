@@ -4,7 +4,14 @@ import { transformMoveForStance } from '@/utils/stance';
 import { formatTime } from '@/utils/time';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated as RNAnimated, Easing as RNEasing, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Animated as RNAnimated, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 
 interface MoveCardProps {
   move: string;
@@ -42,44 +49,83 @@ export const MoveCard: React.FC<MoveCardProps> = ({
   const scaleUp = width >= 1024 ? 1.8 : width >= 768 ? 1.8 : 1;
 
   const prevMove = useRef(move);
-  // Outer card slide value for the 'new' (slide) animation
-  const outerSlideX = useRef(new RNAnimated.Value(0)).current;
+  // Reanimated shared values for performant, natural animations
+  const slideX = useSharedValue(0); // for 'new' (slide) mode
+  const cardScale = useSharedValue(1); // subtle spring bump on entry
+  // Text entrance animation
+  const textOpacity = useSharedValue(1);
+  const textTranslateY = useSharedValue(0);
+  const textScale = useSharedValue(1);
   // Progress bar width (measured) to anchor scale from left using translateX compensation
   const [progressBarWidthNum, setProgressBarWidthNum] = useState(0);
 
-  // On move change, apply animation per mode
+  // On move change, apply animation per mode (slide/new or old tilt)
   useEffect(() => {
     if (!move || isGameOver || isRestPeriod) return;
     if (move === prevMove.current) return;
     prevMove.current = move;
 
+    // Animate text subtly for both 'old' and 'new' modes
+    textOpacity.value = 0;
+    textTranslateY.value = 6;
+    textScale.value = 0.98;
+    textOpacity.value = withTiming(1, { duration: 150 });
+    textTranslateY.value = withTiming(0, { duration: 220, easing: Easing.out(Easing.cubic) });
+    textScale.value = withSpring(1, { damping: 18, stiffness: 180, mass: 0.8 });
+
     // Mode-specific behavior
     if (animationMode === 'new') {
-      // Slide the entire card from off-screen right into place
-      outerSlideX.setValue(width);
-      RNAnimated.timing(outerSlideX, {
-        toValue: 0,
-        duration: 360,
-        easing: RNEasing.out(RNEasing.cubic),
-        useNativeDriver: true,
-      }).start();
+      // Slide the entire card from off-screen right into place with a soft landing bump
+      slideX.value = width;
+      slideX.value = withTiming(0, { duration: 360, easing: Easing.out(Easing.cubic) });
+      cardScale.value = 0.5;
+      cardScale.value = withSpring(1, { damping: 14, stiffness: 120, mass: 0.6});
+    } else if (animationMode === 'old') {
+      // Subtle spring bump to complement tilt without heavy effects
+      cardScale.value = 1.2;
+      cardScale.value = withSpring(1, { damping: 17, stiffness: 190, mass: 0.6});
+      // Keep slide at rest
+      slideX.value = 0;
     } else {
-      // Ensure card is at rest for 'old' (tilt only) and 'none'
-      outerSlideX.stopAnimation();
-      outerSlideX.setValue(0);
+      // none
+      slideX.value = 0;
+      cardScale.value = 1;
     }
-  }, [move, isGameOver, isRestPeriod, animationMode, outerSlideX, width]);
+  }, [move, isGameOver, isRestPeriod, animationMode, width, slideX, cardScale, textOpacity, textTranslateY, textScale]);
 
   // Reset on game over/rest to keep static
   useEffect(() => {
     if (isGameOver || isRestPeriod) {
-      outerSlideX.stopAnimation();
-      outerSlideX.setValue(0);
+      slideX.value = 0;
+      cardScale.value = 1;
+      textOpacity.value = 1;
+      textTranslateY.value = 0;
+      textScale.value = 1;
     }
-  }, [isGameOver, isRestPeriod, outerSlideX]);
+  }, [isGameOver, isRestPeriod, slideX, cardScale, textOpacity, textTranslateY, textScale]);
+
+  // Animated styles (evaluated on UI thread)
+  const outerAnimatedStyle = useAnimatedStyle(() => {
+    const transforms: any[] = [];
+    if (animationMode === 'new') {
+      transforms.push({ translateX: slideX.value });
+      transforms.push({ scale: cardScale.value });
+    } else if (animationMode === 'old') {
+      transforms.push({ scale: cardScale.value });
+    }
+    return { transform: transforms };
+  }, [animationMode]);
+
+  const moveTextAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: textOpacity.value,
+    transform: [
+      { translateY: textTranslateY.value },
+      { scale: textScale.value },
+    ],
+  }));
 
   return (
-      <RNAnimated.View
+      <Animated.View
       style={[
         styles.card,
         {
@@ -87,14 +133,16 @@ export const MoveCard: React.FC<MoveCardProps> = ({
           height: rs(200) * scaleUp,
           borderRadius: rs(20) * scaleUp,
         },
-        {
-          transform: [
-            // Mode: 'new' -> slide card from right; 'old' -> tilt only; 'none' -> static
-            ...(animationMode === 'new'
-              ? [{ translateX: outerSlideX }]
-              : []),
-            ...(animationMode === 'old'
-              ? [
+        outerAnimatedStyle,
+      ]}
+    >
+      {/* Tilt-only transforms for 'old' mode are kept on an inner RN Animated wrapper to avoid mixing engines */}
+      <RNAnimated.View
+        style={[
+          { width: '100%', height: '100%' },
+          animationMode === 'old'
+            ? {
+                transform: [
                   {
                     rotateX: tiltX.interpolate({
                       inputRange: [-0.4, 0, 0.4],
@@ -108,14 +156,11 @@ export const MoveCard: React.FC<MoveCardProps> = ({
                     }),
                   },
                   { scale },
-                ]
-              : []),
-          ],
-        },
-      ]}
-    >
-      {/* Inner content: no extra animation; obeys mode via outer transforms */}
-      <View style={[{ width: '100%', height: '100%' }]}>
+                ],
+              }
+            : undefined,
+        ]}
+      >
         <LinearGradient
           colors={['#171717ff', '#1a1a1aff']}
           style={[
@@ -131,7 +176,7 @@ export const MoveCard: React.FC<MoveCardProps> = ({
         >
         {/* Center area for the move text (and optional progress bar / rest time) */}
         <View style={{ flexGrow: 1, width: '100%', justifyContent: 'center', alignItems: 'center' }}>
-          <Text
+          <Animated.Text
           style={[
             styles.text,
             {
@@ -139,6 +184,9 @@ export const MoveCard: React.FC<MoveCardProps> = ({
               lineHeight: rf(44) * scaleUp,
               padding: rs(4) * scaleUp,
             },
+          ,
+            // Animate the move text slightly for 'old' and 'new'; keep static on 'none'
+            animationMode !== 'none' ? moveTextAnimatedStyle : undefined,
           ]}
           numberOfLines={2}
           adjustsFontSizeToFit
@@ -147,7 +195,7 @@ export const MoveCard: React.FC<MoveCardProps> = ({
           {isGameOver
             ? 'FIGHT OVER!'
             : transformMoveForStance(move || '', (stance || (isSouthPaw ? 'southpaw' : 'orthodox')))}
-          </Text>
+          </Animated.Text>
 
           {/* Progress bar right below the text when active round */}
           {!isPaused && !isGameOver && !isRestPeriod && (
@@ -198,8 +246,8 @@ export const MoveCard: React.FC<MoveCardProps> = ({
           )}
         </View>
         </LinearGradient>
-      </View>
       </RNAnimated.View>
+      </Animated.View>
   );
 };
 

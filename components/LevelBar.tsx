@@ -118,7 +118,6 @@ export const LevelBar: React.FC<LevelBarProps> = ({
       ]).start(() => {
         // Pulse the level text ONLY on actual level-up
         // Trigger a short impact haptic to celebrate the level-up
-        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
         Animated.sequence([
           Animated.spring(levelScale, {
@@ -136,6 +135,7 @@ export const LevelBar: React.FC<LevelBarProps> = ({
         ]).start(() => {
           // After pulse completes, reveal the new level number
           setDisplayedLevel(newLevel);
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
         });
       });
     } else {
