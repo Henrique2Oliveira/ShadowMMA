@@ -58,6 +58,50 @@ export const MoveCard: React.FC<MoveCardProps> = ({
   const textScale = useSharedValue(1);
   // Progress bar width (measured) to anchor scale from left using translateX compensation
   const [progressBarWidthNum, setProgressBarWidthNum] = useState(0);
+  // Reanimated shared value for progress bar (keeps UI-thread animations)
+  const progressShared = useSharedValue(1);
+
+  // Sync incoming moveProgress (which may be an RN Animated.Value or a number) into reanimated shared value
+  useEffect(() => {
+    let listenerId: string | number | null = null;
+    if (moveProgress && typeof (moveProgress as any).addListener === 'function') {
+      try {
+        listenerId = (moveProgress as any).addListener(({ value }: { value: number }) => {
+          progressShared.value = value;
+        });
+      } catch (e) {
+        // fallback: try to set numeric value if available
+        try {
+          const v = (moveProgress as any)._value ?? 1;
+          progressShared.value = v;
+        } catch {
+          progressShared.value = 1;
+        }
+      }
+    } else if (typeof moveProgress === 'number') {
+      progressShared.value = moveProgress;
+    }
+
+    return () => {
+      if (listenerId != null && moveProgress && typeof (moveProgress as any).removeListener === 'function') {
+        try {
+          (moveProgress as any).removeListener(listenerId);
+        } catch {
+          // ignore
+        }
+      }
+    };
+  }, [moveProgress, progressShared]);
+
+  // Animated style for the progress bar using Reanimated
+  const progressAnimatedStyle = useAnimatedStyle(() => {
+    const s = progressShared.value ?? 1;
+    const translateX = (s - 1) * (progressBarWidthNum / 2);
+    return {
+      width: progressBarWidthNum,
+      transform: [{ translateX }, { scaleX: s }],
+    };
+  }, [progressBarWidthNum]);
 
   // On move change, apply animation per mode (slide/new or old tilt)
   useEffect(() => {
@@ -79,7 +123,7 @@ export const MoveCard: React.FC<MoveCardProps> = ({
       slideX.value = width;
       slideX.value = withTiming(0, { duration: 360, easing: Easing.out(Easing.cubic) });
       cardScale.value = 0.5;
-      cardScale.value = withSpring(1, { damping: 14, stiffness: 120, mass: 0.6});
+      cardScale.value = withSpring(1, { damping: 14, stiffness: 120, mass: 1});
     } else if (animationMode === 'old') {
       // Subtle spring bump to complement tilt without heavy effects
       cardScale.value = 1.2;
@@ -212,22 +256,10 @@ export const MoveCard: React.FC<MoveCardProps> = ({
                 setProgressBarWidthNum(w);
               }}
             >
-              <RNAnimated.View
+              <Animated.View
                 style={[
                   styles.progressBar,
-                  {
-                    width: progressBarWidthNum,
-                    transform: [
-                      // translateX = (s - 1) * W / 2 to anchor left when scaling
-                      {
-                        translateX: RNAnimated.multiply(
-                          RNAnimated.subtract(moveProgress, 1),
-                          progressBarWidthNum / 2
-                        ),
-                      },
-                      { scaleX: moveProgress },
-                    ],
-                  },
+                  progressAnimatedStyle,
                 ]}
               />
             </View>
