@@ -1,5 +1,6 @@
 import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
@@ -116,6 +117,9 @@ export const LevelBar: React.FC<LevelBarProps> = ({
         })
       ]).start(() => {
         // Pulse the level text ONLY on actual level-up
+        // Trigger a short impact haptic to celebrate the level-up
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
         Animated.sequence([
           Animated.spring(levelScale, {
             toValue: 1.25,

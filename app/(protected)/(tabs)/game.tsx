@@ -8,6 +8,7 @@ import { CombosModal } from '@/components/Modals/CombosModal';
 import { GameOptionsModal } from '@/components/Modals/GameOptionsModal';
 import GoodJobModal from '@/components/Modals/GoodJobModal';
 import UnlockedCombosModal from '@/components/Modals/UnlockedCombosModal';
+import UpgradeCta from '@/components/Modals/UpgradeCta';
 import { MoveCard } from '@/components/MoveCard';
 import { MoveStats } from '@/components/MoveStats';
 import { TimerDisplay } from '@/components/TimerDisplay';
@@ -18,7 +19,6 @@ import { Colors, Typography } from '@/themes/theme';
 import { Combo, Move } from '@/types/game';
 import { loadGamePreferences, saveGamePreferences } from '@/utils/gamePreferences';
 import { markDailyTrainingCompleted } from '@/utils/notificationUtils';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getAuth } from '@firebase/auth';
 import { useIsFocused } from '@react-navigation/native';
 import { Audio } from 'expo-av';
@@ -223,6 +223,8 @@ export default function Game() {
   });
 
   const [isOptionsModalVisible, setIsOptionsModalVisible] = React.useState(false);
+  // Local visibility for the upgrade CTA so users can close it
+  const [isUpgradeCtaVisible, setIsUpgradeCtaVisible] = React.useState(true);
 
   const [moves, setMoves] = React.useState<Move[]>([]);
   const [currentMove, setCurrentMove] = React.useState<Move | null>(null);
@@ -1107,57 +1109,14 @@ export default function Game() {
           <GameOverButtons />
         )}
 
-        {/* Upgrade CTA when free plan and no fights left , separete in a different compoent and add close button*/}
-        {gameState.isGameOver && (userData?.plan || 'free').toLowerCase() === 'free' && (userData?.fightsLeft ?? 0) <= 0 && (
-          <View
-            style={[
-              styles.upgradeCtaContainer,
-              {
-                bottom: 180 * scaleUp,
-                paddingHorizontal: 16 * scaleUp,
-                width: Math.min(700, width * 0.92),
-              },
-            ]}
-          >
-            <LinearGradient
-              colors={["#1e1e1e", "#2a0f10"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={[
-                styles.upgradeCta,
-                {
-                  paddingVertical: 14 * Math.min(scaleUp, 1.3),
-                  paddingHorizontal: 16 * Math.min(scaleUp, 1.3),
-                  borderRadius: 14 * Math.min(scaleUp, 1.3),
-                },
-              ]}
-            >
-              <View style={styles.upgradeIconWrap}>
-                <MaterialCommunityIcons name="crown" size={24 * scaleUp} color="#ffd257" />
-              </View>
-              <View style={{ flex: 1, marginRight: 12 * scaleUp }}>
-                <Text style={[styles.upgradeTitle, { fontSize: 16 * scaleUp }]}>You’re out of fights</Text>
-                <Text style={[styles.upgradeSubtitle, { fontSize: 13 * scaleUp }]}>
-                  Free plan limit reached. Upgrade for unlimited fights and full access.
-                </Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => router.push('/(protected)/plans')}
-                style={[
-                  styles.upgradeButton,
-                  {
-                    paddingVertical: 10 * Math.min(scaleUp, 1.2),
-                    paddingHorizontal: 16 * Math.min(scaleUp, 1.2),
-                    borderRadius: 10 * Math.min(scaleUp, 1.2),
-                  },
-                ]}
-                activeOpacity={0.9}
-              >
-                <Text style={[styles.upgradeButtonText, { fontSize: 14 * scaleUp }]}>Upgrade</Text>
-              </TouchableOpacity>
-            </LinearGradient>
-          </View>
-        )}
+        {/* Upgrade CTA when free plan and no fights left - moved to separate component with close button */}
+        <UpgradeCta
+          visible={isUpgradeCtaVisible && gameState.isGameOver && (userData?.plan || 'free').toLowerCase() === 'free' && (userData?.fightsLeft ?? 0) <= 0}
+          onClose={() => setIsUpgradeCtaVisible(false)}
+          onUpgrade={() => router.push('/(protected)/plans')}
+          width={width}
+          scaleUp={scaleUp}
+        />
 
         <GameControls
           isPaused={gameState.isPaused}
