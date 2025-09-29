@@ -9,6 +9,7 @@ import Animated, {
   Easing,
   useAnimatedStyle,
   useSharedValue,
+  withSequence,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
@@ -24,6 +25,7 @@ interface MoveCardProps {
   isRestPeriod: boolean;
   isPaused: boolean;
   animationMode: 'none' | 'old' | 'new';
+  direction?: 'left' | 'right' | 'up' | 'down';
   isSouthPaw?: boolean; // backward compat; prefer stance prop below
   stance?: 'orthodox' | 'southpaw';
   selectedTrigger?: number; // increments when user selects/taps the card to trigger sheen slice
@@ -43,6 +45,7 @@ export const MoveCard: React.FC<MoveCardProps> = ({
   isSouthPaw = false,
   stance,
   selectedTrigger,
+  direction,
 }) => {
   // Responsive sizing for larger screens (e.g., tablets)
   const { width } = useWindowDimensions();
@@ -52,6 +55,13 @@ export const MoveCard: React.FC<MoveCardProps> = ({
   // Reanimated shared values for performant, natural animations
   const slideX = useSharedValue(0); // for 'new' (slide) mode
   const cardScale = useSharedValue(1); // subtle spring bump on entry
+  // rotation for small wiggle after entry
+  const cardRotate = useSharedValue(0);
+  // for punch-like recoil: 3D rotation and small translation
+  const cardRotateX = useSharedValue(0);
+  const cardRotateY = useSharedValue(0);
+  const cardTransX = useSharedValue(0);
+  const cardTransY = useSharedValue(0);
   // Text entrance animation
   const textOpacity = useSharedValue(1);
   const textTranslateY = useSharedValue(0);
@@ -122,12 +132,145 @@ export const MoveCard: React.FC<MoveCardProps> = ({
       // Slide the entire card from off-screen right into place with a soft landing bump
       slideX.value = width;
       slideX.value = withTiming(0, { duration: 360, easing: Easing.out(Easing.cubic) });
-      cardScale.value = 0.5;
-      cardScale.value = withSpring(1, { damping: 14, stiffness: 120, mass: 1});
+      // start smaller and pop in with a spring; when finished, do a tiny wiggle and settle
+      cardScale.value = 0.2;
+      cardScale.value = withSpring(1, { damping: 14, stiffness: 120, mass: 1}, (finished) => {
+        'worklet';
+        if (finished) {
+          // compute randomized recoil values on the JS thread and bake into the springs
+        }
+      });
+      // Deterministic recoil values derived from the move `direction` (no randomness)
+      // values chosen to feel like a hit recoil: rotateX (tilt forward/back),
+      // rotateY (tilt left/right), translateX/Y small nudge in that direction
+      let rx = 0; // rotateX degrees
+      let ry = 0; // rotateY degrees
+      let tx = 0; // translateX px
+      let ty = 0; // translateY px
+      // Stronger effect for 'new' animationMode, smaller for 'old'
+      const strength = animationMode === 'new' ? 1 : 0.55;
+      switch (direction) {
+        case 'right':
+          // rotateY sign inverted so the right edge dips back visually
+          ry = -14 * strength;
+          tx = 10 * strength; // move to the right
+          rx = 6 * strength * 0.35;
+          ty = 4 * strength * 0.35;
+          break;
+        case 'left':
+          ry = 14 * strength;
+          tx = -10 * strength;
+          rx = 6 * strength * 0.35;
+          ty = 4 * strength * 0.35;
+          break;
+        case 'up':
+          // rotateX sign inverted to visually lift the top edge back
+          rx = 12 * strength;
+          ty = -8 * strength; // up on screen
+          ry = 5 * strength * 0.4;
+          tx = 4 * strength * 0.4;
+          break;
+        case 'down':
+          rx = -12 * strength;
+          ty = 8 * strength; // down on screen
+          ry = 5 * strength * 0.4;
+          tx = 4 * strength * 0.4;
+          break;
+        default:
+          // neutral slight bounce
+          rx = 6 * strength;
+          ry = -2 * strength;
+          tx = 4 * strength;
+          ty = 2 * strength;
+      }
+      // apply an immediate recoil using springs + settle sequence
+      cardRotateX.value = withSequence(
+        withSpring(rx, { damping: 8, stiffness: 140 }),
+        withSpring(-rx * 0.35, { damping: 12, stiffness: 160 }),
+        withSpring(0, { damping: 18, stiffness: 220 }),
+      );
+      cardRotateY.value = withSequence(
+        withSpring(ry, { damping: 8, stiffness: 140 }),
+        withSpring(-ry * 0.35, { damping: 12, stiffness: 160 }),
+        withSpring(0, { damping: 18, stiffness: 220 }),
+      );
+      cardTransX.value = withSequence(
+        withSpring(tx, { damping: 9, stiffness: 160 }),
+        withSpring(0, { damping: 16, stiffness: 210 }),
+      );
+      cardTransY.value = withSequence(
+        withSpring(ty, { damping: 9, stiffness: 160 }),
+        withSpring(0, { damping: 16, stiffness: 210 }),
+      );
+      // add a tiny bounce overshoot on scale for added weight, then settle
+      cardScale.value = withSpring(1.03, { damping: 12, stiffness: 160 }, (innerFinished) => {
+        'worklet';
+        if (innerFinished) {
+          cardScale.value = withSpring(1, { damping: 18, stiffness: 240 });
+        }
+      });
     } else if (animationMode === 'old') {
       // Subtle spring bump to complement tilt without heavy effects
       cardScale.value = 1.2;
-      cardScale.value = withSpring(1, { damping: 17, stiffness: 190, mass: 0.6});
+      cardScale.value = withSpring(1, { damping: 17, stiffness: 190, mass: 0.6}, (finished) => {
+        'worklet';
+        if (finished) {
+          // smaller randomized recoil for 'old' mode
+        }
+      });
+      // deterministic smaller recoil for 'old' mode based on direction
+      const oldStrength = 0.55;
+      let rxOld = 0;
+      let ryOld = 0;
+      let txOld = 0;
+      let tyOld = 0;
+      switch (direction) {
+        case 'right':
+          ryOld = -14 * oldStrength; // match visual right tilt
+          txOld = 8 * oldStrength;
+          rxOld = 5 * oldStrength;
+          tyOld = 3 * oldStrength;
+          break;
+        case 'left':
+          ryOld = 14 * oldStrength;
+          txOld = -8 * oldStrength;
+          rxOld = 5 * oldStrength;
+          tyOld = 3 * oldStrength;
+          break;
+        case 'up':
+          rxOld = 10 * oldStrength;
+          tyOld = -6 * oldStrength;
+          ryOld = 3 * oldStrength;
+          txOld = 2 * oldStrength;
+          break;
+        case 'down':
+          rxOld = -10 * oldStrength;
+          tyOld = 6 * oldStrength;
+          ryOld = 3 * oldStrength;
+          txOld = 2 * oldStrength;
+          break;
+        default:
+          rxOld = 4 * oldStrength;
+          ryOld = -1 * oldStrength;
+          txOld = 3 * oldStrength;
+          tyOld = 2 * oldStrength;
+      }
+      cardRotateX.value = withSequence(
+        withSpring(rxOld, { damping: 10, stiffness: 160 }),
+        withSpring(0, { damping: 18, stiffness: 220 }),
+      );
+      cardRotateY.value = withSequence(
+        withSpring(ryOld, { damping: 10, stiffness: 160 }),
+        withSpring(0, { damping: 18, stiffness: 220 }),
+      );
+      cardTransX.value = withSequence(
+        withSpring(txOld, { damping: 12, stiffness: 180 }),
+        withSpring(0, { damping: 18, stiffness: 220 }),
+      );
+      cardTransY.value = withSequence(
+        withSpring(tyOld, { damping: 12, stiffness: 180 }),
+        withSpring(0, { damping: 18, stiffness: 220 }),
+      );
       // Keep slide at rest
       slideX.value = 0;
     } else {
@@ -142,6 +285,11 @@ export const MoveCard: React.FC<MoveCardProps> = ({
     if (isGameOver || isRestPeriod) {
       slideX.value = 0;
       cardScale.value = 1;
+      cardRotate.value = 0;
+      cardRotateX.value = 0;
+      cardRotateY.value = 0;
+      cardTransX.value = 0;
+      cardTransY.value = 0;
       textOpacity.value = 1;
       textTranslateY.value = 0;
       textScale.value = 1;
@@ -151,11 +299,24 @@ export const MoveCard: React.FC<MoveCardProps> = ({
   // Animated styles (evaluated on UI thread)
   const outerAnimatedStyle = useAnimatedStyle(() => {
     const transforms: any[] = [];
+    // Add perspective for realistic rotateX/rotateY
+    transforms.push({ perspective: 800 });
     if (animationMode === 'new') {
-      transforms.push({ translateX: slideX.value });
+      transforms.push({ translateX: slideX.value + cardTransX.value });
+      transforms.push({ translateY: cardTransY.value });
+      // small 3D tilt to simulate punch impact
+      transforms.push({ rotateX: `${cardRotateX.value}deg` });
+      transforms.push({ rotateY: `${cardRotateY.value}deg` });
       transforms.push({ scale: cardScale.value });
+      // small z-rotation for additional personality
+      transforms.push({ rotateZ: `${cardRotate.value}deg` });
     } else if (animationMode === 'old') {
+      transforms.push({ translateX: cardTransX.value });
+      transforms.push({ translateY: cardTransY.value });
+      transforms.push({ rotateX: `${cardRotateX.value}deg` });
+      transforms.push({ rotateY: `${cardRotateY.value}deg` });
       transforms.push({ scale: cardScale.value });
+      transforms.push({ rotateZ: `${cardRotate.value}deg` });
     }
     return { transform: transforms };
   }, [animationMode]);
@@ -175,7 +336,6 @@ export const MoveCard: React.FC<MoveCardProps> = ({
         {
           width: rs(260) * scaleUp,
           height: rs(200) * scaleUp,
-          borderRadius: rs(20) * scaleUp,
         },
         outerAnimatedStyle,
       ]}
@@ -184,9 +344,10 @@ export const MoveCard: React.FC<MoveCardProps> = ({
       <RNAnimated.View
         style={[
           { width: '100%', height: '100%' },
-          animationMode === 'old'
+          animationMode !== 'none'
             ? {
                 transform: [
+                  { perspective: 800 },
                   {
                     rotateX: tiltX.interpolate({
                       inputRange: [-0.4, 0, 0.4],
@@ -213,6 +374,7 @@ export const MoveCard: React.FC<MoveCardProps> = ({
               paddingHorizontal: rs(16) * scaleUp,
               paddingVertical: rs(16) * scaleUp,
               borderRadius: rs(20) * scaleUp,
+              overflow: 'hidden',
             },
           ]}
           start={{ x: 0, y: 0 }}
@@ -289,8 +451,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: 260,
     height: 200,
-    borderRadius: 20,
-    overflow: 'hidden',
   },
   gradientBackground: {
     width: '100%',

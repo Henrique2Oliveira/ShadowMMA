@@ -1,6 +1,5 @@
 import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
@@ -135,7 +134,6 @@ export const LevelBar: React.FC<LevelBarProps> = ({
         ]).start(() => {
           // After pulse completes, reveal the new level number
           setDisplayedLevel(newLevel);
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
         });
       });
     } else {

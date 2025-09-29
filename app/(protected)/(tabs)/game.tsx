@@ -1079,6 +1079,7 @@ export default function Game() {
             isPaused={gameState.isPaused}
             animationMode={animationMode}
             isSouthPaw={stance === 'southpaw'}
+            direction={currentMove?.direction}
           />
         </View>
 
@@ -1221,7 +1222,6 @@ const styles = StyleSheet.create({
   newComboMessageContainer: {
     position: 'absolute',
     top: 120,
-
     backgroundColor: 'rgba(134, 33, 33, 1)',
     borderRadius: 10,
     padding: 12,
