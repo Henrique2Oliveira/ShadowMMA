@@ -1422,8 +1422,8 @@ export const submitFeedback = onRequest(async (req, res) => {
 
     // Email configuration via environment variables // esconder num env se for publico
     const host = "smtp.gmail.com";
-    const userEnv = "shadowmmastudios@gmail.com";
-    const pass = "xthdguqpejtfvxve"; 
+    const userEnv = 'shadowmmastudios@gmail.com';
+    const pass = "oygkgxkpjmfharpc"; 
     const to = 'shadowmmastudios@gmail.com';
 
     let emailed = false;
@@ -1433,7 +1433,7 @@ export const submitFeedback = onRequest(async (req, res) => {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const nodemailer = require('nodemailer');
         const transporter = nodemailer.createTransport({
-                service: 'gmail',
+        service: 'gmail',
         auth: {
           user: userEnv,
           pass: pass,
