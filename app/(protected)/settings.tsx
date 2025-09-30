@@ -40,6 +40,7 @@ export default function Settings() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [showPrivacyAdsModal, setShowPrivacyAdsModal] = useState(false);
+  
 
   // Enhanced notification error handling
   const [showNotificationError, setShowNotificationError] = useState(false);
@@ -233,6 +234,8 @@ export default function Settings() {
           <Text style={[styles.optionText, isTablet && styles.optionTextTablet]}>Privacy & Ads</Text>
           <MaterialCommunityIcons name="chevron-right" size={isTablet ? 30 : 24} color={Colors.text} />
         </TouchableOpacity>
+
+        
 
         <View style={styles.option}>
           <MaterialCommunityIcons name="bell" size={isTablet ? 30 : 24} color={Colors.text} />
@@ -503,6 +506,8 @@ export default function Settings() {
         onLimit={() => { setDenied(); setShowPrivacyAdsModal(false); }}
         onRequestClose={() => setShowPrivacyAdsModal(false)}
       />
+
+      
 
     </ScrollView>
   );

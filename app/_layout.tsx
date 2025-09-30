@@ -5,7 +5,7 @@ import { Colors } from '@/themes/theme';
 import { Stack, usePathname } from 'expo-router';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
-import Purchases, { LOG_LEVEL } from 'react-native-purchases';
+import Purchases from 'react-native-purchases';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RootLayout() {
@@ -30,7 +30,7 @@ export default function RootLayout() {
   };
 
   useEffect(() => {
-    Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
+    // Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
 
     if (Platform.OS === 'android') {
       Purchases.configure({ apiKey: "goog_WKPrTYSCxEvIzYhRBIXwOOsIJmY" });
@@ -38,18 +38,8 @@ export default function RootLayout() {
     else {
       console.warn("Purchases is only configured for Android in this app.");
     }
-
-    // getCustomerInfo();
   }, []);
 
-  async function getCustomerInfo() {
-    try {
-      const customerInfo = await Purchases.getCustomerInfo();
-      console.log("Customer Info:", JSON.stringify(customerInfo));
-    } catch (error) {
-      console.error("Error fetching customer info");
-    }
-  }
 
   return (
     <ErrorBoundary

@@ -1,3 +1,5 @@
+import { AlertModal } from '@/components/Modals/AlertModal';
+import FeedbackModal, { FeedbackPayload } from '@/components/Modals/FeedbackModal';
 import PlansModal from '@/components/Modals/PlansModal';
 import { SubscriptionPlan } from '@/config/subscriptionPlans';
 import { useAuth } from '@/contexts/AuthContext';
@@ -74,6 +76,8 @@ export default function Profile() {
   const [newBadge, setNewBadge] = useState<{ id: number; type: 'streak' | 'rounds' } | null>(null);
   const [badgeQueue, setBadgeQueue] = useState<{ id: number; type: 'streak' | 'rounds' }[]>([]);
   const [badgeModalVisible, setBadgeModalVisible] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackStatus, setFeedbackStatus] = useState<{ success?: boolean; message?: string }>({});
 
   // Define badge thresholds and mapping to images
   const badgeThresholds = [3, 7, 14, 30]; // streak (days) thresholds
@@ -577,6 +581,17 @@ export default function Profile() {
               <Text style={[styles.buttonText, { fontSize: font(16) }]}>Upgrade Plan</Text>
             </TouchableOpacity>
 
+            {/* Send Feedback below Upgrade Plan */}
+            <TouchableOpacity
+              style={[styles.button, { padding: spacing(18), borderRadius: uiScale(14), minHeight: uiScale(60, { category: 'button' }) }]}
+              onPress={() => setShowFeedbackModal(true)}
+              accessibilityLabel="Send Feedback or Report a Bug"
+              accessibilityRole="button"
+            >
+              <MaterialCommunityIcons name="email-edit" size={iconSize(24)} color={Colors.text} />
+              <Text style={[styles.buttonText, { fontSize: font(16) }]}>Send Feedback / Report a Bug</Text>
+            </TouchableOpacity>
+
             <TouchableOpacity
               style={[styles.button, { padding: spacing(18), borderRadius: uiScale(14), minHeight: uiScale(60, { category: 'button' }) }]}
               onPress={() => Linking.openURL('https://shadowmma.com/privacy-policy')}
@@ -609,6 +624,46 @@ export default function Profile() {
           setShowPaywall(false);
         }}
       />
+      {/* Feedback Modal */}
+      <FeedbackModal
+        visible={showFeedbackModal}
+        initialEmail={user?.email || undefined}
+        onCancel={() => setShowFeedbackModal(false)}
+        onSubmit={async (payload: FeedbackPayload) => {
+          try {
+            const idToken = await user?.getIdToken?.();
+            const resp = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/submitFeedback', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+              },
+              body: JSON.stringify(payload)
+            });
+            const data = await resp.json().catch(() => ({}));
+            if (!resp.ok || !data?.success) {
+              throw new Error(data?.error?.message || 'Failed to send feedback');
+            }
+            setShowFeedbackModal(false);
+            setFeedbackStatus({ success: true, message: 'Thanks! Your message was sent.' });
+          } catch (e: any) {
+            setFeedbackStatus({ success: false, message: e?.message || 'Could not send your message. Please try again later.' });
+          }
+        }}
+      />
+      {/* Feedback status alert */}
+      {feedbackStatus.message && (
+        <AlertModal
+          visible={!!feedbackStatus.message}
+          title={feedbackStatus.success ? 'Success' : 'Error'}
+          message={feedbackStatus.message}
+          type={feedbackStatus.success ? 'success' : 'error'}
+          primaryButton={{
+            text: 'OK',
+            onPress: () => setFeedbackStatus({})
+          }}
+        />
+      )}
       {/* Avatar edit modal (client-side only) */}
       <Modal visible={avatarModalVisible} transparent animationType="fade" onRequestClose={() => setAvatarModalVisible(false)}>
         <View style={styles.badgeModalOverlay}>

@@ -9,7 +9,7 @@ import { Text, TouchableOpacity } from 'react-native';
 export default function TabsLayout() {
   const router = useRouter();
 
-  const [fontsLoaded, fontError] = useFonts({
+  const [fontsLoaded] = useFonts({
     'CalSans': require('@/assets/fonts/CalSans-Regular.ttf'),
   });
 

@@ -1278,3 +1278,198 @@ export const revenuecatWebhook = onRequest(async (req, res) => {
     res.status(500).json({ success: false, message: 'Internal Server Error'});
   }
 });
+
+// Feedback endpoint: receives feedback/bug report and emails it to owner; also stores in Firestore as backup
+export const submitFeedback = onRequest(async (req, res) => {
+  try {
+    if (req.method !== 'POST') {
+      res.status(405).send('Method Not Allowed');
+      return;
+    }
+
+    // Parse body
+    const { type, subject, message, contactEmail, allowContact } = (req.body || {}) as {
+      type?: 'feedback' | 'bug';
+      subject?: string;
+      message?: string;
+      contactEmail?: string;
+      allowContact?: boolean;
+    };
+
+    if (!subject || !message || subject.trim().length < 3 || message.trim().length < 10) {
+      res.status(400).json({ success: false, error: { code: 'invalid-input', message: 'Subject and message are required.' } });
+      return;
+    }
+
+    // Identify user if token provided (optional)
+    let uid: string | null = null;
+    let emailFromAuth: string | null = null;
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith('Bearer ')) {
+      try {
+        const idToken = authHeader.split('Bearer ')[1];
+        const decoded = await auth.verifyIdToken(idToken);
+        uid = decoded.uid;
+        emailFromAuth = decoded.email || null;
+      } catch {}
+    }
+
+    // --- Basic anti-abuse & rate limiting ---
+    // Key by uid if authenticated, otherwise by IP address
+    const xff = (req.headers['x-forwarded-for'] as string) || '';
+    const ip = (xff.split(',')[0] || (req as any).ip || '').toString().trim() || 'unknown';
+    const rateKeyRaw = uid ? `uid:${uid}` : `ip:${ip}`;
+    const rateKey = rateKeyRaw.replace(/[^a-zA-Z0-9:_-]/g, '');
+
+    // Limits (tune as needed)
+    const nowMs = Date.now();
+    const HOUR_MS = 60 * 60 * 1000;
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const hourLimit = uid ? 5 : 3;
+    const dayLimit = uid ? 15 : 6;
+    const DUP_WINDOW_MS = 10 * 60 * 1000; // 10 minutes duplicate window
+
+    // Pre-compute content hash for dedupe
+    const contentHash = crypto.createHash('sha1').update(`${(type||'feedback')}|${subject.trim()}|${message.trim()}`).digest('hex');
+
+    const rlRef = db.collection('ratelimits').doc(`feedback_${rateKey}`);
+    let retryAfterSeconds: number | undefined;
+    // Use a transaction to safely check/update counters
+    try {
+      await db.runTransaction(async (t) => {
+        const snap = await t.get(rlRef);
+        const data = snap.exists ? (snap.data() as any) : {};
+
+        const hourStartMs = typeof data?.hourStart?.toMillis === 'function' ? data.hourStart.toMillis() : (typeof data?.hourStart === 'number' ? data.hourStart : 0);
+        const dayStartMs = typeof data?.dayStart?.toMillis === 'function' ? data.dayStart.toMillis() : (typeof data?.dayStart === 'number' ? data.dayStart : 0);
+        let hourCount = typeof data?.hourCount === 'number' ? data.hourCount : 0;
+        let dayCount = typeof data?.dayCount === 'number' ? data.dayCount : 0;
+
+        // Reset windows if elapsed
+        if (!hourStartMs || (nowMs - hourStartMs) >= HOUR_MS) {
+          hourCount = 0;
+        }
+        if (!dayStartMs || (nowMs - dayStartMs) >= DAY_MS) {
+          dayCount = 0;
+        }
+
+        // Duplicate content within DUP_WINDOW_MS
+        const lastHash = (data?.lastContentHash as string) || '';
+        const lastHashAtMs = typeof data?.lastHashAt?.toMillis === 'function' ? data.lastHashAt.toMillis() : (typeof data?.lastHashAt === 'number' ? data.lastHashAt : 0);
+        if (lastHash && lastHash === contentHash && lastHashAtMs && (nowMs - lastHashAtMs) < DUP_WINDOW_MS) {
+          // Treat duplicates like rate limited
+          retryAfterSeconds = Math.ceil((DUP_WINDOW_MS - (nowMs - lastHashAtMs)) / 1000);
+          throw Object.assign(new Error('Duplicate submission detected'), { code: 409 });
+        }
+
+        // Enforce limits
+        if (hourCount + 1 > hourLimit) {
+          const waitMs = HOUR_MS - (nowMs - (hourStartMs || nowMs));
+          retryAfterSeconds = Math.max(1, Math.ceil(waitMs / 1000));
+          throw Object.assign(new Error('Too many requests (hourly limit)'), { code: 429 });
+        }
+        if (dayCount + 1 > dayLimit) {
+          const waitMs = DAY_MS - (nowMs - (dayStartMs || nowMs));
+          retryAfterSeconds = Math.max(1, Math.ceil(waitMs / 1000));
+          throw Object.assign(new Error('Too many requests (daily limit)'), { code: 429 });
+        }
+
+        // Update counters and dedupe state
+        const updates: any = {
+          hourCount: hourCount + 1,
+          dayCount: dayCount + 1,
+          lastContentHash: contentHash,
+          lastHashAt: FieldValue.serverTimestamp(),
+        };
+        if (!hourStartMs || (nowMs - hourStartMs) >= HOUR_MS) {
+          updates.hourStart = FieldValue.serverTimestamp();
+        }
+        if (!dayStartMs || (nowMs - dayStartMs) >= DAY_MS) {
+          updates.dayStart = FieldValue.serverTimestamp();
+        }
+        t.set(rlRef, updates, { merge: true });
+      });
+    } catch (e: any) {
+      const code = e?.code;
+      if (code === 429) {
+        if (retryAfterSeconds) res.setHeader('Retry-After', String(retryAfterSeconds));
+        res.status(429).json({ success: false, error: { code: 'rate_limited', message: 'Too many requests. Please try again later.', retryAfterSeconds } });
+        return;
+      }
+      if (code === 409) {
+        if (retryAfterSeconds) res.setHeader('Retry-After', String(retryAfterSeconds));
+        res.status(409).json({ success: false, error: { code: 'duplicate', message: 'Duplicate submission detected. Please wait before sending the same content again.', retryAfterSeconds } });
+        return;
+      }
+      // Unexpected transaction error -> proceed with conservative failure
+      logger.warn('Rate limit transaction failed', e);
+    }
+
+    // Persist feedback to Firestore for tracking
+    const fbRef = await db.collection('feedback').add({
+      type: type || 'feedback',
+      subject: subject.trim(),
+      message: message.trim(),
+      contactEmail: (contactEmail || emailFromAuth || '').toString().trim() || null,
+      allowContact: !!allowContact,
+      uid: uid || null,
+      userEmail: emailFromAuth || null,
+      createdAt: FieldValue.serverTimestamp(),
+      userAgent: (req.headers['user-agent'] as string) || null,
+      platform: (req.headers['x-client-platform'] as string) || null,
+      appVersion: (req.headers['x-app-version'] as string) || null,
+    });
+
+    // Email configuration via environment variables // esconder num env se for publico
+    const host = "smtp.gmail.com";
+    const userEnv = "shadowmmastudios@gmail.com";
+    const pass = "xthdguqpejtfvxve"; 
+    const to = 'shadowmmastudios@gmail.com';
+
+    let emailed = false;
+    if (host && userEnv && pass && to) {
+      try {
+        // Dynamic import to avoid type resolution issues in some environments
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const nodemailer = require('nodemailer');
+        const transporter = nodemailer.createTransport({
+                service: 'gmail',
+        auth: {
+          user: userEnv,
+          pass: pass,
+        },
+        });
+
+        const lines = [
+          `Type: ${type || 'feedback'}`,
+          `Subject: ${subject.trim()}`,
+          `Message:`,
+          message.trim(),
+          '',
+          `User ID: ${uid || 'anonymous'}`,
+          `User Email: ${emailFromAuth || 'unknown'}`,
+          `Contact Email: ${contactEmail || 'not provided'}`,
+          `Allow Contact: ${!!allowContact}`,
+          `Doc ID: ${fbRef.id}`,
+        ].join('\n');
+
+        await transporter.sendMail({
+          from: `Shadow MMA Feedback <${userEnv}>`,
+          to,
+          subject: `[ShadowMMA ${type === 'bug' ? 'Bug' : 'Feedback'}] ${subject.trim()}`,
+          text: lines
+        });
+        emailed = true;
+      } catch (e) {
+        logger.warn('Feedback email failed, stored in Firestore only', e as any);
+      }
+    } else {
+      logger.log('SMTP not configured; feedback stored in Firestore only');
+    }
+
+    res.status(200).json({ success: true, storedId: fbRef.id, emailed });
+  } catch (err: any) {
+    logger.error('submitFeedback error', err);
+    res.status(500).json({ success: false, error: { code: 'internal', message: 'Internal Server Error' } });
+  }
+});
