@@ -20,8 +20,15 @@ type ComboCardProps = {
 };
 
 const ComboCard = React.memo(({ name, type, level, categoryName, isLocked, onPress, proOnly, isFreePlan, onUpgradePress }: ComboCardProps) => {
+  // Treat pro-only gating differently from level-locked: keep vivid look but disable interaction
+  const proLocked = !!proOnly && !!isFreePlan;
+  const displayLocked = isLocked && !proLocked; // only dim when locked by level, not by plan
   // Map categories/types to vibrant gradient color pairs (mirrors gallery.tsx)
   const gradientColors = useMemo<[string, string]>(() => {
+    if (proLocked) {
+      // Premium gold gradient
+      return ['#2b2111', '#b08d57'];
+    }
     const key = (type || categoryName || '').toLowerCase();
     if (key.includes('punch')) return ['#ff512f', '#dd2476']; // red → magenta
     if (key.includes('kick')) return ['#7F00FF', '#E100FF']; // violet → pink
@@ -30,7 +37,7 @@ const ComboCard = React.memo(({ name, type, level, categoryName, isLocked, onPre
     if (key.includes('defense') || key.includes('defence')) return ['#00c6ff', '#0072ff']; // blue spectrum
     if (key.includes('footwork') || key.includes('foot')) return ['#fceabb', '#f8b500']; // pale gold → amber
     return ['#434343', '#000000'];
-  }, [type, categoryName]);
+  }, [type, categoryName, proLocked]);
 
   // Responsive sizing
   const bucket = getDeviceBucket();
@@ -57,7 +64,12 @@ const ComboCard = React.memo(({ name, type, level, categoryName, isLocked, onPre
 
   return (
     <TouchableOpacity
-      style={[styles.comboCard, { minHeight }, isLocked && styles.lockedCard]}
+      style={[
+        styles.comboCard,
+        { minHeight },
+        displayLocked && styles.lockedCard,
+        proLocked && styles.proCard,
+      ]}
       onPress={() => { onPress(); }}
       disabled={isLocked}
     >
@@ -69,8 +81,8 @@ const ComboCard = React.memo(({ name, type, level, categoryName, isLocked, onPre
             color="#02020247"
             style={styles.typeIcon}
           />
-          <Text style={[styles.comboTitle, { fontSize: titleSize }, isLocked && styles.lockedText]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>{name}</Text>
-          {isLocked && (
+          <Text style={[styles.comboTitle, { fontSize: titleSize }, displayLocked && styles.lockedText]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>{name}</Text>
+          {displayLocked && (
             <MaterialCommunityIcons
               name="lock"
               size={uiScale(35, { category: 'icon' })}
@@ -78,23 +90,22 @@ const ComboCard = React.memo(({ name, type, level, categoryName, isLocked, onPre
               style={styles.lockIcon}
             />
           )}
-          {proOnly && isFreePlan && (
-            <View style={styles.proWrap}>
-              <View style={styles.proPill}>
-                <Text style={styles.proPillText}>PRO</Text>
-              </View>
-              <TouchableOpacity style={styles.upgradeBtn} onPress={() => onUpgradePress && onUpgradePress()}>
-                <Text style={styles.upgradeText}>Upgrade</Text>
-              </TouchableOpacity>
-            </View>
-          )}
         </View>
-  <Text style={[styles.comboDescription, { fontSize: descSize, lineHeight: descSize + 4 }, isLocked && styles.lockedText]}>
+        <Text style={[styles.comboDescription, { fontSize: descSize, lineHeight: descSize + 4 }, displayLocked && styles.lockedText]}>
           {categoryName ? `${type ?? ''}` : type ?? ''}
         </Text>
-        <View style={[styles.levelBadge, isLocked && styles.lockedLevelBadge]}>
-          <Text style={[styles.levelText, { fontSize: lvlSize }, isLocked && styles.lockedLevelText]}>Level  {level}</Text>
+        <View style={[styles.levelBadge, displayLocked && styles.lockedLevelBadge]}>
+          <Text style={[styles.levelText, { fontSize: lvlSize }, displayLocked && styles.lockedLevelText]}>Level  {level}</Text>
         </View>
+
+        {proLocked && (
+          <View pointerEvents="none" style={styles.proOverlay}>
+            <View style={styles.proOverlayBadge}>
+              <MaterialCommunityIcons name="crown" size={uiScale(16, { category: 'icon' })} color="#1b1b1b" style={{ marginRight: 6 }} />
+              <Text style={styles.proOverlayText}>PRO ONLY</Text>
+            </View>
+          </View>
+        )}
       </LinearGradient>
     </TouchableOpacity>
   );
@@ -113,6 +124,16 @@ const styles = StyleSheet.create({
   lockedCard: {
     opacity: 0.5,
   },
+  proCard: {
+    // premium border + subtle glow
+    borderWidth: 1,
+    borderColor: '#d4af37',
+    shadowColor: '#d4af37',
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 6,
+  },
   lockedText: {
     color: Colors.text + '99',
   },
@@ -122,40 +143,7 @@ const styles = StyleSheet.create({
     right: 5,
     zIndex: 5,
   },
-  proPill: {
-    position: 'absolute',
-    top: 28,
-    right: 8,
-    backgroundColor: '#ffc107',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  proPillText: {
-    color: '#1b1b1b',
-    fontFamily: Typography.fontFamily,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  proWrap: {
-    position: 'absolute',
-    top: 12,
-    right: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  upgradeBtn: {
-    backgroundColor: '#1a73e8',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  upgradeText: {
-    color: '#fff',
-    fontFamily: Typography.fontFamily,
-    fontWeight: '700',
-  },
+  // Removed inline "Upgrade" button for pro-only cards; using centered overlay instead
   lockedLevelBadge: {
     backgroundColor: 'rgba(22, 22, 22, 1)',
   },
@@ -197,6 +185,27 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontFamily: Typography.fontFamily,
     fontSize: 15,
+  },
+  proOverlay: {
+    ...StyleSheet.absoluteFillObject as any,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  proOverlayBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f4d03f',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#b8860b',
+  },
+  proOverlayText: {
+    color: '#1b1b1b',
+    fontFamily: Typography.fontFamily,
+    fontWeight: '800',
+    letterSpacing: 1,
   },
 });
 

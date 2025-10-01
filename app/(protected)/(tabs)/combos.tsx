@@ -91,6 +91,7 @@ export default function Combos() {
   const [error, setError] = useState<string | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [showPlansModal, setShowPlansModal] = useState(false);
+  const [showProCtaModal, setShowProCtaModal] = useState(false);
 
   const clientAuth = useMemo(() => getClientAuth(firebaseApp), []);
 
@@ -207,8 +208,7 @@ export default function Combos() {
   const handleComboPress = useCallback((item: ComboMeta, isLocked: boolean) => {
     if (item.proOnly && isFreePlan) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      setError('This combo is for Pro users only.');
-      setShowErrorModal(true);
+      setShowProCtaModal(true);
       return;
     }
     if (!isLocked) {
@@ -267,7 +267,6 @@ export default function Combos() {
             userLevel={userLevel}
             onPress={handleComboPress}
             isFreePlan={isFreePlan}
-            onUpgradePress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowPlansModal(true); }}
           />
         </View>
         {showBanner ? (
@@ -337,6 +336,32 @@ export default function Combos() {
           onClose={() => setShowErrorModal(false)}
         />
       )}
+
+      {/* PRO CTA for free users when tapping pro-only combos */}
+      <AlertModal
+        visible={showProCtaModal}
+        title="Unlock this combo"
+        message={
+          "• Unlock all PRO combos\n• Remove ads and interruptions\n• Access advanced drills and modes\n• New combos added regularly\n\nReady to level up your training?"
+        }
+        type="info"
+        primaryButton={{
+          text: 'See PRO Plans',
+          onPress: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setShowProCtaModal(false);
+            setShowPlansModal(true);
+          },
+        }}
+        secondaryButton={{
+          text: 'Not now',
+          onPress: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setShowProCtaModal(false);
+          },
+        }}
+        onClose={() => setShowProCtaModal(false)}
+      />
 
       {combos && combos.length > 0 && (
         <FlatList
