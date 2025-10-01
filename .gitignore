@@ -40,4 +40,3 @@ app-example
 
 # Local secrets (service account, combos export)
 secrets/
-constants/data.js
