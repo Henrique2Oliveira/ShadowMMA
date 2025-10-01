@@ -52,4 +52,4 @@ const uploadData = async () => {
     console.error("❌ Error uploading combos:", error);
   }
 };
-// uploadData();
+uploadData();
