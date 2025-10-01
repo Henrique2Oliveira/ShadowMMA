@@ -2,6 +2,7 @@ import TopBanner from '@/components/ads/TopBanner';
 import MemoizedComboCard from '@/components/MemoizedComboCard';
 import { AlertModal } from '@/components/Modals/AlertModal';
 import { FightModeModal } from '@/components/Modals/FightModeModal';
+import PlansModal from '@/components/Modals/PlansModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { app as firebaseApp } from '@/FirebaseConfig.js';
@@ -89,6 +90,7 @@ export default function Combos() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
+  const [showPlansModal, setShowPlansModal] = useState(false);
 
   const clientAuth = useMemo(() => getClientAuth(firebaseApp), []);
 
@@ -265,6 +267,7 @@ export default function Combos() {
             userLevel={userLevel}
             onPress={handleComboPress}
             isFreePlan={isFreePlan}
+            onUpgradePress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowPlansModal(true); }}
           />
         </View>
         {showBanner ? (
@@ -416,6 +419,11 @@ export default function Combos() {
         onStartFight={() => {
           setIsModalVisible(false);
         }}
+      />
+      <PlansModal
+        visible={showPlansModal}
+        onClose={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowPlansModal(false); }}
+        onSelectPlan={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowPlansModal(false); }}
       />
     </SafeAreaView>
   );

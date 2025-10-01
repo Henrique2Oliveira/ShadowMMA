@@ -17,9 +17,10 @@ interface MemoizedComboCardProps {
   userLevel: number;
   onPress: (item: ComboMeta, isLocked: boolean) => void;
   isFreePlan?: boolean;
+  onUpgradePress?: (item: ComboMeta) => void;
 }
 
-const MemoizedComboCard = ({ item, userLevel, onPress, isFreePlan = false }: MemoizedComboCardProps) => {
+const MemoizedComboCard = ({ item, userLevel, onPress, isFreePlan = false, onUpgradePress }: MemoizedComboCardProps) => {
   const isLocked: boolean = (item.level > userLevel) || (!!item.proOnly && isFreePlan);
 
   return (
@@ -33,6 +34,7 @@ const MemoizedComboCard = ({ item, userLevel, onPress, isFreePlan = false }: Mem
       isLocked={isLocked}
       proOnly={item.proOnly}
       isFreePlan={isFreePlan}
+      onUpgradePress={() => onUpgradePress && onUpgradePress(item)}
       onPress={() => onPress(item, isLocked)}
     />
   );

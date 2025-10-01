@@ -15,10 +15,11 @@ type ComboCardProps = {
   isLocked: boolean;
   proOnly?: boolean;
   isFreePlan?: boolean;
+  onUpgradePress?: () => void;
   onPress: () => void;
 };
 
-const ComboCard = React.memo(({ name, type, level, categoryName, isLocked, onPress, proOnly, isFreePlan }: ComboCardProps) => {
+const ComboCard = React.memo(({ name, type, level, categoryName, isLocked, onPress, proOnly, isFreePlan, onUpgradePress }: ComboCardProps) => {
   // Map categories/types to vibrant gradient color pairs (mirrors gallery.tsx)
   const gradientColors = useMemo<[string, string]>(() => {
     const key = (type || categoryName || '').toLowerCase();
@@ -78,8 +79,13 @@ const ComboCard = React.memo(({ name, type, level, categoryName, isLocked, onPre
             />
           )}
           {proOnly && isFreePlan && (
-            <View style={styles.proPill}>
-              <Text style={styles.proPillText}>PRO ONLY</Text>
+            <View style={styles.proWrap}>
+              <View style={styles.proPill}>
+                <Text style={styles.proPillText}>PRO</Text>
+              </View>
+              <TouchableOpacity style={styles.upgradeBtn} onPress={() => onUpgradePress && onUpgradePress()}>
+                <Text style={styles.upgradeText}>Upgrade</Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -130,6 +136,25 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily,
     fontWeight: '700',
     letterSpacing: 0.5,
+  },
+  proWrap: {
+    position: 'absolute',
+    top: 12,
+    right: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  upgradeBtn: {
+    backgroundColor: '#1a73e8',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  upgradeText: {
+    color: '#fff',
+    fontFamily: Typography.fontFamily,
+    fontWeight: '700',
   },
   lockedLevelBadge: {
     backgroundColor: 'rgba(22, 22, 22, 1)',

@@ -3,8 +3,6 @@
 # dependencies
 node_modules/
 
-constants/data.js
-
 # Expo
 .expo/
 dist/
@@ -39,3 +37,7 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+
+# Local secrets (service account, combos export)
+secrets/
+constants/data.js
