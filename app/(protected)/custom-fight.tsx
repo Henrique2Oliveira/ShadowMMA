@@ -25,6 +25,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
   type?: string;
   categoryId: string;
   comboId?: number | string;
+  proOnly?: boolean;
 };
 
 const CACHE_KEY = 'custom_fight_combos_meta_cache_v1_cat0_asc';
@@ -201,6 +202,12 @@ export default function CustomFight() {
 
   const toggleSelect = useCallback((item: ComboMeta, isLocked: boolean) => {
     if (isLocked) return;
+    const plan = (userData?.plan || 'free').toLowerCase();
+    if (item.proOnly && plan === 'free') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setShowPlansModal(true);
+      return;
+    }
     const id = item.id;
     const type = item.type || 'Punches';
     setSelected(prev => {
@@ -213,7 +220,7 @@ export default function CustomFight() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       return [...prev, { id: String(id), type }];
     });
-  }, []);
+  }, [userData?.plan]);
 
   const isSelected = useCallback((item: ComboMeta) => {
     const id = item.id;
@@ -243,11 +250,13 @@ export default function CustomFight() {
       if (remaining <= 0) return prev;
       const already = new Set(prev.map(p => String(p.id)));
       const toAdd: Array<{ id: string; type: string }> = [];
+      const plan = (userData?.plan || 'free').toLowerCase();
       for (const c of combos) {
         const cType = c.type || 'Punches';
         const id = c.id;
         const locked = c.level > userLevel;
-        if (cType === type && !locked && !already.has(String(id))) {
+        const proBlocked = !!c.proOnly && plan === 'free';
+        if (cType === type && !locked && !proBlocked && !already.has(String(id))) {
           toAdd.push({ id: String(id), type: cType });
           if (toAdd.length >= remaining) break;
         }
@@ -256,7 +265,7 @@ export default function CustomFight() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       return [...prev, ...toAdd];
     });
-  }, [combos, userLevel]);
+  }, [combos, userLevel, userData?.plan]);
 
   const handleStart = useCallback(() => {
     if (selected.length === 0) return;
@@ -277,6 +286,7 @@ export default function CustomFight() {
   const SelectableComboItem = useCallback(({ item }: { item: ComboMeta }) => {
     const locked = item.level > userLevel;
     const selected = isSelected(item);
+    const isFreePlan = (userData?.plan || 'free') === 'free';
 
     return (
       <View style={[styles.cardWrapper, { marginVertical: uiScale(4, { category: 'spacing' }) }]}>        
@@ -284,6 +294,7 @@ export default function CustomFight() {
           item={item}
           userLevel={userLevel}
           onPress={() => toggleSelect(item, locked)}
+          isFreePlan={isFreePlan}
         />
         <View pointerEvents="none" style={[styles.fullOverlay, { opacity: selected ? 1 : 0 }]}>          
           <LinearGradient colors={["rgba(0,0,0,0.05)", "rgba(0,0,0,0.8)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.overlayInner}>

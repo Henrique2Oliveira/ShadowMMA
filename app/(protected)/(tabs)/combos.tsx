@@ -27,6 +27,7 @@ type ComboMeta = {
   categoryId: string;
   categoryName?: string;
   comboId?: number | string;
+  proOnly?: boolean;
 };
 
 const CACHE_KEY = 'combos_meta_cache_v3_cat0_asc';
@@ -200,7 +201,14 @@ export default function Combos() {
     }
   }, []);
 
+  const isFreePlan = (userData?.plan || 'free') === 'free';
   const handleComboPress = useCallback((item: ComboMeta, isLocked: boolean) => {
+    if (item.proOnly && isFreePlan) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setError('This combo is for Pro users only.');
+      setShowErrorModal(true);
+      return;
+    }
     if (!isLocked) {
   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   setModalConfig({
@@ -218,7 +226,7 @@ export default function Combos() {
         saveRecentCombo(item.comboId);
       }
     }
-  }, [setModalConfig, saveRecentCombo]);
+  }, [setModalConfig, saveRecentCombo, isFreePlan]);
 
   const userLevel = useMemo(() => getUserLevel(userData?.xp || 0), [userData?.xp]);
 
@@ -240,7 +248,7 @@ export default function Combos() {
     });
   }, [combos, selectedType, recentComboIds]);
   
-  const isFreeUser = (userData?.plan || 'free') === 'free';
+  const isFreeUser = isFreePlan;
   
   const deviceBucket = getDeviceBucket();
   const cardVerticalGap = deviceBucket === 'tablet'
@@ -256,6 +264,7 @@ export default function Combos() {
             item={item}
             userLevel={userLevel}
             onPress={handleComboPress}
+            isFreePlan={isFreePlan}
           />
         </View>
         {showBanner ? (

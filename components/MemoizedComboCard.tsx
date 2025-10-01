@@ -9,16 +9,18 @@ type ComboMeta = {
   categoryId: string;
   categoryName?: string;
   comboId?: number | string;
+  proOnly?: boolean;
 };
 
 interface MemoizedComboCardProps {
   item: ComboMeta;
   userLevel: number;
   onPress: (item: ComboMeta, isLocked: boolean) => void;
+  isFreePlan?: boolean;
 }
 
-const MemoizedComboCard = ({ item, userLevel, onPress }: MemoizedComboCardProps) => {
-  const isLocked = item.level > userLevel;
+const MemoizedComboCard = ({ item, userLevel, onPress, isFreePlan = false }: MemoizedComboCardProps) => {
+  const isLocked: boolean = (item.level > userLevel) || (!!item.proOnly && isFreePlan);
 
   return (
     <ComboCard
@@ -29,6 +31,8 @@ const MemoizedComboCard = ({ item, userLevel, onPress }: MemoizedComboCardProps)
       categoryName={item.categoryName}
       comboId={item.comboId}
       isLocked={isLocked}
+      proOnly={item.proOnly}
+      isFreePlan={isFreePlan}
       onPress={() => onPress(item, isLocked)}
     />
   );

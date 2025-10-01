@@ -161,6 +161,7 @@ export const combinationSets = [{
         "comboId": 7,
         "level": 4,
         "name": "Uppercut Surprise",
+        "proOnly": true,
         "moves": [
           {
             "move": "JAB",

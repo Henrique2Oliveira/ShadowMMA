@@ -13,10 +13,12 @@ type ComboCardProps = {
   categoryName?: string;
   comboId?: number | string;
   isLocked: boolean;
+  proOnly?: boolean;
+  isFreePlan?: boolean;
   onPress: () => void;
 };
 
-const ComboCard = React.memo(({ name, type, level, categoryName, isLocked, onPress }: ComboCardProps) => {
+const ComboCard = React.memo(({ name, type, level, categoryName, isLocked, onPress, proOnly, isFreePlan }: ComboCardProps) => {
   // Map categories/types to vibrant gradient color pairs (mirrors gallery.tsx)
   const gradientColors = useMemo<[string, string]>(() => {
     const key = (type || categoryName || '').toLowerCase();
@@ -75,6 +77,11 @@ const ComboCard = React.memo(({ name, type, level, categoryName, isLocked, onPre
               style={styles.lockIcon}
             />
           )}
+          {proOnly && isFreePlan && (
+            <View style={styles.proPill}>
+              <Text style={styles.proPillText}>PRO ONLY</Text>
+            </View>
+          )}
         </View>
   <Text style={[styles.comboDescription, { fontSize: descSize, lineHeight: descSize + 4 }, isLocked && styles.lockedText]}>
           {categoryName ? `${type ?? ''}` : type ?? ''}
@@ -108,6 +115,21 @@ const styles = StyleSheet.create({
     top: 26,
     right: 5,
     zIndex: 5,
+  },
+  proPill: {
+    position: 'absolute',
+    top: 28,
+    right: 8,
+    backgroundColor: '#ffc107',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  proPillText: {
+    color: '#1b1b1b',
+    fontFamily: Typography.fontFamily,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   lockedLevelBadge: {
     backgroundColor: 'rgba(22, 22, 22, 1)',

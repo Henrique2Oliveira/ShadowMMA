@@ -683,17 +683,16 @@ export const startFight = onRequest(async (req, res) => {
         return;
       }
 
-      let updatedFightsLeft = undefined as number | undefined;
-      const updates: any = { playing: true };
-
-      // Fetch user for fightsLeft management
-      const userRef = db.collection("users").doc(uid);
-      const userDoc = await userRef.get();
-      if (!userDoc.exists) {
-        res.status(404).send("User not found");
+      // Prevent free users from playing pro-only combos
+      const isProOnly = Boolean((found as any)?.proOnly);
+      const plan = (userData?.plan || 'free').toLowerCase();
+      if (isProOnly && plan === 'free') {
+        res.status(403).json({ error: 'pro-required', message: 'This combo is available for Pro users only.' });
         return;
       }
-      const userData = userDoc.data();
+
+      let updatedFightsLeft = undefined as number | undefined;
+      const updates: any = { playing: true };
       if (userData?.plan === 'free') {
         if (!userData?.fightsLeft || userData.fightsLeft <= 0) {
           res.status(403).json({ error: "No fights left", fightsLeft: userData?.fightsLeft || 0 });
@@ -707,7 +706,7 @@ export const startFight = onRequest(async (req, res) => {
   updates.currentFightRound = fightRounds;
   updates.currentFightTime = Math.round(fightTimePerRoundMinutes * fightRounds); // total minutes for this fight
       
-      await userRef.update(updates);
+  await userRef.update(updates);
 
       res.status(200).json({ combos: [found], fightsLeft: updatedFightsLeft });
       return;
@@ -729,7 +728,14 @@ export const startFight = onRequest(async (req, res) => {
   let totalAvailable = 0;
   moveTypesArray.forEach((moveType) => {
     const arr: ComboT[] = ((comboData as any)?.levels?.[moveType] || []).filter(
-      (c: any) => typeof c?.level === 'number' && c.level <= currentUserLevel
+      (c: any) => {
+        if (!(typeof c?.level === 'number' && c.level <= currentUserLevel)) return false;
+        // Filter out pro-only combos for free users
+        const isProOnly = Boolean(c?.proOnly);
+        const plan = (userData?.plan || 'free').toLowerCase();
+        if (isProOnly && plan === 'free') return false;
+        return true;
+      }
     );
     if (arr.length) {
       // Slight shuffle then sort by level desc to prefer higher within each type
@@ -1032,6 +1038,7 @@ export const getCombosMeta = onRequest(async (req, res) => {
       categoryId: string;
       categoryName?: string;
       comboId: number | string;
+      proOnly?: boolean;
     }> = [];
 
     const pushFromLevels = (
@@ -1063,6 +1070,7 @@ export const getCombosMeta = onRequest(async (req, res) => {
             categoryId,
             categoryName,
             comboId: comboIdVal,
+            proOnly: Boolean((combo as any)?.proOnly),
           });
         });
       }
@@ -1083,6 +1091,28 @@ export const getCombosMeta = onRequest(async (req, res) => {
         return;
       }
       pushFromLevels(docSnap.id, data?.category, data.levels as Record<string, ComboItem[]>);
+      // Also support optional flat combos array with type field
+      if (Array.isArray((data as any).combos)) {
+        const arr = (data as any).combos as ComboItem[];
+        arr.forEach((combo, idx) => {
+          const levelNum = typeof combo.level === 'number' ? combo.level : 0;
+          const displayName = combo.name || combo.title || `Combo ${idx + 1}`;
+          const comboIdVal = combo.comboId ?? idx;
+          const comboType = combo.type || 'Punches';
+          if (moveTypeFilter && moveTypeFilter !== comboType) return;
+          if (comboIdQuery && String(comboIdVal) !== String(comboIdQuery)) return;
+          results.push({
+            id: `${docSnap.id}-${comboType}-${String(comboIdVal)}`,
+            name: String(displayName),
+            level: levelNum,
+            type: comboType,
+            categoryId: docSnap.id,
+            categoryName: data?.category,
+            comboId: comboIdVal,
+            proOnly: Boolean((combo as any)?.proOnly),
+          });
+        });
+      }
     }
 
     // Sort by level asc then name asc
