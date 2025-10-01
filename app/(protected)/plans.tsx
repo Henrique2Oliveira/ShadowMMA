@@ -153,7 +153,7 @@ export default function Plans() {
       setRcPlans(plans);
       fetchSubscriptionDetails();
     } catch (error) {
-      console.error('[RevenueCat] Error fetching offerings', error);
+      // console.error('[RevenueCat] Error fetching offerings', error);
       setError('Unable to load live plans. Showing defaults.');
       setRcPlans([]);
     } finally {
@@ -192,7 +192,7 @@ export default function Plans() {
       }) as string;
       await Linking.openURL(fallback);
     } catch (err) {
-      console.error('[Subscriptions] Manage subscription error', err);
+      // console.error('[Subscriptions] Manage subscription error', err);
       showStatus('Subscriptions', 'Unable to open subscription management. Please try again later.', 'error');
     }
   };
@@ -209,7 +209,7 @@ export default function Plans() {
       showStatus('Subscriptions', 'Subscription data synced.', 'success');
       fetchSubscriptionDetails();
     } catch (err) {
-      console.error('[Subscriptions] Sync error', err);
+      // console.error('[Subscriptions] Sync error', err);
       showStatus('Subscriptions', 'Failed to sync subscription data.', 'error');
     } finally {
       setLoading(false);
@@ -234,7 +234,7 @@ export default function Plans() {
     } catch (err: any) {
       const cancelled = err?.userCancelled || err?.code === 'PURCHASE_CANCELLED_ERROR' || err?.code === '1';
       if (!cancelled) {
-        console.error('[Subscriptions] Restore error', err);
+        // console.error('[Subscriptions] Restore error', err);
         showStatus('Restore', 'Could not restore purchases. Please try again later.', 'error');
       }
     } finally {
@@ -388,7 +388,7 @@ export default function Plans() {
       } catch (e: any) {
         const cancelled = e?.userCancelled || e?.code === 'PURCHASE_CANCELLED_ERROR' || e?.code === '1';
         if (cancelled) return;
-        console.error('[RevenueCat] Purchase error:', e);
+        // console.error('[RevenueCat] Purchase error:', e);
         setPurchaseModalTitle('Purchase Failed');
         setPurchaseModalMessage('We could not complete your purchase. Please try again later.');
         setPurchaseModalType('error');
@@ -433,7 +433,7 @@ export default function Plans() {
     } catch (e: any) {
       const cancelled = e?.userCancelled || e?.code === 'PURCHASE_CANCELLED_ERROR' || e?.code === '1';
       if (cancelled) return;
-      console.error('[RevenueCat] Upgrade purchase error:', e);
+      // console.error('[RevenueCat] Upgrade purchase error:', e);
       setPurchaseModalTitle('Upgrade Failed');
       setPurchaseModalMessage('We could not complete the upgrade. Please try again later.');
       setPurchaseModalType('error');
@@ -476,7 +476,7 @@ export default function Plans() {
       setPurchaseModalVisible(true);
       setTimeout(() => { try { refreshUserData?.(user?.uid ?? ''); } catch {} }, 2500);
     } catch (err) {
-      console.error('[Subscriptions] Schedule switch error', err);
+      // console.error('[Subscriptions] Schedule switch error', err);
       setPurchaseModalTitle('Could Not Open');
       setPurchaseModalType('error');
       setPurchaseModalMessage('We could not open subscription management. Please try again later.');
@@ -525,7 +525,7 @@ export default function Plans() {
       // Refresh local user data after a short delay (gives store time)
       setTimeout(() => { try { refreshUserData?.(user?.uid ?? ''); } catch {} }, 2500);
     } catch (err) {
-      console.error('[Subscriptions] Downgrade/manage error', err);
+      // console.error('[Subscriptions] Downgrade/manage error', err);
       setPurchaseModalTitle('Unable to Open');
       setPurchaseModalType('error');
       setPurchaseModalMessage('We could not open the subscription management page. Please try again later from the Manage Subscriptions button.');

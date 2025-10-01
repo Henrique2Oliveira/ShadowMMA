@@ -26,6 +26,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
   categoryId: string;
   comboId?: number | string;
   proOnly?: boolean;
+  moves?: Array<{ move: string }>;
 };
 
 const CACHE_KEY = 'custom_fight_combos_meta_cache_v1_cat0_asc';
@@ -287,6 +288,21 @@ export default function CustomFight() {
     const locked = item.level > userLevel;
     const selected = isSelected(item);
     const isFreePlan = (userData?.plan || 'free') === 'free';
+    const proLocked = !!item.proOnly && isFreePlan;
+    const showMoves = Array.isArray(item.moves) && item.moves.length > 0 && !locked && !proLocked;
+  const preview = showMoves ? item.moves!.slice(0, 6).map(m => (m?.move || '').replace(/\n/g, ' ')).filter(Boolean) : [];
+  const formatted = preview.map(txt => txt.replace(/\s/g, '\u00A0'));
+    const getPreviewGradient = (): [string, string] => {
+      if (proLocked) return ['#1f1608', '#8a6f3a'];
+      const key = (item.type || '').toLowerCase();
+      if (key.includes('punch')) return ['#2a1411', '#3a1127'];
+      if (key.includes('kick')) return ['#1b0e33', '#3b0b4a'];
+      if (key.includes('elbow')) return ['#2d1a05', '#3a2a0b'];
+      if (key.includes('knee')) return ['#0b2a25', '#163a26'];
+      if (key.includes('defense') || key.includes('defence')) return ['#0a2345', '#0a1740'];
+      if (key.includes('footwork') || key.includes('foot')) return ['#2d2712', '#3b2d0a'];
+      return ['#1c1c1c', '#111'];
+    };
 
     return (
       <View style={[styles.cardWrapper, { marginVertical: uiScale(4, { category: 'spacing' }) }]}>        
@@ -296,6 +312,18 @@ export default function CustomFight() {
           onPress={() => toggleSelect(item, locked)}
           isFreePlan={isFreePlan}
         />
+        {showMoves && (
+          <View style={cfPreviewStyles.wrapper}>
+            <LinearGradient colors={getPreviewGradient()} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={cfPreviewStyles.inner}>
+              {formatted.map((mv, i) => (
+                <React.Fragment key={`mv-${i}`}>
+                  {i > 0 && <Text style={[cfPreviewStyles.arrow, cfPreviewStyles.sep]}>→</Text>}
+                  <Text style={cfPreviewStyles.move} numberOfLines={1}>{mv}</Text>
+                </React.Fragment>
+              ))}
+            </LinearGradient>
+          </View>
+        )}
         <View pointerEvents="none" style={[styles.fullOverlay, { opacity: selected ? 1 : 0 }]}>          
           <LinearGradient colors={["rgba(0,0,0,0.05)", "rgba(0,0,0,0.8)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.overlayInner}>
             {/* <MaterialCommunityIcons name="check" size={overlayCheckSize} color="#ffffffff" style={{ marginBottom: spacing(4) }} /> */}
@@ -655,5 +683,44 @@ const styles = StyleSheet.create({
     color: '#d9f7e3',
     fontFamily: Typography.fontFamily,
     maxWidth: uiScale(140, { category: 'spacing' }),
+  },
+});
+
+// Compact moves preview under cards (similar to ComboCarousel)
+const cfPreviewStyles = StyleSheet.create({
+  wrapper: {
+    marginTop: uiScale(-2, { category: 'spacing' }),
+    paddingHorizontal: uiScale(6, { category: 'spacing' }),
+  },
+  inner: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: uiScale(10, { category: 'spacing' }),
+    paddingHorizontal: uiScale(10, { category: 'spacing' }),
+    borderBottomLeftRadius: uiScale(18, { category: 'button' }),
+    borderBottomRightRadius: uiScale(18, { category: 'button' }),
+    shadowColor: '#000',
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
+  move: {
+    color: 'rgba(255, 255, 255, 0.82)',
+    fontSize: uiScale(13, { category: 'font' }),
+    fontFamily: Typography.fontFamily,
+    lineHeight: uiScale(18, { category: 'font' }),
+    textAlign: 'center',
+  },
+  arrow: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: uiScale(13, { category: 'font' }),
+    fontFamily: Typography.fontFamily,
+    lineHeight: uiScale(18, { category: 'font' }),
+  },
+  sep: {
+    marginHorizontal: uiScale(6, { category: 'spacing' }),
   },
 });

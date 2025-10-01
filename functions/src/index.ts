@@ -1007,8 +1007,17 @@ export const getCombosMeta = onRequest(async (req, res) => {
       res.status(401).send("Unauthorized: Missing or invalid token");
       return;
     }
-    const idToken = authHeader.split("Bearer ")[1];
-    await auth.verifyIdToken(idToken);
+  const idToken = authHeader.split("Bearer ")[1];
+  const decoded = await auth.verifyIdToken(idToken);
+  const uid = decoded.uid;
+
+  // Fetch user to determine plan and level gating
+  const userRef = db.collection("users").doc(uid);
+  const userDoc = await userRef.get();
+  const userData = userDoc.exists ? userDoc.data() as any : undefined;
+  const userPlan = String(userData?.plan || 'free').toLowerCase();
+  const userXp = Math.min(MAX_XP, Math.max(0, Number(userData?.xp || 0)));
+  const userLevel = Math.min(MAX_LEVEL, Math.floor(userXp / 100));
 
     const category = (req.method === "GET" ? req.query.category : (req.body?.category as string | undefined)) as
       | string
@@ -1027,6 +1036,7 @@ export const getCombosMeta = onRequest(async (req, res) => {
       level?: number;
       type?: string; // e.g., Punches | Kicks | Defense
       description?: string;
+      moves?: any[]; // optional array of moves for the combo
       // any other fields are ignored on output
     };
 
@@ -1039,6 +1049,7 @@ export const getCombosMeta = onRequest(async (req, res) => {
       categoryName?: string;
       comboId: number | string;
       proOnly?: boolean;
+      moves?: Array<{ move: string }>; // included only when user has access
     }> = [];
 
     const pushFromLevels = (
@@ -1047,6 +1058,18 @@ export const getCombosMeta = onRequest(async (req, res) => {
       levelsObj: Record<string, ComboItem[]>
     ) => {
       if (!levelsObj || typeof levelsObj !== 'object') return;
+      const isPro = userPlan !== 'free';
+      const normalizeMoves = (arr: any): Array<{ move: string }> => {
+        const out: Array<{ move: string }> = [];
+        if (Array.isArray(arr)) {
+          for (const x of arr) {
+            if (typeof x === 'string') out.push({ move: x });
+            else if (x && typeof x === 'object' && (x as any).move) out.push({ move: String((x as any).move) });
+            if (out.length >= 6) break; // cap preview size
+          }
+        }
+        return out;
+      };
       for (const typeKey of Object.keys(levelsObj)) {
         const arr = Array.isArray(levelsObj[typeKey]) ? levelsObj[typeKey] : [];
         arr.forEach((combo, idx) => {
@@ -1062,6 +1085,9 @@ export const getCombosMeta = onRequest(async (req, res) => {
           // Filter by comboId if specified
           if (comboIdQuery && String(comboIdVal) !== String(comboIdQuery)) return;
 
+          const proOnly = Boolean((combo as any)?.proOnly);
+          const allowed = (levelNum <= userLevel) && (!proOnly || isPro);
+
           results.push({
             id: `${categoryId}-${typeKey}-${String(comboIdVal)}`,
             name: String(displayName),
@@ -1070,7 +1096,10 @@ export const getCombosMeta = onRequest(async (req, res) => {
             categoryId,
             categoryName,
             comboId: comboIdVal,
-            proOnly: Boolean((combo as any)?.proOnly),
+            proOnly,
+            ...(allowed && Array.isArray((combo as any)?.moves)
+              ? { moves: normalizeMoves((combo as any)?.moves) }
+              : {}),
           });
         });
       }
@@ -1094,6 +1123,18 @@ export const getCombosMeta = onRequest(async (req, res) => {
       // Also support optional flat combos array with type field
       if (Array.isArray((data as any).combos)) {
         const arr = (data as any).combos as ComboItem[];
+        const isPro = userPlan !== 'free';
+        const normalizeMoves = (arr: any): Array<{ move: string }> => {
+          const out: Array<{ move: string }> = [];
+          if (Array.isArray(arr)) {
+            for (const x of arr) {
+              if (typeof x === 'string') out.push({ move: x });
+              else if (x && typeof x === 'object' && (x as any).move) out.push({ move: String((x as any).move) });
+              if (out.length >= 6) break;
+            }
+          }
+          return out;
+        };
         arr.forEach((combo, idx) => {
           const levelNum = typeof combo.level === 'number' ? combo.level : 0;
           const displayName = combo.name || combo.title || `Combo ${idx + 1}`;
@@ -1101,6 +1142,8 @@ export const getCombosMeta = onRequest(async (req, res) => {
           const comboType = combo.type || 'Punches';
           if (moveTypeFilter && moveTypeFilter !== comboType) return;
           if (comboIdQuery && String(comboIdVal) !== String(comboIdQuery)) return;
+          const proOnly = Boolean((combo as any)?.proOnly);
+          const allowed = (levelNum <= userLevel) && (!proOnly || isPro);
           results.push({
             id: `${docSnap.id}-${comboType}-${String(comboIdVal)}`,
             name: String(displayName),
@@ -1109,7 +1152,10 @@ export const getCombosMeta = onRequest(async (req, res) => {
             categoryId: docSnap.id,
             categoryName: data?.category,
             comboId: comboIdVal,
-            proOnly: Boolean((combo as any)?.proOnly),
+            proOnly,
+            ...(allowed && Array.isArray((combo as any)?.moves)
+              ? { moves: normalizeMoves((combo as any)?.moves) }
+              : {}),
           });
         });
       }

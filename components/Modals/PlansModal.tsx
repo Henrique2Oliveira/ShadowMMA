@@ -273,7 +273,7 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
     } catch (err: any) {
       const cancelled = err?.userCancelled || err?.code === 'PURCHASE_CANCELLED_ERROR' || err?.code === '1';
       if (!cancelled) {
-        console.error('[RevenueCat] Restore error', err);
+        // console.error('[RevenueCat] Restore error', err);
         showStatus('Restore', 'Could not restore purchases. Please try again later.', 'error');
       }
     } finally {

@@ -29,6 +29,7 @@ type ComboMeta = {
   categoryName?: string;
   comboId?: number | string;
   proOnly?: boolean;
+  moves?: Array<{ move: string }>; // optional moves preview when allowed
 };
 
 const CACHE_KEY = 'combos_meta_cache_v3_cat0_asc';
@@ -259,6 +260,43 @@ export default function Combos() {
 
   const renderItem = useCallback(({ item, index }: { item: ComboMeta; index: number }) => {
     const showBanner = isFreeUser && index >= 0 && (index + 1) % 14 === 0; // Show banner after every 15 items for free users
+    const isLockedByLevel = item.level > (userLevel || 0);
+    const isProLocked = !!item.proOnly && isFreePlan;
+    const showMoves = Array.isArray(item.moves) && item.moves.length > 0 && !isLockedByLevel && !isProLocked;
+    const getPreviewGradient = (): [string, string] => {
+      if (isProLocked) return ['#1f1608', '#8a6f3a']; // darker gold palette
+      const key = (item.type || item.categoryName || '').toLowerCase();
+      if (key.includes('punch')) return ['#2a1411', '#3a1127'];
+      if (key.includes('kick')) return ['#1b0e33', '#3b0b4a'];
+      if (key.includes('elbow')) return ['#2d1a05', '#3a2a0b'];
+      if (key.includes('knee')) return ['#0b2a25', '#163a26'];
+      if (key.includes('defense') || key.includes('defence')) return ['#0a2345', '#0a1740'];
+      if (key.includes('footwork') || key.includes('foot')) return ['#2d2712', '#3b2d0a'];
+      return ['#1c1c1c', '#111'];
+    };
+    const renderMoves = () => {
+      if (!showMoves) return null;
+      const preview = item
+        .moves!
+        .slice(0, 6)
+        .map(m => (m?.move || '').replace(/\n/g, ' '))
+        .filter(Boolean);
+      if (preview.length === 0) return null;
+      const formatted = preview.map(txt => txt.replace(/\s/g, '\u00A0'));
+      const nodes: React.ReactNode[] = [];
+      const maxInline = Math.min(6, preview.length);
+      for (let i = 0; i < maxInline; i++) {
+        if (i > 0) nodes.push(<Text key={`arr-${i}`} style={[previewStyles.arrow, previewStyles.sep]}>→</Text>);
+        nodes.push(<Text key={`mv-${i}`} style={previewStyles.move} numberOfLines={1}>{formatted[i]}</Text>);
+      }
+      return (
+        <View style={previewStyles.wrapper}>
+          <LinearGradient colors={getPreviewGradient()} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={previewStyles.inner}>
+            {nodes}
+          </LinearGradient>
+        </View>
+      );
+    };
     return (
       <View>
         <View style={{ marginVertical: cardVerticalGap }}>
@@ -268,13 +306,14 @@ export default function Combos() {
             onPress={handleComboPress}
             isFreePlan={isFreePlan}
           />
+          {renderMoves()}
         </View>
         {showBanner ? (
           <TopBanner inline />
         ) : null}
       </View>
     );
-  }, [userLevel, handleComboPress, cardVerticalGap, isFreeUser]);
+  }, [userLevel, handleComboPress, cardVerticalGap, isFreeUser, isFreePlan]);
 
   const keyExtractor = useCallback((item: ComboMeta) => item.id, []);
 
@@ -565,5 +604,46 @@ const errStyles = StyleSheet.create({
     backgroundColor: '#ff4d4f',
     borderRadius: 8,
     overflow: 'hidden',
+  },
+});
+
+// Compact moves preview under cards (mirrors ComboCarousel style)
+const previewStyles = StyleSheet.create({
+  wrapper: {
+    // slight overlap so it looks like it emerges from under the card
+    marginTop: uiScale(-2, { category: 'spacing' }),
+    paddingHorizontal: uiScale(6, { category: 'spacing' }),
+  },
+  inner: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: uiScale(10, { category: 'spacing' }),
+    paddingHorizontal: uiScale(10, { category: 'spacing' }),
+
+    borderBottomLeftRadius: uiScale(18, { category: 'button' }),
+    borderBottomRightRadius: uiScale(18, { category: 'button' }),
+    shadowColor: '#000',
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
+  move: {
+    color: 'rgba(255, 255, 255, 0.82)',
+    fontSize: uiScale(13, { category: 'font' }),
+    fontFamily: Typography.fontFamily,
+    lineHeight: uiScale(18, { category: 'font' }),
+    textAlign: 'center',
+  },
+  arrow: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: uiScale(13, { category: 'font' }),
+    fontFamily: Typography.fontFamily,
+    lineHeight: uiScale(18, { category: 'font' }),
+  },
+  sep: {
+    marginHorizontal: uiScale(6, { category: 'spacing' }),
   },
 });
