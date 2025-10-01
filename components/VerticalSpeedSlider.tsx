@@ -102,6 +102,7 @@ export const VerticalSpeedSlider: React.FC<VerticalSpeedSliderProps> = ({
           !isPaused && styles.disabledButton
         ]}
         onPress={toggleSlider}
+        hitSlop={{ top: 10 * scaleUp, bottom: 10 * scaleUp, left: 10 * scaleUp, right: 10 * scaleUp }}
         disabled={!isPaused}
       >
         <Text style={[styles.speedText, { fontSize: 22 * scaleUp }]}>x{Math.round(speedMultiplier * 10) / 10}</Text>
@@ -119,7 +120,9 @@ export const VerticalSpeedSlider: React.FC<VerticalSpeedSliderProps> = ({
             paddingTop: 25 * scaleUp,
             paddingHorizontal: 10 * scaleUp,
           }
-        ]}>
+        ]}
+        {...panResponder.panHandlers}
+        >
           
           {/* Slider Track */}
           <View style={[styles.track, { width: TRACK_WIDTH, height: SLIDER_HEIGHT, borderRadius: 5 * scaleUp, marginVertical: 5 * scaleUp }]}>
@@ -148,7 +151,6 @@ export const VerticalSpeedSlider: React.FC<VerticalSpeedSliderProps> = ({
                 left: 30 * scaleUp,
               },
             ]}
-            {...panResponder.panHandlers}
           />
           
           {/* Speed Value Display */}

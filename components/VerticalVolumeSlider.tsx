@@ -88,6 +88,7 @@ export const VerticalVolumeSlider: React.FC<VerticalVolumeSliderProps> = ({
           !isPaused && styles.disabledButton,
         ]}
         onPress={toggleSlider}
+        hitSlop={{ top: 10 * scaleUp, bottom: 10 * scaleUp, left: 10 * scaleUp, right: 10 * scaleUp }}
         disabled={!isPaused}
         accessibilityRole="button"
         accessibilityLabel="Volume"
@@ -113,6 +114,7 @@ export const VerticalVolumeSlider: React.FC<VerticalVolumeSliderProps> = ({
               paddingHorizontal: 10 * scaleUp,
             },
           ]}
+          {...panResponder.panHandlers}
         >
           {/* Slider Track */}
           <View
@@ -146,7 +148,6 @@ export const VerticalVolumeSlider: React.FC<VerticalVolumeSliderProps> = ({
                 left: 30 * scaleUp,
               },
             ]}
-            {...panResponder.panHandlers}
           />
 
           {/* Value Display */}
