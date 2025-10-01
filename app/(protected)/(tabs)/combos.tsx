@@ -262,9 +262,10 @@ export default function Combos() {
     const showBanner = isFreeUser && index >= 0 && (index + 1) % 14 === 0; // Show banner after every 15 items for free users
     const isLockedByLevel = item.level > (userLevel || 0);
     const isProLocked = !!item.proOnly && isFreePlan;
+    const isProCombo = !!item.proOnly;
     const showMoves = Array.isArray(item.moves) && item.moves.length > 0 && !isLockedByLevel && !isProLocked;
     const getPreviewGradient = (): [string, string] => {
-      if (isProLocked) return ['#1f1608', '#8a6f3a']; // darker gold palette
+      if (isProCombo) return ['#1f1608', '#8a6f3a']; // darker gold palette always for pro combos
       const key = (item.type || item.categoryName || '').toLowerCase();
       if (key.includes('punch')) return ['#2a1411', '#3a1127'];
       if (key.includes('kick')) return ['#1b0e33', '#3b0b4a'];
@@ -290,7 +291,7 @@ export default function Combos() {
         nodes.push(<Text key={`mv-${i}`} style={previewStyles.move} numberOfLines={1}>{formatted[i]}</Text>);
       }
       return (
-        <View style={previewStyles.wrapper}>
+        <View style={previewStyles.wrapper} pointerEvents="none">
           <LinearGradient colors={getPreviewGradient()} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={previewStyles.inner}>
             {nodes}
           </LinearGradient>
@@ -299,7 +300,7 @@ export default function Combos() {
     };
     return (
       <View>
-        <View style={{ marginVertical: cardVerticalGap }}>
+        <View style={{ marginVertical: cardVerticalGap, position: 'relative', zIndex: 2 }}>
           <MemoizedComboCard
             item={item}
             userLevel={userLevel}
@@ -611,24 +612,25 @@ const errStyles = StyleSheet.create({
 const previewStyles = StyleSheet.create({
   wrapper: {
     // slight overlap so it looks like it emerges from under the card
-    marginTop: uiScale(-2, { category: 'spacing' }),
+    marginTop: uiScale(-5, { category: 'spacing' }),
     paddingHorizontal: uiScale(6, { category: 'spacing' }),
+    zIndex: 1,
+    position: 'relative',
   },
   inner: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     paddingVertical: uiScale(10, { category: 'spacing' }),
-    paddingHorizontal: uiScale(10, { category: 'spacing' }),
-
+    paddingHorizontal: uiScale(22, { category: 'spacing' }),
     borderBottomLeftRadius: uiScale(18, { category: 'button' }),
     borderBottomRightRadius: uiScale(18, { category: 'button' }),
     shadowColor: '#000',
     shadowOpacity: 0.35,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
+    elevation: 1,
   },
   move: {
     color: 'rgba(255, 255, 255, 0.82)',

@@ -240,33 +240,33 @@ export default function CustomFight() {
     setSelected(prev => prev.filter(s => s.id !== String(id)));
   }, []);
 
-  // Quick select by type (adds multiple at once up to MAX_SELECT)
-  const selectByType = useCallback((type: string) => {
-    // Respect level gating for move types
-    if (type === 'Kicks' && userLevel < KICKS_REQUIRED_LEVEL) return;
-    if (type === 'Defense' && userLevel < DEFENSE_REQUIRED_LEVEL) return;
-    if (!combos) return;
-    setSelected(prev => {
-      const remaining = MAX_SELECT - prev.length;
-      if (remaining <= 0) return prev;
-      const already = new Set(prev.map(p => String(p.id)));
-      const toAdd: Array<{ id: string; type: string }> = [];
-      const plan = (userData?.plan || 'free').toLowerCase();
-      for (const c of combos) {
-        const cType = c.type || 'Punches';
-        const id = c.id;
-        const locked = c.level > userLevel;
-        const proBlocked = !!c.proOnly && plan === 'free';
-        if (cType === type && !locked && !proBlocked && !already.has(String(id))) {
-          toAdd.push({ id: String(id), type: cType });
-          if (toAdd.length >= remaining) break;
-        }
-      }
-      if (toAdd.length === 0) return prev;
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      return [...prev, ...toAdd];
-    });
-  }, [combos, userLevel, userData?.plan]);
+  // // Quick select by type (adds multiple at once up to MAX_SELECT)
+  // const selectByType = useCallback((type: string) => {
+  //   // Respect level gating for move types
+  //   if (type === 'Kicks' && userLevel < KICKS_REQUIRED_LEVEL) return;
+  //   if (type === 'Defense' && userLevel < DEFENSE_REQUIRED_LEVEL) return;
+  //   if (!combos) return;
+  //   setSelected(prev => {
+  //     const remaining = MAX_SELECT - prev.length;
+  //     if (remaining <= 0) return prev;
+  //     const already = new Set(prev.map(p => String(p.id)));
+  //     const toAdd: Array<{ id: string; type: string }> = [];
+  //     const plan = (userData?.plan || 'free').toLowerCase();
+  //     for (const c of combos) {
+  //       const cType = c.type || 'Punches';
+  //       const id = c.id;
+  //       const locked = c.level > userLevel;
+  //       const proBlocked = !!c.proOnly && plan === 'free';
+  //       if (cType === type && !locked && !proBlocked && !already.has(String(id))) {
+  //         toAdd.push({ id: String(id), type: cType });
+  //         if (toAdd.length >= remaining) break;
+  //       }
+  //     }
+  //     if (toAdd.length === 0) return prev;
+  //     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  //     return [...prev, ...toAdd];
+  //   });
+  // }, [combos, userLevel, userData?.plan]);
 
   const handleStart = useCallback(() => {
     if (selected.length === 0) return;
@@ -293,7 +293,7 @@ export default function CustomFight() {
   const preview = showMoves ? item.moves!.slice(0, 6).map(m => (m?.move || '').replace(/\n/g, ' ')).filter(Boolean) : [];
   const formatted = preview.map(txt => txt.replace(/\s/g, '\u00A0'));
     const getPreviewGradient = (): [string, string] => {
-      if (proLocked) return ['#1f1608', '#8a6f3a'];
+      if (item.proOnly) return ['#6e5327ff', '#614815ff'];
       const key = (item.type || '').toLowerCase();
       if (key.includes('punch')) return ['#2a1411', '#3a1127'];
       if (key.includes('kick')) return ['#1b0e33', '#3b0b4a'];
@@ -325,7 +325,7 @@ export default function CustomFight() {
           </View>
         )}
         <View pointerEvents="none" style={[styles.fullOverlay, { opacity: selected ? 1 : 0 }]}>          
-          <LinearGradient colors={["rgba(0,0,0,0.05)", "rgba(0,0,0,0.8)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.overlayInner}>
+          <LinearGradient colors={["rgba(5, 5, 5, 0.48)", "rgba(0, 0, 0, 0.14)"]} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.overlayInner}>
             {/* <MaterialCommunityIcons name="check" size={overlayCheckSize} color="#ffffffff" style={{ marginBottom: spacing(4) }} /> */}
             <Text style={[styles.overlayTitle, { fontSize: fs.overlayTitle, maxWidth: '85%', textAlign: 'center' }]}>SELECTED</Text>
             <Text style={[styles.overlaySub, { fontSize: fs.overlaySub, maxWidth: '85%', textAlign: 'center' }]}>Tap again to remove</Text>
@@ -353,12 +353,7 @@ export default function CustomFight() {
           <TouchableOpacity style={styles.backButton} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }}>
             <MaterialCommunityIcons name="arrow-left" size={backIconSize} color={Colors.text} />
           </TouchableOpacity>
-          <MaterialCommunityIcons
-            name="mixed-martial-arts"
-            size={iconSize}
-            color={Colors.text}
-            style={{ opacity: 0.9 }}
-          />
+
           <View style={{ marginLeft: 10 }}>
             <Text style={[styles.headerText, { fontSize: fs.headerTitle }]}>Custom Fight</Text>
             <Text style={[styles.headerSubtitle, { fontSize: fs.headerSubtitle }]}>Pick up to {MAX_SELECT} combos and start fighting</Text>
@@ -616,16 +611,21 @@ const styles = StyleSheet.create({
     marginHorizontal: uiScale(8, { category: 'spacing' }),
     borderRadius: uiScale(8, { category: 'button' }),
     overflow: 'hidden',
+    position: 'relative',
+    zIndex: 2,
   },
   fullOverlay: {
     ...StyleSheet.absoluteFillObject as any,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 3,
+    elevation: 3,
   },
   overlayInner: {
     ...StyleSheet.absoluteFillObject as any,
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: uiScale(8, { category: 'button' }),
     padding: uiScale(16, { category: 'spacing' }),
   },
   overlayTitle: {
@@ -691,12 +691,14 @@ const cfPreviewStyles = StyleSheet.create({
   wrapper: {
     marginTop: uiScale(-2, { category: 'spacing' }),
     paddingHorizontal: uiScale(6, { category: 'spacing' }),
+    position: 'relative',
+    zIndex: 1,
   },
   inner: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     paddingVertical: uiScale(10, { category: 'spacing' }),
     paddingHorizontal: uiScale(10, { category: 'spacing' }),
     borderBottomLeftRadius: uiScale(18, { category: 'button' }),
@@ -705,7 +707,7 @@ const cfPreviewStyles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
+    elevation: 1,
   },
   move: {
     color: 'rgba(255, 255, 255, 0.82)',

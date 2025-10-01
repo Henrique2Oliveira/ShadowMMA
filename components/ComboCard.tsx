@@ -20,13 +20,14 @@ type ComboCardProps = {
 };
 
 const ComboCard = React.memo(({ name, type, level, categoryName, isLocked, onPress, proOnly, isFreePlan, onUpgradePress }: ComboCardProps) => {
-  // Treat pro-only gating differently from level-locked: keep vivid look but disable interaction
+  // Treat pro-only combos with premium style always; only block interaction on free plan
   const proLocked = !!proOnly && !!isFreePlan;
-  const displayLocked = isLocked && !proLocked; // only dim when locked by level, not by plan
+  const isProCombo = !!proOnly;
+  const displayLocked = isLocked && !proLocked; // dim only when locked by level, not by plan
   // Map categories/types to vibrant gradient color pairs (mirrors gallery.tsx)
   const gradientColors = useMemo<[string, string]>(() => {
-    if (proLocked) {
-      // Premium gold gradient
+    if (isProCombo) {
+      // Premium gold gradient (always for pro-only combos)
       return ['#2b2111', '#b08d57'];
     }
     const key = (type || categoryName || '').toLowerCase();
@@ -37,7 +38,7 @@ const ComboCard = React.memo(({ name, type, level, categoryName, isLocked, onPre
     if (key.includes('defense') || key.includes('defence')) return ['#00c6ff', '#0072ff']; // blue spectrum
     if (key.includes('footwork') || key.includes('foot')) return ['#fceabb', '#f8b500']; // pale gold → amber
     return ['#434343', '#000000'];
-  }, [type, categoryName, proLocked]);
+  }, [type, categoryName, isProCombo]);
 
   // Responsive sizing
   const bucket = getDeviceBucket();
@@ -68,7 +69,7 @@ const ComboCard = React.memo(({ name, type, level, categoryName, isLocked, onPre
         styles.comboCard,
         { minHeight },
         displayLocked && styles.lockedCard,
-        proLocked && styles.proCard,
+        isProCombo && styles.proCard,
       ]}
       onPress={() => { onPress(); }}
       disabled={isLocked}
@@ -117,6 +118,9 @@ const styles = StyleSheet.create({
   comboCard: {
     borderRadius: 12,
     overflow: 'hidden',
+    position: 'relative',
+    zIndex: 2,
+    elevation: 4,
   },
   cardGradient: {
     borderRadius: 12,

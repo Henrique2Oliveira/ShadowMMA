@@ -423,7 +423,7 @@ export default function Index() {
       }
     },
     {
-      title: 'Custom Fight',
+      title: 'Build & Train',
       disabled: false,
       onPress: () => {
         router.push('/(protected)/custom-fight');
@@ -647,7 +647,7 @@ export default function Index() {
         >
           <GradientButton
             title={buttons[8].title}
-            iconName="tune"
+            iconName="mixed-martial-arts"
             iconSize={88}
             fontSize={30}
             proOnly
