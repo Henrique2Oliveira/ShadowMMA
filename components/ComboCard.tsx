@@ -121,6 +121,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     zIndex: 2,
     elevation: 4,
+    marginTop: uiScale(8, { category: 'spacing' }),
   },
   cardGradient: {
     borderRadius: 12,

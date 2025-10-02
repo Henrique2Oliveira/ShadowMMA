@@ -19,7 +19,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 
 export default function Index() {
   const { status: adConsentStatus, setGranted, setDenied, loading: consentLoading } = useAdConsent();
@@ -49,6 +50,12 @@ export default function Index() {
   const [notificationMessage, setNotificationMessage] = React.useState(() =>
     notificationMessages[Math.floor(Math.random() * notificationMessages.length)]
   );
+
+  // Reanimated scroll shared value for StartFightButton sway
+  const scrollY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((event) => {
+    scrollY.value = event.contentOffset.y;
+  });
 
   // State to track if enhanced notifications are enabled
   const [enhancedNotificationsEnabled, setEnhancedNotificationsEnabled] = useState(false);
@@ -448,8 +455,10 @@ export default function Index() {
   ];
 
   return (
-    <ScrollView
+    <Animated.ScrollView
       contentContainerStyle={{ flexGrow: 1, backgroundColor: Colors.background }}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -475,8 +484,8 @@ export default function Index() {
         </Text>
       </View>
 
-      {/* Header */}
-  <View style={{ backgroundColor: Colors.background, paddingTop: isTablet ? 20 : 10, maxWidth: isTablet ? 680 : 600, marginHorizontal: 'auto', width: '100%', alignItems: 'center' }}>
+    {/* Header */}
+  <View style={{ backgroundColor: "transparent", paddingTop: isTablet ? 20 : 10, maxWidth: isTablet ? 680 : 600, marginHorizontal: 'auto', width: '100%', alignItems: 'center', position: 'relative', zIndex: 10, elevation: 10 }}>
         <LevelBar xp={userData?.xp || 0} />
       </View>
 
@@ -493,6 +502,7 @@ export default function Index() {
             title={buttons[0].title}
             disabled={buttons[0].disabled}
             onPress={buttons[0].onPress}
+            scrollY={scrollY}
           />
         </View>
 
@@ -736,7 +746,7 @@ export default function Index() {
         onLimit={() => { setDenied(); }}
         onRequestClose={() => { /* force a choice to proceed */ }}
       />
-    </ScrollView >
+    </Animated.ScrollView >
   );
 }
 
@@ -751,7 +761,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 'auto',
     alignSelf: 'center',
     marginVertical: 5,
-    backgroundColor: 'rgba(21, 21, 21, 1)',
+    backgroundColor: '#14141481',
+    position: 'relative',
+    zIndex: 10,
+    elevation: 10,
 
   },
   notificationCard: {

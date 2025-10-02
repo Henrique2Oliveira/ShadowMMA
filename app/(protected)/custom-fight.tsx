@@ -75,6 +75,7 @@ export default function CustomFight() {
   const [error, setError] = useState<string | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [showPlansModal, setShowPlansModal] = useState(false);
+  const [showProCtaModal, setShowProCtaModal] = useState(false);
 
   // selection state: store unique id and type for each
   const [selected, setSelected] = useState<Array<{ id: string; type: string }>>([]);
@@ -206,7 +207,7 @@ export default function CustomFight() {
     const plan = (userData?.plan || 'free').toLowerCase();
     if (item.proOnly && plan === 'free') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      setShowPlansModal(true);
+      setShowProCtaModal(true);
       return;
     }
     const id = item.id;
@@ -312,6 +313,15 @@ export default function CustomFight() {
           onPress={() => toggleSelect(item, locked)}
           isFreePlan={isFreePlan}
         />
+        {proLocked && (
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowProCtaModal(true); }}
+            style={[styles.fullOverlay, { backgroundColor: 'transparent' }]}
+          >
+            <View style={{ flex: 1 }} />
+          </TouchableOpacity>
+        )}
         {showMoves && (
           <View style={cfPreviewStyles.wrapper}>
             <LinearGradient colors={getPreviewGradient()} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={cfPreviewStyles.inner}>
@@ -379,6 +389,32 @@ export default function CustomFight() {
           onClose={() => setShowErrorModal(false)}
         />
       )}
+
+      {/* PRO CTA for free users when tapping pro-only combos */}
+      <AlertModal
+        visible={showProCtaModal}
+        title="Unlock this combo"
+        message={
+          "• Unlock all PRO combos\n• Remove ads and interruptions\n• Access advanced drills and modes\n• New combos added regularly\n\nReady to level up your training?"
+        }
+        type="info"
+        primaryButton={{
+          text: 'See PRO Plans',
+          onPress: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setShowProCtaModal(false);
+            setShowPlansModal(true);
+          },
+        }}
+        secondaryButton={{
+          text: 'Not now',
+          onPress: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setShowProCtaModal(false);
+          },
+        }}
+        onClose={() => setShowProCtaModal(false)}
+      />
 
       {combos && (
         <>
