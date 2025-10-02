@@ -424,11 +424,11 @@ export default function CustomFight() {
             contentContainerStyle={styles.comboList}
             renderItem={renderItem}
             refreshControl={<RefreshControl refreshing={loading} onRefresh={() => fetchCombos(true)} tintColor={Colors.text} />}
-            maxToRenderPerBatch={10}
-            windowSize={5}
+            maxToRenderPerBatch={8}
+            windowSize={8}
             removeClippedSubviews={true}
             initialNumToRender={8}
-            updateCellsBatchingPeriod={50}
+            updateCellsBatchingPeriod={30}
             ListHeaderComponent={() => (
               <View>
                 <View style={styles.selectionHeader}>

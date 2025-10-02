@@ -446,11 +446,11 @@ export default function Combos() {
           }}
           renderItem={({ item, index }) => renderItem({ item, index })}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); fetchCombos(true); }} tintColor={Colors.text} />}
-          maxToRenderPerBatch={10}
-          windowSize={5}
+          maxToRenderPerBatch={8}
+          windowSize={8}
           removeClippedSubviews={true}
           initialNumToRender={8}
-          updateCellsBatchingPeriod={50}
+          updateCellsBatchingPeriod={30}
           ListEmptyComponent={!loading ? (
             <View style={{ padding: 24, alignItems: 'center' }}>
               <Text style={{ color: Colors.text, fontFamily: Typography.fontFamily, opacity: 0.8 }}>No combos match this filter.</Text>
