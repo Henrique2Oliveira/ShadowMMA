@@ -1,3 +1,4 @@
+import { getUTCDateKey, incrementTelemetry } from '@/utils/streak';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getApps, initializeApp } from 'firebase/app';
 import {
@@ -104,15 +105,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Optimized streak update function
   const updateLoginStreakOptimized = async (user: User) => {
+    const today = getUTCDateKey();
+    const storageKey = `lastStreakUpdate_${user.uid}`;
+    const metaKey = `streakMeta_${user.uid}`; // Persist last successful server sync
+
     try {
-      const today = new Date().toDateString(); // e.g., "Sat Aug 24 2025"
-      const storageKey = `lastStreakUpdate_${user.uid}`;
-      
-      // Check if we already updated today
+      // Prevent duplicate same‑day server calls
       const lastUpdate = await AsyncStorage.getItem(storageKey);
-      if (lastUpdate === today) {
-        return; // Already updated today, skip API call
-      }
+      if (lastUpdate === today) return;
 
       const idToken = await user.getIdToken();
       const response = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/updateLastLogin', {
@@ -123,23 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.loginStreak !== undefined) {
-          const previousStreak = loginStreak;
-          setLoginStreak(data.loginStreak);
-          
-          // Trigger streak update callback if there's an increase and it's not day 0
-          // Also trigger on first day (previousStreak 0 -> newStreak 1)
-          if (streakUpdateCallback && data.loginStreak > previousStreak && data.loginStreak > 0) {
-            streakUpdateCallback(data.loginStreak, previousStreak);
-          }
-          
-          // Cache that we updated today
-          await AsyncStorage.setItem(storageKey, today);
-          lastStreakUpdate.current = today;
-        }
-      } else {
+      if (!response.ok) {
         console.warn('Failed to update login streak:', response.status);
         if (response.status >= 500) {
           showErrorModal(
@@ -148,13 +132,70 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             'warning'
           );
         }
+        return;
       }
+
+      const data = await response.json();
+      if (!(data.success && typeof data.loginStreak === 'number')) return;
+
+      // Use functional update to avoid stale closure value
+      const metaRaw = await AsyncStorage.getItem(metaKey);
+      let meta: any = metaRaw ? JSON.parse(metaRaw) : {};
+      const localBefore = loginStreak; // snapshot before set
+
+      setLoginStreak(prev => {
+        const previousStreak = prev;
+        const newStreak = data.loginStreak as number;
+        // Reconciliation: if we had an optimistic increment and server says lower, inform user
+        if (meta.optimisticPending && newStreak < previousStreak) {
+          showErrorModal(
+            'Streak Synced',
+            `We\'ve synced your streak with the server: ${newStreak} day${newStreak === 1 ? '' : 's'}. (Offline progress adjusted)`,
+            'info'
+          );
+        }
+        // Trigger callback only when server actually updated upwards
+        if (streakUpdateCallback && data.updated && newStreak > previousStreak && newStreak > 0) {
+          streakUpdateCallback(newStreak, previousStreak);
+        }
+        return newStreak;
+      });
+
+      // Telemetry: server increment detection
+      if (data.updated && data.loginStreak > localBefore) {
+        incrementTelemetry(user.uid, 'server');
+      }
+
+      meta = { lastServerDate: today, lastServerStreak: data.loginStreak, optimisticPending: false };
+      await AsyncStorage.multiSet([[storageKey, today], [metaKey, JSON.stringify(meta)]]);
+      lastStreakUpdate.current = today;
     } catch (error: any) {
-      console.warn('Error updating login streak:', error);
+      console.warn('Error updating login streak (will attempt offline heuristic):', error);
+      // Offline / network fallback: optimistic local increment if exactly one day passed
       if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        try {
+          const metaRaw = await AsyncStorage.getItem(metaKey);
+            if (metaRaw) {
+              const meta = JSON.parse(metaRaw) as { lastServerDate?: string; lastServerStreak?: number };
+              if (meta.lastServerDate && typeof meta.lastServerStreak === 'number') {
+                const lastDateKey = meta.lastServerDate; // already UTC key
+                // Compute diff in days using UTC keys lexicographically not safe; parse again
+                const lastDate = new Date(meta.lastServerDate + 'T00:00:00.000Z');
+                const todayDate = new Date(getUTCDateKey() + 'T00:00:00.000Z');
+                const daysDiff = Math.floor((todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+                if (daysDiff === 1) {
+                  // Optimistic increment (marked unsynced)
+                  setLoginStreak(prev => prev + 1);
+                  await AsyncStorage.setItem(storageKey, today); // avoid spamming attempts this session
+                  await AsyncStorage.setItem(metaKey, JSON.stringify({ ...meta, optimisticPending: true }));
+                  incrementTelemetry(user.uid, 'offline');
+                }
+              }
+            }
+        } catch {}
         showErrorModal(
           'Connection Error',
-          'Unable to update your streak. Please check your internet connection.',
+          'Unable to connect to update your streak. We will sync automatically when back online.',
           'warning'
         );
       }

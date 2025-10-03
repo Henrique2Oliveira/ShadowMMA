@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import { getNotificationTitleBody, getUTCDateKey } from './streak';
 
 // Configure notifications to show when app is in foreground
 Notifications.setNotificationHandler({
@@ -103,30 +104,9 @@ export const scheduleStreakReminder = async (currentStreak: number) => {
     await Notifications.cancelAllScheduledNotificationsAsync();
     
     const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(10, 0, 0, 0); // 10 AM next day
-
-    // Different messages based on streak
-    let title = "Don't Break Your Streak! 🔥";
-    let body = "";
-    
-    if (currentStreak === 0) {
-      title = "Start Your Journey! 🥊";
-      body = "Begin your training streak today and become unstoppable!";
-    } else if (currentStreak === 1) {
-      title = "Keep It Going! 🔥";
-      body = "You started strong! Don't lose momentum on day 2.";
-    } else if (currentStreak < 7) {
-      title = `${currentStreak} Day Streak! 🔥`;
-      body = "You're building momentum! Keep your streak alive.";
-    } else if (currentStreak < 30) {
-      title = `${currentStreak} Day Streak! 🚀`;
-      body = "Amazing dedication! Don't let this streak end now.";
-    } else {
-      title = `${currentStreak} Day Legend! 👑`;
-      body = "You're a true champion! Maintain your legendary streak.";
-    }
+    const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+    tomorrow.setUTCHours(10, 0, 0, 0); // 10:00 UTC next day for consistency
+    const { title, body } = getNotificationTitleBody(currentStreak);
 
     await Notifications.scheduleNotificationAsync({
       content: {
@@ -314,7 +294,7 @@ export const scheduleWeeklyAchievementNotification = async (streak: number) => {
 // Record login and manage notifications
 export const recordLoginAndScheduleNotifications = async (userStreak: number) => {
   try {
-    const today = new Date().toDateString();
+  const today = getUTCDateKey();
     const lastLogin = await AsyncStorage.getItem(STORAGE_KEYS.LAST_LOGIN_DATE);
     const dailyTrainingCompletedDate = await AsyncStorage.getItem(
       STORAGE_KEYS.DAILY_TRAINING_COMPLETED_DATE
@@ -382,7 +362,7 @@ export const getEnhancedNotificationsEnabled = async (): Promise<boolean> => {
 // Check if the user has already completed the daily training (so we can avoid further reminders today)
 export const isDailyTrainingCompleted = async (): Promise<boolean> => {
   try {
-    const today = new Date().toDateString();
+  const today = getUTCDateKey();
     const completedDate = await AsyncStorage.getItem(
       STORAGE_KEYS.DAILY_TRAINING_COMPLETED_DATE
     );
@@ -416,7 +396,7 @@ export const cancelEngagementNotifications = async () => {
 // Mark the daily training as completed and prevent further same‑day reminders
 export const markDailyTrainingCompleted = async () => {
   try {
-    const today = new Date().toDateString();
+  const today = getUTCDateKey();
     // Persist completion date
     await AsyncStorage.setItem(
       STORAGE_KEYS.DAILY_TRAINING_COMPLETED_DATE,

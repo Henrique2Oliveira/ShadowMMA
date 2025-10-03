@@ -1,4 +1,5 @@
 import { Colors } from '@/themes/theme';
+import { getStreakMessage } from '@/utils/streak';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
@@ -15,13 +16,6 @@ export const StreakCongratulationsModal: React.FC<StreakCongratulationsModalProp
   streakCount,
   onClose,
 }) => {
-  const getStreakMessage = () => {
-    if (streakCount === 1) return "First day completed! 🔥";
-    if (streakCount < 7) return `${streakCount} day streak! Keep it up! 🔥`;
-    if (streakCount < 30) return `${streakCount} day streak! You're on fire! 🚀`;
-    return `${streakCount} day streak! You're a legend! 👑`;
-  };
-
   const getStreakIcon = () => {
     if (streakCount === 1) return "fire";
     if (streakCount < 7) return "fire";
@@ -67,9 +61,7 @@ export const StreakCongratulationsModal: React.FC<StreakCongratulationsModalProp
             <Text style={styles.title}>Congratulations!</Text>
 
             {/* Message */}
-            <Text style={styles.message}>
-              {getStreakMessage()}
-            </Text>
+            <Text style={styles.message}>{getStreakMessage(streakCount)}</Text>
 
             <Text style={styles.subtitle}>
               Keep training daily to maintain your streak and unlock more rewards!

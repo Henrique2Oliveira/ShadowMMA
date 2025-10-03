@@ -13,6 +13,7 @@ import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
 import { checkMissedLoginAndScheduleComeback, recordLoginAndScheduleNotifications, registerForPushNotificationsAsync } from '@/utils/notificationUtils';
 import { isTablet, rf, rs } from '@/utils/responsive';
+import { getUTCDateKey } from '@/utils/streak';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -181,45 +182,31 @@ export default function Index() {
     }
   }, [setStreakUpdateCallback, handleStreakUpdate]);
 
-  // Initialize streak count from userData when available
+  // Keep local streak count in sync (no modal logic here to avoid duplicates)
   useEffect(() => {
-    if (userData?.loginStreak && userData.loginStreak > 0) {
+    if (userData?.loginStreak !== undefined) {
       setStreakCount(userData.loginStreak);
     }
   }, [userData?.loginStreak]);
 
-  // Check for streak achievement when component mounts or userData changes
+  // Guard callback-based modal so it only shows once per day even if callback fires multiple times (e.g. refocus)
   useEffect(() => {
-    const checkStreakAchievement = async () => {
-      if (user && userData?.loginStreak) {
-        const today = new Date().toDateString();
-        const storageKey = `streakModalShown_${user.uid}_${today}`;
-        const modalAlreadyShown = await AsyncStorage.getItem(storageKey);
-
-        // If we haven't shown the modal today and the user has a streak
-        if (!modalAlreadyShown && userData.loginStreak > 0) {
-          // Check if this is a new day login by comparing with yesterday's stored streak
-          const yesterdayStreakKey = `previousStreak_${user.uid}`;
-          const yesterdayStreak = await AsyncStorage.getItem(yesterdayStreakKey);
-          const prevStreak = yesterdayStreak ? parseInt(yesterdayStreak) : 0;
-
-          // If streak increased, show modal
-          if (userData.loginStreak > prevStreak) {
-            setStreakCount(userData.loginStreak);
-            setShowStreakModal(true);
-            // Mark modal as shown today
-            await AsyncStorage.setItem(storageKey, 'true');
-            // Store current streak for tomorrow's comparison
-            await AsyncStorage.setItem(yesterdayStreakKey, userData.loginStreak.toString());
-          }
-        }
+    const enforceOncePerDay = async () => {
+      if (!user || streakCount <= 0 || !showStreakModal) return;
+  const today = getUTCDateKey();
+      const storageKey = `streakModalShown_${user.uid}_${today}`;
+      const already = await AsyncStorage.getItem(storageKey);
+      if (already) {
+        // Modal already shown today elsewhere; hide duplicate
+        setShowStreakModal(false);
+      } else {
+        await AsyncStorage.setItem(storageKey, 'true');
+        // Persist current streak for tomorrow comparison (could be useful later)
+        await AsyncStorage.setItem(`previousStreak_${user.uid}`, streakCount.toString());
       }
     };
-
-    if (userData?.loginStreak !== undefined) {
-      checkStreakAchievement();
-    }
-  }, [user, userData?.loginStreak]);
+    enforceOncePerDay();
+  }, [showStreakModal, streakCount, user]);
 
   // Load enhanced notifications setting
   useEffect(() => {
@@ -735,7 +722,7 @@ export default function Index() {
           setShowStreakModal(false);
           // Mark modal as shown today when manually closed
           if (user) {
-            const today = new Date().toDateString();
+            const today = getUTCDateKey();
             const storageKey = `streakModalShown_${user.uid}_${today}`;
             await AsyncStorage.setItem(storageKey, 'true');
           }
