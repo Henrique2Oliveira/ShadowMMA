@@ -1,9 +1,9 @@
 // Import the functions you need from the SDKs you need
-import combinationSets from '@/secrets/data.js';
+import { combinationSets } from '@/secrets/data.js';
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 import { initializeApp } from "firebase/app";
 import { getReactNativePersistence, initializeAuth } from 'firebase/auth';
-import { doc, getFirestore, setDoc } from "firebase/firestore";
+import { arrayUnion, doc, getFirestore, setDoc, updateDoc } from "firebase/firestore";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -31,25 +31,63 @@ export const db = getFirestore(app);
 
 
 
-// don't forget to import combinationSets from '@/constants/data.js' if you want to use this script;
+// One-time uploader: writes combos in small chunks per level to avoid large payloads
+// NOTE: Do NOT auto-run this on app start. Call uploadCombosInChunks() manually from a dev-only entry point.
+const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 
-const uploadData = async () => {
+function chunkArray(arr, size) {
+  const chunks = [];
+  for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
+  return chunks;
+}
+
+export const uploadCombosInChunks = async (options = {}) => {
+  const {
+    chunkSize = 20, // smaller chunks reduce request size; adjust if needed
+    interChunkDelayMs = 50, // tiny delay to avoid rate limits
+    logProgress = true,
+  } = options;
+
   try {
     for (const category of combinationSets) {
-      const categoryId = category.id.toString();
-      const categoryRef = doc(db, "combos", categoryId); // Collection: "combos", doc ID = categoryId
+      const categoryId = String(category.id);
+      const categoryRef = doc(db, 'combos', categoryId);
 
-      await setDoc(categoryRef, {
-        category: category.category,
-        levels: category.levels
-      });
+      // Start fresh metadata; don't write the whole levels at once
+      await setDoc(categoryRef, { category: category.category, levels: {} }, { merge: true });
 
-      console.log(`Uploaded category: ${category.category}`);
+      const levelEntries = Object.entries(category.levels || {});
+      for (const [levelName, combos] of levelEntries) {
+        // Initialize the array to empty to avoid duplicating data on re-runs
+        await setDoc(
+          categoryRef,
+          { [`levels.${levelName}`]: [] },
+          { merge: true }
+        );
+
+        const chunks = chunkArray(combos || [], chunkSize);
+        for (let i = 0; i < chunks.length; i++) {
+          const chunk = chunks[i];
+          // Append this chunk using arrayUnion (server-side dedupe by value)
+          await updateDoc(categoryRef, {
+            [`levels.${levelName}`]: arrayUnion(...chunk),
+          });
+
+          if (logProgress) {
+            console.log(
+              `Uploaded ${category.category} -> ${levelName}: chunk ${i + 1}/${chunks.length} (size=${chunk.length})`
+            );
+          }
+
+          if (interChunkDelayMs > 0) await sleep(interChunkDelayMs);
+        }
+      }
+
+      if (logProgress) console.log(`✅ Uploaded category: ${category.category}`);
     }
 
-    console.log("✅ All combos uploaded successfully");
+    console.log('✅ All combos uploaded successfully (chunked)');
   } catch (error) {
-    console.error("❌ Error uploading combos:", error);
+    console.error('❌ Error uploading combos (chunked):', error);
   }
 };
-uploadData();

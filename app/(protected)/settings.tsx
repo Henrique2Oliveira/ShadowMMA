@@ -5,7 +5,7 @@ import { SelectionModal } from '@/components/Modals/SelectionModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdConsent } from '@/contexts/ConsentContext';
 import { useUserData } from '@/contexts/UserDataContext';
-import { db } from '@/FirebaseConfig';
+import { db, uploadCombosInChunks } from '@/FirebaseConfig';
 import { Colors, Typography } from '@/themes/theme';
 import { cancelAllNotifications, recordLoginAndScheduleNotifications, registerForPushNotificationsAsync, scheduleDailyNotification } from '@/utils/notificationUtils';
 import { isTablet, rf } from '@/utils/responsive';
@@ -40,6 +40,10 @@ export default function Settings() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [showPrivacyAdsModal, setShowPrivacyAdsModal] = useState(false);
+  // Dev-only: upload combos to Firestore in chunks
+  const [showDevUploadConfirm, setShowDevUploadConfirm] = useState(false);
+  const [devUploadRunning, setDevUploadRunning] = useState(false);
+  const [devUploadLogs, setDevUploadLogs] = useState<string[]>([]);
   
 
   // Enhanced notification error handling
@@ -397,6 +401,39 @@ export default function Settings() {
           <Text style={[styles.optionText, styles.dangerText, isTablet && styles.optionTextTablet]}>Delete Account</Text>
           <MaterialCommunityIcons name="chevron-right" size={isTablet ? 30 : 24} color="#ff4444" />
         </TouchableOpacity>
+
+
+        {__DEV__ && (
+          <>
+            <View style={styles.sectionHeader}>
+              <MaterialCommunityIcons name="tools" size={isTablet ? 28 : 20} color="#6cf" />
+              <Text style={[styles.sectionTitle, isTablet && styles.sectionTitleTablet]}>Developer Tools</Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.option}
+              onPress={() => setShowDevUploadConfirm(true)}
+              disabled={devUploadRunning}
+            >
+              <MaterialCommunityIcons name="cloud-upload" size={isTablet ? 30 : 24} color={devUploadRunning ? '#aaa' : '#6cf'} />
+              <Text style={[styles.optionText, isTablet && styles.optionTextTablet]}>
+                {devUploadRunning ? 'Uploading combos…' : 'Dev: Upload combos to Firestore'}
+              </Text>
+              <MaterialCommunityIcons name="chevron-right" size={isTablet ? 30 : 24} color={Colors.text} />
+            </TouchableOpacity>
+
+            {devUploadLogs.length > 0 && (
+              <View style={[styles.option, styles.subOption, { flexDirection: 'column', alignItems: 'flex-start' }]}>
+                <Text style={[styles.optionText, { marginLeft: 0, marginBottom: 8 }]}>Upload logs</Text>
+                {devUploadLogs.slice(-10).map((line, idx) => (
+                  <Text key={idx} style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, marginBottom: 2 }}>
+                    • {line}
+                  </Text>
+                ))}
+              </View>
+            )}
+          </>
+        )}
       </View>
 
       <AlertModal
@@ -506,6 +543,49 @@ export default function Settings() {
         onLimit={() => { setDenied(); setShowPrivacyAdsModal(false); }}
         onRequestClose={() => setShowPrivacyAdsModal(false)}
       />
+
+      {__DEV__ && (
+        <AlertModal
+          visible={showDevUploadConfirm}
+          title="Upload Combos"
+          message="This will write combo data from secrets/data.js to Firestore in small chunks. Continue?"
+          type="info"
+          primaryButton={{
+            text: devUploadRunning ? 'Uploading…' : 'Start Upload',
+            onPress: async () => {
+              if (devUploadRunning) return;
+              setShowDevUploadConfirm(false);
+              setDevUploadLogs([]);
+              setDevUploadRunning(true);
+              // Capture console logs during upload to show progress in UI
+              const originalLog = console.log;
+              const originalError = console.error;
+              try {
+                console.log = (...args: any[]) => {
+                  originalLog(...args);
+                  try { setDevUploadLogs(prev => [...prev, args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')].slice(-200)); } catch {}
+                };
+                console.error = (...args: any[]) => {
+                  originalError(...args);
+                  try { setDevUploadLogs(prev => [...prev, 'ERROR: ' + args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')].slice(-200)); } catch {}
+                };
+                await uploadCombosInChunks({ chunkSize: 20, interChunkDelayMs: 60, logProgress: true });
+                setDevUploadLogs(prev => [...prev, '✅ Upload finished'].slice(-200));
+              } catch (e: any) {
+                setDevUploadLogs(prev => [...prev, `❌ Upload failed: ${e?.message || String(e)}`].slice(-200));
+              } finally {
+                console.log = originalLog;
+                console.error = originalError;
+                setDevUploadRunning(false);
+              }
+            },
+          }}
+          secondaryButton={{
+            text: 'Cancel',
+            onPress: () => setShowDevUploadConfirm(false),
+          }}
+        />
+      )}
 
       
 
