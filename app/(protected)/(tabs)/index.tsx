@@ -267,7 +267,7 @@ export default function Index() {
   // Handle notification card click - enable enhanced notifications
   const handleNotificationCardClick = async () => {
     try {
-  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const hasPermission = await registerForPushNotificationsAsync();
       if (hasPermission) {
         setEnhancedNotificationsEnabled(true);
@@ -484,8 +484,8 @@ export default function Index() {
         </Text>
       </View>
 
-    {/* Header */}
-  <View style={{ backgroundColor: "transparent", paddingTop: isTablet ? 20 : 10, maxWidth: isTablet ? 680 : 600, marginHorizontal: 'auto', width: '100%', alignItems: 'center', position: 'relative', zIndex: 10, elevation: 10 }}>
+      {/* Header */}
+      <View style={{ backgroundColor: "transparent", paddingTop: isTablet ? 20 : 10, maxWidth: isTablet ? 680 : 600, marginHorizontal: 'auto', width: '100%', alignItems: 'center', position: 'relative', zIndex: 10, elevation: 10 }}>
         <LevelBar xp={userData?.xp || 0} />
       </View>
 
@@ -494,15 +494,15 @@ export default function Index() {
 
         <View
           style={{
-            width: '100%',
-            maxWidth: 600,
+        width: '100%',
+        maxWidth: 600,
           }}
         >
           <StartFightButton
-            title={buttons[0].title}
-            disabled={buttons[0].disabled}
-            onPress={buttons[0].onPress}
-            scrollY={scrollY}
+        title={buttons[0].title}
+        disabled={buttons[0].disabled}
+        onPress={buttons[0].onPress}
+        scrollY={scrollY}
           />
         </View>
 
@@ -510,48 +510,48 @@ export default function Index() {
         <View style={styles.row}>
           {/* Map through buttons 1-4 for small buttons */}
           {[
-            { buttonIndex: 1, iconName: "timer-outline" },
-            { buttonIndex: 2, iconName: "timer-sand" },
-            { buttonIndex: 3, iconName: "karate" },
-            { buttonIndex: 4, iconName: "shield" }
+        { buttonIndex: 1, iconName: "timer-outline" },
+        { buttonIndex: 2, iconName: "timer-sand" },
+        { buttonIndex: 3, iconName: "karate" },
+        { buttonIndex: 4, iconName: "shield" }
           ].map(({ buttonIndex, iconName }, index) => {
-            const button = buttons[buttonIndex];
-            const isLockedKicks = button.title === 'Kicks' && userLevel < KICKS_REQUIRED_LEVEL;
-            const isLockedDefense = button.title === 'Defense' && userLevel < DEFENSE_REQUIRED_LEVEL;
-            const locked = isLockedKicks || isLockedDefense;
-            const ICON_SIZE = isTablet ? rs(36) : rs(32);
-            // const LABEL_FONT = isTablet ? rf(16) : rf(13);
-            return (
-              <View
-                key={buttonIndex}
-                style={[
-                  styles.smallButton,
-                  locked && { opacity: 0.5 }
-                ]}
-              >
-                <TouchableOpacity
-                  style={styles.smallButtonTouch}
-                  onPress={button.onPress}
-                  disabled={button.disabled}>
-                  <MaterialCommunityIcons
-                    name={iconName as any}
-                    size={ICON_SIZE}
-                    color={"#fff"}
-                    style={styles.smallButtonIcon}
-                  />
-                  <Text style={[styles.smallTextButton]}>
-                    {button.title}
-                  </Text>
-                  {locked && (
-                    <View style={{ position: 'absolute', bottom: 4, right: 4, backgroundColor: '#222', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8, borderWidth: 1, borderColor: '#555' }}>
-                      <Text style={{ color: '#ffdd55', fontSize: 10, fontFamily: Typography.fontFamily }}>
-                        Lv {isLockedKicks ? KICKS_REQUIRED_LEVEL : DEFENSE_REQUIRED_LEVEL}
-                      </Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              </View>
-            );
+        const button = buttons[buttonIndex];
+        const isLockedKicks = button.title === 'Kicks' && userLevel < KICKS_REQUIRED_LEVEL;
+        const isLockedDefense = button.title === 'Defense' && userLevel < DEFENSE_REQUIRED_LEVEL;
+        const locked = isLockedKicks || isLockedDefense;
+        const ICON_SIZE = isTablet ? rs(36) : rs(32);
+        // const LABEL_FONT = isTablet ? rf(16) : rf(13);
+        return (
+          <View
+            key={buttonIndex}
+            style={[
+          styles.smallButton,
+          locked && { opacity: 0.5 }
+            ]}
+          >
+            <TouchableOpacity
+          style={styles.smallButtonTouch}
+          onPress={button.onPress}
+          disabled={button.disabled}>
+          <MaterialCommunityIcons
+            name={iconName as any}
+            size={ICON_SIZE}
+            color={"#fff"}
+            style={styles.smallButtonIcon}
+          />
+          <Text style={[styles.smallTextButton]}>
+            {button.title}
+          </Text>
+          {locked && (
+            <View style={{ position: 'absolute', bottom: 4, right: 4, backgroundColor: '#222', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8, borderWidth: 1, borderColor: '#555' }}>
+              <Text style={{ color: '#ffdd55', fontSize: 10, fontFamily: Typography.fontFamily }}>
+            Lv {isLockedKicks ? KICKS_REQUIRED_LEVEL : DEFENSE_REQUIRED_LEVEL}
+              </Text>
+            </View>
+          )}
+            </TouchableOpacity>
+          </View>
+        );
           })}
 
         </View>
@@ -559,16 +559,16 @@ export default function Index() {
         {/* Weekly Mission */}
         <View
           style={{
-            width: '100%',
-            maxWidth: 600,
+        width: '100%',
+        maxWidth: 600,
           }}
         >
           <WeeklyMission
-            completedRounds={userData?.totalFightRounds || 0}
-            totalRounds={weeklyMissionRounds}
-            completedTime={Math.round(userData?.totalFightTime || 0)}
-            totalTime={weeklyMissionTime}
-            onPress={handleNavigateToSettings}
+        completedRounds={userData?.totalFightRounds || 0}
+        totalRounds={weeklyMissionRounds}
+        completedTime={Math.round(userData?.totalFightTime || 0)}
+        totalTime={weeklyMissionTime}
+        onPress={handleNavigateToSettings}
           />
         </View>
 
@@ -576,110 +576,113 @@ export default function Index() {
         {/* Notification Card - Only show if enhanced notifications are disabled */}
         {!enhancedNotificationsEnabled && (
           <View
-            style={{
-              width: '100%',
-              maxWidth: 600,
-            }}
+        style={{
+          width: '100%',
+          maxWidth: 600,
+        }}
           >
-            <TouchableOpacity
-              style={[styles.notificationCard, isTablet && { padding: 16 }]}
-              onPress={handleNotificationCardClick}
-            >
-              <MaterialCommunityIcons name="bell" size={rs(26)} color={Colors.text} />
-              <Text style={styles.notificationText}>{notificationMessage}</Text>
-              <MaterialCommunityIcons name="chevron-right" size={rs(26)} color={Colors.text} />
-            </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.notificationCard, isTablet && { padding: 16 }]}
+          onPress={handleNotificationCardClick}
+        >
+          <MaterialCommunityIcons name="bell" size={rs(26)} color={Colors.text} />
+          <Text style={styles.notificationText}>{notificationMessage}</Text>
+          <MaterialCommunityIcons name="chevron-right" size={rs(26)} color={Colors.text} />
+        </TouchableOpacity>
           </View>
         )}
 
         <View
           style={{
-            width: '100%',
-            maxWidth: 600,
+        width: '100%',
+        maxWidth: 600,
           }}
         >
           <GradientButton
-            title={buttons[5].title}
-            iconName="boxing-glove"
-            iconSize={96}
-            fontSize={35}
-            disabled={buttons[5].disabled}
-            onPress={buttons[5].onPress}
+        title={buttons[5].title}
+        iconName="boxing-glove"
+        iconSize={96}
+        fontSize={35}
+        disabled={buttons[5].disabled}
+        onPress={buttons[5].onPress}
           />
         </View>
 
+        {/* Move Upgrade Plan directly below Combos */}
         <View
           style={{
-            width: '100%',
-            maxWidth: 600,
+        width: '100%',
+        maxWidth: 600,
           }}
         >
           <GradientButton
-            title={buttons[6].title}
-            iconName="dice-multiple"
-            iconSize={92}
-            fontSize={28}
-            disabled={buttons[6].disabled}
-            onPress={buttons[6].onPress}
+        title={buttons[7].title}
+        iconName="arrow-up-bold-circle"
+        iconSize={90}
+        fontSize={22}
+        subtitle="Train Smarter, Get Stronger"
+        proOnly
+        disabled={buttons[7].disabled}
+        onPress={buttons[7].onPress}
           />
         </View>
 
         {/* Inline banner ad for free users (only after consent decision) */}
         {isFree && adConsentStatus !== 'unknown' && (
           <View style={{ width: '100%', maxWidth: 600, alignSelf: 'center' }}>
-            <TopBanner inline />
+        <TopBanner inline />
           </View>
         )}
 
+        {/* Place Random Fight where Upgrade Plan used to be */}
         <View
           style={{
-            width: '100%',
-            maxWidth: 600,
+        width: '100%',
+        maxWidth: 600,
           }}
         >
           <GradientButton
-            title={buttons[7].title}
-            iconName="arrow-up-bold-circle"
-            iconSize={90}
-            fontSize={22}
-            subtitle="Train Smarter, Get Stronger"
-            proOnly
-            disabled={buttons[7].disabled}
-            onPress={buttons[7].onPress}
+        title={buttons[6].title}
+        iconName="dice-multiple"
+        iconSize={92}
+        fontSize={28}
+        disabled={buttons[6].disabled}
+        onPress={buttons[6].onPress}
           />
         </View>
 
         <View
           style={{
-            width: '100%',
-            maxWidth: 600,
+        width: '100%',
+        maxWidth: 600,
           }}
         >
           <GradientButton
-            title={buttons[8].title}
-            iconName="mixed-martial-arts"
-            iconSize={88}
-            fontSize={30}
-            proOnly
-            disabled={buttons[8].disabled}
-            onPress={buttons[8].onPress}
+        title={buttons[8].title}
+        iconName="mixed-martial-arts"
+        iconSize={88}
+        fontSize={30}
+        proOnly
+        disabled={buttons[8].disabled}
+        onPress={buttons[8].onPress}
           />
-          <View
-            style={{
-              width: '100%',
-              maxWidth: 600,
-            }}
-          >
-            <GradientButton
-              title={buttons[9].title}
-              iconName="run"
-              iconSize={96}
-              fontSize={24}
-              subtitle="in progress... coming soon"
-              disabled={buttons[9].disabled}
-              onPress={buttons[9].onPress}
-            />
-          </View>
+        </View>
+        
+        <View
+          style={{
+        width: '100%',
+        maxWidth: 600,
+          }}
+        >
+          <GradientButton
+        title={buttons[9].title}
+        iconName="run"
+        iconSize={96}
+        fontSize={24}
+        subtitle="in progress... coming soon"
+        disabled={buttons[9].disabled}
+        onPress={buttons[9].onPress}
+          />
 
         </View>
       </View>

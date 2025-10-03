@@ -1549,3 +1549,176 @@ export const submitFeedback = onRequest(async (req, res) => {
     res.status(500).json({ success: false, error: { code: 'internal', message: 'Internal Server Error' } });
   }
 });
+
+// --- Saved Combo Sets (PRO feature) ---
+// Users can store up to 6 saved sets of selected combos for quick reuse
+// Schema: users/{uid}/savedComboSets/{docId} -> { name, items: [{ id, type }], count, createdAt, updatedAt }
+const MAX_SAVED_SETS = 6;
+const MAX_SET_SIZE = 10; // must match client MAX_SELECT
+
+export const getSavedComboSets = onRequest(async (req, res) => {
+  try {
+    if (req.method !== 'GET' && req.method !== 'POST') {
+      res.status(405).send('Method Not Allowed');
+      return;
+    }
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      res.status(401).send('Unauthorized: Missing or invalid token');
+      return;
+    }
+    const idToken = authHeader.split('Bearer ')[1];
+    const decoded = await auth.verifyIdToken(idToken);
+    const uid = decoded.uid;
+
+    const userRef = db.collection('users').doc(uid);
+    const userDoc = await userRef.get();
+    const plan = (userDoc.data()?.plan || 'free').toString().toLowerCase();
+    if (plan === 'free') {
+      res.status(403).json({ success: false, error: { code: 'pro-only', message: 'This feature is available for PRO users only.' } });
+      return;
+    }
+
+    const colRef = userRef.collection('savedComboSets');
+    const snap = await colRef.orderBy('updatedAt', 'desc').limit(MAX_SAVED_SETS).get();
+    const sets = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+    res.status(200).json({ success: true, sets });
+  } catch (err: any) {
+    logger.error('getSavedComboSets error', err);
+    res.status(500).json({ success: false, error: { code: err.code || 'internal', message: err.message || 'Internal Server Error' } });
+  }
+});
+
+export const saveComboSet = onRequest(async (req, res) => {
+  try {
+    if (req.method !== 'POST') {
+      res.status(405).send('Method Not Allowed');
+      return;
+    }
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      res.status(401).send('Unauthorized: Missing or invalid token');
+      return;
+    }
+    const idToken = authHeader.split('Bearer ')[1];
+    const decoded = await auth.verifyIdToken(idToken);
+    const uid = decoded.uid;
+
+    const { name, items, setId } = (req.body || {}) as {
+      name?: string;
+      items?: Array<{ id: string | number; type?: string }>;
+      setId?: string; // optional overwrite id
+    };
+
+    if (!Array.isArray(items) || items.length === 0) {
+      res.status(400).json({ success: false, error: { code: 'invalid-args', message: 'No items to save.' } });
+      return;
+    }
+    if (items.length > MAX_SET_SIZE) {
+      res.status(400).json({ success: false, error: { code: 'too-many', message: `Max ${MAX_SET_SIZE} items per set.` } });
+      return;
+    }
+
+    const normalizedItems = items
+      .map(i => ({ id: String(i.id), type: (i.type || 'Punches').toString() }))
+      .filter(i => i.id);
+
+    const userRef = db.collection('users').doc(uid);
+    const userDoc = await userRef.get();
+    if (!userDoc.exists) {
+      res.status(404).json({ success: false, error: { code: 'not-found', message: 'User not found.' } });
+      return;
+    }
+    const plan = (userDoc.data()?.plan || 'free').toString().toLowerCase();
+    if (plan === 'free') {
+      res.status(403).json({ success: false, error: { code: 'pro-only', message: 'This feature is available for PRO users only.' } });
+      return;
+    }
+
+    const colRef = userRef.collection('savedComboSets');
+
+    // If creating a new set, enforce capacity
+    if (!setId) {
+      const countSnap = await colRef.limit(MAX_SAVED_SETS + 1).get();
+      if (countSnap.size >= MAX_SAVED_SETS) {
+        res.status(409).json({ success: false, error: { code: 'capacity', message: `You can save up to ${MAX_SAVED_SETS} sets.` } });
+        return;
+      }
+    }
+
+    const payload = {
+      name: (name || '').toString().trim().slice(0, 40) || null,
+      items: normalizedItems,
+      count: normalizedItems.length,
+      updatedAt: FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+    } as any;
+
+    let docId = setId;
+    if (setId) {
+      // Overwrite existing
+      const docRef = colRef.doc(setId);
+      const exists = await docRef.get();
+      if (!exists.exists) {
+        res.status(404).json({ success: false, error: { code: 'not-found', message: 'Set not found to overwrite.' } });
+        return;
+      }
+      // Keep original createdAt
+      payload.createdAt = exists.data()?.createdAt || FieldValue.serverTimestamp();
+      await docRef.set(payload, { merge: true });
+      docId = docRef.id;
+    } else {
+      const docRef = await colRef.add(payload);
+      docId = docRef.id;
+    }
+
+    const saved = await colRef.doc(docId!).get();
+    res.status(200).json({ success: true, set: { id: docId, ...(saved.data() as any) } });
+  } catch (err: any) {
+    logger.error('saveComboSet error', err);
+    res.status(500).json({ success: false, error: { code: err.code || 'internal', message: err.message || 'Internal Server Error' } });
+  }
+});
+
+export const deleteComboSet = onRequest(async (req, res) => {
+  try {
+    if (req.method !== 'POST' && req.method !== 'DELETE') {
+      res.status(405).send('Method Not Allowed');
+      return;
+    }
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      res.status(401).send('Unauthorized: Missing or invalid token');
+      return;
+    }
+    const idToken = authHeader.split('Bearer ')[1];
+    const decoded = await auth.verifyIdToken(idToken);
+    const uid = decoded.uid;
+
+    const { setId } = (req.body || {}) as { setId?: string };
+    const idFromQuery = (req.query?.setId as string | undefined);
+    const finalId = setId || idFromQuery;
+    if (!finalId) {
+      res.status(400).json({ success: false, error: { code: 'invalid-args', message: 'Missing setId.' } });
+      return;
+    }
+
+    const userRef = db.collection('users').doc(uid);
+    const userDoc = await userRef.get();
+    const plan = (userDoc.data()?.plan || 'free').toString().toLowerCase();
+    if (plan === 'free') {
+      res.status(403).json({ success: false, error: { code: 'pro-only', message: 'This feature is available for PRO users only.' } });
+      return;
+    }
+
+    const docRef = userRef.collection('savedComboSets').doc(finalId);
+    await docRef.delete();
+    res.status(200).json({ success: true });
+  } catch (err: any) {
+    logger.error('deleteComboSet error', err);
+    res.status(500).json({ success: false, error: { code: err.code || 'internal', message: err.message || 'Internal Server Error' } });
+  }
+});

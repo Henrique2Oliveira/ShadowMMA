@@ -14,11 +14,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { getAuth as getClientAuth } from 'firebase/auth';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ActivityIndicator, Alert, FlatList, Modal, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Match ComboMeta shape from combos.tsx
- type ComboMeta = {
+type ComboMeta = {
   id: string;
   name: string;
   level: number;
@@ -33,6 +33,7 @@ const CACHE_KEY = 'custom_fight_combos_meta_cache_v1_cat0_asc';
 const CACHE_TTL_MS = 1000 * 60 * 10; // 10 minutes
 const SELECTED_KEY = 'custom_fight_last_selection';
 const MAX_SELECT = 10;
+const MAX_SAVED_SETS = 6;
 
 export default function CustomFight() {
   const { user } = useAuth();
@@ -55,8 +56,8 @@ export default function CustomFight() {
     clearBtn: font(12),
     startHint: font(15),
     startButton: font(22),
-  overlayTitle: font(26),
-  overlaySub: font(12),
+    overlayTitle: font(26),
+    overlaySub: font(12),
     chip: font(14),
     lockedLevel: font(11),
   } as const;
@@ -76,6 +77,16 @@ export default function CustomFight() {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [showPlansModal, setShowPlansModal] = useState(false);
   const [showProCtaModal, setShowProCtaModal] = useState(false);
+
+  // Save/Load sets UI
+  const [saveLoadVisible, setSaveLoadVisible] = useState(false);
+  const [sets, setSets] = useState<Array<{ id: string; name: string | null; items: Array<{ id: string; type: string }>; count: number }>>([]);
+  const [saving, setSaving] = useState(false);
+  const [loadingSets, setLoadingSets] = useState(false);
+  const [newSetName, setNewSetName] = useState('');
+  const isPro = (userData?.plan || 'free').toLowerCase() !== 'free';
+  const insets = useSafeAreaInsets();
+  // Reorder handled inline inside the grouped chip
 
   // selection state: store unique id and type for each
   const [selected, setSelected] = useState<Array<{ id: string; type: string }>>([]);
@@ -149,6 +160,23 @@ export default function CustomFight() {
     fetchCombos();
   }, [fetchCombos]);
 
+  const fetchSavedSets = useCallback(async () => {
+    if (!isPro) return;
+    setLoadingSets(true);
+    try {
+      const token = await clientAuth.currentUser?.getIdToken();
+      if (!token) return;
+      const url = 'https://us-central1-shadow-mma.cloudfunctions.net/getSavedComboSets';
+      const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      if (resp.ok) {
+        const json = await resp.json();
+        const arr = Array.isArray(json.sets) ? json.sets : [];
+        setSets(arr);
+      }
+    } catch { }
+    finally { setLoadingSets(false); }
+  }, [clientAuth, isPro]);
+
   // Load previously saved selection on mount
   useEffect(() => {
     (async () => {
@@ -171,7 +199,7 @@ export default function CustomFight() {
 
   // Auto-save selection for next time
   useEffect(() => {
-    AsyncStorage.setItem(SELECTED_KEY, JSON.stringify(selected)).catch(() => {});
+    AsyncStorage.setItem(SELECTED_KEY, JSON.stringify(selected)).catch(() => { });
   }, [selected]);
 
   const getUserLevel = (xp: number) => Math.min(100, Math.floor(xp / 100));
@@ -241,6 +269,20 @@ export default function CustomFight() {
     setSelected(prev => prev.filter(s => s.id !== String(id)));
   }, []);
 
+  const moveSelected = useCallback((idx: number, dir: -1 | 1) => {
+    setSelected(prev => {
+      const next = [...prev];
+      const to = idx + dir;
+      if (idx < 0 || idx >= next.length) return prev;
+      if (to < 0 || to >= next.length) return prev;
+      const temp = next[idx];
+      next[idx] = next[to];
+      next[to] = temp;
+      return next;
+    });
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }, []);
+
   // // Quick select by type (adds multiple at once up to MAX_SELECT)
   // const selectByType = useCallback((type: string) => {
   //   // Respect level gating for move types
@@ -283,6 +325,78 @@ export default function CustomFight() {
     setIsModalVisible(true);
   }, [selected, userData?.plan]);
 
+  const openSaveLoad = useCallback(() => {
+    if (!isPro) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setShowPlansModal(true);
+      return;
+    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSaveLoadVisible(true);
+    fetchSavedSets();
+  }, [isPro, fetchSavedSets]);
+
+  const saveCurrentSelection = useCallback(async (overwriteId?: string) => {
+    if (!isPro) return;
+    if (selected.length === 0) {
+      Alert.alert('Nothing to save', 'Select some combos first.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const token = await clientAuth.currentUser?.getIdToken();
+      if (!token) return;
+      const body = {
+        name: (newSetName || '').trim() || null,
+        items: selected.map(s => ({ id: s.id, type: s.type })),
+        setId: overwriteId || undefined,
+      };
+      const resp = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/saveComboSet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body),
+      });
+      if (!resp.ok) {
+        const txt = await resp.text();
+        throw new Error(txt || `Failed to save (${resp.status})`);
+      }
+      const json = await resp.json();
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      setNewSetName('');
+      await fetchSavedSets();
+    } catch (e: any) {
+      Alert.alert('Save failed', e?.message || 'Could not save this set.');
+    } finally {
+      setSaving(false);
+    }
+  }, [clientAuth, isPro, selected, newSetName, fetchSavedSets]);
+
+  const loadSet = useCallback((s: { items: Array<{ id: string; type: string }> }) => {
+    const items = (s.items || []).slice(0, MAX_SELECT);
+    setSelected(items.map(it => ({ id: String(it.id), type: it.type || 'Punches' })));
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setSaveLoadVisible(false);
+  }, []);
+
+  const deleteSet = useCallback(async (setId: string) => {
+    try {
+      const token = await clientAuth.currentUser?.getIdToken();
+      if (!token) return;
+      const resp = await fetch('https://us-central1-shadow-mma.cloudfunctions.net/deleteComboSet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ setId }),
+      });
+      if (!resp.ok) {
+        const txt = await resp.text();
+        throw new Error(txt || `Failed to delete (${resp.status})`);
+      }
+      await fetchSavedSets();
+    } catch (e: any) {
+      Alert.alert('Delete failed', e?.message || 'Could not delete this set.');
+    }
+  }, [clientAuth, fetchSavedSets]);
+
   const iconSize = headerIconSize;
 
   const SelectableComboItem = useCallback(({ item }: { item: ComboMeta }) => {
@@ -291,8 +405,8 @@ export default function CustomFight() {
     const isFreePlan = (userData?.plan || 'free') === 'free';
     const proLocked = !!item.proOnly && isFreePlan;
     const showMoves = Array.isArray(item.moves) && item.moves.length > 0 && !locked && !proLocked;
-  const preview = showMoves ? item.moves!.slice(0, 6).map(m => (m?.move || '').replace(/\n/g, ' ')).filter(Boolean) : [];
-  const formatted = preview.map(txt => txt.replace(/\s/g, '\u00A0'));
+    const preview = showMoves ? item.moves!.slice(0, 6).map(m => (m?.move || '').replace(/\n/g, ' ')).filter(Boolean) : [];
+    const formatted = preview.map(txt => txt.replace(/\s/g, '\u00A0'));
     const getPreviewGradient = (): [string, string] => {
       if (item.proOnly) return ['#6e5327ff', '#614815ff'];
       const key = (item.type || '').toLowerCase();
@@ -306,7 +420,7 @@ export default function CustomFight() {
     };
 
     return (
-      <View style={[styles.cardWrapper, { marginVertical: uiScale(4, { category: 'spacing' }) }]}>        
+      <View style={[styles.cardWrapper, { marginVertical: uiScale(4, { category: 'spacing' }) }]}>
         <MemoizedComboCard
           item={item}
           userLevel={userLevel}
@@ -334,8 +448,8 @@ export default function CustomFight() {
             </LinearGradient>
           </View>
         )}
-        <View pointerEvents="none" style={[styles.fullOverlay, { opacity: selected ? 1 : 0 }]}>          
-          <LinearGradient colors={["rgba(5, 5, 5, 0.48)", "rgba(0, 0, 0, 0.14)"]} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.overlayInner}>
+        <View pointerEvents="none" style={[styles.fullOverlay, { opacity: selected ? 1 : 0 }]}>
+          <LinearGradient colors={["rgba(5, 5, 5, 0.01)", "rgba(24, 24, 24, 0.73)","rgba(0, 0, 0, 0.01)"]} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.overlayInner}>
             {/* <MaterialCommunityIcons name="check" size={overlayCheckSize} color="#ffffffff" style={{ marginBottom: spacing(4) }} /> */}
             <Text style={[styles.overlayTitle, { fontSize: fs.overlayTitle, maxWidth: '85%', textAlign: 'center' }]}>SELECTED</Text>
             <Text style={[styles.overlaySub, { fontSize: fs.overlaySub, maxWidth: '85%', textAlign: 'center' }]}>Tap again to remove</Text>
@@ -354,7 +468,7 @@ export default function CustomFight() {
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={[Colors.bgGameDark ,Colors.bgGameDark, Colors.background]}
+        colors={[Colors.bgGameDark, Colors.bgGameDark, Colors.background]}
         start={{ x: 0, y: 1 }}
         end={{ x: 1, y: 0 }}
         style={styles.headerGradient}
@@ -437,66 +551,95 @@ export default function CustomFight() {
                     <View style={styles.selectionCountPill}>
                       <Text style={styles.selectionCountText}>{selected.length}/{MAX_SELECT}</Text>
                     </View>
+                    <TouchableOpacity
+                      onPress={openSaveLoad}
+                      style={styles.saveBadgeButton}
+                      accessibilityRole="button"
+                      accessibilityLabel="Save or load combo sets"
+                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                    >
+                      <MaterialCommunityIcons name="content-save-outline" size={18} color="#cfe1ff" />
+                    </TouchableOpacity>
+                    {/* Reorder is inline within the grouped chip; toggle removed */}
                   </View>
                   <TouchableOpacity
                     onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelected([]); }}
                     disabled={selected.length === 0}
                     style={[styles.clearBtn, selected.length === 0 && { opacity: 0.5 }]}
                   >
-                    <MaterialCommunityIcons name="trash-can-outline" size={18} color="#ffc14d" style={{ marginRight: 6 }} />
+                    <MaterialCommunityIcons name="trash-can-outline" size={18} color="#ffd3d3" style={{ marginRight: 6 }} />
                     <Text style={[styles.clearBtnText, { fontSize: fs.clearBtn }]}>CLEAR ALL</Text>
                   </TouchableOpacity>
                 </View>
-                {/* Quick removal chips for selected combos */}
+                {/* Grouped selection chip with order, names, moves, reorder and remove */}
                 {selected.length > 0 && (
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.selectedChips}
-                  >
-                    {selected.map(s => {
-                      const meta = idToCombo.get(String(s.id));
-                      const label = meta?.name || `#${s.id}`;
+                  <View style={styles.groupChip}>
+                    {selected.map((s, idx) => {
+                      const combo = idToCombo.get(String(s.id));
+                      const name = combo?.name || `#${s.id}`;
+                      const moves = (combo?.moves || []).map(m => (m?.move || '').replace(/\n/g, ' ')).filter(Boolean);
+                      const shown = moves.slice(0, 8);
+                      const more = Math.max(0, moves.length - shown.length);
+                      const isFirst = idx === 0;
+                      const isLast = idx === selected.length - 1;
                       return (
-                        <TouchableOpacity
-                          key={`sel-${s.id}`}
-                          onPress={() => removeSelection(String(s.id))}
-                          style={styles.selectedChip}
-                        >
-                          <MaterialCommunityIcons name="check-circle" size={16} color="#4ade80" style={{ marginRight: 6 }} />
-                          <Text style={[styles.selectedChipText, { fontSize: fs.chip }]} numberOfLines={1}>
-                            {label}
-                          </Text>
-                          <MaterialCommunityIcons name="close" size={16} color="#4ade80" style={{ marginLeft: 8, opacity: 0.95 }} />
-                        </TouchableOpacity>
+                        <View key={`grp-${s.id}`} style={styles.groupRow}>
+                          <View style={styles.groupIndex}><Text style={styles.groupIndexText}>{idx + 1}</Text></View>
+                          <View style={styles.groupInfo}>
+                            <Text style={styles.groupName} numberOfLines={1}>{name}</Text>
+                            <View style={styles.groupMovesChip}>
+                              <View style={styles.groupMovesRow}>
+                                {shown.map((mv, i) => (
+                                  <React.Fragment key={`gm-${idx}-${i}`}>
+                                    {i > 0 && <Text style={styles.seqArrow}>→</Text>}
+                                    <Text style={styles.groupMove}>{mv}</Text>
+                                  </React.Fragment>
+                                ))}
+                                {more > 0 && <Text style={styles.seqMore}> +{more}</Text>}
+                              </View>
+                            </View>
+                          </View>
+                          <View style={styles.groupActions}>
+                            <TouchableOpacity onPress={() => moveSelected(idx, -1)} disabled={isFirst} style={[styles.reorderBtn, isFirst && { opacity: 0.4 }]}>
+                              <MaterialCommunityIcons name="chevron-left" size={18} color="#cfe1ff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => moveSelected(idx, 1)} disabled={isLast} style={[styles.reorderBtn, isLast && { opacity: 0.4 }]}>
+                              <MaterialCommunityIcons name="chevron-right" size={18} color="#cfe1ff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => removeSelection(String(s.id))} style={[styles.reorderBtn, { backgroundColor: '#2c1a1a', borderColor: '#5a2a2a' }]}>
+                              <MaterialCommunityIcons name="close" size={16} color="#ffd3d3" />
+                            </TouchableOpacity>
+                          </View>
+                        </View>
                       );
                     })}
-                  </ScrollView>
+                  </View>
                 )}
-                {/* Removed Add {type} chips row as requested */}
-                {/* Removed quick remove-by-type row as requested */}
+
               </View>
             )}
             ListFooterComponent={() => (
               <View style={styles.footerSpace} />
             )}
           />
-          <View style={styles.startBar}>
-            <Text style={[styles.startHint, { fontSize: fs.startHint }]}>{selected.length > 0 ? `${selected.length} combo${selected.length>1?'s':''} selected` : 'Select combos to enable'}</Text>
-            <TouchableOpacity
-              style={[styles.startButton, selected.length === 0 && { opacity: 0.6 }]}
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handleStart(); }}
-              disabled={selected.length === 0}
-            >
-              <Text style={[styles.startButtonText, { fontSize: fs.startButton }]}>Start Fight</Text>
-            </TouchableOpacity>
+          <View style={[styles.startBar, { paddingBottom: uiScale(12, { category: 'spacing' }) + insets.bottom }]}>
+            <Text style={[styles.startHint, { fontSize: fs.startHint }]}>{selected.length > 0 ? `${selected.length} combo${selected.length > 1 ? 's' : ''} selected` : ' '}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <TouchableOpacity
+                style={[styles.startButton, selected.length === 0 && { opacity: 0.6 }]}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handleStart(); }}
+                disabled={selected.length === 0}
+              >
+                <Text style={[styles.startButtonText, { fontSize: fs.startButton }]}>Start Fight</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </>
       )}
 
       <FightModeModal
         isVisible={isModalVisible}
-  onClose={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setIsModalVisible(false); }}
+        onClose={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setIsModalVisible(false); }}
         roundDuration={roundDuration}
         setRoundDuration={setRoundDuration}
         numRounds={numRounds}
@@ -515,7 +658,7 @@ export default function CustomFight() {
         onStartFight={() => {
           setIsModalVisible(false);
           // Persist last selection (already autosaved, but keep here for reliability)
-          AsyncStorage.setItem(SELECTED_KEY, JSON.stringify(selected)).catch(()=>{});
+          AsyncStorage.setItem(SELECTED_KEY, JSON.stringify(selected)).catch(() => { });
         }}
       />
       <PlansModal
@@ -527,6 +670,71 @@ export default function CustomFight() {
           router.push('/(protected)/plans');
         }}
       />
+
+      {/* Save/Load Sets Modal (PRO only) */}
+      <Modal visible={saveLoadVisible} animationType="slide" transparent onRequestClose={() => setSaveLoadVisible(false)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={styles.modalTitle}>Saved Sets</Text>
+              <TouchableOpacity onPress={() => setSaveLoadVisible(false)}>
+                <MaterialCommunityIcons name="close" size={24} color={Colors.text} />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.modalSub}>Store up to {MAX_SAVED_SETS} sets.</Text>
+
+            <View style={styles.saveRow}>
+              <TextInput
+                value={newSetName}
+                onChangeText={setNewSetName}
+                placeholder="Optional name"
+                placeholderTextColor="#aaa"
+                style={styles.input}
+                maxLength={40}
+              />
+              <TouchableOpacity disabled={saving || selected.length === 0} onPress={() => saveCurrentSelection()} style={[styles.primaryBtn, (saving || selected.length === 0) && { opacity: 0.6 }]}
+              >
+                <Text style={styles.primaryBtnText}>{saving ? 'Saving…' : 'Save Current'}</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ height: 12 }} />
+            {loadingSets ? (
+              <View style={{ paddingVertical: 16, alignItems: 'center' }}>
+                <ActivityIndicator color={Colors.text} />
+              </View>
+            ) : (
+              <ScrollView style={{ maxHeight: 360 }}>
+                {sets.length === 0 && (
+                  <Text style={{ color: Colors.text, opacity: 0.8, fontFamily: Typography.fontFamily }}>No saved sets yet.</Text>
+                )}
+                {sets.map(s => (
+                  <View key={s.id} style={styles.setRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.setName}>{s.name || 'Unnamed set'}</Text>
+                      <Text style={styles.setMeta}>{s.count} item{s.count !== 1 ? 's' : ''}</Text>
+                    </View>
+                    <TouchableOpacity onPress={() => loadSet(s)} style={styles.smallBtn}>
+                      <Text style={styles.smallBtnText}>Load</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => saveCurrentSelection(s.id)} style={[styles.smallBtn, { backgroundColor: '#123c7a', borderColor: '#2e67c0' }]}>
+                      <Text style={styles.smallBtnText}>Overwrite</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => deleteSet(s.id)} style={[styles.smallBtn, { backgroundColor: '#3a1010', borderColor: '#6a1a1a' }]}>
+                      <Text style={styles.smallBtnText}>Delete</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+
+            <View style={{ height: 8 }} />
+            <TouchableOpacity onPress={fetchSavedSets} style={[styles.secondaryBtn]}>
+              <Text style={styles.secondaryBtnText}>Refresh</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -582,34 +790,50 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 2,
-    backgroundColor: '#332b16',
+    backgroundColor: '#2a2020',
     paddingHorizontal: uiScale(12, { category: 'spacing' }),
     paddingVertical: uiScale(8, { category: 'spacing' }),
     borderRadius: uiScale(20, { category: 'button' }),
     borderWidth: 1,
-    borderColor: '#5c4718',
+    borderColor: '#563636',
   },
   clearBtnText: {
-    color: '#ffdb99',
+    color: '#ffd3d3',
     marginLeft: 2,
     fontFamily: Typography.fontFamily,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
   selectionCountPill: {
-    backgroundColor: '#2f2614',
+    backgroundColor: '#1d2a1f',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#8a6a1a',
+    borderColor: '#2e6b3a',
   },
   selectionCountText: {
-    color: '#ffdb99',
+    color: '#c6f3d6',
     fontFamily: Typography.fontFamily,
     fontWeight: '700',
     fontSize: uiScale(12, { category: 'font' }),
     letterSpacing: 0.3,
+  },
+  saveBadgeButton: {
+    marginLeft: uiScale(8, { category: 'spacing' }),
+    backgroundColor: '#17202a',
+    width: uiScale(32, { category: 'button' }),
+    height: uiScale(32, { category: 'button' }),
+    borderRadius: uiScale(10, { category: 'button' }),
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#223040',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   footerSpace: { height: uiScale(120, { category: 'spacing' }) },
   startBar: {
@@ -617,9 +841,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#1b1b1bff',
+    backgroundColor: '#101312',
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderColor: '#c5c5c593',
+    borderColor: '#2a3a30',
     padding: uiScale(12, { category: 'spacing' }),
     flexDirection: 'row',
     alignItems: 'center',
@@ -636,7 +860,19 @@ const styles = StyleSheet.create({
     borderRadius: uiScale(10, { category: 'button' }),
     borderWidth: 1,
     borderColor: '#1a610cff',
-    borderBottomWidth: 4,
+    borderBottomWidth: 3,
+  },
+  saveLoadButton: {
+    backgroundColor: '#1c4fb8',
+    width: uiScale(46, { category: 'button' }),
+    height: uiScale(46, { category: 'button' }),
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: uiScale(10, { category: 'button' }),
+    borderWidth: 1,
+    borderColor: '#2e67c0',
+    borderBottomWidth: 3,
+    marginRight: uiScale(10, { category: 'spacing' }),
   },
   startButtonText: {
     color: '#fff',
@@ -692,7 +928,7 @@ const styles = StyleSheet.create({
     borderRadius: uiScale(18, { category: 'button' }),
     marginRight: uiScale(8, { category: 'spacing' }),
     borderWidth: 1,
-    borderColor: '#1a610c55',
+    borderColor: '#2e6b3a66',
   },
   chipText: {
     color: Colors.background,
@@ -707,18 +943,265 @@ const styles = StyleSheet.create({
   selectedChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#102318',
+    backgroundColor: '#0e1a13',
     paddingVertical: uiScale(6, { category: 'spacing' }),
     paddingHorizontal: uiScale(10, { category: 'spacing' }),
     borderRadius: uiScale(16, { category: 'button' }),
     marginRight: uiScale(8, { category: 'spacing' }),
     borderWidth: 1,
+    borderColor: '#1f4e2a',
+  },
+  chipIndex: {
+    width: uiScale(18, { category: 'button' }),
+    height: uiScale(18, { category: 'button' }),
+    borderRadius: uiScale(9, { category: 'button' }),
+    backgroundColor: '#163a26',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: uiScale(6, { category: 'spacing' }),
+    borderWidth: 1,
     borderColor: '#2e6b3a',
+  },
+  chipIndexText: {
+    color: '#d9f7e3',
+    fontFamily: Typography.fontFamily,
+    fontSize: uiScale(11, { category: 'font' }),
+    lineHeight: uiScale(12, { category: 'font' }),
   },
   selectedChipText: {
     color: '#d9f7e3',
     fontFamily: Typography.fontFamily,
     maxWidth: uiScale(140, { category: 'spacing' }),
+  },
+  reorderBtn: {
+    backgroundColor: '#17202a',
+    borderWidth: 1,
+    borderColor: '#223040',
+    borderRadius: uiScale(8, { category: 'button' }),
+    paddingHorizontal: uiScale(6, { category: 'spacing' }),
+    paddingVertical: uiScale(4, { category: 'spacing' }),
+    marginLeft: uiScale(4, { category: 'spacing' }),
+  },
+  sequencePreview: {
+    paddingHorizontal: uiScale(8, { category: 'spacing' }),
+    paddingTop: uiScale(2, { category: 'spacing' }),
+    paddingBottom: uiScale(10, { category: 'spacing' }),
+  },
+  seqGroup: {
+    backgroundColor: '#0f1712',
+    borderWidth: 1,
+    borderColor: '#1f3d28',
+    borderRadius: uiScale(12, { category: 'button' }),
+    paddingVertical: uiScale(8, { category: 'spacing' }),
+    paddingHorizontal: uiScale(10, { category: 'spacing' }),
+    marginRight: uiScale(8, { category: 'spacing' }),
+  },
+  seqHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: uiScale(4, { category: 'spacing' }),
+  },
+  seqIndex: {
+    color: '#8ce2a7',
+    fontFamily: Typography.fontFamily,
+    marginRight: uiScale(6, { category: 'spacing' }),
+  },
+  seqName: {
+    color: '#d9f7e3',
+    fontFamily: Typography.fontFamily,
+    maxWidth: uiScale(140, { category: 'spacing' }),
+  },
+  seqMovesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'nowrap',
+  },
+  seqMove: {
+    color: '#eafbef',
+    fontFamily: Typography.fontFamily,
+    fontSize: uiScale(12, { category: 'font' }),
+    maxWidth: uiScale(120, { category: 'spacing' }),
+  },
+  seqArrow: {
+    color: '#bcefd1',
+    marginHorizontal: uiScale(6, { category: 'spacing' }),
+  },
+  seqMore: {
+    color: '#9adbb8',
+    marginLeft: uiScale(6, { category: 'spacing' }),
+    fontFamily: Typography.fontFamily,
+    fontSize: uiScale(12, { category: 'font' }),
+  },
+  // Grouped chip styles
+  groupChip: {
+    marginHorizontal: uiScale(8, { category: 'spacing' }),
+    marginTop: uiScale(4, { category: 'spacing' }),
+    marginBottom: uiScale(8, { category: 'spacing' }),
+    backgroundColor: '#0b1410',
+    borderColor: '#1f3d28',
+    borderWidth: 1,
+    borderRadius: uiScale(14, { category: 'button' }),
+    padding: uiScale(10, { category: 'spacing' }),
+  },
+  groupRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: uiScale(6, { category: 'spacing' }),
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: '#1a2a20',
+  },
+  groupInfo: {
+    flex: 1,
+    flexDirection: 'column',
+    marginRight: uiScale(8, { category: 'spacing' }),
+    minWidth: 0,
+  },
+  groupIndex: {
+    width: uiScale(22, { category: 'button' }),
+    height: uiScale(22, { category: 'button' }),
+    borderRadius: uiScale(11, { category: 'button' }),
+    backgroundColor: '#163a26',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#2e6b3a',
+    marginRight: uiScale(8, { category: 'spacing' }),
+  },
+  groupIndexText: {
+    color: '#d9f7e3',
+    fontFamily: Typography.fontFamily,
+    fontSize: uiScale(12, { category: 'font' }),
+    lineHeight: uiScale(14, { category: 'font' }),
+  },
+  groupName: {
+    color: '#d9f7e3',
+    fontFamily: Typography.fontFamily,
+    maxWidth: uiScale(140, { category: 'spacing' }),
+    marginRight: uiScale(8, { category: 'spacing' }),
+  },
+  groupMovesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    flexWrap: 'wrap',
+  },
+  groupMovesChip: {
+    marginTop: uiScale(4, { category: 'spacing' }),
+    backgroundColor: '#0d1f16',
+    borderWidth: 1,
+    borderColor: '#1f3d28',
+    borderRadius: uiScale(10, { category: 'button' }),
+    paddingVertical: uiScale(6, { category: 'spacing' }),
+    paddingHorizontal: uiScale(8, { category: 'spacing' }),
+  },
+  groupMove: {
+    color: '#eafbef',
+    fontFamily: Typography.fontFamily,
+    fontSize: uiScale(12, { category: 'font' }),
+    maxWidth: uiScale(120, { category: 'spacing' }),
+  },
+  groupActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: uiScale(8, { category: 'spacing' }),
+  },
+  // Modal styles
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'flex-end',
+  },
+  modalCard: {
+    backgroundColor: '#0f1211',
+    padding: uiScale(16, { category: 'spacing' }),
+    borderTopLeftRadius: uiScale(16, { category: 'button' }),
+    borderTopRightRadius: uiScale(16, { category: 'button' }),
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderColor: '#1c2a22',
+  },
+  modalTitle: {
+    color: Colors.text,
+    fontFamily: Typography.fontFamily,
+    fontSize: uiScale(20, { category: 'font' }),
+  },
+  modalSub: {
+    color: Colors.text,
+    opacity: 0.8,
+    marginTop: 4,
+    fontFamily: Typography.fontFamily,
+  },
+  saveRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: uiScale(12, { category: 'spacing' }),
+  },
+  input: {
+    flex: 1,
+    backgroundColor: '#151a18',
+    color: Colors.text,
+    paddingVertical: uiScale(10, { category: 'spacing' }),
+    paddingHorizontal: uiScale(12, { category: 'spacing' }),
+    borderRadius: uiScale(8, { category: 'button' }),
+    borderWidth: 1,
+    borderColor: '#2a3a30',
+    marginRight: uiScale(8, { category: 'spacing' }),
+  },
+  primaryBtn: {
+    backgroundColor: Colors.darkGreen,
+    paddingVertical: uiScale(10, { category: 'spacing' }),
+    paddingHorizontal: uiScale(12, { category: 'spacing' }),
+    borderRadius: uiScale(8, { category: 'button' }),
+    borderWidth: 1,
+    borderColor: '#1a610cff',
+  },
+  primaryBtnText: {
+    color: '#fff',
+    fontFamily: Typography.fontFamily,
+    fontWeight: '600',
+  },
+  secondaryBtn: {
+    marginTop: uiScale(8, { category: 'spacing' }),
+    alignSelf: 'flex-start',
+    backgroundColor: '#17202a',
+    paddingVertical: uiScale(8, { category: 'spacing' }),
+    paddingHorizontal: uiScale(12, { category: 'spacing' }),
+    borderRadius: uiScale(8, { category: 'button' }),
+    borderWidth: 1,
+    borderColor: '#223040',
+  },
+  secondaryBtnText: {
+    color: '#d6e7ff',
+    fontFamily: Typography.fontFamily,
+  },
+  setRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: uiScale(10, { category: 'spacing' }),
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: '#223028',
+  },
+  setName: {
+    color: Colors.text,
+    fontFamily: Typography.fontFamily,
+    fontSize: uiScale(16, { category: 'font' }),
+  },
+  setMeta: {
+    color: '#9ab7a8',
+    fontFamily: Typography.fontFamily,
+    fontSize: uiScale(12, { category: 'font' }),
+  },
+  smallBtn: {
+    backgroundColor: '#17202a',
+    borderWidth: 1,
+    borderColor: '#223040',
+    paddingVertical: uiScale(6, { category: 'spacing' }),
+    paddingHorizontal: uiScale(10, { category: 'spacing' }),
+    borderRadius: uiScale(8, { category: 'button' }),
+    marginLeft: uiScale(8, { category: 'spacing' }),
+  },
+  smallBtnText: {
+    color: '#cfe1ff',
+    fontFamily: Typography.fontFamily,
   },
 });
 
