@@ -1,3 +1,4 @@
+import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
 import { isTablet, rf, rs } from '@/utils/responsive';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -87,6 +88,12 @@ export function FightModeModal({
   userLevel = 0,
   extraParams,
 }: FightModeModalProps) {
+  // Pull user plan + lives from context (fallback to any explicit extraParams override)
+  const { userData } = useUserData();
+  const derivedPlan = (extraParams?.plan || userData?.plan || '').toLowerCase();
+  const isFreePlan = derivedPlan === 'free';
+  const livesLeft = typeof userData?.fightsLeft === 'number' ? userData.fightsLeft : undefined;
+
   const isFullRandomFight = movesMode.includes('RANDOM_ALL');
   const isCustomSelected = movesMode.includes('CUSTOM_SELECTED');
   const KICKS_REQUIRED_LEVEL = 7;
@@ -149,14 +156,9 @@ export function FightModeModal({
                   ? 'Random Fight: All unlocked combos (below or at your level) are loaded. Order shuffles each time.'
                   : 'Random Combos: 3–5 varied combos from selected move types for skill variety & conditioning.'}
             </Text>
-            {extraParams?.plan === 'free' && (
-              <View style={styles.lifeBadge} accessibilityRole="text" accessibilityLabel="Costs one life">
-                <MaterialCommunityIcons name="heart-minus" color="#fff" size={14} style={{ marginRight: 4 }} />
-                <Text style={styles.lifeBadgeText}>-1 Life</Text>
-              </View>
-            )}
           </View>
-           {extraParams?.plan === 'free' && <Text style={styles.lifeHint}>Starting a fight consumes one Life. Lives refill daily — upgrade for more.</Text>}
+          {/* Life cost info moved below Start button */}
+          {/* (Compact lives info moved below Start button) */}
 
           <View style={styles.optionsContainer}>
             <View style={styles.optionRow}>
@@ -321,6 +323,23 @@ export function FightModeModal({
             <TouchableOpacity style={styles.startButton} onPress={handleStartFight} activeOpacity={0.9}>
               <Text style={styles.startButtonText}>Start Fight</Text>
             </TouchableOpacity>
+            {isFreePlan && (
+              <View style={styles.livesInline}>
+                <MaterialCommunityIcons
+                  name={livesLeft !== undefined && livesLeft <= 0 ? 'heart-broken' : 'heart'}
+                  size={rs(isTablet ? 18 : 14)}
+                  color={
+                    livesLeft === undefined ? '#ffffff80' : livesLeft <= 0 ? '#ff5b57' : livesLeft === 1 ? '#ffb347' : '#67d76a'
+                  }
+                  style={{ marginRight: 4 }}
+                />
+                <Text style={styles.livesInlineText}>
+                  {typeof livesLeft === 'number'
+                    ? `${Math.max(livesLeft, 0)} ${Math.max(livesLeft, 0) === 1 ? 'Life' : 'Lives'} left • Upgrade for ∞ Fights!`
+                    : 'Lives: …'}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
       </TouchableOpacity>
@@ -468,6 +487,26 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 12,
     lineHeight: rf(16),
+  },
+  // Compact inline lives indicator (below Start button)
+  livesInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginTop: 8,
+    marginBottom: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: '#2f2f2f',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#444'
+  },
+  livesInlineText: {
+    color: '#ffffffb8',
+    fontSize: rf(isTablet ? 12 : 10),
+    fontFamily: Typography.fontFamily,
+    letterSpacing: 0.4,
   },
   optionsContainer: {
     width: '100%',
