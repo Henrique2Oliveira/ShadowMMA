@@ -2,7 +2,7 @@
   "expo": {
     "name": "Shadow MMA",
     "slug": "ShadowMMA",
-    "version": "1.1",
+    "version": "1.2",
     "orientation": "portrait",
     "icon": "./assets/images/playstore-icon-official.png",
     "scheme": "shadowmma",
