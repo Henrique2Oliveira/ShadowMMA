@@ -2,7 +2,6 @@ import MemoizedComboCard from '@/components/MemoizedComboCard';
 import { AlertModal } from '@/components/Modals/AlertModal';
 import { FightModeModal } from '@/components/Modals/FightModeModal';
 import PlansModal from '@/components/Modals/PlansModal';
-import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { app as firebaseApp } from '@/FirebaseConfig.js';
 import { Colors, Typography } from '@/themes/theme';
@@ -14,7 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { getAuth as getClientAuth } from 'firebase/auth';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Modal, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Modal, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Match ComboMeta shape from combos.tsx
@@ -26,7 +25,7 @@ type ComboMeta = {
   categoryId: string;
   comboId?: number | string;
   proOnly?: boolean;
-  moves?: Array<{ move: string }>;
+  moves?: { move: string }[];
 };
 
 const CACHE_KEY = 'custom_fight_combos_meta_cache_v1_cat0_asc';
@@ -36,19 +35,16 @@ const MAX_SELECT = 10;
 const MAX_SAVED_SETS = 6;
 
 export default function CustomFight() {
-  const { user } = useAuth();
   const { userData } = useUserData();
-  const { width } = useWindowDimensions();
   // Responsive scaling helpers
   const font = (v: number) => uiScale(v, { category: 'font' });
-  const spacing = (v: number) => uiScale(v, { category: 'spacing' });
   const icon = (v: number) => uiScale(v, { category: 'icon' });
-  const button = (v: number) => uiScale(v, { category: 'button' });
 
-  const headerIconSize = icon(42);
+  const _headerIconSize = icon(42);
+  // referenced intentionally for future layout adjustments
+  void _headerIconSize;
   const backIconSize = icon(30);
   // Overlay (selection) UI sizing – slightly smaller so it doesn't overflow on tablets
-  const overlayCheckSize = icon(44);
   const fs = {
     headerTitle: font(30),
     headerSubtitle: font(14),
@@ -69,7 +65,7 @@ export default function CustomFight() {
   const [restTime, setRestTime] = React.useState('1');
   const [moveSpeed, setMoveSpeed] = React.useState('1');
   const [movesMode, setMovesMode] = React.useState<string[]>(['Punches', 'CUSTOM_SELECTED']);
-  const [category, setCategory] = React.useState('0');
+  const [category] = React.useState('0');
 
   const [combos, setCombos] = useState<ComboMeta[] | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -80,7 +76,7 @@ export default function CustomFight() {
 
   // Save/Load sets UI
   const [saveLoadVisible, setSaveLoadVisible] = useState(false);
-  const [sets, setSets] = useState<Array<{ id: string; name: string | null; items: Array<{ id: string; type: string }>; count: number }>>([]);
+  const [sets, setSets] = useState<{ id: string; name: string | null; items: { id: string; type: string }[]; count: number }[]>([]);
   const [saving, setSaving] = useState(false);
   const [loadingSets, setLoadingSets] = useState(false);
   const [newSetName, setNewSetName] = useState('');
@@ -89,7 +85,7 @@ export default function CustomFight() {
   // Reorder handled inline inside the grouped chip
 
   // selection state: store unique id and type for each
-  const [selected, setSelected] = useState<Array<{ id: string; type: string }>>([]);
+  const [selected, setSelected] = useState<{ id: string; type: string }[]>([]);
 
   const clientAuth = useMemo(() => getClientAuth(firebaseApp), []);
 
@@ -183,7 +179,7 @@ export default function CustomFight() {
       try {
         const raw = await AsyncStorage.getItem(SELECTED_KEY);
         if (!raw) return;
-        const parsed = JSON.parse(raw) as Array<{ id: string; type?: string }>;
+  const parsed = JSON.parse(raw) as { id: string; type?: string }[];
         if (Array.isArray(parsed)) {
           const normalized = parsed
             .filter(p => p && p.id)
@@ -204,8 +200,7 @@ export default function CustomFight() {
 
   const getUserLevel = (xp: number) => Math.min(100, Math.floor(xp / 100));
   const userLevel = useMemo(() => getUserLevel(userData?.xp || 0), [userData?.xp]);
-  const KICKS_REQUIRED_LEVEL = 7;
-  const DEFENSE_REQUIRED_LEVEL = 3;
+  // Level gating values (kept here for future use)
 
   // Reconcile loaded selection with available (and unlocked) combos once data/user level ready
   useEffect(() => {
@@ -222,13 +217,7 @@ export default function CustomFight() {
     });
   }, [combos, userLevel]);
 
-  const availableTypes = useMemo(() => {
-    const set = new Set<string>();
-    (combos || []).forEach(c => set.add(c.type || 'Punches'));
-    // Keep consistent order with app: Punches, Kicks, Defense
-    const order = ['Punches', 'Kicks', 'Defense'];
-    return order.filter(t => set.has(t));
-  }, [combos]);
+  // availableTypes intentionally removed — not used in this file
 
   const toggleSelect = useCallback((item: ComboMeta, isLocked: boolean) => {
     if (isLocked) return;
@@ -360,8 +349,8 @@ export default function CustomFight() {
         const txt = await resp.text();
         throw new Error(txt || `Failed to save (${resp.status})`);
       }
-      const json = await resp.json();
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  await resp.json();
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       setNewSetName('');
       await fetchSavedSets();
     } catch (e: any) {
@@ -371,7 +360,7 @@ export default function CustomFight() {
     }
   }, [clientAuth, isPro, selected, newSetName, fetchSavedSets]);
 
-  const loadSet = useCallback((s: { items: Array<{ id: string; type: string }> }) => {
+  const loadSet = useCallback((s: { items: { id: string; type: string }[] }) => {
     const items = (s.items || []).slice(0, MAX_SELECT);
     setSelected(items.map(it => ({ id: String(it.id), type: it.type || 'Punches' })));
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -397,7 +386,7 @@ export default function CustomFight() {
     }
   }, [clientAuth, fetchSavedSets]);
 
-  const iconSize = headerIconSize;
+  // headerIconSize available for potential future use
 
   const SelectableComboItem = useCallback(({ item }: { item: ComboMeta }) => {
     const locked = item.level > userLevel;

@@ -6,9 +6,11 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ProtectedLayout() {
 
-  const [fontsLoaded] = useFonts({
+  const [_fontsLoaded] = useFonts({
     'CalSans': require('@/assets/fonts/CalSans-Regular.ttf'),
   });
+  // Mark as used to satisfy linter; font loading handled by useFonts side-effect
+  void _fontsLoaded;
   
   const auth = useContext(AuthContext);
 

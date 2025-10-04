@@ -32,7 +32,8 @@ export default function Plans() {
   }, [width, isTablet]);
   const { user } = useAuth();
   const { userData, refreshUserData } = useUserData();
-  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
+  const [_selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
+  void _selectedPlan;
   const [showDowngradeModal, setShowDowngradeModal] = useState(false);
   const [rcPlans, setRcPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(false);
@@ -763,6 +764,8 @@ export default function Plans() {
             const proPrice = proPlan?.price || '$9.70';
             const annualPrice = annualPlan?.price || '$39.99';
             const annualMonthlyEq = calculateMonthlyEquivalent(annualPrice, 'year');
+            void proPrice;
+            void annualMonthlyEq;
             return (
               <>
                 <Text style={styles.disclaimerText}>

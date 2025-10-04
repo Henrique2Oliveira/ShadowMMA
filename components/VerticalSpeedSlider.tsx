@@ -27,7 +27,6 @@ export const VerticalSpeedSlider: React.FC<VerticalSpeedSliderProps> = ({
   const MAX_SPEED = 2.5;
   
   const [isVisible, setIsVisible] = React.useState(false);
-  const [isDragging, setIsDragging] = React.useState(false);
   const [dragStartY, setDragStartY] = React.useState(0);
   const [dragStartSpeed, setDragStartSpeed] = React.useState(speedMultiplier);
   
@@ -37,23 +36,7 @@ export const VerticalSpeedSlider: React.FC<VerticalSpeedSliderProps> = ({
     return SLIDER_HEIGHT - (ratio * SLIDER_HEIGHT);
   };
 
-  // Convert position to speed with smooth continuous values
-  const positionToSpeed = (position: number) => {
-    const ratio = (SLIDER_HEIGHT - position) / SLIDER_HEIGHT;
-    const speed = MIN_SPEED + (ratio * (MAX_SPEED - MIN_SPEED));
-    // Return smooth values with one decimal place precision
-    return Math.round(speed * 10) / 10;
-  };
-
-  const showSlider = () => {
-    if (!isPaused) return;
-    setIsVisible(true);
-  };
-
-  const hideSlider = () => {
-    if (isDragging) return; // Don't hide while dragging
-    setIsVisible(false);
-  };
+  // (positionToSpeed, showSlider and hideSlider intentionally removed — not used)
 
   const toggleSlider = () => {
     if (!isPaused) return;
@@ -65,7 +48,6 @@ export const VerticalSpeedSlider: React.FC<VerticalSpeedSliderProps> = ({
     onMoveShouldSetPanResponder: () => isPaused,
     
     onPanResponderGrant: (evt: any) => {
-      setIsDragging(true);
       setDragStartY(evt.nativeEvent.pageY);
       setDragStartSpeed(speedMultiplier);
     },
@@ -82,7 +64,6 @@ export const VerticalSpeedSlider: React.FC<VerticalSpeedSliderProps> = ({
     },
     
     onPanResponderRelease: () => {
-      setIsDragging(false);
       // Slider stays open - only closes when speed button is clicked again
     },
   });

@@ -27,11 +27,9 @@ export const subscriptionPlans: SubscriptionPlan[] = [
     period: 'forever',
     features: [
       '3 Fights a day',
-      'Basic training programs',
-      // 'Random Fight generator',
-      // 'Combo training',
-      'Essential techniques',
-      // 'Progress tracking',
+      'Random Fights Generator',
+      'Essential Combos',
+
     ]
   },
   {
@@ -43,7 +41,7 @@ export const subscriptionPlans: SubscriptionPlan[] = [
       'Combo training',
       'Ad-free experience',
       'Custom Combat builder',
-      'Priority support',
+      'Unique Pro only Combos',
     ],
     popular: true
   },
@@ -56,7 +54,7 @@ export const subscriptionPlans: SubscriptionPlan[] = [
       'Combo training',
       'Ad-free experience',
       'Custom Combat builder',
-      'Priority support',
+      'Unique Pro only Combos',
     ]
   }
 ];

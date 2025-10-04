@@ -6,12 +6,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated as RNAnimated, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withSpring,
-  withTiming,
+    Easing,
+    useAnimatedStyle,
+    useSharedValue,
+    withSequence,
+    withSpring,
+    withTiming,
 } from 'react-native-reanimated';
 
 interface MoveCardProps {
@@ -79,7 +79,7 @@ export const MoveCard: React.FC<MoveCardProps> = ({
         listenerId = (moveProgress as any).addListener(({ value }: { value: number }) => {
           progressShared.value = value;
         });
-      } catch (e) {
+      } catch {
         // fallback: try to set numeric value if available
         try {
           const v = (moveProgress as any)._value ?? 1;

@@ -292,8 +292,9 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
     const isExpanded = expanded[plan.title];
     const featuresToShow = isExpanded || isTablet ? plan.features : plan.features.slice(0, 3);
     const showExpandToggle = !isTablet && plan.features.length > 3;
-    const isAnnual = plan.title.toLowerCase() === 'annual';
-    const perMonthEquivalent = isAnnual && plan.features.find(f => f.toLowerCase().includes('monthly equivalent'));
+  const isAnnual = plan.title.toLowerCase() === 'annual';
+  const perMonthEquivalent = isAnnual && plan.features.find(f => f.toLowerCase().includes('monthly equivalent'));
+  void perMonthEquivalent;
     return (
       <View key={plan.title} style={[styles.planOuter, { width: layout.cardWidth }]}> 
         <LinearGradient

@@ -35,7 +35,6 @@ export const VerticalVolumeSlider: React.FC<VerticalVolumeSliderProps> = ({
   const MAX = 1;
 
   const [isVisible, setIsVisible] = React.useState(false);
-  const [isDragging, setIsDragging] = React.useState(false);
   const [dragStartY, setDragStartY] = React.useState(0);
   const [dragStartValue, setDragStartValue] = React.useState(volume);
 
@@ -56,7 +55,6 @@ export const VerticalVolumeSlider: React.FC<VerticalVolumeSliderProps> = ({
     onMoveShouldSetPanResponder: () => isPaused,
 
     onPanResponderGrant: (evt: any) => {
-      setIsDragging(true);
       setDragStartY(evt.nativeEvent.pageY);
       setDragStartValue(volume);
     },
@@ -72,7 +70,7 @@ export const VerticalVolumeSlider: React.FC<VerticalVolumeSliderProps> = ({
     },
 
     onPanResponderRelease: () => {
-      setIsDragging(false);
+      // no-op
     },
   });
 

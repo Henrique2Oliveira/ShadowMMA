@@ -3,7 +3,6 @@ import MemoizedComboCard from '@/components/MemoizedComboCard';
 import { AlertModal } from '@/components/Modals/AlertModal';
 import { FightModeModal } from '@/components/Modals/FightModeModal';
 import PlansModal from '@/components/Modals/PlansModal';
-import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { app as firebaseApp } from '@/FirebaseConfig.js';
 import { Colors, Typography } from '@/themes/theme';
@@ -15,7 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { getAuth as getClientAuth } from 'firebase/auth';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type ComboMeta = {
@@ -29,7 +28,7 @@ type ComboMeta = {
   categoryName?: string;
   comboId?: number | string;
   proOnly?: boolean;
-  moves?: Array<{ move: string }>; // optional moves preview when allowed
+  moves?: { move: string }[]; // optional moves preview when allowed
 };
 
 const CACHE_KEY = 'combos_meta_cache_v3_cat0_asc';
@@ -38,14 +37,10 @@ const RECENT_COMBOS_KEY = 'recent_combos';
 const MAX_RECENT_COMBOS = 2; // Maximum number of recent combos to store
 
 export default function Combos() {
-  const { user } = useAuth();
   const { userData } = useUserData();
-  const { width } = useWindowDimensions();
   // Responsive helpers
   const font = (v: number) => uiScale(v, { category: 'font' });
-  const spacing = (v: number) => uiScale(v, { category: 'spacing' });
   const icon = (v: number) => uiScale(v, { category: 'icon' });
-  const button = (v: number) => uiScale(v, { category: 'button' });
   const headerIconSize = icon(42);
   const backIconSize = icon(30);
   const fs = {
@@ -65,7 +60,7 @@ export default function Combos() {
   const [selectedComboId, setSelectedComboId] = React.useState<string | number | undefined>(undefined);
   const [selectedType, setSelectedType] = React.useState<string>('All');
 
-  const setModalConfig = (config: {
+  const setModalConfig = useCallback((config: {
     roundDuration?: string;
     numRounds?: string;
     restTime?: string;
@@ -75,16 +70,16 @@ export default function Combos() {
     comboId?: string | number;
     moveType?: string;
   }) => {
-    setRoundDuration(config.roundDuration || roundDuration);
-    setNumRounds(config.numRounds || numRounds);
-    setRestTime(config.restTime || restTime);
-    setMoveSpeed(config.moveSpeed || moveSpeed);
-    setMovesMode(config.movesMode || movesMode);
-    setCategory(config.category || category);
+    setRoundDuration(prev => config.roundDuration || prev);
+    setNumRounds(prev => config.numRounds || prev);
+    setRestTime(prev => config.restTime || prev);
+    setMoveSpeed(prev => config.moveSpeed || prev);
+    setMovesMode(prev => config.movesMode || prev);
+    setCategory(prev => config.category || prev);
     setSelectedComboId(config.comboId);
-  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  setIsModalVisible(true);
-  };
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setIsModalVisible(true);
+  }, [setCategory]);
 
   const [combos, setCombos] = useState<ComboMeta[] | null>(null);
   const [recentComboIds, setRecentComboIds] = useState<(string | number)[]>([]);
@@ -577,36 +572,7 @@ const styles = StyleSheet.create({
 
 });
 
-const errStyles = StyleSheet.create({
-  errorBox: {
-    marginHorizontal: 16,
-    marginBottom: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    backgroundColor: '#2a0000',
-    borderColor: '#ff4d4f',
-    borderWidth: StyleSheet.hairlineWidth,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  errorText: {
-    color: '#ffbbbb',
-    fontFamily: Typography.fontFamily,
-    fontSize: 14,
-    flex: 1,
-  },
-  retryText: {
-    color: '#ffffff',
-    fontFamily: Typography.fontFamily,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#ff4d4f',
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-});
+// errStyles intentionally removed — not used
 
 // Compact moves preview under cards (mirrors ComboCarousel style)
 const previewStyles = StyleSheet.create({

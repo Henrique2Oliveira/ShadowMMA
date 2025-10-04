@@ -131,6 +131,23 @@ export default function Index() {
     }, [user, refreshUserData, loadMissionSettings])
   );
 
+  const setModalConfig = useCallback((config: {
+    roundDuration?: string;
+    numRounds?: string;
+    restTime?: string;
+    moveSpeed?: string;
+    movesMode?: string[];
+    category?: string;
+  }) => {
+    setRoundDuration(prev => config.roundDuration || prev);
+    setNumRounds(prev => config.numRounds || prev);
+    setRestTime(prev => config.restTime || prev);
+    setMoveSpeed(prev => config.moveSpeed || prev);
+    setMovesMode(prev => config.movesMode || prev);
+    setCategory(prev => config.category || prev);
+    setIsModalVisible(true);
+  }, []);
+
   // Expose the show modal function globally
   React.useEffect(() => {
     globalThis.showFightModal = () => setModalConfig({
@@ -144,7 +161,7 @@ export default function Index() {
     return () => {
       globalThis.showFightModal = undefined;
     };
-  }, []);
+  }, [setModalConfig]);
 
   useEffect(() => {
     if (user) {
@@ -276,22 +293,6 @@ export default function Index() {
     }
   };
 
-  const setModalConfig = (config: {
-    roundDuration?: string;
-    numRounds?: string;
-    restTime?: string;
-    moveSpeed?: string;
-    movesMode?: string[];
-    category?: string;
-  }) => {
-    setRoundDuration(config.roundDuration || roundDuration);
-    setNumRounds(config.numRounds || numRounds);
-    setRestTime(config.restTime || restTime);
-    setMoveSpeed(config.moveSpeed || moveSpeed);
-    setMovesMode(config.movesMode || movesMode);
-    setCategory(config.category || category);
-    setIsModalVisible(true);
-  };
 
   const buttons = [
     {

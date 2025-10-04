@@ -6,14 +6,14 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef } from 'react';
 import {
-  Animated,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  useWindowDimensions
+    Animated,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+    useWindowDimensions
 } from 'react-native';
 
 type AnimatedValue = Animated.Value;
@@ -31,7 +31,7 @@ export const CombosModal: React.FC<CombosModalProps> = ({
   onClose,
   randomFight = false,
 }) => {
-  const { height, width } = useWindowDimensions();
+  const { height } = useWindowDimensions();
   const isSmallHeight = height < 700;
   const modalMaxHeight = Math.min(height * 0.82, uiScale(720));
 

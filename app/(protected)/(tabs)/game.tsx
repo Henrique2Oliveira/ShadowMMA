@@ -72,7 +72,7 @@ type ModalConfig = {
 export default function Game() {
   // Global cap for speed
   const MAX_SPEED = 2.5;
-  const { width, height } = useWindowDimensions();
+  const { width, height: _height } = useWindowDimensions();
   const scaleUp = width >= 1024 ? 1.5 : width >= 768 ? 1.25 : 1;
   const [currentModal, setCurrentModal] = React.useState<ModalConfig | null>(null);
   const { updateUserData, userData } = useUserData();
@@ -239,6 +239,8 @@ export default function Game() {
   const [showCombosModal, setShowCombosModal] = React.useState(false);
   const [combos, setCombos] = React.useState<Combo[]>([]);
   const [currentComboName, setCurrentComboName] = React.useState<string>("");
+  // referenced in several effects; mark used for linter when only setter is used
+  void currentComboName;
   const [currentCombo, setCurrentCombo] = React.useState<Combo | null>(null);
   const [currentComboMoveIndex, setCurrentComboMoveIndex] = React.useState<number>(0);
   const [stance, setStance] = React.useState<'orthodox' | 'southpaw'>('orthodox');

@@ -100,7 +100,7 @@ export default function QuizScreen({ onComplete }: Props) {
             }));
           }
         } catch { }
-      } catch (e) {
+        } catch {
         // silent
       }
       onComplete(newAnswers);
@@ -134,7 +134,7 @@ export default function QuizScreen({ onComplete }: Props) {
         setPermissionError('Permission denied. You can enable notifications later in Settings.');
         await goNext({ notificationsEnabled: false });
       }
-    } catch (e) {
+    } catch {
       setPermissionError('Unable to enable notifications right now. You can try later in Settings.');
       await goNext({ notificationsEnabled: false });
     } finally {
@@ -147,7 +147,7 @@ export default function QuizScreen({ onComplete }: Props) {
       case 0:
         return (
           <QuestionBlock
-            title="What's your age range?"
+            title={"What\u2019s your age range?"}
             options={['Under 18', '18-24', '25-34', '35+']}
             selected={answers.age}
             onSelect={(v) => handleBasicAnswer('age', v)}
@@ -156,7 +156,7 @@ export default function QuizScreen({ onComplete }: Props) {
       case 1:
         return (
           <QuestionBlock
-            title="What's your gender?"
+            title={"What\u2019s your gender?"}
             options={['Male', 'Female', 'Other']}
             selected={answers.gender}
             onSelect={(v) => handleBasicAnswer('gender', v)}
@@ -165,7 +165,7 @@ export default function QuizScreen({ onComplete }: Props) {
       case 2:
         return (
           <QuestionBlock
-            title="What's your martial arts experience?"
+            title={"What\u2019s your martial arts experience?"}
             options={['Beginner', 'Some Experience', 'Advanced', 'Professional']}
             selected={answers.experience}
             onSelect={(v) => handleBasicAnswer('experience', v)}
@@ -174,7 +174,7 @@ export default function QuizScreen({ onComplete }: Props) {
       case 3:
         return (
           <QuestionBlock
-            title="What's your main goal?"
+            title={"What\u2019s your main goal?"}
             options={['Learn Self-Defense', 'Get in Shape', 'Compete', 'Master Techniques']}
             selected={answers.goal}
             onSelect={(v) => handleBasicAnswer('goal', v)}
@@ -209,7 +209,7 @@ export default function QuizScreen({ onComplete }: Props) {
                 <Text style={styles.stanceDesc}>Right side leads. Good for left‑handed.</Text>
               </Pressable>
             </View>
-            <Text style={styles.jabNote}>Example: The jab is the quick straight punch from your lead hand. In Orthodox it's your LEFT hand; in Southpaw it's your RIGHT hand.</Text>
+            <Text style={styles.jabNote}>Example: The jab is the quick straight punch from your lead hand. In Orthodox it&apos;s your LEFT hand; in Southpaw it&apos;s your RIGHT hand.</Text>
             <Text style={styles.stanceNoteBottom}>You can switch later in Game Options.</Text>
           </View>
         );
@@ -250,7 +250,7 @@ export default function QuizScreen({ onComplete }: Props) {
         return (
           <View style={styles.sectionContainer}>
             <Text style={styles.question}>Daily training reminder?</Text>
-            <Text style={styles.helperText}>Pick a time (optional). We'll nudge you to train. Change anytime in Settings.</Text>
+            <Text style={styles.helperText}>Pick a time (optional). We\u2019ll nudge you to train. Change anytime in Settings.</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center', marginTop: 10 }}>
               {dailyTimeChoices.map(choice => {
                 const isSelected = answers.dailyReminderEnabled && answers.dailyReminderHour === choice.hour && answers.dailyReminderMinute === choice.minute;

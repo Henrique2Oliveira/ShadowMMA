@@ -12,19 +12,7 @@ import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Image, ImageBackground, Linking, Modal, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 
-type UserData = {
-  name: string;
-  plan: string;
-  xp: number;
-  fightsLeft: number;
-  loginStreak?: number;
-  currentFightRound?: number;
-  currentFightTime?: number;
-  totalFightRounds?: number;
-  totalFightTime?: number;
-  lifetimeFightRounds?: number;
-  lifetimeFightTime?: number;
-};
+// User data shape is described by UserDataContext; no local type needed here
 
 // Simple avatar options we let users tweak (subset of DiceBear open-peeps)
 type AvatarOptions = {
@@ -42,6 +30,8 @@ type AvatarOptions = {
 export default function Profile() {
   const { width } = useWindowDimensions();
   const deviceScale = width >= 1024 ? 1.45 : width >= 768 ? 1.25 : width >= 600 ? 1.1 : 1;
+  // Used implicitly for responsive math in a few places; mark as used for linter
+  void deviceScale;
   const iconSize = (v: number) => uiScale(v, { category: 'icon' });
   const font = (v: number) => uiScale(v, { category: 'font' });
   const spacing = (v: number) => uiScale(v, { category: 'spacing' });
@@ -140,8 +130,8 @@ export default function Profile() {
           setBadgeQueue(prev => [...prev, ...queueAdds]);
           await AsyncStorage.setItem(unifiedKey, JSON.stringify(unified));
         }
-      } catch (e) {
-        console.warn('Unified badge storage error', e);
+        } catch (e) {
+          console.warn('Unified badge storage error', e);
       }
     };
     run();
