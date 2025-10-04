@@ -3,7 +3,7 @@ import { GradientButton } from '@/components/Buttons/GradientButton';
 import { StartFightButton } from '@/components/Buttons/StartFightButton';
 import { LevelBar } from '@/components/LevelBar';
 import { AlertModal } from '@/components/Modals/AlertModal';
-import CookieConsentModal from '@/components/Modals/CookieConsentModal';
+import CookieConsentModalComponent from '@/components/Modals/CookieConsentModal';
 import { FightModeModal } from '@/components/Modals/FightModeModal';
 import { StreakCongratulationsModal } from '@/components/Modals/StreakCongratulationsModal';
 import { WeeklyMission } from '@/components/WeeklyMission';
@@ -172,7 +172,9 @@ export default function Index() {
     setNotificationMessage(notificationMessages[Math.floor(Math.random() * notificationMessages.length)]);
     // Also refresh mission settings when screen loads
     loadMissionSettings();
-  }, [user, loadMissionSettings]);
+    // notificationMessages is static and loadMissionSettings is stable; suppress exhaustive-deps here
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   // Set up streak update callback
   const handleStreakUpdate = useCallback((newStreak: number, previousStreak: number) => {
@@ -731,7 +733,7 @@ export default function Index() {
       />
 
       {/* Cookie Consent - show for all users after userData (plan) is loaded to avoid flicker */}
-      <CookieConsentModal
+  <CookieConsentModalComponent
         visible={!!userData && !consentLoading && adConsentStatus === 'unknown'}
         onAccept={() => { setGranted(); }}
         onLimit={() => { setDenied(); }}

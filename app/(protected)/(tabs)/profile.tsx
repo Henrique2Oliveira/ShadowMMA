@@ -1,5 +1,6 @@
 import { AlertModal } from '@/components/Modals/AlertModal';
-import FeedbackModal, { FeedbackPayload } from '@/components/Modals/FeedbackModal';
+import type { FeedbackPayload } from '@/components/Modals/FeedbackModal';
+import FeedbackModalComponent from '@/components/Modals/FeedbackModal';
 import PlansModal from '@/components/Modals/PlansModal';
 import { SubscriptionPlan } from '@/config/subscriptionPlans';
 import { useAuth } from '@/contexts/AuthContext';
@@ -130,8 +131,8 @@ export default function Profile() {
           setBadgeQueue(prev => [...prev, ...queueAdds]);
           await AsyncStorage.setItem(unifiedKey, JSON.stringify(unified));
         }
-        } catch (e) {
-          console.warn('Unified badge storage error', e);
+        } catch (_e) {
+          console.warn('Unified badge storage error', _e);
       }
     };
     run();
@@ -201,7 +202,7 @@ export default function Profile() {
       }
     };
     loadData();
-  }, [user]);
+  }, [user, refreshUserData]);
 
   // Load saved avatar seed + options (client-side only); default to user's name if none saved
   useEffect(() => {
@@ -615,7 +616,7 @@ export default function Profile() {
         }}
       />
       {/* Feedback Modal */}
-      <FeedbackModal
+      <FeedbackModalComponent
         visible={showFeedbackModal}
         initialEmail={user?.email || undefined}
         onCancel={() => setShowFeedbackModal(false)}

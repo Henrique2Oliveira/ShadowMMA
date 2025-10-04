@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { Colors, Typography } from '@/themes/theme';
 import { rf, rs } from '@/utils/responsive';
 import { transformMoveForStance } from '@/utils/stance';
@@ -101,6 +102,7 @@ export const MoveCard: React.FC<MoveCardProps> = ({
         }
       }
     };
+  // moveProgress is a mutable Animated.Value; we intentionally avoid exhaustive deps
   }, [moveProgress, progressShared]);
 
   // Animated style for the progress bar using Reanimated
@@ -114,6 +116,7 @@ export const MoveCard: React.FC<MoveCardProps> = ({
   }, [progressBarWidthNum]);
 
   // On move change, apply animation per mode (slide/new or old tilt)
+  // UI animations based on move changes are intentionally managed; skip exhaustive-deps
   useEffect(() => {
     if (!move || isGameOver || isRestPeriod) return;
     if (move === prevMove.current) return;

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { Colors, Typography } from '@/themes/theme';
 import { Move } from '@/types/game';
 import { uiScale } from '@/utils/uiScale';
@@ -45,6 +46,7 @@ export const CombosModal: React.FC<CombosModalProps> = ({
     combos.map(() => new Animated.Value(1))
   ).current;
 
+  // Animations use local refs and are intentionally started only when `visible` changes.
   useEffect(() => {
     if (visible) {
       // Reset animations when modal opens

@@ -32,7 +32,7 @@ const TypeChip: React.FC<{ label: string; icon: any; selected: boolean; onPress:
     </TouchableOpacity>
   );
 
-export const FeedbackModal: React.FC<FeedbackModalProps> = ({ visible, initialEmail, onSubmit, onCancel }) => {
+const FeedbackModal: React.FC<FeedbackModalProps> = ({ visible, initialEmail, onSubmit, onCancel }) => {
   const [type, setType] = useState<FeedbackType>('feedback');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');

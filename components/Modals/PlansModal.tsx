@@ -254,7 +254,7 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.uid]);
 
   const handleRestore = async () => {
     if (restoreLoading) return;

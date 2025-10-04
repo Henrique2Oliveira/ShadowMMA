@@ -1,15 +1,16 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { Colors, Typography } from '@/themes/theme';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  Animated,
-  Dimensions,
-  Easing,
-  Image,
-  ImageBackground,
-  StyleSheet,
-  Text,
-  View,
+    ActivityIndicator,
+    Animated,
+    Dimensions,
+    Easing,
+    Image,
+    ImageBackground,
+    StyleSheet,
+    Text,
+    View,
 } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
@@ -69,6 +70,8 @@ export const LoadingScreen = () => {
   const [tipIndex, setTipIndex] = useState(() => Math.floor(Math.random() * TIPS.length));
   const tipFade = useRef(new Animated.Value(0)).current;
 
+  // Animations intentionally manage internal refs; skip exhaustive-deps here
+  // Intentional: animations use many internal refs and should not re-run when other props change
   useEffect(() => {
     // Icon entrance animation
     Animated.parallel([

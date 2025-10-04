@@ -8,7 +8,7 @@ interface QuizIntroProps {
   onSkip?: () => void; // kept for backward compatibility (not rendered)
 }
 
-export const QuizIntro: React.FC<QuizIntroProps> = ({ onStart }) => {
+const QuizIntro: React.FC<QuizIntroProps> = ({ onStart }) => {
   return (
     <ImageBackground
       source={require('@/assets/images/bg-gym-profile.png')}

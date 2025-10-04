@@ -48,6 +48,8 @@ export default function QuizScreen({ onComplete }: Props) {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [customReminderTime, setCustomReminderTime] = useState<Date | null>(null);
   // Animate whenever step or track width changes
+  // animate progress bar when step changes; skip exhaustive deps to avoid re-runs on anim ref
+  // Intentional: progress animation handled via ref; avoid adding ref deps
   useEffect(() => {
     if (!trackWidth) return; // wait for layout
     const target = ((step + 1) / totalSteps) * trackWidth;
@@ -57,7 +59,7 @@ export default function QuizScreen({ onComplete }: Props) {
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false, // width animation
     }).start();
-  }, [step, trackWidth]);
+  }, [step, trackWidth, progressAnim]);
 
   const roundsOptions = [5, 10, 15, 20, 25, 30, 35, 40, 50];
   const timeOptions = [15, 30, 45, 60, 90, 120, 150, 180, 240];

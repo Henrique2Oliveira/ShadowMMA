@@ -149,7 +149,7 @@ export const LevelBar: React.FC<LevelBarProps> = ({
 
     // Update stored previous XP
     prevXpRef.current = xp;
-  }, [xp, xpAnim, levelUpHoldMs, suppressInitialLevelUpAnimation, showPrevLevelDuringLevelUp, level]);
+  }, [xp, xpAnim, levelUpHoldMs, suppressInitialLevelUpAnimation, showPrevLevelDuringLevelUp, level, levelScale]);
 
   return (
     <View style={[styles.container, containerStyle]}>

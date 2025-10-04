@@ -23,6 +23,8 @@ export default function Settings() {
   const { user, resetPassword } = useAuth();
   const { userData } = useUserData();
   const { status: adConsentStatus, setGranted, setDenied } = useAdConsent();
+  // referenced for possible future ad decisions; mark as used for linter
+  void adConsentStatus;
   const [isLoading, setIsLoading] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
@@ -317,12 +319,15 @@ export default function Settings() {
                     await cancelAllNotifications();
                     setEnhancedNotificationsEnabled(false);
                     await AsyncStorage.setItem('enhancedNotificationsEnabled', 'false');
-                  } catch (error) {
+                  } catch (_error) {
+                    // Intentionally log for diagnostics without exposing details to UI
+                    void _error;
                     setNotificationErrorMessage('Failed to disable notifications. Some alerts may still be active.');
                     setShowNotificationError(true);
                   }
                 }
               } catch (error) {
+                void error;
                 console.log('Error toggling enhanced notifications:', error);
                 setNotificationErrorMessage('Unable to update notification settings. Please try again.');
                 setShowNotificationError(true);

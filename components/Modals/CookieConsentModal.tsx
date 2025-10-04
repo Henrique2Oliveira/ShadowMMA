@@ -22,7 +22,7 @@ type Props = {
   onRequestClose?: () => void;
 };
 
-export const CookieConsentModal: React.FC<Props> = ({ visible, onAccept, onLimit, onRequestClose }) => {
+const CookieConsentModal: React.FC<Props> = ({ visible, onAccept, onLimit, onRequestClose }) => {
   const { width, height } = useWindowDimensions();
   const cardMaxWidth = Math.min(width - uiScale(24, { category: 'spacing' }) * 2, 640);
   const cardMaxHeight = Math.min(height * 0.88, 700);

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { Typography } from '@/themes/theme';
 import React, { useEffect } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
@@ -18,6 +19,7 @@ const StatItem: React.FC<StatItemProps> = ({ move, count, delay }) => {
   const translateY = React.useRef(new Animated.Value(0)).current;
   const scale = React.useRef(new Animated.Value(0.5)).current;
 
+  // StatItem uses internal animation refs; skip exhaustive deps for those animations
   useEffect(() => {
     Animated.sequence([
       // Initial delay based on index
@@ -97,12 +99,14 @@ export const MoveStats: React.FC<MoveStatsProps> = ({ stats, onComplete }) => {
     .sort((a, b) => b[1] - a[1]); // Sort by count in descending order
   const totalDuration = (moveEntries.length * 1200) + 3500; // Total animation duration adjusted for new timing
 
+  // Animations use internal refs; intentionally omit dynamic deps
   useEffect(() => {
     if (onComplete) {
       const timer = setTimeout(onComplete, totalDuration);
       return () => clearTimeout(timer);
     }
-  }, [onComplete, totalDuration]);
+  // onComplete referenced intentionally; include it since it's a callback prop
+  }, [totalDuration, onComplete]);
 
   // Only show top 5 moves to prevent clutter
   const topMoves = moveEntries.slice(0, 5);

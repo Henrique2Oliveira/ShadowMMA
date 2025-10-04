@@ -138,8 +138,8 @@ export default function Plans() {
         store: ent?.store || null,
         managementURL: info?.managementURL || null,
       });
-    } catch (err) {
-      console.warn('[Subscriptions] Unable to fetch subscription details', err);
+    } catch (_err) {
+      console.warn('[Subscriptions] Unable to fetch subscription details', _err);
     }
   };
 
@@ -153,8 +153,9 @@ export default function Plans() {
       const plans = mapOfferingsToPlans(offerings);
       setRcPlans(plans);
       fetchSubscriptionDetails();
-    } catch (error) {
-      // console.error('[RevenueCat] Error fetching offerings', error);
+    } catch (_error) {
+      void _error;
+      // console.error('[RevenueCat] Error fetching offerings', _error);
       setError('Unable to load live plans. Showing defaults.');
       setRcPlans([]);
     } finally {
@@ -166,6 +167,7 @@ export default function Plans() {
     // Load on mount
     getOfferings();
     fetchSubscriptionDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   // Placeholders for future RevenueCat integration
   const handleManageSubscription = async () => {
@@ -193,6 +195,7 @@ export default function Plans() {
       }) as string;
       await Linking.openURL(fallback);
     } catch (err) {
+      void err;
       // console.error('[Subscriptions] Manage subscription error', err);
       showStatus('Subscriptions', 'Unable to open subscription management. Please try again later.', 'error');
     }
@@ -209,8 +212,9 @@ export default function Plans() {
   try { await refreshUserData?.(user?.uid ?? ''); } catch {}
       showStatus('Subscriptions', 'Subscription data synced.', 'success');
       fetchSubscriptionDetails();
-    } catch (err) {
-      // console.error('[Subscriptions] Sync error', err);
+    } catch (_err) {
+      void _err;
+      // console.error('[Subscriptions] Sync error', _err);
       showStatus('Subscriptions', 'Failed to sync subscription data.', 'error');
     } finally {
       setLoading(false);
@@ -232,8 +236,8 @@ export default function Plans() {
       } else {
         showStatus('Restore', 'No previous purchases were found for this account.', 'info');
       }
-    } catch (err: any) {
-      const cancelled = err?.userCancelled || err?.code === 'PURCHASE_CANCELLED_ERROR' || err?.code === '1';
+    } catch (_err: any) {
+      const cancelled = _err?.userCancelled || _err?.code === 'PURCHASE_CANCELLED_ERROR' || _err?.code === '1';
       if (!cancelled) {
         // console.error('[Subscriptions] Restore error', err);
         showStatus('Restore', 'Could not restore purchases. Please try again later.', 'error');
@@ -297,6 +301,7 @@ export default function Plans() {
         }
         setCurrentExpiration(expiry);
       } catch (e) {
+        void e;
         setCurrentExpiration(null);
       } finally {
         setDowngradeLoading(false);
@@ -476,8 +481,9 @@ export default function Plans() {
       setPurchaseModalMessage(switchMessage || 'Your monthly plan will begin after your current annual period ends.');
       setPurchaseModalVisible(true);
       setTimeout(() => { try { refreshUserData?.(user?.uid ?? ''); } catch {} }, 2500);
-    } catch (err) {
-      // console.error('[Subscriptions] Schedule switch error', err);
+    } catch (_err) {
+      void _err;
+      // console.error('[Subscriptions] Schedule switch error', _err);
       setPurchaseModalTitle('Could Not Open');
       setPurchaseModalType('error');
       setPurchaseModalMessage('We could not open subscription management. Please try again later.');
@@ -526,6 +532,7 @@ export default function Plans() {
       // Refresh local user data after a short delay (gives store time)
       setTimeout(() => { try { refreshUserData?.(user?.uid ?? ''); } catch {} }, 2500);
     } catch (err) {
+      void err;
       // console.error('[Subscriptions] Downgrade/manage error', err);
       setPurchaseModalTitle('Unable to Open');
       setPurchaseModalType('error');

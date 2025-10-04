@@ -1,5 +1,5 @@
 import PlansModal from '@/components/Modals/PlansModal';
-import QuizIntro from '@/components/QuizIntro';
+import QuizIntroComponent from '@/components/QuizIntro';
 import QuizScreen, { QuizData } from '@/components/QuizScreen';
 import { subscriptionPlans, type SubscriptionPlan } from '@/config/subscriptionPlans';
 import { Colors, Typography } from '@/themes/theme';
@@ -24,7 +24,7 @@ export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
   };
 
   if (quizStage === 'intro') {
-    return <QuizIntro onStart={() => setQuizStage('quiz')} onSkip={onSkip} />;
+  return <QuizIntroComponent onStart={() => setQuizStage('quiz')} onSkip={onSkip} />;
   }
   if (quizStage === 'quiz') {
     return <QuizScreen onComplete={handleQuizComplete} />;

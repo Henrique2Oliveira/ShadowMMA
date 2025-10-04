@@ -5,13 +5,13 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import {
-  Animated,
-  Dimensions,
-  Modal,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Animated,
+    Dimensions,
+    Modal,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
 interface UnlockedCombosModalProps {
@@ -20,7 +20,7 @@ interface UnlockedCombosModalProps {
   onClose: () => void;
 }
 
-export const UnlockedCombosModal: React.FC<UnlockedCombosModalProps> = ({
+const UnlockedCombosModal: React.FC<UnlockedCombosModalProps> = ({
   visible,
   combos,
   onClose,
@@ -69,7 +69,6 @@ export const UnlockedCombosModal: React.FC<UnlockedCombosModalProps> = ({
       runEntry();
     }
   }, [visible, hasItems, runEntry]);
-
   const handleNext = React.useCallback(() => {
     if (!hasItems) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

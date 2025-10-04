@@ -446,7 +446,7 @@ export default function CustomFight() {
         </View>
       </View>
     );
-  }, [isSelected, toggleSelect, userLevel]);
+  }, [isSelected, toggleSelect, userLevel, fs.overlaySub, fs.overlayTitle, userData?.plan]);
 
   const renderItem = useCallback(({ item }: { item: ComboMeta }) => {
     return <SelectableComboItem item={item} />;

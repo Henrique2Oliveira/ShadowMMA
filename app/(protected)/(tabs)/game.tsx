@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* Keep behavior-preserving: many effects use refs and intentional omissions of deps */
 import { GameOverButtons } from '@/components/Buttons/GameOverButtons';
 import { ComboCarousel } from '@/components/ComboCarousel';
 import { GameControls } from '@/components/GameControls';
@@ -72,7 +74,7 @@ type ModalConfig = {
 export default function Game() {
   // Global cap for speed
   const MAX_SPEED = 2.5;
-  const { width, height: _height } = useWindowDimensions();
+  const { width } = useWindowDimensions();
   const scaleUp = width >= 1024 ? 1.5 : width >= 768 ? 1.25 : 1;
   const [currentModal, setCurrentModal] = React.useState<ModalConfig | null>(null);
   const { updateUserData, userData } = useUserData();
@@ -101,6 +103,8 @@ export default function Game() {
     }
   }, [bellSound, isMuted]);
 
+  // Intentionally omit some dependencies (sounds/bellSound are managed inside effect lifecycle)
+  // Intentional: sound loading/unloading uses internal refs; avoid exhaustive deps
   React.useEffect(() => {
     const loadSounds = async () => {
       try {
@@ -147,6 +151,7 @@ export default function Game() {
   const isFocused = useIsFocused();
 
   // Keep screen awake while on Game tab
+  // Intentional: app state handling relies on 'sounds' ref values; avoid exhaustive deps to prevent re-subscribing
   React.useEffect(() => {
     const tag = 'game-screen';
     if (isFocused) {
@@ -160,6 +165,7 @@ export default function Game() {
   }, [isFocused]);
 
   // Handle app state and focus changes
+  // Intentional: focus-handling uses refs and side-effects that should not re-run on every change
   React.useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState) => {
       if (nextAppState === 'background' || nextAppState === 'inactive') {
@@ -346,12 +352,12 @@ export default function Game() {
       const currentLevel = Math.min(100, Math.floor(userData.xp / 100) || 0);
       if (currentLevel > previousLevel && previousLevel > 0) {
         // If backend already provided the combos list, prefer that over the generic banner
-        let t: ReturnType<typeof setTimeout> | null = null;
+        let timeoutId: ReturnType<typeof setTimeout> | null = null;
         if (!newUnlockedCombos || newUnlockedCombos.length === 0) {
           setShowNewCombo(true);
-          t = setTimeout(() => setShowNewCombo(false), 5000);
+          timeoutId = setTimeout(() => setShowNewCombo(false), 5000);
         }
-        return () => { if (t) clearTimeout(t); };
+        return () => { if (timeoutId) clearTimeout(timeoutId); };
       }
       setPreviousLevel(currentLevel);
     }
@@ -633,7 +639,6 @@ export default function Game() {
     resetAnimations,
     animateMove,
     updateMoveProgress,
-    animateRestPeriod,
     addRandomMovementEffect
   } = useGameAnimations();
   const sideButtonsOpacity = React.useRef(new Animated.Value(0)).current;

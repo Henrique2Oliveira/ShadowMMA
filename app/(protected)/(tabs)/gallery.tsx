@@ -55,7 +55,7 @@ export default function Gallery() {
     setIsModalVisible(true);
   };
 
-  const handleOpenYouTube = useCallback(() => {
+  const handleOpenYouTube = React.useCallback(() => {
     if (!selectedMove) return;
     // Build a YouTube search query using the move name; include a context keyword for better relevance.
     const query = encodeURIComponent(`How to ${selectedMove.name} boxing technique`);
@@ -63,9 +63,9 @@ export default function Gallery() {
     Linking.openURL(url).catch(() => { /* noop: could add error toast */ });
   }, [selectedMove]);
 
-  const renderMove: ListRenderItem<Move> = useCallback(({ item: move }) => (
+  const renderMove: ListRenderItem<Move> = ({ item: move }) => (
     <MoveGridCard move={move} onPress={() => handleMovePress(move)} />
-  ), [handleMovePress]);
+  );
 
   const keyExtractor = useCallback((item: Move) => item.id.toString(), []);
 
@@ -93,7 +93,7 @@ export default function Gallery() {
   const MoveGridCard = memo(function MoveGridCard({ move, onPress }: { move: Move; onPress: () => void }) {
     const scale = useRef(new Animated.Value(1)).current;
     const glowOpacity = useRef(new Animated.Value(0)).current;
-    const gradientColors = useMemo(() => getGradientByCategory(move.category), [move.category, getGradientByCategory]);
+  const gradientColors = useMemo(() => getGradientByCategory(move.category), [move.category]);
 
     const onPressIn = () => {
       Haptics.selectionAsync().catch(() => {});
