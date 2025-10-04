@@ -386,7 +386,7 @@ export default function Plans() {
         const hasPro = Object.keys(active).length > 0;
         if (hasPro) {
           setPurchaseModalTitle('Purchase Successful');
-          setPurchaseModalMessage('Your purchase was successful. Enjoy premium features!');
+          setPurchaseModalMessage('Payment confirmed ✅ Your premium access is activating. This can take up to a few minutes while we sync with the store. If everything is not unlocked right away, close this dialog and tap “Sync Subscription” (or pull to refresh). Enjoy the training!');
           setPurchaseModalType('success');
           setPurchaseModalVisible(true);
           try { await refreshUserData(user?.uid ?? ''); } catch {}
@@ -431,7 +431,7 @@ export default function Plans() {
       const hasPro = Object.keys(active).length > 0;
       if (hasPro) {
         setPurchaseModalTitle('Upgrade Complete');
-        setPurchaseModalMessage('Your annual plan is now active. Enjoy extended access!');
+        setPurchaseModalMessage('Annual plan activated ✅ It can take up to 2 minutes for all premium features to reflect. If something still looks locked, tap “Sync Subscription” or try again shortly. Train hard!');
         setPurchaseModalType('success');
         setPurchaseModalVisible(true);
         try { await refreshUserData(user?.uid ?? ''); } catch {}

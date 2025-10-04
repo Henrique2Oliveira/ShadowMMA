@@ -167,7 +167,7 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
       const hasPro = Object.keys(active).length > 0;
       if (hasPro) {
         setPurchaseModalTitle('Purchase Successful');
-        setPurchaseModalMessage('Your purchase was successful. Enjoy premium features!');
+        setPurchaseModalMessage('Payment confirmed ✅ Premium access is activating. It may take up to a few minutes to sync with the store. If features are still locked after a moment, close this window and tap refresh or reopen this screen. Enjoy the upgraded training!');
         setPurchaseModalType('success');
         setClosePlansAfterModal(true);
         setPurchaseModalVisible(true);
