@@ -203,7 +203,50 @@ firebase deploy --only firestore:rules
 ```bash
 firebase deploy
 ```
+## 9.5 Problem with Async Storage --legacy--pears 
 
+✅ Solução definitiva
+
+Abre o package.json
+
+Reinstala a versão correta do AsyncStorage (compatível com Firebase Auth):
+```bash
+npm install @react-native-async-storage/async-storage@1.24.0 --save
+```
+Apaga o cache local e o lockfile antigo:
+```bash
+rm -rf node_modules package-lock.json
+npm install
+```
+
+Verifica se está na versão certa:
+```bash
+npm ls @react-native-async-storage/async-storage
+```
+
+Resultado esperado:
+```bash
+@react-native-async-storage/async-storage@1.24.0
+```
+
+Comita as mudanças:
+```bash
+git add package.json package-lock.json
+git commit -m "fix: revert async-storage to 1.24.0 for Firebase compatibility"
+git push
+```
+
+Reexecuta o build limpando o cache da EAS:
+```bash
+eas build --platform android --profile production --clear-cache
+```
+
+```bash
+(opcional):
+  "env": {
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
+      }
+```
 ## 10. Building an Android AAB (Play Store)
 You can produce a Play Store ready `.aab` either via EAS Build (recommended) or the classic `gradlew bundleRelease` if using prebuild/native.
 
