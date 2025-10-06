@@ -4,24 +4,24 @@ import { isTablet, rf, rs } from '@/utils/responsive';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import {
-    Dimensions,
-    Image,
-    LayoutChangeEvent,
-    StyleSheet,
-    TouchableOpacity,
-    View
+  Dimensions,
+  Image,
+  LayoutChangeEvent,
+  StyleSheet,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import Animated, {
-    Easing,
-    runOnUI,
-    SharedValue,
-    useAnimatedReaction,
-    useAnimatedStyle,
-    useSharedValue,
-    withDecay,
-    withRepeat,
-    withSequence,
-    withTiming,
+  Easing,
+  runOnUI,
+  SharedValue,
+  useAnimatedReaction,
+  useAnimatedStyle,
+  useSharedValue,
+  withDecay,
+  withRepeat,
+  withSequence,
+  withTiming,
 } from 'react-native-reanimated';
 
 interface StartFightButtonProps {
@@ -45,6 +45,7 @@ export const StartFightButton: React.FC<StartFightButtonProps> = ({
   // Additional motion
   const lateralNoise = useSharedValue(0); // [-1..1] mapped to px for translateX
   const tiltNoise = useSharedValue(0); // [-1..1] mapped to rotateX/rotateY
+  const punchSwing = useSharedValue(0); // dedicated punch animation
 
   const onLayoutBag = (e: LayoutChangeEvent) => {
     // store half-height as pivot
@@ -52,6 +53,37 @@ export const StartFightButton: React.FC<StartFightButtonProps> = ({
   };
 
   const handlePress = () => {
+    'worklet';
+    // Create a realistic punch impact with swing to the right, then pendulum back
+    const impactAngle = 18; // degrees - strong initial swing
+    const duration1 = 180; // fast initial swing
+    const duration2 = 350; // swing back and overshoot
+    const duration3 = 450; // settle with damping
+    const duration4 = 500; // final settle
+    
+    punchSwing.value = withSequence(
+      // Initial impact - swing right
+      withTiming(impactAngle, { 
+        duration: duration1, 
+        easing: Easing.out(Easing.cubic) 
+      }),
+      // Swing back past center (overshoot left)
+      withTiming(-impactAngle * 0.6, { 
+        duration: duration2, 
+        easing: Easing.inOut(Easing.quad) 
+      }),
+      // Swing right again (less)
+      withTiming(impactAngle * 0.35, { 
+        duration: duration3, 
+        easing: Easing.inOut(Easing.quad) 
+      }),
+      // Settle back to center with damping
+      withTiming(0, { 
+        duration: duration4, 
+        easing: Easing.out(Easing.quad) 
+      })
+    );
+    
     onPress?.();
   };
 
@@ -130,18 +162,18 @@ export const StartFightButton: React.FC<StartFightButtonProps> = ({
 
   // Derived animated styles
   const containerStyle = useAnimatedStyle(() => {
-    // total swing
-    const totalSwing = impulseSwing.value + idleSwing.value; // combine
-    const deg = totalSwing * 3; // map [-1..1] to [-3deg..3deg]
+    // total swing - combine all swing sources
+    const totalSwing = impulseSwing.value + idleSwing.value + (punchSwing.value / 18); // normalize punch swing
+    const deg = totalSwing * 3 + punchSwing.value; // map [-1..1] to [-3deg..3deg] + punch animation
     // Lateral/tilt amplitudes
     const LATERAL_PX = 10; // base px; scaled externally with rs
     const TILT_X_DEG = 2.2; // slight 3D tilt
     const TILT_Y_DEG = 1.6;
-    const tx = lateralNoise.value * LATERAL_PX; // normalized -> px
+    const tx = lateralNoise.value * LATERAL_PX + (punchSwing.value * 0.5); // add lateral movement on punch
     // tie tilt slightly to the swing for cohesion
     const tiltBase = tiltNoise.value * 0.7 + totalSwing * 0.3;
-    const rX = tiltBase * TILT_X_DEG;
-    const rY = -tiltBase * TILT_Y_DEG;
+    const rX = tiltBase * TILT_X_DEG + (punchSwing.value * 0.15); // add 3D depth on punch
+    const rY = -tiltBase * TILT_Y_DEG + (punchSwing.value * 0.2);
     const translateForPivot = -pivotHalf.value; // rotate around top-center
     return {
       transform: [
