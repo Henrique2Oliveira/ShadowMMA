@@ -1,4 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+import { Text } from '@/components';
 import { Colors, Typography } from '@/themes/theme';
 import { Move } from '@/types/game';
 import { uiScale } from '@/utils/uiScale';
@@ -11,7 +12,6 @@ import {
     Modal,
     ScrollView,
     StyleSheet,
-    Text,
     TouchableOpacity,
     View,
     useWindowDimensions

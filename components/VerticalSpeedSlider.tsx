@@ -1,6 +1,7 @@
+import { Text } from '@/components';
 import { Colors, Typography } from '@/themes/theme';
 import React from 'react';
-import { Animated, PanResponder, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { Animated, PanResponder, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 
 interface VerticalSpeedSliderProps {
   speedMultiplier: number;

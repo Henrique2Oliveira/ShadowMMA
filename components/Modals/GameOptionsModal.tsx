@@ -1,7 +1,8 @@
+import { Text } from '@/components';
 import { Colors, Typography } from '@/themes/theme';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Animated, Easing, Modal, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { Animated, Easing, Modal, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 
 interface GameOptionsModalProps {
   visible: boolean;

@@ -1,10 +1,11 @@
+import { Text, TextInput } from '@/components';
 import { Colors, Typography } from '@/themes/theme';
 import { isTablet, rf } from '@/utils/responsive';
 import { uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useMemo, useState } from 'react';
-import { Dimensions, KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Dimensions, KeyboardAvoidingView, Modal, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 type FeedbackType = 'feedback' | 'bug';
 

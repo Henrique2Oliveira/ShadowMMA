@@ -1,9 +1,10 @@
+import { Text } from '@/components';
 import { Colors } from '@/themes/theme';
 import { getStreakMessage } from '@/utils/streak';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { Dimensions, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface StreakCongratulationsModalProps {
   visible: boolean;

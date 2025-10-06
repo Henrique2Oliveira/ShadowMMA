@@ -1,3 +1,4 @@
+import { Text } from '@/components';
 import { Colors, Typography } from '@/themes/theme';
 import { uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -9,7 +10,6 @@ import {
     Dimensions,
     Modal,
     StyleSheet,
-    Text,
     TouchableOpacity,
     View,
 } from 'react-native';

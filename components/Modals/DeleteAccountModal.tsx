@@ -1,8 +1,9 @@
+import { Text, TextInput } from '@/components';
 import { Colors, Typography } from '@/themes/theme';
 import { uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface DeleteAccountModalProps {
   visible: boolean;

@@ -1,27 +1,27 @@
+import { Text } from '@/components';
 import { Colors, Typography } from '@/themes/theme';
 import { isTablet, rf, rs } from '@/utils/responsive';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import {
-  Dimensions,
-  Image,
-  LayoutChangeEvent,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    Dimensions,
+    Image,
+    LayoutChangeEvent,
+    StyleSheet,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import Animated, {
-  Easing,
-  runOnUI,
-  SharedValue,
-  useAnimatedReaction,
-  useAnimatedStyle,
-  useSharedValue,
-  withDecay,
-  withRepeat,
-  withSequence,
-  withTiming,
+    Easing,
+    runOnUI,
+    SharedValue,
+    useAnimatedReaction,
+    useAnimatedStyle,
+    useSharedValue,
+    withDecay,
+    withRepeat,
+    withSequence,
+    withTiming,
 } from 'react-native-reanimated';
 
 interface StartFightButtonProps {

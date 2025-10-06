@@ -1,3 +1,4 @@
+import { Text } from '@/components';
 import PlansModal from '@/components/Modals/PlansModal';
 import QuizIntroComponent from '@/components/QuizIntro';
 import QuizScreen, { QuizData } from '@/components/QuizScreen';
@@ -5,7 +6,7 @@ import { subscriptionPlans, type SubscriptionPlan } from '@/config/subscriptionP
 import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 // Update the type Props to include a new callback for plan selection
 type Props = {

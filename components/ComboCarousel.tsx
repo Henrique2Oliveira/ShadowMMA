@@ -1,7 +1,8 @@
+import { Text } from '@/components';
 import { Typography } from '@/themes/theme';
 import { transformMoveForStance } from '@/utils/stance';
 import React from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 
 interface ComboCarouselProps {
   combo: any | null;

@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* Keep behavior-preserving: many effects use refs and intentional omissions of deps */
+import { Text } from '@/components';
 import { GameOverButtons } from '@/components/Buttons/GameOverButtons';
 import { ComboCarousel } from '@/components/ComboCarousel';
 import { GameControls } from '@/components/GameControls';
@@ -29,7 +30,7 @@ import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
-import { Animated, AppState, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { Animated, AppState, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 
 
 // Pre-game tips (shown once before the user presses Start)

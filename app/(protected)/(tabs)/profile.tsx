@@ -1,3 +1,4 @@
+import { Text } from '@/components';
 import { AlertModal } from '@/components/Modals/AlertModal';
 import type { FeedbackPayload } from '@/components/Modals/FeedbackModal';
 import FeedbackModalComponent from '@/components/Modals/FeedbackModal';
@@ -11,7 +12,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Image, ImageBackground, Linking, Modal, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { Image, ImageBackground, Linking, Modal, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 
 // User data shape is described by UserDataContext; no local type needed here
 

@@ -1,7 +1,8 @@
+import { Text } from '@/components';
 import { Colors, Typography } from '@/themes/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { ImageBackground, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ImageBackground, Linking, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface QuizIntroProps {
   onStart: () => void;

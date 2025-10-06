@@ -1,7 +1,8 @@
+import { Text } from '@/components';
 import { Colors, Typography } from '@/themes/theme';
 import { formatTime } from '@/utils/time';
 import React from 'react';
-import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 
 interface TimerDisplayProps {
   currentRound: number;

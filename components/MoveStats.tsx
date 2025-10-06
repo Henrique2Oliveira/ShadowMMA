@@ -1,7 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+import { Text } from '@/components';
 import { Typography } from '@/themes/theme';
 import React, { useEffect } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 
 interface MoveStatsProps {
   stats: { [key: string]: number };

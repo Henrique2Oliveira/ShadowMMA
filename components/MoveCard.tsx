@@ -1,11 +1,12 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+import { Text } from '@/components';
 import { Colors, Typography } from '@/themes/theme';
 import { rf, rs } from '@/utils/responsive';
 import { transformMoveForStance } from '@/utils/stance';
 import { formatTime } from '@/utils/time';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated as RNAnimated, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Animated as RNAnimated, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, {
     Easing,
     useAnimatedStyle,

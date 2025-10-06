@@ -1,4 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+import { Text } from '@/components';
 import { Colors, Typography } from '@/themes/theme';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -9,7 +10,6 @@ import {
     Image,
     ImageBackground,
     StyleSheet,
-    Text,
     View,
 } from 'react-native';
 

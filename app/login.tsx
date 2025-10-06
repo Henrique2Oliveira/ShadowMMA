@@ -1,3 +1,4 @@
+import { Text } from '@/components';
 import PaywallScreen from '@/components/PaywallScreen';
 import { useAuth } from '@/contexts/AuthContext';
 import AuthScreen from '@/screens/AuthScreen';
@@ -7,7 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFonts } from 'expo-font';
 import { Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet, View } from "react-native";
 
 export default function Index() {
   const { isAuthenticated, loading } = useAuth();

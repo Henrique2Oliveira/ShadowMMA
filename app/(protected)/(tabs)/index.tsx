@@ -1,3 +1,4 @@
+import { Text } from '@/components';
 import TopBanner from '@/components/ads/TopBanner';
 import { GradientButton } from '@/components/Buttons/GradientButton';
 import { StartFightButton } from '@/components/Buttons/StartFightButton';
@@ -20,7 +21,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 
 export default function Index() {

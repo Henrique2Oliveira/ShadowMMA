@@ -1,3 +1,4 @@
+import { Text } from '@/components';
 import { AlertModal } from '@/components/Modals/AlertModal';
 import CookieConsentModal from '@/components/Modals/CookieConsentModal';
 import { DeleteAccountModal } from '@/components/Modals/DeleteAccountModal';
@@ -16,7 +17,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
 import { deleteDoc, doc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
-import { Platform, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Switch, TouchableOpacity, View } from 'react-native';
 
 
 export default function Settings() {

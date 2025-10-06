@@ -1,3 +1,4 @@
+import { Text } from '@/components';
 import { moves } from '@/constants/dataGalleryMoves';
 import { Colors, Typography } from '@/themes/theme';
 import { Move } from '@/types/moves';
@@ -6,7 +7,7 @@ import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { memo, useCallback, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, FlatList, Linking, ListRenderItem, Modal, Pressable, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { Animated, Easing, FlatList, Linking, ListRenderItem, Modal, Pressable, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 
 export default function Gallery() {
   const [selectedMove, setSelectedMove] = useState<Move | null>(null);
