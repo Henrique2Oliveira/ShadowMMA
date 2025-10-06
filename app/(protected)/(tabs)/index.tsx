@@ -608,9 +608,9 @@ export default function Index() {
         >
           <GradientButton
         title={buttons[7].title}
-        iconName="arrow-up-bold-circle"
+        iconName="marker-check"
         iconSize={90}
-        fontSize={22}
+        fontSize={24}
         subtitle="Train Smarter, Get Stronger"
         proOnly
         disabled={buttons[7].disabled}
