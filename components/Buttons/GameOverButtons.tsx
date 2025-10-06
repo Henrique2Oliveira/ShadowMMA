@@ -54,9 +54,11 @@ export const GameOverButtons: React.FC = () => {
   const handleReturnPress = useCallback(async () => {
     if (busy || navigatedRef.current) return;
     const plan = (userData?.plan || 'free').toLowerCase();
+    const completedFights = userData?.lifetimeFightRounds || 0;
 
     // Only show interstitial for free users, Android, and not in Expo Go
-    const shouldShowAd = plan === 'free' && Platform.OS === 'android' && Constants.appOwnership !== 'expo';
+    // Skip ads for the first 6 fights to improve initial UX and user retention
+    const shouldShowAd = plan === 'free' && completedFights >= 6 && Platform.OS === 'android' && Constants.appOwnership !== 'expo';
 
     const navigateHome = () => {
       if (navigatedRef.current) return;
@@ -64,8 +66,8 @@ export const GameOverButtons: React.FC = () => {
       router.push('/');
     };
 
-    // Only show ad if consent has been decided
-    if (!shouldShowAd || adConsentStatus === 'unknown') {
+    // Navigate home if ads shouldn't be shown
+    if (!shouldShowAd) {
       navigateHome();
       return;
     }
@@ -83,7 +85,10 @@ export const GameOverButtons: React.FC = () => {
         return;
       }
 
-  const interstitial = InterstitialAd.createForAdRequest(unitId, { requestNonPersonalizedAdsOnly: adConsentStatus === 'denied' });
+      // Request non-personalized ads if consent is unknown or denied (GDPR compliance)
+      const interstitial = InterstitialAd.createForAdRequest(unitId, { 
+        requestNonPersonalizedAdsOnly: adConsentStatus !== 'granted' 
+      });
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
       const onClosed = () => {

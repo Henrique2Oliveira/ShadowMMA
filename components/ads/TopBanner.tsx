@@ -1,4 +1,5 @@
 import { useAdConsent } from '@/contexts/ConsentContext';
+import { useUserData } from '@/contexts/UserDataContext';
 import Constants from 'expo-constants';
 import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
@@ -10,16 +11,23 @@ type Props = {
 
 export default function TopBanner({ bottomOffset = 96, inline = false }: Props) {
 	const { status } = useAdConsent();
+	const { userData } = useUserData();
 	const [AdsComponents, setAdsComponents] = useState<null | {
 		BannerAd: any;
 		BannerAdSize: any;
 		TestIds: any;
 	}>(null);
 
+	// Skip banner ads for users who have completed fewer than 6 fights
+	// This improves initial UX and user retention
+	const completedFights = userData?.lifetimeFightRounds || 0;
+	if (completedFights < 6) return null;
+
 	useEffect(() => {
-		// Avoid importing the native module in Expo Go or before consent
+		// Avoid importing the native module in Expo Go
 		if (Constants.appOwnership === 'expo') return;
-		if (status === 'unknown') return;
+		// Note: We no longer wait for consent decision before loading ads
+		// We'll show non-personalized ads if consent is unknown or denied
 		let mounted = true;
 		(async () => {
 			try {
@@ -28,7 +36,7 @@ export default function TopBanner({ bottomOffset = 96, inline = false }: Props) 
 			} catch {}
 		})();
 		return () => { mounted = false; };
-	}, [status]);
+	}, []);
 
 	if (!AdsComponents) return null;
 	const { BannerAd, BannerAdSize, TestIds } = AdsComponents;
@@ -50,7 +58,7 @@ export default function TopBanner({ bottomOffset = 96, inline = false }: Props) 
 			<BannerAd
 				unitId={unitId}
 				size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-				requestOptions={{ requestNonPersonalizedAdsOnly: status === 'denied' }}
+				requestOptions={{ requestNonPersonalizedAdsOnly: status !== 'granted' }}
 			/>
 		</View>
 	);
