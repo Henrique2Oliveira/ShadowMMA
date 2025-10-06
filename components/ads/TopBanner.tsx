@@ -18,11 +18,6 @@ export default function TopBanner({ bottomOffset = 96, inline = false }: Props) 
 		TestIds: any;
 	}>(null);
 
-	// Skip banner ads for users who have completed fewer than 6 fights
-	// This improves initial UX and user retention
-	const completedFights = userData?.lifetimeFightRounds || 0;
-	if (completedFights < 6) return null;
-
 	useEffect(() => {
 		// Avoid importing the native module in Expo Go
 		if (Constants.appOwnership === 'expo') return;
@@ -37,6 +32,11 @@ export default function TopBanner({ bottomOffset = 96, inline = false }: Props) 
 		})();
 		return () => { mounted = false; };
 	}, []);
+
+	// Skip banner ads for users who have completed fewer than 6 fights
+	// This improves initial UX and user retention
+	const completedFights = userData?.lifetimeFightRounds || 0;
+	if (completedFights < 6) return null;
 
 	if (!AdsComponents) return null;
 	const { BannerAd, BannerAdSize, TestIds } = AdsComponents;
