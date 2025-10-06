@@ -429,6 +429,11 @@ export default function Profile() {
                   <Text style={[styles.fightsNumber, { fontSize: dyn.fightsNumber }]}>
                     {userData?.plan === 'free' ? Math.max(0, userData?.fightsLeft ?? 0) : '∞'}
                   </Text>
+                  {userData?.plan === 'free' && (
+                    <Text style={[styles.fightsResetText, { fontSize: dyn.tinyText(10) }]}>
+                      Resets in 24h
+                    </Text>
+                  )}
                 </View>
               </View>
             </View>
@@ -1280,6 +1285,14 @@ const styles = StyleSheet.create({
     textShadowColor: "#000",
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 2,
+  },
+  fightsResetText: {
+    color: Colors.text,
+    fontSize: 10,
+    fontFamily: Typography.fontFamily,
+    opacity: 0.6,
+    marginTop: 2,
+    textAlign: 'center',
   },
   badgeModalOverlay: {
     flex: 1,

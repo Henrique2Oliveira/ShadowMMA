@@ -402,7 +402,7 @@ export default function Game() {
 
     // Don't reset speed multiplier - preserve user's saved preference
     // setSpeedMultiplier(parseFloat(params.moveSpeed || '1'));
-  // Removed Speed Boost state reset
+    // Removed Speed Boost state reset
 
     const fetchMoves = async () => {
       setIsLoading(true);
@@ -470,21 +470,21 @@ export default function Game() {
             setCurrentModal({
               visible: true,
               title: 'No Fights Left',
-              message: 'You have reached your daily fight limit. Upgrade to Pro for unlimited fights!',
+              message: `You’ve used all your fights for today! 🥊 Your lives will refill back to 3 after 24 hours — or upgrade to Pro for unlimited fights and keep the action going!`,
               type: 'warning',
               primaryButton: {
-                text: 'Upgrade to Pro',
-                onPress: () => {
-                  setCurrentModal(null);
-                  router.navigate('/(protected)/(tabs)');
-                }
+              text: 'Upgrade to Pro',
+              onPress: () => {
+                setCurrentModal(null);
+                router.navigate('/(protected)/(tabs)');
+              }
               },
               secondaryButton: {
-                text: 'Maybe Later',
-                onPress: () => {
-                  setCurrentModal(null);
-                  router.navigate('/(protected)/(tabs)');
-                }
+              text: 'Maybe Later',
+              onPress: () => {
+                setCurrentModal(null);
+                router.navigate('/(protected)/(tabs)');
+              }
               }
             });
             // If backend responded with fightsLeft, reflect it; otherwise clamp UI to 0
@@ -500,7 +500,6 @@ export default function Game() {
             }
             return;
           }
-          throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
@@ -942,7 +941,7 @@ export default function Game() {
     }
     return () => animation?.stop();
   }, [gameState.isPaused, gameState.isRestPeriod, currentMove, speedMultiplier, updateMove, updateMoveProgress]);
-  
+
   // Track current move for stats
   React.useEffect(() => {
     if (currentMove && !gameState.isPaused && !gameState.isRestPeriod) {
