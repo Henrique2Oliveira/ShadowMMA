@@ -88,7 +88,6 @@ export default function Game() {
     require('@/assets/audio/sfx/swoosh1.mp3'),
     require('@/assets/audio/sfx/swoosh2.mp3'),
     require('@/assets/audio/sfx/swoosh3.mp3'),
-
   ];
 
   const [bellSound, setBellSound] = React.useState<Audio.Sound | null>(null);

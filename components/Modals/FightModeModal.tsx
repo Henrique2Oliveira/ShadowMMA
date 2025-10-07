@@ -56,7 +56,7 @@ export const FIGHT_OPTIONS: {
     { value: '7', label: '7' },
   ],
   restTimes: [
-  { value: '0.5', label: '30s' },
+    { value: '0.5', label: '30s' },
     { value: '1', label: '1m' },
     { value: '1.5', label: '1.5m' },
     { value: '2', label: '2m' },
@@ -350,20 +350,20 @@ export function FightModeModal({
 
 const styles = StyleSheet.create({
   buttonContainer: {
-  flexDirection: 'row',
-  flexWrap: 'nowrap',
-  flex: 2,
-  justifyContent: 'space-between',
-  columnGap: 8,
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    flex: 2,
+    justifyContent: 'space-between',
+    columnGap: 8,
   },
   moveModeButton: {
-  backgroundColor: '#444444',
-  paddingVertical: isTablet ? 14 : 10,
-  paddingHorizontal: isTablet ? 14 : 10,
-  borderRadius: 10,
-  flex: 1,
-  alignItems: 'center',
-  gap: 4,
+    backgroundColor: '#444444',
+    paddingVertical: isTablet ? 14 : 10,
+    paddingHorizontal: isTablet ? 14 : 10,
+    borderRadius: 10,
+    flex: 1,
+    alignItems: 'center',
+    gap: 4,
   },
   moveModeButtonActive: {
     backgroundColor: Colors.darkGreen,
@@ -424,9 +424,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: isTablet ? 32 : 20,
-    paddingBottom: isTablet ? 40 : 48,
-    marginBottom: 20,
-    minHeight: isTablet ? 420 : 300,
+    paddingBottom: isTablet ? 40 : 68,
     width: '100%',
     maxWidth: isTablet ? 760 : '100%',
     alignSelf: 'center'

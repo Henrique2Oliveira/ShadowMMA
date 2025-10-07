@@ -32,7 +32,7 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.belsonsan.ShadowMMA",
-      "versionCode": 7,
+      "versionCode": 8,
       "permissions": [
         "com.android.vending.BILLING",
         "com.google.android.gms.permission.AD_ID"
