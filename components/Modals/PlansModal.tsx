@@ -432,7 +432,7 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
               }}
               style={styles.plansContainer}
               refreshControl={
-                <RefreshControl tintColor={Colors.text} refreshing={loading} onRefresh={fetchOfferings} />
+                <RefreshControl colors={[Colors.background]} tintColor={Colors.text} refreshing={loading} onRefresh={fetchOfferings} />
               }
             >
               {loading && !rcPlans.length ? (

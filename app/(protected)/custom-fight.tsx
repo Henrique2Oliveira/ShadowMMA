@@ -527,7 +527,7 @@ export default function CustomFight() {
             keyExtractor={keyExtractor}
             contentContainerStyle={styles.comboList}
             renderItem={renderItem}
-            refreshControl={<RefreshControl refreshing={loading} onRefresh={() => fetchCombos(true)} tintColor={Colors.text} />}
+            refreshControl={<RefreshControl colors={[Colors.background]} refreshing={loading} onRefresh={() => fetchCombos(true)} tintColor={Colors.text} />}
             maxToRenderPerBatch={8}
             windowSize={8}
             removeClippedSubviews={true}

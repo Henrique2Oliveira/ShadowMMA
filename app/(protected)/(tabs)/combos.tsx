@@ -441,7 +441,7 @@ export default function Combos() {
             );
           }}
           renderItem={({ item, index }) => renderItem({ item, index })}
-          refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); fetchCombos(true); }} tintColor={Colors.text} />}
+          refreshControl={<RefreshControl colors={[Colors.background]} refreshing={loading} onRefresh={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); fetchCombos(true); }} tintColor={Colors.text} />}
           maxToRenderPerBatch={8}
           windowSize={8}
           removeClippedSubviews={true}

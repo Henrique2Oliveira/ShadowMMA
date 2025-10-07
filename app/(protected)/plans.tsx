@@ -556,7 +556,7 @@ export default function Plans() {
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
       bounces={true}
-      refreshControl={<RefreshControl tintColor={Colors.text} refreshing={loading} onRefresh={getOfferings} />}
+      refreshControl={<RefreshControl colors={[Colors.background]} tintColor={Colors.text} refreshing={loading} onRefresh={getOfferings} />}
     >
       <View style={styles.header}>
         <TouchableOpacity

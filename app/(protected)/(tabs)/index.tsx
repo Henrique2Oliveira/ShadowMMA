@@ -455,7 +455,7 @@ export default function Index() {
           refreshing={refreshing}
           onRefresh={onRefresh}
           tintColor={Colors.background}
-          colors={[Colors.text]}
+          colors={[Colors.background]}
         />
       }>
 
