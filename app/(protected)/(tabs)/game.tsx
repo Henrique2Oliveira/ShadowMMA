@@ -88,7 +88,7 @@ export default function Game() {
     require('@/assets/audio/sfx/swoosh1.mp3'),
     require('@/assets/audio/sfx/swoosh2.mp3'),
     require('@/assets/audio/sfx/swoosh3.mp3'),
-    // require('@/assets/audio/sfx/kickbag.mp3'), adicionar mais tarde se quiser
+
   ];
 
   const [bellSound, setBellSound] = React.useState<Audio.Sound | null>(null);
@@ -473,18 +473,18 @@ export default function Game() {
               message: `You’ve used all your fights for today! 🥊 Your lives will refill back to 3 after 24 hours — or upgrade to Pro for unlimited fights and keep the action going!`,
               type: 'warning',
               primaryButton: {
-              text: 'Upgrade to Pro',
-              onPress: () => {
-                setCurrentModal(null);
-                router.navigate('/(protected)/(tabs)');
-              }
+                text: 'Upgrade to Pro',
+                onPress: () => {
+                  setCurrentModal(null);
+                  router.navigate('/(protected)/(tabs)');
+                }
               },
               secondaryButton: {
-              text: 'Maybe Later',
-              onPress: () => {
-                setCurrentModal(null);
-                router.navigate('/(protected)/(tabs)');
-              }
+                text: 'Maybe Later',
+                onPress: () => {
+                  setCurrentModal(null);
+                  router.navigate('/(protected)/(tabs)');
+                }
               }
             });
             // If backend responded with fightsLeft, reflect it; otherwise clamp UI to 0
