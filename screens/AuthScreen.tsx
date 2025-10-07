@@ -1,11 +1,12 @@
+import { AlertModal } from '@/components/Modals/AlertModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { Colors, Typography } from '@/themes/theme';
 import { uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Keyboard,
   KeyboardAvoidingView,
@@ -35,6 +36,9 @@ export default function AuthScreen() {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
+  const [passwordResetMessage, setPasswordResetMessage] = useState('');
+  const [passwordResetType, setPasswordResetType] = useState<'success' | 'error'>('success');
   const { login, register, resetPassword } = useAuth();
 
   const nameRef = useRef<TextInput>(null);
@@ -158,19 +162,31 @@ export default function AuthScreen() {
                 <TouchableOpacity
                   onPress={async () => {
                     if (!email) {
-                      setError('Please enter your email address first');
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      setPasswordResetType('error');
+                      setPasswordResetMessage('Please enter your email address first');
+                      setShowPasswordResetModal(true);
                       return;
                     }
                     try {
                       const result = await resetPassword(email);
                       if (result.success) {
-                        Alert.alert('Password reset email sent! Check your inbox.');
-                        setError('Password reset email sent! Check your inbox.');
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        setPasswordResetType('success');
+                        setPasswordResetMessage('Password reset email sent! Check your inbox and follow the instructions to reset your password.');
+                        setShowPasswordResetModal(true);
+                        setError('');
                       } else if (result.error) {
-                        setError(result.error.message);
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        setPasswordResetType('error');
+                        setPasswordResetMessage(result.error.message || 'Failed to send reset email. Please check your email and try again.');
+                        setShowPasswordResetModal(true);
                       }
                     } catch (e) {
-                      setError('Failed to send reset email. Please try again.');
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      setPasswordResetType('error');
+                      setPasswordResetMessage('Failed to send reset email. Please try again.');
+                      setShowPasswordResetModal(true);
                     }
                   }}
                 >
@@ -204,6 +220,22 @@ export default function AuthScreen() {
           </ScrollView>
         </TouchableWithoutFeedback>
       </SafeAreaView>
+
+      {/* Password Reset Modal */}
+      <AlertModal
+        visible={showPasswordResetModal}
+        title={passwordResetType === 'success' ? 'Email Sent!' : 'Reset Failed'}
+        message={passwordResetMessage}
+        type={passwordResetType}
+        primaryButton={{
+          text: 'OK',
+          onPress: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setShowPasswordResetModal(false);
+          },
+        }}
+        onClose={() => setShowPasswordResetModal(false)}
+      />
     </KeyboardAvoidingView>
   );
 }

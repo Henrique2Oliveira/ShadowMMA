@@ -14,7 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { getAuth as getClientAuth } from 'firebase/auth';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Modal, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, Modal, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Match ComboMeta shape from combos.tsx
@@ -74,6 +74,12 @@ export default function CustomFight() {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [showPlansModal, setShowPlansModal] = useState(false);
   const [showProCtaModal, setShowProCtaModal] = useState(false);
+  const [showMaxSelectionModal, setShowMaxSelectionModal] = useState(false);
+  const [showNothingToSaveModal, setShowNothingToSaveModal] = useState(false);
+  const [showSaveFailedModal, setShowSaveFailedModal] = useState(false);
+  const [saveFailedMessage, setSaveFailedMessage] = useState('');
+  const [showDeleteFailedModal, setShowDeleteFailedModal] = useState(false);
+  const [deleteFailedMessage, setDeleteFailedMessage] = useState('');
 
   // Save/Load sets UI
   const [saveLoadVisible, setSaveLoadVisible] = useState(false);
@@ -236,7 +242,11 @@ export default function CustomFight() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         return prev.filter(s => s.id !== String(id));
       }
-      if (prev.length >= MAX_SELECT) return prev; // ignore if already 5
+      if (prev.length >= MAX_SELECT) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        setShowMaxSelectionModal(true);
+        return prev;
+      }
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       return [...prev, { id: String(id), type }];
     });
@@ -329,7 +339,8 @@ export default function CustomFight() {
   const saveCurrentSelection = useCallback(async (overwriteId?: string) => {
     if (!isPro) return;
     if (selected.length === 0) {
-      Alert.alert('Nothing to save', 'Select some combos first.');
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      setShowNothingToSaveModal(true);
       return;
     }
     setSaving(true);
@@ -355,7 +366,9 @@ export default function CustomFight() {
       setNewSetName('');
       await fetchSavedSets();
     } catch (e: any) {
-      Alert.alert('Save failed', e?.message || 'Could not save this set.');
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      setSaveFailedMessage(e?.message || 'Could not save this set.');
+      setShowSaveFailedModal(true);
     } finally {
       setSaving(false);
     }
@@ -383,7 +396,9 @@ export default function CustomFight() {
       }
       await fetchSavedSets();
     } catch (e: any) {
-      Alert.alert('Delete failed', e?.message || 'Could not delete this set.');
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      setDeleteFailedMessage(e?.message || 'Could not delete this set.');
+      setShowDeleteFailedModal(true);
     }
   }, [clientAuth, fetchSavedSets]);
 
@@ -725,6 +740,78 @@ export default function CustomFight() {
           </View>
         </View>
       </Modal>
+
+      {/* Max Selection Alert Modal */}
+      <AlertModal
+        visible={showMaxSelectionModal}
+        title="Maximum Selection Reached"
+        message={`You can only select up to ${MAX_SELECT} combos at a time. Remove one to add another.`}
+        type="warning"
+        primaryButton={{
+          text: 'Got it',
+          onPress: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setShowMaxSelectionModal(false);
+          },
+        }}
+        onClose={() => setShowMaxSelectionModal(false)}
+      />
+
+      {/* Nothing to Save Alert Modal */}
+      <AlertModal
+        visible={showNothingToSaveModal}
+        title="Nothing to Save"
+        message="Select some combos first before saving a set."
+        type="warning"
+        primaryButton={{
+          text: 'OK',
+          onPress: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setShowNothingToSaveModal(false);
+          },
+        }}
+        onClose={() => setShowNothingToSaveModal(false)}
+      />
+
+      {/* Save Failed Alert Modal */}
+      <AlertModal
+        visible={showSaveFailedModal}
+        title="Save Failed"
+        message={saveFailedMessage || 'Could not save this set. Please try again.'}
+        type="error"
+        primaryButton={{
+          text: 'Retry',
+          onPress: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setShowSaveFailedModal(false);
+            saveCurrentSelection();
+          },
+        }}
+        secondaryButton={{
+          text: 'Cancel',
+          onPress: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setShowSaveFailedModal(false);
+          },
+        }}
+        onClose={() => setShowSaveFailedModal(false)}
+      />
+
+      {/* Delete Failed Alert Modal */}
+      <AlertModal
+        visible={showDeleteFailedModal}
+        title="Delete Failed"
+        message={deleteFailedMessage || 'Could not delete this set. Please try again.'}
+        type="error"
+        primaryButton={{
+          text: 'OK',
+          onPress: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setShowDeleteFailedModal(false);
+          },
+        }}
+        onClose={() => setShowDeleteFailedModal(false)}
+      />
     </SafeAreaView>
   );
 }

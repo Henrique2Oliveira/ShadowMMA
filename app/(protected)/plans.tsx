@@ -43,7 +43,7 @@ export default function Plans() {
   const [purchaseModalTitle, setPurchaseModalTitle] = useState('');
   const [purchaseModalMessage, setPurchaseModalMessage] = useState('');
   const [purchaseModalType, setPurchaseModalType] = useState<'success' | 'error' | 'warning' | 'info'>('info');
-  // General purpose status modal (replaces Alert.alert)
+  // General purpose status modal
   const [statusModalVisible, setStatusModalVisible] = useState(false);
   const [statusModalTitle, setStatusModalTitle] = useState('');
   const [statusModalMessage, setStatusModalMessage] = useState('');
@@ -868,7 +868,7 @@ export default function Plans() {
         onClose={() => setPurchaseModalVisible(false)}
       />
 
-      {/* Status Modal (replaces system Alert.alert for consistent styling) */}
+      {/* Status Modal */}
       <AlertModal
         visible={statusModalVisible}
         title={statusModalTitle}
