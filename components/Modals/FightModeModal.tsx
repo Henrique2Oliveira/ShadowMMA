@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: isTablet ? 32 : 20,
-    paddingBottom: isTablet ? 40 : 68,
+    paddingBottom: isTablet ? 45 : 28,
     width: '100%',
     maxWidth: isTablet ? 760 : '100%',
     alignSelf: 'center'
