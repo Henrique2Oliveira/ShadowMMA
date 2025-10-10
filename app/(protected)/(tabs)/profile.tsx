@@ -11,8 +11,8 @@ import { uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { Image, ImageBackground, Linking, Modal, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, Image, ImageBackground, Linking, Modal, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 
 // User data shape is described by UserDataContext; no local type needed here
 
@@ -70,6 +70,12 @@ export default function Profile() {
   const [badgeModalVisible, setBadgeModalVisible] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackStatus, setFeedbackStatus] = useState<{ success?: boolean; message?: string }>({});
+
+  // Loading animation values
+  const glowAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const progressAnim = useRef(new Animated.Value(0)).current;
+  const fadeInAnim = useRef(new Animated.Value(0)).current;
 
   // Define badge thresholds and mapping to images
   const badgeThresholds = [3, 7, 14, 30]; // streak (days) thresholds
@@ -153,6 +159,78 @@ export default function Profile() {
     setBadgeQueue(q => q.slice(1));
     setNewBadge(null);
   };
+
+  // Loading screen animations
+  useEffect(() => {
+    if (loading) {
+      // Reset animations
+      glowAnim.setValue(0);
+      pulseAnim.setValue(1);
+      progressAnim.setValue(0);
+      fadeInAnim.setValue(0);
+
+      // Glow pulse animation
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(glowAnim, {
+            toValue: 1,
+            duration: 1500,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(glowAnim, {
+            toValue: 0,
+            duration: 1500,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+
+      // Icon pulse animation
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.1,
+            duration: 800,
+            easing: Easing.inOut(Easing.quad),
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 800,
+            easing: Easing.inOut(Easing.quad),
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+
+      // Progress bar animation
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(progressAnim, {
+            toValue: 1,
+            duration: 2000,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: false,
+          }),
+          Animated.timing(progressAnim, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: false,
+          }),
+        ])
+      ).start();
+
+      // Fade in animation
+      Animated.timing(fadeInAnim, {
+        toValue: 1,
+        duration: 600,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [loading, glowAnim, pulseAnim, progressAnim, fadeInAnim]);
 
   // Helper function to format large numbers
   const formatNumber = (num: number): string => {
@@ -317,11 +395,87 @@ export default function Profile() {
   };
 
   if (loading) {
+    const glowOpacity = glowAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.1, 0.25],
+    });
+
+    const glowScale = glowAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [1, 1.2],
+    });
+
+    const progressWidth = progressAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['0%', '100%'],
+    });
+
     return (
-      <View style={[styles.container, styles.loadingContainer]}>
-        <MaterialCommunityIcons name="loading" size={iconSize(50)} color={Colors.background} />
-        <Text style={[styles.loadingText, { fontSize: font(16) }]}>Loading profile...</Text>
-      </View>
+      <ImageBackground
+        source={require('@/assets/images/bg-gym-profile.png')}
+        style={styles.bg}
+        imageStyle={{ opacity: 0.3 }}
+        resizeMode="cover"
+        blurRadius={4}
+      >
+        {/* Dim overlay */}
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)' }]} />
+        
+        <Animated.View style={[styles.loadingContainer, { opacity: fadeInAnim }]}>
+          {/* Animated glow background */}
+          <Animated.View style={[
+            styles.loadingGlow,
+            {
+              opacity: glowOpacity,
+              transform: [{ scale: glowScale }],
+            }
+          ]} />
+          
+          {/* Main loading icon with gym theme */}
+          <Animated.View style={[
+            styles.loadingIconContainer,
+            { transform: [{ scale: pulseAnim }] }
+          ]}>
+            <View style={styles.loadingRing}>
+              <MaterialCommunityIcons 
+                name="dumbbell" 
+                size={iconSize(60)} 
+                color={Colors.text}
+                style={styles.loadingIcon}
+              />
+            </View>
+          </Animated.View>
+
+          {/* Loading text */}
+          <Text style={[styles.loadingTitle, { fontSize: font(28) }]}>
+            Preparing Your Gym
+          </Text>
+          <Text style={[styles.loadingSubtitle, { fontSize: font(14) }]}>
+            Loading your stats and achievements...
+          </Text>
+
+          {/* Progress indicator */}
+          <View style={styles.loadingProgressTrack}>
+            <Animated.View style={[
+              styles.loadingProgressBar,
+              { width: progressWidth }
+            ]} />
+          </View>
+
+          {/* Gym motivation tip */}
+          <View style={styles.loadingTipContainer}>
+            <MaterialCommunityIcons 
+              name="lightbulb-on-outline" 
+              size={iconSize(16)} 
+              color={Colors.redDots}
+              style={{ marginRight: 6 }}
+            />
+            <Text style={[styles.loadingTip, { fontSize: font(12) }]}>
+              "Your only limit is you"
+            </Text>
+          </View>
+        </Animated.View>
+      </ImageBackground>
     );
   }
 
@@ -887,14 +1041,102 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   loadingContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
   },
-  loadingText: {
-    color: Colors.background,
-    marginTop: 15,
-    fontSize: 22,
+  loadingGlow: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: Colors.redDots,
+    opacity: 0.15,
+    shadowColor: Colors.redDots,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 40,
+  },
+  loadingIconContainer: {
+    width: 140,
+    height: 140,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  loadingRing: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    borderWidth: 3,
+    borderColor: Colors.redDots,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    shadowColor: Colors.redDots,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  loadingIcon: {
+    textShadowColor: Colors.redDots,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+  },
+  loadingTitle: {
+    color: Colors.text,
+    fontSize: 28,
     fontFamily: Typography.fontFamily,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+    textShadowColor: '#000',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  loadingSubtitle: {
+    color: Colors.text,
+    fontSize: 14,
+    fontFamily: Typography.fontFamily,
+    textAlign: 'center',
+    opacity: 0.8,
+    marginBottom: 24,
+  },
+  loadingProgressTrack: {
+    width: '60%',
+    maxWidth: 280,
+    height: 8,
+    borderRadius: 6,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.redDots + '66',
+    marginBottom: 30,
+  },
+  loadingProgressBar: {
+    height: '100%',
+    width: '100%',
+    backgroundColor: Colors.redDots,
+    borderRadius: 6,
+  },
+  loadingTipContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.redDots + '33',
+  },
+  loadingTip: {
+    color: Colors.text,
+    fontSize: 12,
+    fontFamily: Typography.fontFamily,
+    fontStyle: 'italic',
+    opacity: 0.9,
   },
   buttonList: {
     marginTop: 30,
