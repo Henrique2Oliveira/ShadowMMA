@@ -12,7 +12,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Image, ImageBackground, Linking, Modal, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { Animated, Easing, Image, ImageBackground, Linking, Modal, Platform, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 
 // User data shape is described by UserDataContext; no local type needed here
 
@@ -138,8 +138,8 @@ export default function Profile() {
           setBadgeQueue(prev => [...prev, ...queueAdds]);
           await AsyncStorage.setItem(unifiedKey, JSON.stringify(unified));
         }
-        } catch (_e) {
-          console.warn('Unified badge storage error', _e);
+      } catch (_e) {
+        console.warn('Unified badge storage error', _e);
       }
     };
     run();
@@ -394,6 +394,26 @@ export default function Profile() {
     }
   };
 
+  // Open the Google Play Store listing for the app so users can leave a review/feedback
+  const openPlayStoreReview = async () => {
+    // Android Play Store deep link and web fallback
+    if (Platform.OS === 'android') {
+      const applicationId = 'com.belsonsan.ShadowMMA';
+      const playStoreUrl = `market://details?id=${applicationId}`;
+      const webFallbackUrl = `https://play.google.com/store/apps/details?id=${applicationId}`;
+      try {
+        const canOpen = await Linking.canOpenURL(playStoreUrl);
+        await Linking.openURL(canOpen ? playStoreUrl : webFallbackUrl);
+      } catch {
+        // Best-effort fallback
+        try { await Linking.openURL(webFallbackUrl); } catch {}
+      }
+    } else {
+      // For non-Android platforms, do nothing for now or route to a generic feedback option
+      // You could add App Store link here if needed in the future.
+    }
+  };
+
   if (loading) {
     const glowOpacity = glowAnim.interpolate({
       inputRange: [0, 1],
@@ -420,7 +440,7 @@ export default function Profile() {
       >
         {/* Dim overlay */}
         <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)' }]} />
-        
+
         <Animated.View style={[styles.loadingContainer, { opacity: fadeInAnim }]}>
           {/* Animated glow background */}
           <Animated.View style={[
@@ -430,16 +450,16 @@ export default function Profile() {
               transform: [{ scale: glowScale }],
             }
           ]} />
-          
+
           {/* Main loading icon with gym theme */}
           <Animated.View style={[
             styles.loadingIconContainer,
             { transform: [{ scale: pulseAnim }] }
           ]}>
             <View style={styles.loadingRing}>
-              <MaterialCommunityIcons 
-                name="dumbbell" 
-                size={iconSize(60)} 
+              <MaterialCommunityIcons
+                name="dumbbell"
+                size={iconSize(60)}
                 color={Colors.text}
                 style={styles.loadingIcon}
               />
@@ -464,9 +484,9 @@ export default function Profile() {
 
           {/* Gym motivation tip */}
           <View style={styles.loadingTipContainer}>
-            <MaterialCommunityIcons 
-              name="lightbulb-on-outline" 
-              size={iconSize(16)} 
+            <MaterialCommunityIcons
+              name="lightbulb-on-outline"
+              size={iconSize(16)}
               color={Colors.redDots}
               style={{ marginRight: 6 }}
             />
@@ -553,7 +573,7 @@ export default function Profile() {
             <View style={styles.statsContainer}>
               <View style={styles.statBox}>
                 <View style={styles.statRow}>
-                  <MaterialCommunityIcons name="boxing-glove" size={iconSize(20) } color={Colors.text} style={styles.statIcon} />
+                  <MaterialCommunityIcons name="boxing-glove" size={iconSize(20)} color={Colors.text} style={styles.statIcon} />
                   <Text style={[styles.statNumber, { fontSize: dyn.statNumber }]}>
                     {userData?.lifetimeFightRounds ? formatNumber(userData.lifetimeFightRounds) : "-"}
                   </Text>
@@ -562,7 +582,7 @@ export default function Profile() {
               </View>
               <View style={styles.statBox}>
                 <View style={styles.statRow}>
-                  <MaterialCommunityIcons name="timer" size={iconSize(20) } color={Colors.text} style={styles.statIcon} />
+                  <MaterialCommunityIcons name="timer" size={iconSize(20)} color={Colors.text} style={styles.statIcon} />
                   <Text style={[styles.statNumber, { fontSize: dyn.statNumber }]}>
                     {userData?.lifetimeFightTime ? formatTime(userData.lifetimeFightTime).value : "-"}
                   </Text>
@@ -728,10 +748,19 @@ export default function Profile() {
             </TouchableOpacity>
 
             <TouchableOpacity style={[styles.button, { padding: spacing(18), borderRadius: uiScale(14), minHeight: uiScale(60, { category: 'button' }) }]} onPress={() => setShowPaywall(true)}>
-              <MaterialCommunityIcons name="star" size={iconSize(24)} color={Colors.text} />
+              <MaterialCommunityIcons name="marker-check" size={iconSize(24)} color={Colors.text} />
               <Text style={[styles.buttonText, { fontSize: font(16) }]}>Upgrade Plan</Text>
             </TouchableOpacity>
 
+            <TouchableOpacity
+              style={[styles.button, { padding: spacing(18), borderRadius: uiScale(14), minHeight: uiScale(60, { category: 'button' }) }]}
+              onPress={openPlayStoreReview}
+              accessibilityLabel="Rate us on Google Play"
+              accessibilityRole="button"
+            >
+              <MaterialCommunityIcons name="star" size={iconSize(24)} color={Colors.text} />
+              <Text style={[styles.buttonText, { fontSize: font(16) }]}>Rate us on Play Store</Text>
+            </TouchableOpacity>
             {/* Send Feedback below Upgrade Plan */}
             <TouchableOpacity
               style={[styles.button, { padding: spacing(18), borderRadius: uiScale(14), minHeight: uiScale(60, { category: 'button' }) }]}
