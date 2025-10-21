@@ -1,21 +1,34 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Text } from '@/components';
 import { Colors, Typography } from '@/themes/theme';
+import { uiScale } from '@/utils/uiScale';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-    ActivityIndicator,
-    Animated,
-    Dimensions,
-    Easing,
-    Image,
-    ImageBackground,
-    StyleSheet,
-    View,
+  ActivityIndicator,
+  Animated,
+  Dimensions,
+  Easing,
+  Image,
+  ImageBackground,
+  StyleSheet,
+  View,
 } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
-export const LoadingScreen = () => {
+type LoadingScreenProps = {
+  title?: string;
+  subtitle?: string | null;
+  showTips?: boolean;
+  variant?: 'full' | 'inline';
+};
+
+export const LoadingScreen = ({
+  title = 'Loading…',
+  subtitle = null,
+  showTips = true,
+  variant = 'full',
+}: LoadingScreenProps) => {
   // Core anims
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.5)).current;
@@ -222,6 +235,16 @@ export const LoadingScreen = () => {
     outputRange: [0, (width * 0.62)],
   });
 
+  // Inline (compact) variant for in-place spinners
+  if (variant === 'inline') {
+    return (
+      <View style={inlineStyles.container}>
+        <ActivityIndicator size="small" color={Colors.redDots} />
+        <Text style={[inlineStyles.text]}>{title}</Text>
+      </View>
+    );
+  }
+
   return (
     <ImageBackground
       source={require('@/assets/images/bg-gym-profile.png')}
@@ -294,12 +317,16 @@ export const LoadingScreen = () => {
       </Animated.View>
 
       {/* Loading indicator */}
-      <ActivityIndicator size="large" color={Colors.redDots} style={styles.spinner} />
+  <ActivityIndicator size="large" color={Colors.redDots} style={styles.spinner} />
 
       {/* Loading text */}
-      <Animated.Text style={[styles.loadingText, { opacity: textFadeAnim }]}>
-        Loading Fight…
+      <Animated.Text style={[styles.loadingText, { opacity: textFadeAnim, fontSize: uiScale(28, { category: 'font' }) }]}>
+        {title}
       </Animated.Text>
+
+      {subtitle ? (
+        <Text style={[styles.subtitleText]}>{subtitle}</Text>
+      ) : null}
 
       {/* Indeterminate progress bar */}
       <View style={styles.progressTrack}>
@@ -307,9 +334,11 @@ export const LoadingScreen = () => {
       </View>
 
       {/* Cycling tip */}
-      <Animated.View style={{ opacity: tipFade }}>
-        <Text style={styles.tipText}>{TIPS[tipIndex]}</Text>
-      </Animated.View>
+      {showTips ? (
+        <Animated.View style={{ opacity: tipFade }}>
+          <Text style={styles.tipText}>{TIPS[tipIndex]}</Text>
+        </Animated.View>
+      ) : null}
     </ImageBackground>
   );
 };
@@ -358,7 +387,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     color: Colors.text,
-    fontSize: 28,
     fontFamily: Typography.fontFamily,
     marginBottom: 8,
     textAlign: 'center',
@@ -366,6 +394,13 @@ const styles = StyleSheet.create({
     textShadowColor: Colors.redDotsDark,
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
+  },
+  subtitleText: {
+    color: Colors.lightText,
+    fontSize: uiScale(14, { category: 'font' }),
+    fontFamily: Typography.fontFamily,
+    textAlign: 'center',
+    marginBottom: 6,
   },
   progressTrack: {
     width: width * 0.5,
@@ -397,5 +432,20 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
     backgroundColor: Colors.redDots,
+  },
+});
+
+const inlineStyles = StyleSheet.create({
+  container: {
+    padding: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  text: {
+    color: Colors.text,
+    fontSize: uiScale(14, { category: 'font' }),
+    fontFamily: Typography.fontFamily,
   },
 });

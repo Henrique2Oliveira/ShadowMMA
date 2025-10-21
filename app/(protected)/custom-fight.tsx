@@ -1,4 +1,4 @@
-import { Text, TextInput } from '@/components';
+import { LoadingScreen, Text, TextInput } from '@/components';
 import MemoizedComboCard from '@/components/MemoizedComboCard';
 import { AlertModal } from '@/components/Modals/AlertModal';
 import { FightModeModal } from '@/components/Modals/FightModeModal';
@@ -14,7 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { getAuth as getClientAuth } from 'firebase/auth';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Modal, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { FlatList, Modal, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Match ComboMeta shape from combos.tsx
@@ -491,10 +491,7 @@ export default function CustomFight() {
       </LinearGradient>
 
       {loading && !combos && (
-        <View style={{ padding: 24, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={Colors.text} />
-          <Text style={{ color: Colors.text, marginTop: 8, fontFamily: Typography.fontFamily }}>Loading combos…</Text>
-        </View>
+        <LoadingScreen title="Loading combos…" />
       )}
 
       {!!error && (
@@ -706,7 +703,7 @@ export default function CustomFight() {
             <View style={{ height: 12 }} />
             {loadingSets ? (
               <View style={{ paddingVertical: 16, alignItems: 'center' }}>
-                <ActivityIndicator color={Colors.text} />
+                <LoadingScreen variant="inline" title="Loading saved sets…" showTips={false} />
               </View>
             ) : (
               <ScrollView style={{ maxHeight: 360 }}>

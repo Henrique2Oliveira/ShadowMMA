@@ -4,4 +4,5 @@
  */
 export { Text } from './CustomText';
 export { TextInput } from './CustomTextInput';
+export { LoadingScreen } from './LoadingScreen';
 
