@@ -21,6 +21,7 @@
 11. Ads & Monetization Notes
 12. Troubleshooting
 13. Roadmap / Next Ideas
+14. Rating Prompt (Play Store)
 
 ---
 
@@ -315,6 +316,23 @@ Increase `version` (in `package.json`) & `android.versionCode` (if using `app.js
 - Localization & multi-language support
 
 ---
+
+## 14. Rating Prompt (Play Store)
+
+A lightweight in-app rating prompt appears after a few completed fights and occasionally afterwards to encourage Google Play reviews.
+
+- UI component: `components/Modals/RateAppModal.tsx`
+- Logic and throttling: `utils/ratingPrompt.ts`
+- Config: `config/rating.ts`
+
+Defaults:
+- First prompt after 3 completed fights
+- Remind after 8 more fights, and at least 7 days between prompts
+- Respects “No, thanks” (never ask again) and “Maybe later” (snooze)
+
+Android store link uses the package name from Gradle (`com.belsonsan.ShadowMMA`). iOS is gated off until an App Store ID is available—set `IOS_APP_ID` in `config/rating.ts` when ready.
+
+Trigger point is at the end of a session on the Game screen; the prompt waits for other end-of-fight modals (e.g., level-up or "Good job") to be dismissed before appearing.
 
 ### Quick Commands Reference
 ```bash

@@ -117,7 +117,7 @@ export const GameOverButtons: React.FC = () => {
     } finally {
       setBusy(false);
     }
-  }, [busy, userData?.plan, adConsentStatus]);
+  }, [busy, userData?.plan, userData?.lifetimeFightRounds, adConsentStatus]);
 
   return (
     <>

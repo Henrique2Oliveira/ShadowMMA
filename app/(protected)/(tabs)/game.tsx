@@ -10,6 +10,7 @@ import { AlertModal } from '@/components/Modals/AlertModal';
 import { CombosModal } from '@/components/Modals/CombosModal';
 import { GameOptionsModal } from '@/components/Modals/GameOptionsModal';
 import GoodJobModal from '@/components/Modals/GoodJobModal';
+import RateAppModal from '@/components/Modals/RateAppModal';
 import UnlockedCombosModal from '@/components/Modals/UnlockedCombosModal';
 import UpgradeCta from '@/components/Modals/UpgradeCta';
 import { MoveCard } from '@/components/MoveCard';
@@ -22,6 +23,7 @@ import { Colors, Typography } from '@/themes/theme';
 import { Combo, Move } from '@/types/game';
 import { loadGamePreferences, saveGamePreferences } from '@/utils/gamePreferences';
 import { markDailyTrainingCompleted } from '@/utils/notificationUtils';
+import { markPromptShown, markRated, neverAskAgain, openStoreListing, recordFightCompleted, shouldShowPrompt, snooze } from '@/utils/ratingPrompt';
 import { getAuth } from '@firebase/auth';
 import { useIsFocused } from '@react-navigation/native';
 import { Audio } from 'expo-av';
@@ -30,7 +32,7 @@ import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
-import { Animated, AppState, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { Animated, AppState, Platform, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 
 
 // Pre-game tips (shown once before the user presses Start)
@@ -259,6 +261,10 @@ export default function Game() {
   // Good job modal when no new combos
   const [showGoodJob, setShowGoodJob] = React.useState(false);
   // LevelBar animations handled internally by shared component (DRY)
+
+  // Rating prompt state
+  const [rateReadyPending, setRateReadyPending] = React.useState(false);
+  const [showRateModal, setShowRateModal] = React.useState(false);
 
   // Speed multiplier: default param OR 1.0, but we will bump first-time users to 1.5x below
   // Clamp any incoming param to MAX_SPEED
@@ -955,6 +961,34 @@ export default function Game() {
     }
   }, [gameState.isGameOver]);
 
+  // Track completed fights and decide if rating prompt should be queued
+  React.useEffect(() => {
+    let cancelled = false;
+    if (gameState.isGameOver) {
+      (async () => {
+        try {
+          await recordFightCompleted();
+          const decision = await shouldShowPrompt();
+          if (!cancelled && decision.show && Platform.OS === 'android') {
+            setRateReadyPending(true);
+          }
+        } catch {}
+      })();
+    }
+    return () => { cancelled = true; };
+  }, [gameState.isGameOver]);
+
+  // Only show rating modal when no other end-of-fight modals are visible
+  React.useEffect(() => {
+    const hasUnlockedCombos = !!(newUnlockedCombos && newUnlockedCombos.length > 0);
+    if (rateReadyPending && !showGoodJob && !hasUnlockedCombos) {
+      setShowRateModal(true);
+      setRateReadyPending(false);
+      // Mark prompt as shown to reset counters/throttling
+      markPromptShown().catch(() => {});
+    }
+  }, [rateReadyPending, showGoodJob, newUnlockedCombos]);
+
   // Add random movement effect
   React.useEffect(() => {
     let isAnimating = false;
@@ -1067,6 +1101,24 @@ export default function Game() {
         visible={!!(newUnlockedCombos && newUnlockedCombos.length > 0)}
         combos={newUnlockedCombos || []}
         onClose={() => setNewUnlockedCombos(null)}
+      />
+
+      {/* Rating prompt modal (Play Store) */}
+      <RateAppModal
+        visible={showRateModal}
+        onRate={async () => {
+          setShowRateModal(false);
+          await markRated();
+          await openStoreListing();
+        }}
+        onLater={async () => {
+          setShowRateModal(false);
+          await snooze();
+        }}
+        onNever={async () => {
+          setShowRateModal(false);
+          await neverAskAgain();
+        }}
       />
 
       <LinearGradient
