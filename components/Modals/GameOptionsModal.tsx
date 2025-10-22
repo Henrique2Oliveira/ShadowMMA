@@ -45,6 +45,8 @@ export const GameOptionsModal: React.FC<GameOptionsModalProps> = ({
 }) => {
   const { width } = useWindowDimensions();
   const slideX = React.useRef(new Animated.Value(0)).current;
+  const [confirmQuitVisible, setConfirmQuitVisible] = React.useState(false);
+  const confirmAnim = React.useRef(new Animated.Value(0)).current;
 
   // Slide modal content from the right when opening
   React.useEffect(() => {
@@ -58,6 +60,24 @@ export const GameOptionsModal: React.FC<GameOptionsModalProps> = ({
       }).start();
     }
   }, [visible, width, slideX]);
+
+  // Reset and/or animate confirm card when toggled
+  React.useEffect(() => {
+    if (!visible) {
+      setConfirmQuitVisible(false);
+      confirmAnim.setValue(0);
+      return;
+    }
+    if (confirmQuitVisible) {
+      confirmAnim.setValue(0);
+      Animated.timing(confirmAnim, {
+        toValue: 1,
+        duration: 180,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [visible, confirmQuitVisible, confirmAnim]);
   const getAnimationModeLabel = (mode: 'none' | 'old' | 'new') => {
     switch (mode) {
       case 'none': return 'Animations: None';
@@ -105,7 +125,7 @@ export const GameOptionsModal: React.FC<GameOptionsModalProps> = ({
     {
       icon: 'exit',
       label: 'Quit',
-      onPress: onQuit,
+      onPress: () => setConfirmQuitVisible(true),
     },
   ];
 
@@ -117,7 +137,7 @@ export const GameOptionsModal: React.FC<GameOptionsModalProps> = ({
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
-        <Animated.View style={[styles.modalContent, { transform: [{ translateX: slideX }] }]}>
+  <Animated.View style={[styles.modalContent, { transform: [{ translateX: slideX }] }]}>
           <TouchableOpacity
             style={styles.closeButton}
             onPress={onClose}
@@ -186,6 +206,51 @@ export const GameOptionsModal: React.FC<GameOptionsModalProps> = ({
             ))}
           </View>
         </Animated.View>
+
+        {confirmQuitVisible && (
+          <View style={styles.confirmOverlay}>
+            <View style={styles.confirmBackdrop} />
+            <Animated.View
+              style={[
+                styles.confirmCard,
+                {
+                  opacity: confirmAnim,
+                  transform: [
+                    {
+                      scale: confirmAnim.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] }),
+                    },
+                  ],
+                },
+              ]}
+              accessibilityRole="alert"
+            >
+              <Ionicons name="alert-circle" size={30} color={Colors.redDots} style={{ marginBottom: 8 }} />
+              <Text style={styles.confirmTitle}>Leave fight?</Text>
+              <Text style={styles.confirmMessage}>
+                You’ll lose today’s fight progress. Are you sure you want to quit?
+              </Text>
+              <View style={styles.confirmActions}>
+                <TouchableOpacity
+                  onPress={() => setConfirmQuitVisible(false)}
+                  style={styles.confirmSecondary}
+                  accessibilityLabel="Stay in fight"
+                >
+                  <Text style={styles.confirmSecondaryText}>Stay</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    setConfirmQuitVisible(false);
+                    onQuit();
+                  }}
+                  style={styles.confirmDestructive}
+                  accessibilityLabel="Quit fight"
+                >
+                  <Text style={styles.confirmDestructiveText}>Quit</Text>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          </View>
+        )}
       </View>
     </Modal>
   );
@@ -281,5 +346,78 @@ const styles = StyleSheet.create({
     height: 10,
     backgroundColor: Colors.redDots,
     borderRadius: 6,
+  },
+  // Confirmation overlay styles
+  confirmOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  confirmBackdrop: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  confirmCard: {
+    width: '90%',
+    maxWidth: 380,
+    backgroundColor: Colors.bgDark,
+    borderRadius: 12,
+    padding: 18,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 10,
+  },
+  confirmTitle: {
+    fontFamily: 'CalSans',
+    fontSize: 20,
+    color: Colors.text,
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  confirmMessage: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 14,
+    color: Colors.text,
+    opacity: 0.85,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  confirmActions: {
+    flexDirection: 'row',
+  },
+  confirmSecondary: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    marginRight: 10,
+  },
+  confirmSecondaryText: {
+    color: Colors.text,
+    fontFamily: Typography.fontFamily,
+    fontSize: 15,
+  },
+  confirmDestructive: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: Colors.redDots,
+  },
+  confirmDestructiveText: {
+    color: '#000',
+    fontFamily: Typography.fontFamily,
+    fontSize: 15,
+    fontWeight: '600',
   },
 });

@@ -491,7 +491,7 @@ export default function Profile() {
               style={{ marginRight: 6 }}
             />
             <Text style={[styles.loadingTip, { fontSize: font(12) }]}>
-              "Your only limit is you"
+              &quot;Your only limit is you&quot;
             </Text>
           </View>
         </Animated.View>
