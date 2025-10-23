@@ -416,6 +416,7 @@ export const handleGameOver = onRequest(async (req, res) => {
 
     // Post-transaction: fetch unlocked combos if level up
     let unlockedCombos: string[] | undefined = undefined;
+    let unlockedCombosMeta: Array<{ name: string; type?: string; comboId?: string | number; moves?: Array<{ move: string }>; categoryId?: string }>| undefined = undefined;
     if (txResult.didLevelUp) {
       try {
         const catId = '0';
@@ -425,17 +426,40 @@ export const handleGameOver = onRequest(async (req, res) => {
           const levelsObj = data?.levels;
           if (levelsObj && typeof levelsObj === 'object') {
             const names: string[] = [];
+            const meta: Array<{ name: string; type?: string; comboId?: string | number; moves?: Array<{ move: string }>; categoryId?: string }> = [];
+            const normalizeMoves = (arr: any): Array<{ move: string }> => {
+              const out: Array<{ move: string }> = [];
+              if (Array.isArray(arr)) {
+                for (const x of arr) {
+                  if (typeof x === 'string') out.push({ move: x });
+                  else if (x && typeof x === 'object' && (x as any).move) out.push({ move: String((x as any).move) });
+                  if (out.length >= 8) break; // cap for payload size
+                }
+              }
+              return out;
+            };
             for (const typeKey of Object.keys(levelsObj)) {
               const arr = Array.isArray(levelsObj[typeKey]) ? levelsObj[typeKey] : [];
-              for (const c of arr) {
+              for (let idx = 0; idx < arr.length; idx++) {
+                const c = arr[idx];
                 if (typeof c?.level === 'number' && c.level === txResult.newLevel) {
                   const nm = String(c?.name || c?.title || 'Combo');
                   names.push(nm);
+                  meta.push({
+                    name: nm,
+                    type: String(c?.type || typeKey),
+                    comboId: (c?.comboId ?? idx),
+                    moves: Array.isArray((c as any)?.moves) ? normalizeMoves((c as any)?.moves) : undefined,
+                    categoryId: combosDoc.id,
+                  });
                 }
               }
             }
             const seen = new Set<string>();
             unlockedCombos = names.filter(n => (seen.has(n) ? false : (seen.add(n), true)));
+            // De-dup meta by name to mirror names
+            const seenMeta = new Set<string>();
+            unlockedCombosMeta = meta.filter(m => (seenMeta.has(m.name) ? false : (seenMeta.add(m.name), true)));
           }
         }
       } catch (e) {
@@ -450,7 +474,8 @@ export const handleGameOver = onRequest(async (req, res) => {
       currentLevel: txResult.currentLevel,
       newLevel: txResult.newLevel,
       levelUp: txResult.didLevelUp,
-      unlockedCombos,
+  unlockedCombos,
+  unlockedCombosMeta,
       xpBreakdown: {
         baseXP: txResult.breakdown.baseXP,
         randomXPAdjustment: txResult.breakdown.randomXP,

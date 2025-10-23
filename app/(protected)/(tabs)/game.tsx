@@ -257,7 +257,7 @@ export default function Game() {
   const [previousLevel, setPreviousLevel] = React.useState(0);
   const [showNewCombo, setShowNewCombo] = React.useState(false);
   // Names of combos unlocked on the last level up (shown right after game over)
-  const [newUnlockedCombos, setNewUnlockedCombos] = React.useState<string[] | null>(null);
+  const [newUnlockedCombos, setNewUnlockedCombos] = React.useState<(string | { name: string; type?: string; moves?: { move: string }[] })[] | null>(null);
   // Good job modal when no new combos
   const [showGoodJob, setShowGoodJob] = React.useState(false);
   // LevelBar animations handled internally by shared component (DRY)
@@ -728,11 +728,19 @@ export default function Game() {
               .then(response => response.json())
               .then(data => {
                 updateUserData({ xp: data.newXp });
-                // On level up, show the unlocked combos list (names only) instead of generic banner
-                if (data?.levelUp && Array.isArray(data?.unlockedCombos) && data.unlockedCombos.length > 0) {
-                  setShowNewCombo(false);
-                  setNewUnlockedCombos(data.unlockedCombos as string[]);
-                  setShowGoodJob(false);
+                // On level up, show unlocked combos (prefer detailed meta from backend when available)
+                if (data?.levelUp) {
+                  const meta = Array.isArray(data?.unlockedCombosMeta) ? data.unlockedCombosMeta : [];
+                  const names = Array.isArray(data?.unlockedCombos) ? data.unlockedCombos : [];
+                  const payload = (meta.length > 0 ? meta : names) as any[];
+                  if (payload.length > 0) {
+                    setShowNewCombo(false);
+                    setNewUnlockedCombos(payload);
+                    setShowGoodJob(false);
+                  } else {
+                    setNewUnlockedCombos(null);
+                    setShowGoodJob(true);
+                  }
                 } else {
                   // No unlocked combos this time — show a positive message modal
                   setNewUnlockedCombos(null);
