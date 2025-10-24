@@ -8,7 +8,8 @@ import { Colors, Typography } from '@/themes/theme';
 import { isTablet, rf, rs } from '@/utils/responsive';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { router } from 'expo-router';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Purchases from 'react-native-purchases';
 
@@ -82,6 +83,25 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
     return { columns, cardWidth, containerWidth: maxContainer } as const;
   }, [width]);
   const containerHorizontalPadding = isTablet ? rs(34) : 20;
+  // When this modal is requested, redirect to the full Plans screen instead (better UX)
+  const navigatedRef = useRef(false);
+  useEffect(() => {
+    if (visible && !navigatedRef.current) {
+      navigatedRef.current = true;
+      // Small delay to allow press ripple/haptics to feel responsive
+      setTimeout(() => {
+        try {
+          router.push('/(protected)/plans');
+        } finally {
+          // Ensure parent state closes the modal flag to avoid loops
+          onClose?.();
+        }
+      }, 60);
+    }
+    if (!visible) {
+      navigatedRef.current = false;
+    }
+  }, [visible, onClose]);
 
   const toggleExpand = useCallback((title: string) => {
     setExpanded(prev => ({ ...prev, [title]: !prev[title] }));
@@ -366,6 +386,7 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
 
   const plansData: SubscriptionPlan[] = rcPlans.length ? rcPlans : subscriptionPlans;
 
+  // Render nothing; we immediately navigate to the Plans route when asked to show this modal
   return (
     <>
     <Modal
