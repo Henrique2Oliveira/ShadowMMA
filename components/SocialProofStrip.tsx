@@ -15,7 +15,7 @@ import {
 import { uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Easing, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 
 // Using shared types and option pools from '@/types/avatar'
 // Seed + full option support with a safe default background for contrast
@@ -76,9 +76,11 @@ const randomAvatar = (i: number): { uri: string } => {
 };
 
 export default function SocialProofStrip() {
-  const isTablet = false; // visuals are compact; can enhance later if needed
+  const { width } = useWindowDimensions();
+  const isTablet = width >= 768;
   const AVATAR_COUNT = 6;
   const size = uiScale(isTablet ? 44 : 38);
+  const overlap = Math.round(size * 0.32);
   const pulse = useRef(new Animated.Value(0)).current;
   const skeleton = useRef(new Animated.Value(0)).current;
   const [retryKey, setRetryKey] = useState(0);
@@ -145,7 +147,7 @@ export default function SocialProofStrip() {
         {avatars.map((a, i) => {
           const key = `sp-${retryKey}-${i}`;
           return (
-            <View key={key} style={[styles.avatarWrap, i !== 0 && styles.avatarOverlap]}>
+            <View key={key} style={[styles.avatarWrap, i !== 0 && { marginLeft: -overlap }]}>
               <Image
                 source={{ uri: a.uri }}
                 style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}
