@@ -1,5 +1,6 @@
 import { Text } from '@/components';
 import { AlertModal } from '@/components/Modals/AlertModal';
+import SocialProofStrip from '@/components/SocialProofStrip';
 import { calculateMonthlyEquivalent, mapOfferingsToPlans, subscriptionPlans, type SubscriptionPlan } from '@/config/subscriptionPlans';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData, useUserData as useUserDataCtx } from '@/contexts/UserDataContext';
@@ -418,6 +419,11 @@ export default function PlansModal({ visible, onClose, onSelectPlan }: Props) {
               <Text style={styles.bannerWarningText}>{error}</Text>
             </View>
           )}
+
+          {/* Social proof strip */}
+          <View style={{ marginBottom: 12 }}>
+            <SocialProofStrip />
+          </View>
 
           {isTablet ? (
             <ScrollView

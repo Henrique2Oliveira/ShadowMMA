@@ -7,6 +7,7 @@ import { AlertModal } from '@/components/Modals/AlertModal';
 import CookieConsentModalComponent from '@/components/Modals/CookieConsentModal';
 import { FightModeModal } from '@/components/Modals/FightModeModal';
 import { StreakCongratulationsModal } from '@/components/Modals/StreakCongratulationsModal';
+import SocialProofStrip from '@/components/SocialProofStrip';
 import { WeeklyMission } from '@/components/WeeklyMission';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdConsent } from '@/contexts/ConsentContext';
@@ -497,6 +498,11 @@ export default function Index() {
           />
         </View>
 
+        {/* Social proof between Start Fight and quick actions */}
+        <View style={{ width: '100%', maxWidth: 600, marginTop: 8, marginBottom: 8 }}>
+          <SocialProofStrip />
+        </View>
+
         {/* Timer Row - Small Buttons*/}
         <View style={styles.row}>
           {/* Map through buttons 1-4 for small buttons */}
@@ -611,7 +617,7 @@ export default function Index() {
         iconName="marker-check"
         iconSize={90}
         fontSize={24}
-        subtitle="Train Smarter, Get Stronger"
+        subtitle="Are you Ready?"
         proOnly
         disabled={buttons[7].disabled}
         onPress={buttons[7].onPress}

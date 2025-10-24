@@ -3,10 +3,24 @@ import { AlertModal } from '@/components/Modals/AlertModal';
 import type { FeedbackPayload } from '@/components/Modals/FeedbackModal';
 import FeedbackModalComponent from '@/components/Modals/FeedbackModal';
 import PlansModal from '@/components/Modals/PlansModal';
+import SocialProofStrip from '@/components/SocialProofStrip';
 import { SubscriptionPlan } from '@/config/subscriptionPlans';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
+import {
+  ACCESSORIES_OPTIONS,
+  AvatarOptions,
+  BG_OPTIONS,
+  CLOTHING_COLOR_OPTIONS,
+  FACE_OPTIONS,
+  FACIAL_HAIR_OPTIONS,
+  FEMALE_HEAD_OPTIONS,
+  HAIR_COLOR_OPTIONS,
+  HEAD_OPTIONS,
+  MALE_HEAD_OPTIONS,
+  SKIN_OPTIONS,
+} from '@/types/avatar';
 import { uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,18 +30,7 @@ import { Animated, Easing, Image, ImageBackground, Linking, Modal, Platform, Ref
 
 // User data shape is described by UserDataContext; no local type needed here
 
-// Simple avatar options we let users tweak (subset of DiceBear open-peeps)
-type AvatarOptions = {
-  head?: string;
-  skinColor?: string; // hex without '#'
-  accessories?: string;
-  facialHair?: string;
-  face?: string;
-  backgroundColor?: string; // hex without '#'
-  headContrastColor?: string; // hair color hex without '#'
-  clothingColor?: string; // hex without '#'
-  gender?: 'male' | 'female';
-};
+// Avatar options and option pools are shared from '@/types/avatar'
 
 export default function Profile() {
   const { width } = useWindowDimensions();
@@ -361,11 +364,11 @@ export default function Profile() {
     const rand = Math.random().toString(36).slice(2, 10);
     setTempAvatarSeed(rand);
     // Randomize simple options
-    const pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
-    const maybe = <T,>(arr: T[], probability = 0.6): T | undefined => (Math.random() < probability ? pick(arr) : undefined);
+  const pick = <T,>(arr: readonly T[]): T => arr[Math.floor(Math.random() * arr.length)];
+  const maybe = <T,>(arr: readonly T[], probability = 0.6): T | undefined => (Math.random() < probability ? pick(arr) : undefined);
     const gender = tempAvatarOptions.gender || 'male';
-    const headPool = gender === 'male' ? MALE_HEAD_OPTIONS : FEMALE_HEAD_OPTIONS;
-    const facialHairPick = gender === 'female' ? maybe(FACIAL_HAIR_OPTIONS, 0.1) : maybe(FACIAL_HAIR_OPTIONS, 0.45);
+  const headPool = gender === 'male' ? MALE_HEAD_OPTIONS : FEMALE_HEAD_OPTIONS;
+  const facialHairPick = gender === 'female' ? maybe(FACIAL_HAIR_OPTIONS, 0.1) : maybe(FACIAL_HAIR_OPTIONS, 0.45);
     setTempAvatarOptions({
       ...tempAvatarOptions,
       head: pick(headPool),
@@ -564,6 +567,10 @@ export default function Profile() {
             <View style={{ alignItems: 'center' }}>
               <Text style={[styles.name, { fontSize: font(isTablet ? 40 : 32) }]}>{userData?.name || 'Anonymous'}</Text>
               <Text style={[styles.subtitle, { fontSize: font(isTablet ? 22 : 18) }]}>{userData?.plan !== 'free' ? 'Pro Member' : 'Free Member'}</Text>
+            </View>
+            {/* Social proof: small avatar carousel */}
+            <View style={{ width: '100%', marginTop: spacing(14) }}>
+              <SocialProofStrip />
             </View>
           </View>
           {/* Lifetime Stats Section (moved above badges) */}
@@ -874,10 +881,10 @@ export default function Profile() {
                   const idx = sequence.indexOf(prev.gender || 'male');
                   const next = sequence[(idx + 1) % sequence.length] as NonNullable<AvatarOptions['gender']>;
                   const result: AvatarOptions = { ...prev, gender: next };
-                  if (next === 'male' && (!prev.head || !MALE_HEAD_OPTIONS.includes(prev.head))) {
+                  if (next === 'male' && (!prev.head || !(MALE_HEAD_OPTIONS as ReadonlyArray<string>).includes(prev.head || ''))) {
                     result.head = MALE_HEAD_OPTIONS[0];
                   } else if (next === 'female') {
-                    if (!prev.head || !FEMALE_HEAD_OPTIONS.includes(prev.head)) result.head = FEMALE_HEAD_OPTIONS[0];
+                    if (!prev.head || !(FEMALE_HEAD_OPTIONS as ReadonlyArray<string>).includes(prev.head || '')) result.head = FEMALE_HEAD_OPTIONS[0];
                     result.facialHair = undefined;
                   }
                   return result;
@@ -893,7 +900,7 @@ export default function Profile() {
               <TouchableOpacity
                 style={styles.avatarRowBtn}
                 onPress={() => setTempAvatarOptions(prev => {
-                  const pool = prev.gender === 'male' ? MALE_HEAD_OPTIONS : prev.gender === 'female' ? FEMALE_HEAD_OPTIONS : HEAD_OPTIONS;
+                  const pool: readonly string[] = prev.gender === 'male' ? MALE_HEAD_OPTIONS : prev.gender === 'female' ? FEMALE_HEAD_OPTIONS : HEAD_OPTIONS;
                   return { ...prev, head: cycleNext(pool, prev.head) };
                 })}
               >
@@ -907,7 +914,7 @@ export default function Profile() {
               {/* Hair Color - cycle */}
               <TouchableOpacity
                 style={styles.avatarRowBtn}
-                onPress={() => setTempAvatarOptions(prev => ({ ...prev, headContrastColor: cycleNext(HAIR_COLOR_OPTIONS, prev.headContrastColor) }))}
+                onPress={() => setTempAvatarOptions(prev => ({ ...prev, headContrastColor: cycleNext(HAIR_COLOR_OPTIONS as readonly string[], prev.headContrastColor) }))}
               >
                 <Text style={styles.avatarRowLabel}>Hair Color</Text>
                 <View style={[styles.avatarRowRight, { gap: 6 }]}>
@@ -920,7 +927,7 @@ export default function Profile() {
               {/* Skin - cycle colors */}
               <TouchableOpacity
                 style={styles.avatarRowBtn}
-                onPress={() => setTempAvatarOptions(prev => ({ ...prev, skinColor: cycleNext(SKIN_OPTIONS, prev.skinColor) }))}
+                onPress={() => setTempAvatarOptions(prev => ({ ...prev, skinColor: cycleNext(SKIN_OPTIONS as readonly string[], prev.skinColor) }))}
               >
                 <Text style={styles.avatarRowLabel}>Skin</Text>
                 <View style={[styles.avatarRowRight, { gap: 6 }]}>
@@ -935,7 +942,7 @@ export default function Profile() {
               {/* Expression - cycle incl None */}
               <TouchableOpacity
                 style={styles.avatarRowBtn}
-                onPress={() => setTempAvatarOptions(prev => ({ ...prev, face: cycleNext(FACE_OPTIONS, prev.face, true) }))}
+                onPress={() => setTempAvatarOptions(prev => ({ ...prev, face: cycleNext(FACE_OPTIONS as readonly string[], prev.face, true) }))}
               >
                 <Text style={styles.avatarRowLabel}>Expression</Text>
                 <View style={styles.avatarRowRight}>
@@ -946,7 +953,7 @@ export default function Profile() {
               {/* Facial Hair - cycle incl None */}
               <TouchableOpacity
                 style={styles.avatarRowBtn}
-                onPress={() => setTempAvatarOptions(prev => ({ ...prev, facialHair: cycleNext(FACIAL_HAIR_OPTIONS, prev.facialHair, true) }))}
+                onPress={() => setTempAvatarOptions(prev => ({ ...prev, facialHair: cycleNext(FACIAL_HAIR_OPTIONS as readonly string[], prev.facialHair, true) }))}
               >
                 <Text style={styles.avatarRowLabel}>Facial Hair</Text>
                 <View style={styles.avatarRowRight}>
@@ -960,7 +967,7 @@ export default function Profile() {
               {/* Accessories - cycle incl None */}
               <TouchableOpacity
                 style={styles.avatarRowBtn}
-                onPress={() => setTempAvatarOptions(prev => ({ ...prev, accessories: cycleNext(ACCESSORIES_OPTIONS, prev.accessories, true) }))}
+                onPress={() => setTempAvatarOptions(prev => ({ ...prev, accessories: cycleNext(ACCESSORIES_OPTIONS as readonly string[], prev.accessories, true) }))}
               >
                 <Text style={styles.avatarRowLabel}>Accessories</Text>
                 <View style={styles.avatarRowRight}>
@@ -972,7 +979,7 @@ export default function Profile() {
               {/* Clothing Color - cycle */}
               <TouchableOpacity
                 style={styles.avatarRowBtn}
-                onPress={() => setTempAvatarOptions(prev => ({ ...prev, clothingColor: cycleNext(CLOTHING_COLOR_OPTIONS, prev.clothingColor) }))}
+                onPress={() => setTempAvatarOptions(prev => ({ ...prev, clothingColor: cycleNext(CLOTHING_COLOR_OPTIONS as readonly string[], prev.clothingColor) }))}
               >
                 <Text style={styles.avatarRowLabel}>Clothing</Text>
                 <View style={[styles.avatarRowRight, { gap: 6 }]}>
@@ -985,7 +992,7 @@ export default function Profile() {
               {/* Background - cycle incl None */}
               <TouchableOpacity
                 style={styles.avatarRowBtn}
-                onPress={() => setTempAvatarOptions(prev => ({ ...prev, backgroundColor: cycleNext(BG_OPTIONS, prev.backgroundColor, true) }))}
+                onPress={() => setTempAvatarOptions(prev => ({ ...prev, backgroundColor: cycleNext(BG_OPTIONS as readonly string[], prev.backgroundColor, true) }))}
               >
                 <Text style={styles.avatarRowLabel}>Background</Text>
                 <View style={[styles.avatarRowRight, { gap: 6 }]}>
@@ -1710,22 +1717,7 @@ const styles = StyleSheet.create({
 });
 
 // ---- Avatar UI option sets ----
-const HEAD_OPTIONS = [
-  'afro', 'bangs', 'bangs2', 'bantuKnots', 'bear', 'bun', 'bun2', 'buns', 'cornrows', 'cornrows2', 'dreads1', 'dreads2', 'flatTop', 'flatTopLong', 'grayBun', 'grayMedium', 'grayShort', 'hatBeanie', 'hatHip', 'hijab', 'long', 'longAfro', 'longBangs', 'longCurly', 'medium1', 'medium2', 'medium3', 'mediumBangs', 'mediumBangs2', 'mediumBangs3', 'mediumStraight', 'mohawk', 'mohawk2', 'noHair1', 'noHair2', 'short1', 'short2', 'short3', 'short4'
-];
-const SKIN_OPTIONS = ['694d3d', 'ae5d29', 'd08b5b', 'edb98a', 'ffdbb4'];
-const ACCESSORIES_OPTIONS = ['eyepatch', 'glasses', 'glasses2', 'glasses3', 'glasses4', 'glasses5', 'sunglasses', 'sunglasses2'];
-const FACIAL_HAIR_OPTIONS = ['chin', 'full', 'goatee1', 'moustache1', 'moustache2', 'moustache3'];
-const FACE_OPTIONS = ['smile', 'smileTeethGap', 'smileBig', 'smileLOL', 'serious', 'angryWithFang', 'cute', 'eyesClosed', 'awe'];
-const BG_OPTIONS = ['b6e3f4', 'c0aede', 'd1d4f9', 'ffd5dc', 'ffdfbf', 'ffffe0', 'd0f4de', 'f0f0f0', '000000', 'ffffff'];
-const HAIR_COLOR_OPTIONS = ['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'c93305', 'd6b370', 'e8e1e1', 'ecdcbf', 'f59797'];
-const CLOTHING_COLOR_OPTIONS = ['8fa7df', '9ddadb', '78e185', 'e279c7', 'e78276', 'fdea6b', 'ffcf77'];
-const MALE_HEAD_OPTIONS = [
-  'noHair1', 'noHair2', 'afro', 'flatTop', 'flatTopLong', 'mohawk', 'mohawk2', 'short1', 'short2', 'short3', 'short4', 'cornrows', 'cornrows2', 'dreads1', 'dreads2', 'hatBeanie', 'hatHip'
-];
-const FEMALE_HEAD_OPTIONS = [
-  'bun', 'bun2', 'buns', 'long', 'longAfro', 'longBangs', 'longCurly', 'medium1', 'medium2', 'medium3', 'mediumStraight', 'mediumBangs', 'mediumBangs2', 'mediumBangs3', 'grayBun', 'grayMedium', 'grayShort', 'hijab'
-];
+// Moved to '@/types/avatar' and imported at top for reuse across the app.
 
 function pretty(key: string) {
   return key
@@ -1736,9 +1728,9 @@ function pretty(key: string) {
     .replace(/^\w/, (c) => c.toUpperCase());
 }
 
-function cycleNext<T>(arr: T[], current?: T, includeNone = false): T | undefined {
+function cycleNext<T>(arr: readonly T[], current?: T, includeNone = false): T | undefined {
   // includeNone cycles an extra step where value becomes undefined (None)
-  const list = arr.slice();
+  const list = arr.slice() as T[];
   if (includeNone) {
     // represent None as undefined by stepping through arr length + 1
     if (current === undefined) return list[0];

@@ -1,5 +1,6 @@
 import { Text } from '@/components';
 import { AlertModal } from '@/components/Modals/AlertModal';
+import SocialProofStrip from '@/components/SocialProofStrip';
 import { calculateMonthlyEquivalent, mapOfferingsToPlans, subscriptionPlans, type SubscriptionPlan } from '@/config/subscriptionPlans';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
@@ -584,6 +585,10 @@ export default function Plans() {
             <Text style={styles.bannerInfoText}>Refreshing…</Text>
           </View>
         )}
+        {/* Social proof strip */}
+        <View style={{ marginBottom: 12 }}>
+          <SocialProofStrip />
+        </View>
         {/* Manage/Sync actions */}
         <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10, gap: 10, flexWrap: 'wrap' }}>
           <TouchableOpacity onPress={handleRestorePurchases} disabled={restoreLoading} style={{ paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#1e1e1e', borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
