@@ -4,25 +4,25 @@ import { isTablet, rf, rs } from '@/utils/responsive';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import {
-    Dimensions,
-    Image,
-    LayoutChangeEvent,
-    StyleSheet,
-    TouchableOpacity,
-    View
+  Dimensions,
+  Image,
+  LayoutChangeEvent,
+  StyleSheet,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import Animated, {
-    Easing,
-    runOnUI,
-    SharedValue,
-    useAnimatedReaction,
-    useAnimatedStyle,
-    useSharedValue,
-    withDecay,
-    withDelay,
-    withRepeat,
-    withSequence,
-    withTiming,
+  Easing,
+  runOnUI,
+  SharedValue,
+  useAnimatedReaction,
+  useAnimatedStyle,
+  useSharedValue,
+  withDecay,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming,
 } from 'react-native-reanimated';
 
 interface StartFightButtonProps {
@@ -211,10 +211,15 @@ export const StartFightButton: React.FC<StartFightButtonProps> = ({
   });
 
   const shimmerStyle = useAnimatedStyle(() => {
-    const start = -0.4 * shimmerWidth.value;
-    const travel = 1.4 * shimmerWidth.value;
-    const tx = start + shimmerProg.value * travel;
-    return { transform: [{ translateX: tx }] };
+    // Treat shimmerWidth.value as the measured button width.
+    const btnWidth = shimmerWidth.value || 0;
+    // Band width for shimmer visual; at least 80px or 25% of button width
+    const band = Math.max(80, Math.floor(btnWidth * 0.25));
+    // Move from just off the left (-band) to just off the right (btnWidth + band)
+    const start = -band;
+    const end = btnWidth + band;
+    const tx = start + shimmerProg.value * (end - start);
+    return { transform: [{ translateX: tx }], width: band, left: 0 };
   });
 
   const SCREEN_HEIGHT = Dimensions.get('window').height;

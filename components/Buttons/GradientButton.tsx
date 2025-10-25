@@ -37,19 +37,20 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
   shimmerDelayMs = 0,
 }) => {
   // Width tracking for shimmer travel distance
-  const widthRef = React.useRef(0);
+  const [width, setWidth] = React.useState(0);
   const shimmerProg = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
-    if (!shimmer || disabled) return;
+    if (!shimmer || disabled || width <= 0) return;
     shimmerProg.setValue(0);
+    const randomOffset = Math.floor(Math.random() * 1200);
     const loop = Animated.loop(
       Animated.timing(shimmerProg, {
-        toValue: 1,
-        duration: 1800,
-        easing: Easing.linear,
-        useNativeDriver: true,
-        delay: 0,
+      toValue: 1,
+      duration: 1800,
+      easing: Easing.linear,
+      useNativeDriver: true,
+      delay: randomOffset,
       })
     );
     const id = setTimeout(() => loop.start(), Math.max(0, shimmerDelayMs));
@@ -57,11 +58,14 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
       try { (loop as any).stop?.(); } catch {}
       clearTimeout(id);
     };
-  }, [shimmer, shimmerDelayMs, disabled, shimmerProg]);
+  }, [shimmer, shimmerDelayMs, disabled, shimmerProg, width]);
 
+  // Compute a shimmer band width and translate range so the shimmer
+  // starts off-screen to the left and finishes off-screen to the right.
+  const shimmerWidth = Math.max(80, Math.floor(width * 0.25));
   const translateX = shimmerProg.interpolate({
     inputRange: [0, 1],
-    outputRange: [-(widthRef.current * 0.4 || -120), widthRef.current || 300]
+    outputRange: [-shimmerWidth, width + shimmerWidth]
   });
 
   return (
@@ -77,11 +81,11 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
         style={[{ flex: 1 }, disabled && { opacity: 1 }]}
         onPress={onPress}
         disabled={disabled}
-        onLayout={({ nativeEvent }) => { widthRef.current = nativeEvent.layout.width; }}
+        onLayout={({ nativeEvent }) => { setWidth(nativeEvent.layout.width); }}
       >
         {/* Shimmer overlay */}
         {shimmer && !disabled && (
-          <Animated.View pointerEvents="none" style={[styles.shimmerWrap, { transform: [{ translateX }] }]}>
+          <Animated.View pointerEvents="none" style={[styles.shimmerWrap, { transform: [{ translateX }], left: 0, width: shimmerWidth }]}>
             <LinearGradient
               colors={["#ffffff00", "#ffffff26", "#ffffff00"]}
               start={{ x: 0, y: 0 }}
