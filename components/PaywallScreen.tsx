@@ -1,13 +1,15 @@
 import { Text } from '@/components';
+import { AlertModal } from '@/components/Modals/AlertModal';
 import QuizIntroComponent from '@/components/QuizIntro';
 import QuizScreen, { QuizData } from '@/components/QuizScreen';
 import SocialProofStrip from '@/components/SocialProofStrip';
 import { mapOfferingsToPlans, subscriptionPlans, type SubscriptionPlan } from '@/config/subscriptionPlans';
 import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, Easing, ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Purchases from 'react-native-purchases';
 
 // Update the type Props to include a new callback for plan selection
@@ -23,6 +25,21 @@ export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Modal removed; navigate to Plans screen instead
+  const [loginPromptVisible, setLoginPromptVisible] = useState(false);
+
+  // Shared plans list for indexing/animations
+  const displayPlans = useMemo<SubscriptionPlan[]>(() => (rcPlans.length ? rcPlans : subscriptionPlans), [rcPlans]);
+  // Entry and press animations for cards
+  const entryOpacity = useMemo(() => displayPlans.map(() => new Animated.Value(0)), [displayPlans.length]);
+  const entryTranslateY = useMemo(() => displayPlans.map(() => new Animated.Value(12)), [displayPlans.length]);
+  const cardScale = useMemo(() => displayPlans.map(() => new Animated.Value(1)), [displayPlans.length]);
+  // Shimmer state (reused for both card and its button)
+  const shimmerProg = useMemo(() => displayPlans.map(() => new Animated.Value(0)), [displayPlans.length]);
+  const shimmerLoopsRef = useRef<Animated.CompositeAnimation[]>([]);
+  const cardWidthsRef = useRef<number[]>([]);
+  const buttonWidthsRef = useRef<number[]>([]);
+  // Button press feedback
+  const buttonScale = useMemo(() => displayPlans.map(() => new Animated.Value(1)), [displayPlans.length]);
 
   const handleQuizComplete = (data: QuizData) => {
     setQuizData(data);
@@ -72,6 +89,45 @@ export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
     return { monthly, annual, monthlyPrice, annualPrice, annualMonthly, savingsPct } as const;
   }, [rcPlans]);
 
+  // Stagger in plan cards softly
+  useEffect(() => {
+    const anims = displayPlans.map((_, i) =>
+      Animated.parallel([
+        Animated.timing(entryOpacity[i], { toValue: 1, duration: 320, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.spring(entryTranslateY[i], { toValue: 0, useNativeDriver: true, friction: 8, tension: 80 }),
+      ])
+    );
+    Animated.stagger(90, anims).start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayPlans.length]);
+
+  // Start shimmer loops, one per card/button
+  useEffect(() => {
+    shimmerLoopsRef.current.forEach(a => a.stop && a.stop());
+    shimmerLoopsRef.current = [];
+    const loops = shimmerProg.map((prog, i) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(prog, {
+            toValue: 1,
+            duration: 1600,
+            easing: Easing.inOut(Easing.quad),
+            useNativeDriver: true,
+            delay: i * 160,
+          }),
+          Animated.timing(prog, { toValue: 0, duration: 0, useNativeDriver: true }),
+        ])
+      )
+    );
+    shimmerLoopsRef.current = loops;
+    loops.forEach(l => l.start());
+    return () => {
+      shimmerLoopsRef.current.forEach(a => a.stop && a.stop());
+      shimmerLoopsRef.current = [];
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayPlans.length]);
+
   // Stage routing (must come AFTER all hooks to keep hooks order stable)
   if (quizStage === 'intro') {
     return <QuizIntroComponent onStart={() => setQuizStage('quiz')} onSkip={onSkip} />;
@@ -81,11 +137,14 @@ export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
   }
 
   const handlePlanSelection = (plan: SubscriptionPlan) => {
-    if (plan.title === 'Free') {
+    const isFree = (plan.title || '').toLowerCase() === 'free';
+    if (isFree) {
+      // Directly skip for free plan – no modal
       onSkip();
-    } else {
-      onSelectPlan?.(plan);
+      return;
     }
+    // Paid plans: prompt to login/create account
+    setLoginPromptVisible(true);
   };
 
   return (
@@ -139,13 +198,27 @@ export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.cardsContainer}
         >
-          {(rcPlans.length ? rcPlans : subscriptionPlans).map((plan) => {
+          {displayPlans.map((plan, i) => {
             const isAnnual = (plan.period || '').toLowerCase() === 'year';
             return (
-              <View
+              <Animated.View
                 key={plan.title}
-                style={[styles.card, plan.popular && styles.popularCard]}
+                onLayout={(e) => {
+                  cardWidthsRef.current[i] = e.nativeEvent.layout.width;
+                }}
+                style={[
+                  styles.card,
+                  plan.popular && styles.popularCard,
+                  {
+                    opacity: entryOpacity[i],
+                    transform: [
+                      { translateY: entryTranslateY[i] },
+                      { scale: cardScale[i] },
+                    ],
+                  },
+                ]}
               >
+                {/* Card shimmer overlay removed per request (animate buttons only) */}
                 {plan.popular && (
                   <View style={styles.popularBadge}>
                     <Text style={styles.popularText}>MOST POPULAR</Text>
@@ -161,6 +234,16 @@ export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
                   <Text style={styles.price}>{plan.price}</Text>
                   <Text style={styles.period}>/{plan.period}</Text>
                 </View>
+                {isAnnual && pricing.annualMonthly != null && (
+                  <Text style={styles.monthlyEquivalent}>
+                    {'\u2248 '}
+                    <Text style={styles.monthlyEquivalentValue}>
+                      {(plan.price || '').match(/^[^0-9]+/)?.[0] || ''}{pricing.annualMonthly.toFixed(2)}
+                    </Text>
+                    <Text style={styles.monthlyEquivalentSuffix}>/mo equivalent</Text>
+                  </Text>
+                )}
+               
                 <View style={styles.featuresContainer}>
                   {plan.features.slice(0, 4).map((feature, idx) => (
                     <View key={idx} style={styles.featureRow}>
@@ -174,15 +257,51 @@ export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
                     </Pressable>
                   )}
                 </View>
-                <Pressable
-                  style={[styles.button, plan.popular && styles.popularButton]}
-                  onPress={() => handlePlanSelection(plan)}
-                >
-                  <Text style={styles.buttonText}>
-                    {plan.title === 'Free' ? 'Start Free' : 'Choose Plan'}
-                  </Text>
-                </Pressable>
-              </View>
+                <Animated.View style={{ transform: [{ scale: buttonScale[i] }] }}>
+                  <Pressable
+                    style={[
+                      styles.button,
+                      plan.popular && styles.popularButton,
+                    ]}
+                    onPress={() => handlePlanSelection(plan)}
+                    onPressIn={() => {
+                      Animated.spring(buttonScale[i], { toValue: 0.98, useNativeDriver: true, friction: 6, tension: 120 }).start();
+                    }}
+                    onPressOut={() => {
+                      Animated.spring(buttonScale[i], { toValue: 1, useNativeDriver: true, friction: 7, tension: 120 }).start();
+                    }}
+                    onLayout={(e) => {
+                      buttonWidthsRef.current[i] = e.nativeEvent.layout.width;
+                    }}
+                  >
+                    {/* Shimmer overlay for the button */}
+                    {(() => {
+                      const w = buttonWidthsRef.current[i] || 240;
+                      const translateX = shimmerProg[i].interpolate({ inputRange: [0, 1], outputRange: [-0.4 * w, w + 40] });
+                      return (
+                        <Animated.View pointerEvents="none" style={[styles.buttonShimmerWrap, { transform: [{ translateX }] }]}>
+                          <LinearGradient
+                            colors={["rgba(255,255,255,0)", "rgba(255,255,255,0.26)", "rgba(255,255,255,0)"]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            style={styles.buttonShimmerGrad}
+                          />
+                        </Animated.View>
+                      );
+                    })()}
+                    {/* Subtle gradient for button depth */}
+                    <LinearGradient
+                      colors={['rgba(255,255,255,0.08)', 'rgba(255,255,255,0)']}
+                      start={{ x: 0.5, y: 0 }}
+                      end={{ x: 0.5, y: 1 }}
+                      style={StyleSheet.absoluteFill}
+                    />
+                    <Text style={styles.buttonText}>
+                      {plan.title === 'Free' ? 'Start Free' : 'Choose Plan'}
+                    </Text>
+                  </Pressable>
+                </Animated.View>
+              </Animated.View>
             );
           })}
         </ScrollView>
@@ -242,6 +361,21 @@ export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
       </ScrollView>
 
       {/* PlansModal removed: direct navigation to Plans screen now */}
+      <AlertModal
+        visible={loginPromptVisible}
+        title="Create an account"
+        message="You need to log in or create an account to continue."
+        type="info"
+        primaryButton={{
+          text: 'Continue',
+          onPress: () => {
+            setLoginPromptVisible(false);
+            router.push('/login');
+          },
+        }}
+        secondaryButton={{ text: 'Cancel', onPress: () => setLoginPromptVisible(false) }}
+        onClose={() => setLoginPromptVisible(false)}
+      />
     </ImageBackground>
   );
 }
@@ -323,6 +457,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#5c4718',
     marginTop: 8,
+    marginBottom: 15,
   },
   bannerWarningText: {
     color: '#ffdb99',
@@ -340,6 +475,7 @@ const styles = StyleSheet.create({
     padding: 20,
     width: 280,
     marginHorizontal: 10,
+    position: 'relative',
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -394,7 +530,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'baseline',
-    marginBottom: 20,
+    marginBottom: 5,
   },
   price: {
     fontFamily: Typography.fontFamily,
@@ -405,6 +541,26 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily,
     fontSize: 16,
     color: Colors.lightText,
+  },
+  monthlyEquivalent: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 12,
+    color: Colors.lightText,
+    textAlign: 'center',
+    marginTop: 2,
+    marginBottom: 12,
+    opacity: 0.95,
+  },
+  monthlyEquivalentValue: {
+    color: Colors.text,
+    fontFamily: Typography.fontFamily,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  monthlyEquivalentSuffix: {
+    color: Colors.lightText,
+    fontFamily: Typography.fontFamily,
+    fontSize: 12,
   },
   featuresContainer: {
     marginBottom: 20,
@@ -432,6 +588,15 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
+    overflow: 'hidden',
+    // depth / elevation
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
   },
   popularButton: {
     backgroundColor: Colors.green,
@@ -440,6 +605,34 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily,
     color: Colors.text,
     fontSize: 16,
+  },
+  // Button shimmer styles
+  buttonShimmerWrap: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: -40,
+    width: 80,
+    opacity: 0.7,
+    zIndex: 1,
+  },
+  buttonShimmerGrad: {
+    flex: 1,
+    borderRadius: 8,
+  },
+  // Shimmer overlay (card only)
+  cardShimmerWrap: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: -80,
+    width: 120,
+    opacity: 0.35,
+    zIndex: 1,
+  },
+  cardShimmerGrad: {
+    flex: 1,
+    borderRadius: 15,
   },
   trustSection: {
     alignItems: 'center',
