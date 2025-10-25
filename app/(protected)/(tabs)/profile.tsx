@@ -68,7 +68,6 @@ export default function Profile() {
   // Generic new badge state supporting both streak and rounds categories
   const [newBadge, setNewBadge] = useState<{ id: number; type: 'streak' | 'rounds' } | null>(null);
   const [badgeQueue, setBadgeQueue] = useState<{ id: number; type: 'streak' | 'rounds' }[]>([]);
-  const [badgeModalVisible, setBadgeModalVisible] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackStatus, setFeedbackStatus] = useState<{ success?: boolean; message?: string }>({});
 
@@ -148,17 +147,26 @@ export default function Profile() {
 
   // Process badge queue to display modals sequentially
   useEffect(() => {
-    if (!badgeModalVisible && badgeQueue.length > 0) {
-      const next = badgeQueue[0];
-      setNewBadge(next);
-      setBadgeModalVisible(true);
+    // If no badge is being shown and there are items queued, show the first
+    if (!newBadge && badgeQueue.length > 0) {
+      setNewBadge(badgeQueue[0]);
     }
-  }, [badgeQueue, badgeModalVisible]);
+  }, [badgeQueue, newBadge]);
 
   const closeBadgeModal = () => {
-    setBadgeModalVisible(false);
-    setBadgeQueue(q => q.slice(1));
+    // Hide current
     setNewBadge(null);
+    // Remove the current from queue and, after a short pause, show the next (if any)
+    setBadgeQueue(prev => {
+      const nextQueue = prev.slice(1);
+      if (nextQueue.length > 0) {
+        setTimeout(() => {
+          // Only set if nothing else is showing
+          setNewBadge(curr => curr ?? nextQueue[0]);
+        }, 350);
+      }
+      return nextQueue;
+    });
   };
 
   // Loading screen animations
@@ -1009,10 +1017,10 @@ export default function Profile() {
           </View>
         </View>
       </Modal>
-      <Modal visible={badgeModalVisible} transparent animationType="fade" onRequestClose={() => setBadgeModalVisible(false)}>
+      <Modal visible={!!newBadge} transparent animationType="fade" onRequestClose={closeBadgeModal}>
         <View style={styles.badgeModalOverlay}>
           <View style={styles.badgeModalContent}>
-            <TouchableOpacity style={styles.badgeModalClose} onPress={closeBadgeModal}>
+            <TouchableOpacity style={styles.badgeModalClose} onPress={closeBadgeModal} accessibilityRole="button" accessibilityLabel="Close badge dialog">
               <MaterialCommunityIcons name="close" size={iconSize(24)} color={Colors.text} />
             </TouchableOpacity>
             {newBadge && (
@@ -1020,14 +1028,14 @@ export default function Profile() {
                 const img = newBadge.type === 'streak' ? badgeImages[newBadge.id] : roundBadgeImages[newBadge.id];
                 const title = newBadge.type === 'streak' ? 'New Streak Badge!' : 'New Rounds Badge!';
                 const text = newBadge.type === 'streak'
-                  ? `You reached a ${newBadge.id}-day streak. Keep going!`
+                  ? `You reached a ${newBadge.id}-day streak. \n Keep going!`
                   : `You completed ${newBadge.id} lifetime rounds. Keep fighting!`;
                 return (
                   <>
                     <Image source={img} style={[styles.badgeModalImage, { width: uiScale(140), height: uiScale(140) }]} resizeMode="contain" />
                     <Text style={[styles.badgeModalTitle, { fontSize: font(26) }]}>{title}</Text>
                     <Text style={[styles.badgeModalText, { fontSize: font(16) }]}>{text}</Text>
-                    <TouchableOpacity style={[styles.badgeModalButton, { paddingVertical: spacing(14), paddingHorizontal: spacing(36), borderRadius: uiScale(28) }]} onPress={closeBadgeModal}>
+                    <TouchableOpacity style={[styles.badgeModalButton, { paddingVertical: spacing(14), paddingHorizontal: spacing(36), borderRadius: uiScale(28) }]} onPress={closeBadgeModal} accessibilityRole="button" accessibilityLabel="Acknowledge new badge">
                       <Text style={[styles.badgeModalButtonText, { fontSize: font(16) }]}>Awesome!</Text>
                     </TouchableOpacity>
                   </>
