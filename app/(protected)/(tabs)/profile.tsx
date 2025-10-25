@@ -102,6 +102,9 @@ export default function Profile() {
   const earnedBadges = badgeThresholds.filter(d => maxStreak >= d); // streak badges earned
   const lifetimeRounds = userData?.lifetimeFightRounds || 0;
   const earnedRoundBadges = roundBadgeThresholds.filter(r => lifetimeRounds >= r);
+  // Newest to oldest order (higher threshold = more recent achievement)
+  const earnedBadgesSorted = [...earnedBadges].sort((a, b) => b - a);
+  const earnedRoundBadgesSorted = [...earnedRoundBadges].sort((a, b) => b - a);
 
   // Unified badge storage + detection (migration from legacy keys)
   useEffect(() => {
@@ -664,16 +667,21 @@ export default function Profile() {
             ) : (
               <View>
                 <Text style={[styles.nextBadgeLabel, { textAlign: 'center', marginBottom: 8 }]}>Rounds</Text>
-                <View style={[styles.badgesRow, earnedRoundBadges.length === 1 && styles.badgesRowSingle]}>
-                  {earnedRoundBadges.map(r => (
-                    <View key={`rounds-${r}`} style={[styles.badgeWrapper, { width: dyn.badgeWrapperWidth }]}>
-                      <View style={[styles.badgeBg, { width: dyn.badgeSize, height: dyn.badgeSize, borderRadius: uiScale(18) }]}>
-                        <Image source={roundBadgeImages[r]} style={[styles.badgeImage, { width: dyn.badgeImage, height: dyn.badgeImage }]} resizeMode="contain" />
-                      </View>
-                      <Text style={[styles.badgeLabel, { fontSize: dyn.tinyText(12) }]}>{r} {r === 1 ? 'round' : 'rounds'}</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.badgesCarouselContent}
+                  style={styles.badgesCarousel}
+                >
+                  {earnedRoundBadgesSorted.map(r => (
+                    <View key={`rounds-${r}`} style={[styles.badgeWrapper, { width: dyn.badgeWrapperWidth }]}> 
+                      <View style={[styles.badgeBg, { width: dyn.badgeSize, height: dyn.badgeSize, borderRadius: uiScale(18) }]}> 
+                        <Image source={roundBadgeImages[r]} style={[styles.badgeImage, { width: dyn.badgeImage, height: dyn.badgeImage }]} resizeMode="contain" /> 
+                      </View> 
+                      <Text style={[styles.badgeLabel, { fontSize: dyn.tinyText(12) }]}>{r} {r === 1 ? 'round' : 'rounds'}</Text> 
                     </View>
                   ))}
-                </View>
+                </ScrollView>
                 {/* Progress to next rounds badge */}
                 {(() => {
                   const next = roundBadgeThresholds.find(t => lifetimeRounds < t);
@@ -718,16 +726,21 @@ export default function Profile() {
             ) : (
               <View style={{ marginTop: 18 }}>
                 <Text style={[styles.nextBadgeLabel, { textAlign: 'center', marginBottom: 8 }]}>Login Streak</Text>
-                <View style={[styles.badgesRow, earnedBadges.length === 1 && styles.badgesRowSingle]}>
-                  {earnedBadges.map(days => (
-                    <View key={`streak-${days}`} style={[styles.badgeWrapper, { width: dyn.badgeWrapperWidth }]}>
-                      <View style={[styles.badgeBg, { width: dyn.badgeSize, height: dyn.badgeSize, borderRadius: uiScale(18) }]}>
-                        <Image source={badgeImages[days]} style={[styles.badgeImage, { width: dyn.badgeImage, height: dyn.badgeImage }]} resizeMode="contain" />
-                      </View>
-                      <Text style={[styles.badgeLabel, { fontSize: dyn.tinyText(12) }]}>{days} {days === 1 ? 'day' : 'days'}</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.badgesCarouselContent}
+                  style={styles.badgesCarousel}
+                >
+                  {earnedBadgesSorted.map(days => (
+                    <View key={`streak-${days}`} style={[styles.badgeWrapper, { width: dyn.badgeWrapperWidth }]}> 
+                      <View style={[styles.badgeBg, { width: dyn.badgeSize, height: dyn.badgeSize, borderRadius: uiScale(18) }]}> 
+                        <Image source={badgeImages[days]} style={[styles.badgeImage, { width: dyn.badgeImage, height: dyn.badgeImage }]} resizeMode="contain" /> 
+                      </View> 
+                      <Text style={[styles.badgeLabel, { fontSize: dyn.tinyText(12) }]}>{days} {days === 1 ? 'day' : 'days'}</Text> 
                     </View>
                   ))}
-                </View>
+                </ScrollView>
                 {/* Progress to next streak badge */}
                 {(() => {
                   const next = badgeThresholds.find(t => maxStreak < t);
@@ -1192,6 +1205,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgesCarousel: {
+    paddingVertical: 4,
+  },
+  badgesCarouselContent: {
+    paddingHorizontal: 6,
     alignItems: 'center',
   },
   badgesRowSingle: {
