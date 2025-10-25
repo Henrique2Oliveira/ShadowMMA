@@ -4,24 +4,25 @@ import { isTablet, rf, rs } from '@/utils/responsive';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import {
-  Dimensions,
-  Image,
-  LayoutChangeEvent,
-  StyleSheet,
-  TouchableOpacity,
-  View
+    Dimensions,
+    Image,
+    LayoutChangeEvent,
+    StyleSheet,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import Animated, {
-  Easing,
-  runOnUI,
-  SharedValue,
-  useAnimatedReaction,
-  useAnimatedStyle,
-  useSharedValue,
-  withDecay,
-  withRepeat,
-  withSequence,
-  withTiming,
+    Easing,
+    runOnUI,
+    SharedValue,
+    useAnimatedReaction,
+    useAnimatedStyle,
+    useSharedValue,
+    withDecay,
+    withDelay,
+    withRepeat,
+    withSequence,
+    withTiming,
 } from 'react-native-reanimated';
 
 interface StartFightButtonProps {
@@ -30,13 +31,18 @@ interface StartFightButtonProps {
   onPress: () => void;
   // Optional shared scroll value (contentOffset.y) to sway the bag when user scrolls up
   scrollY?: SharedValue<number>;
+  // Optional shimmer on the big CTA
+  shimmer?: boolean;
+  shimmerDelayMs?: number;
 }
 
 export const StartFightButton: React.FC<StartFightButtonProps> = ({
   title,
   disabled = false,
   onPress,
-  scrollY
+  scrollY,
+  shimmer = true,
+  shimmerDelayMs = 0,
 }) => {
   // Reanimated shared values
   const impulseSwing = useSharedValue(0); // impulse swings from press/scroll
@@ -46,6 +52,9 @@ export const StartFightButton: React.FC<StartFightButtonProps> = ({
   const lateralNoise = useSharedValue(0); // [-1..1] mapped to px for translateX
   const tiltNoise = useSharedValue(0); // [-1..1] mapped to rotateX/rotateY
   const punchSwing = useSharedValue(0); // dedicated punch animation
+  // Shimmer state
+  const shimmerProg = useSharedValue(0);
+  const shimmerWidth = useSharedValue(240);
 
   const onLayoutBag = (e: LayoutChangeEvent) => {
     // store half-height as pivot
@@ -134,6 +143,19 @@ export const StartFightButton: React.FC<StartFightButtonProps> = ({
     runOnUI(startTilt)();
   }, [lateralNoise, tiltNoise]);
 
+  // Shimmer loop
+  React.useEffect(() => {
+    if (!shimmer || disabled) return;
+    shimmerProg.value = 0;
+    shimmerProg.value = withDelay(shimmerDelayMs,
+      withRepeat(
+        withTiming(1, { duration: 1800, easing: Easing.linear }),
+        -1,
+        false
+      )
+    );
+  }, [shimmer, shimmerDelayMs, disabled]);
+
   // Scroll-driven sway: when user scrolls upward (dragging from bottom to top), add a small impulse
   useAnimatedReaction(
     () => scrollY?.value,
@@ -188,6 +210,13 @@ export const StartFightButton: React.FC<StartFightButtonProps> = ({
     };
   });
 
+  const shimmerStyle = useAnimatedStyle(() => {
+    const start = -0.4 * shimmerWidth.value;
+    const travel = 1.4 * shimmerWidth.value;
+    const tx = start + shimmerProg.value * travel;
+    return { transform: [{ translateX: tx }] };
+  });
+
   const SCREEN_HEIGHT = Dimensions.get('window').height;
   const ropeLength = SCREEN_HEIGHT + rs(400); // ensure it goes well beyond the top on all screens
 
@@ -230,6 +259,17 @@ export const StartFightButton: React.FC<StartFightButtonProps> = ({
           end={{ x: 0, y: 1 }}
           style={[styles.linearGradientButton, { shadowColor: "#020000e1" }, disabled && { shadowOpacity: 0 }]}
         >
+          {/* Shimmer overlay */}
+          {shimmer && !disabled && (
+            <Animated.View pointerEvents="none" style={[styles.shimmerWrap, shimmerStyle]}>
+              <LinearGradient
+                colors={["#ffffff00", "#ffffff26", "#ffffff00"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.shimmerGrad}
+              />
+            </Animated.View>
+          )}
           {/* top highlight for depth */}
           <LinearGradient
             colors={["#ffffff30", "#ffffff08", "#00000000"]}
@@ -248,6 +288,7 @@ export const StartFightButton: React.FC<StartFightButtonProps> = ({
             disabled={disabled}
             style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
             activeOpacity={0.9}
+            onLayout={({ nativeEvent }) => { shimmerWidth.value = nativeEvent.layout.width; }}
           >
             <Image source={require('@/assets/images/jab-icon.png')} style={styles.imageButton} />
             <Text style={[styles.textButton, { textAlign: 'center', fontSize: rf(36), lineHeight: rf(46) }]}>
@@ -389,5 +430,18 @@ const styles = StyleSheet.create({
     bottom: 0,
     height: rs(10),
     backgroundColor: '#00000015'
+  },
+  shimmerWrap: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: -40,
+    width: 80,
+    opacity: 0.7,
+    borderRadius: 26,
+    overflow: 'hidden'
+  },
+  shimmerGrad: {
+    flex: 1,
   }
 });

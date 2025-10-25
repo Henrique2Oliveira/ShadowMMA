@@ -495,6 +495,8 @@ export default function Index() {
             disabled={buttons[0].disabled}
             onPress={buttons[0].onPress}
             scrollY={scrollY}
+            shimmer
+            shimmerDelayMs={0}
           />
         </View>
 
@@ -600,6 +602,8 @@ export default function Index() {
             fontSize={35}
             disabled={buttons[5].disabled}
             onPress={buttons[5].onPress}
+            shimmer
+            shimmerDelayMs={140}
           />
         </View>
 
@@ -619,6 +623,8 @@ export default function Index() {
             proOnly
             disabled={buttons[7].disabled}
             onPress={buttons[7].onPress}
+            shimmer
+            shimmerDelayMs={280}
           />
         </View>
 
@@ -643,6 +649,8 @@ export default function Index() {
             fontSize={28}
             disabled={buttons[6].disabled}
             onPress={buttons[6].onPress}
+            shimmer
+            shimmerDelayMs={420}
           />
         </View>
 
@@ -660,6 +668,8 @@ export default function Index() {
             proOnly
             disabled={buttons[8].disabled}
             onPress={buttons[8].onPress}
+            shimmer
+            shimmerDelayMs={560}
           />
         </View>
 
@@ -677,6 +687,8 @@ export default function Index() {
             subtitle="in progress... coming soon"
             disabled={buttons[9].disabled}
             onPress={buttons[9].onPress}
+            shimmer
+            shimmerDelayMs={700}
           />
 
         </View>

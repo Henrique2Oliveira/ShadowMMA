@@ -4,7 +4,7 @@ import { isTablet, rf, rs } from '@/utils/responsive';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Animated, Easing, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface GradientButtonProps {
   title: string;
@@ -17,6 +17,9 @@ interface GradientButtonProps {
   onPress: () => void;
   colors?: [string, string];
   shadowColor?: string;
+  // Shimmer props (for big CTA buttons)
+  shimmer?: boolean;
+  shimmerDelayMs?: number;
 }
 
 export const GradientButton: React.FC<GradientButtonProps> = ({
@@ -29,8 +32,38 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
   disabled = false,
   onPress,
   colors = ["#205428ff", "#57f83bff"],
-  shadowColor = "#5ce248ff"
+  shadowColor = "#5ce248ff",
+  shimmer = false,
+  shimmerDelayMs = 0,
 }) => {
+  // Width tracking for shimmer travel distance
+  const widthRef = React.useRef(0);
+  const shimmerProg = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    if (!shimmer || disabled) return;
+    shimmerProg.setValue(0);
+    const loop = Animated.loop(
+      Animated.timing(shimmerProg, {
+        toValue: 1,
+        duration: 1800,
+        easing: Easing.linear,
+        useNativeDriver: true,
+        delay: 0,
+      })
+    );
+    const id = setTimeout(() => loop.start(), Math.max(0, shimmerDelayMs));
+    return () => {
+      try { (loop as any).stop?.(); } catch {}
+      clearTimeout(id);
+    };
+  }, [shimmer, shimmerDelayMs, disabled, shimmerProg]);
+
+  const translateX = shimmerProg.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-(widthRef.current * 0.4 || -120), widthRef.current || 300]
+  });
+
   return (
     <LinearGradient
       colors={colors}
@@ -41,10 +74,22 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
       ]}
     >
       <TouchableOpacity
-        style={[disabled && { opacity: 1 }]}
+        style={[{ flex: 1 }, disabled && { opacity: 1 }]}
         onPress={onPress}
         disabled={disabled}
+        onLayout={({ nativeEvent }) => { widthRef.current = nativeEvent.layout.width; }}
       >
+        {/* Shimmer overlay */}
+        {shimmer && !disabled && (
+          <Animated.View pointerEvents="none" style={[styles.shimmerWrap, { transform: [{ translateX }] }]}>
+            <LinearGradient
+              colors={["#ffffff00", "#ffffff26", "#ffffff00"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.shimmerGrad}
+            />
+          </Animated.View>
+        )}
         {proOnly && (
           <View style={styles.proBadgeContainer}>
             <View style={styles.proBadge}>
@@ -209,5 +254,17 @@ const styles = StyleSheet.create({
     textShadowColor: "#000",
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 4,
+  },
+  shimmerWrap: {
+    position: 'absolute',
+    top:-5,
+    bottom: 0,
+    left: -40,
+    width: 80,
+    opacity: 0.7,
+  },
+  shimmerGrad: {
+    flex: 1,
+    borderRadius: 14,
   },
 });
