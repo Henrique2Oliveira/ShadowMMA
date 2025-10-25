@@ -34,7 +34,7 @@ export default function QuizScreen({ onComplete }: Props) {
     goal: '',
     stance: 'orthodox',
     notificationsEnabled: false,
-    weeklyMissionRounds: 20,
+    weeklyMissionRounds: 15,
     weeklyMissionTime: 60,
     dailyReminderEnabled: false,
     dailyReminderHour: 18,
@@ -354,7 +354,7 @@ export default function QuizScreen({ onComplete }: Props) {
         return (
           <NumberSelect
             title="Choose your weekly target rounds"
-            description="A balanced goal is 20 rounds. You can change this later in Settings."
+            description="A balanced goal is 15 rounds. You can change this later in Settings."
             options={roundsOptions}
             unit="rounds"
             selected={answers.weeklyMissionRounds}
