@@ -154,7 +154,7 @@ export const StartFightButton: React.FC<StartFightButtonProps> = ({
         false
       )
     );
-  }, [shimmer, shimmerDelayMs, disabled]);
+  }, [shimmer, shimmerDelayMs, disabled, shimmerProg]);
 
   // Scroll-driven sway: when user scrolls upward (dragging from bottom to top), add a small impulse
   useAnimatedReaction(

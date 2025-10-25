@@ -892,10 +892,10 @@ export default function Profile() {
                   const idx = sequence.indexOf(prev.gender || 'male');
                   const next = sequence[(idx + 1) % sequence.length] as NonNullable<AvatarOptions['gender']>;
                   const result: AvatarOptions = { ...prev, gender: next };
-                  if (next === 'male' && (!prev.head || !(MALE_HEAD_OPTIONS as ReadonlyArray<string>).includes(prev.head || ''))) {
+                  if (next === 'male' && (!prev.head || !(MALE_HEAD_OPTIONS as readonly string[]).includes(prev.head || ''))) {
                     result.head = MALE_HEAD_OPTIONS[0];
                   } else if (next === 'female') {
-                    if (!prev.head || !(FEMALE_HEAD_OPTIONS as ReadonlyArray<string>).includes(prev.head || '')) result.head = FEMALE_HEAD_OPTIONS[0];
+                    if (!prev.head || !(FEMALE_HEAD_OPTIONS as readonly string[]).includes(prev.head || '')) result.head = FEMALE_HEAD_OPTIONS[0];
                     result.facialHair = undefined;
                   }
                   return result;

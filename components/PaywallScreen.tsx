@@ -30,15 +30,20 @@ export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
   // Shared plans list for indexing/animations
   const displayPlans = useMemo<SubscriptionPlan[]>(() => (rcPlans.length ? rcPlans : subscriptionPlans), [rcPlans]);
   // Entry and press animations for cards
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const entryOpacity = useMemo(() => displayPlans.map(() => new Animated.Value(0)), [displayPlans.length]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const entryTranslateY = useMemo(() => displayPlans.map(() => new Animated.Value(12)), [displayPlans.length]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const cardScale = useMemo(() => displayPlans.map(() => new Animated.Value(1)), [displayPlans.length]);
   // Shimmer state (reused for both card and its button)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const shimmerProg = useMemo(() => displayPlans.map(() => new Animated.Value(0)), [displayPlans.length]);
   const shimmerLoopsRef = useRef<Animated.CompositeAnimation[]>([]);
   const cardWidthsRef = useRef<number[]>([]);
   const buttonWidthsRef = useRef<number[]>([]);
   // Button press feedback
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const buttonScale = useMemo(() => displayPlans.map(() => new Animated.Value(1)), [displayPlans.length]);
 
   const handleQuizComplete = (data: QuizData) => {

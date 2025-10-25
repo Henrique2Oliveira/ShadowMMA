@@ -572,10 +572,14 @@ export default function Plans() {
 
   // Pretty entry + press animations for plan cards (inspired by ComboCarousel fade/slide)
   const displayPlans = useMemo(() => (rcPlans.length ? rcPlans : subscriptionPlans), [rcPlans]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const entryOpacity = useMemo(() => displayPlans.map(() => new Animated.Value(0)), [displayPlans.length]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const entryTranslateY = useMemo(() => displayPlans.map(() => new Animated.Value(14)), [displayPlans.length]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const cardScale = useMemo(() => displayPlans.map(() => new Animated.Value(1)), [displayPlans.length]);
   // Button shimmer animation state
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const shimmerProg = useMemo(() => displayPlans.map(() => new Animated.Value(0)), [displayPlans.length]);
   const shimmerLoopsRef = useRef<Animated.CompositeAnimation[]>([]);
   const buttonWidthsRef = useRef<number[]>([]);
