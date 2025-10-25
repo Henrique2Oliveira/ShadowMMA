@@ -253,7 +253,7 @@ export default function QuizScreen({ onComplete }: Props) {
         return (
           <View style={styles.sectionContainer}>
             <Text style={styles.question}>Daily training reminder?</Text>
-            <Text style={styles.helperText}>Pick a time (optional). We\u2019ll nudge you to train. Change anytime in Settings.</Text>
+            <Text style={styles.helperText}>Pick a time (optional). We will nudge you to train. Change anytime in Settings.</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center', marginTop: 10 }}>
               {dailyTimeChoices.map(choice => {
                 const isSelected = answers.dailyReminderEnabled && answers.dailyReminderHour === choice.hour && answers.dailyReminderMinute === choice.minute;
@@ -788,7 +788,7 @@ const NumberSelect = ({ title, description, options, unit, selected, onSelect }:
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
         {options.map(opt => {
           const isSelected = selected === opt;
-          const isRecommended = (title.toLowerCase().includes('rounds') && opt === 20) || (title.toLowerCase().includes('training time') && opt === 60);
+          const isRecommended = (title.toLowerCase().includes('rounds') && opt === 15) || (title.toLowerCase().includes('training time') && opt === 60);
           return (
             <Pressable
               key={opt}

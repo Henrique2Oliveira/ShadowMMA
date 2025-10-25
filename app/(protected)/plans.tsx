@@ -9,8 +9,8 @@ import { isTablet as deviceIsTablet, rf } from '@/utils/responsive';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Linking, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, Easing, Linking, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import Purchases from 'react-native-purchases';
 
 
@@ -551,6 +551,68 @@ export default function Plans() {
     return calculateMonthlyEquivalent(plan.price, plan.period);
   };
 
+  // Compute dynamic pricing info for banners/badges (uses live rcPlans when available)
+  const pricing = useMemo(() => {
+    const pool = rcPlans.length ? rcPlans : subscriptionPlans;
+    const monthly = pool.find(p => (p.period || '').toLowerCase() === 'month');
+    const annual = pool.find(p => (p.period || '').toLowerCase() === 'year');
+    const toNumber = (price?: string | null) => {
+      if (!price) return null;
+      const n = parseFloat(price.replace(/[^0-9.]/g, ''));
+      return isNaN(n) ? null : n;
+    };
+    const monthlyPrice = monthly ? toNumber(monthly.price) : null;
+    const annualPrice = annual ? toNumber(annual.price) : null;
+    const annualMonthly = annualPrice != null ? +(annualPrice / 12).toFixed(2) : null;
+    const savingsPct = monthlyPrice != null && annualMonthly != null && monthlyPrice > 0
+      ? Math.max(0, Math.round((1 - (annualMonthly / monthlyPrice)) * 100))
+      : null;
+    return { monthly, annual, monthlyPrice, annualPrice, annualMonthly, savingsPct } as const;
+  }, [rcPlans]);
+
+  // Pretty entry + press animations for plan cards (inspired by ComboCarousel fade/slide)
+  const displayPlans = useMemo(() => (rcPlans.length ? rcPlans : subscriptionPlans), [rcPlans]);
+  const entryOpacity = useMemo(() => displayPlans.map(() => new Animated.Value(0)), [displayPlans.length]);
+  const entryTranslateY = useMemo(() => displayPlans.map(() => new Animated.Value(14)), [displayPlans.length]);
+  const cardScale = useMemo(() => displayPlans.map(() => new Animated.Value(1)), [displayPlans.length]);
+  // Button shimmer animation state
+  const shimmerProg = useMemo(() => displayPlans.map(() => new Animated.Value(0)), [displayPlans.length]);
+  const shimmerLoopsRef = useRef<Animated.CompositeAnimation[]>([]);
+  const buttonWidthsRef = useRef<number[]>([]);
+
+  useEffect(() => {
+    // Stagger in the cards with a soft fade + slide-up
+    const anims = displayPlans.map((_, i) => (
+      Animated.parallel([
+        Animated.timing(entryOpacity[i], { toValue: 1, duration: 320, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.spring(entryTranslateY[i], { toValue: 0, useNativeDriver: true, friction: 7, tension: 80 })
+      ])
+    ));
+    Animated.stagger(90, anims).start();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayPlans.length]);
+
+  // Start/Restart button shimmer loops
+  useEffect(() => {
+    // stop previous
+    shimmerLoopsRef.current.forEach(a => { try { (a as any).stop?.(); } catch {} });
+    shimmerLoopsRef.current = [];
+    displayPlans.forEach((_, i) => {
+      const loop = Animated.loop(
+        Animated.timing(shimmerProg[i], { toValue: 1, duration: 1800, easing: Easing.linear, useNativeDriver: true })
+      );
+      shimmerProg[i].setValue(0);
+      shimmerLoopsRef.current.push(loop);
+      // slight stagger to avoid perfect sync
+      setTimeout(() => loop.start(), i * 120);
+    });
+    return () => {
+      shimmerLoopsRef.current.forEach(a => { try { (a as any).stop?.(); } catch {} });
+      shimmerLoopsRef.current = [];
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayPlans.length]);
+
   return (
     <ScrollView
       style={styles.container}
@@ -583,6 +645,13 @@ export default function Plans() {
           <View style={styles.bannerInfo}>
             <ActivityIndicator size="small" color={Colors.text} />
             <Text style={styles.bannerInfoText}>Refreshing…</Text>
+          </View>
+        )}
+        {/* Dynamic discount banner (computed from live RC prices when available) */}
+        {pricing.savingsPct != null && pricing.savingsPct >= 5 && (
+          <View style={styles.discountBanner}>
+            <MaterialCommunityIcons name="tag" size={16} color="#fff" style={{ marginRight: 6 }} />
+            <Text style={styles.discountBannerText}>Save {pricing.savingsPct}% with Annual vs Monthly</Text>
           </View>
         )}
         {/* Social proof strip */}
@@ -699,10 +768,20 @@ export default function Plans() {
               justifyContent: 'center'
             }
           ]}>
-            {(rcPlans.length ? rcPlans : subscriptionPlans).map((plan) => (
-              <Pressable
+            {displayPlans.map((plan, i) => (
+              <Animated.View
                 key={plan.title}
-                style={[{ width: layout.cardWidth }, styles.planOuter, isTablet && { margin: 12 }]} onPress={() => handleSelectPlan(plan)}>
+                style={[
+                  { width: layout.cardWidth },
+                  styles.planOuter,
+                  isTablet && { margin: 12 },
+                  { opacity: entryOpacity[i], transform: [{ translateY: entryTranslateY[i] }, { scale: cardScale[i] }] }
+                ]}
+              >
+                <Pressable onPress={() => handleSelectPlan(plan)}
+                  onPressIn={() => { Animated.spring(cardScale[i], { toValue: 0.98, useNativeDriver: true, friction: 7 }).start(); }}
+                  onPressOut={() => { Animated.spring(cardScale[i], { toValue: 1, useNativeDriver: true, friction: 7 }).start(); }}
+                >
                 <LinearGradient
                   colors={normalize(plan.title) === normalize(userData?.plan) ? ['#1b2e1b', '#0d140d'] : plan.popular ? ['#2d1215', '#130607'] : ['#141414', '#0d0d0d']}
                   start={{ x: 0, y: 0 }}
@@ -713,6 +792,13 @@ export default function Plans() {
                     normalize(plan.title) === normalize(userData?.plan) && styles.activePlanCard,
                   ]}
                 >
+                  {/* Dynamic savings badge for Annual */}
+                  {((plan.period || '').toLowerCase() === 'year') && pricing.savingsPct != null && pricing.savingsPct >= 5 && (
+                    <View style={[styles.badgeBase, styles.discountBadge, plan.popular && styles.discountBadgeOffset]}>
+                      <MaterialCommunityIcons name="tag" size={14} color="#ffd1d1" style={{ marginRight: 4 }} />
+                      <Text style={[styles.badgeText, styles.discountBadgeText]}>SAVE {pricing.savingsPct}%</Text>
+                    </View>
+                  )}
                   {plan.popular && (
                     <View style={[styles.badgeBase, styles.popularBadge]}>
                       <MaterialCommunityIcons name="star" size={14} color="#ffc14d" style={{ marginRight: 4 }} />
@@ -756,58 +842,56 @@ export default function Plans() {
                       getButtonStyle(plan.title),
                       isTablet && styles.selectButtonTablet
                     ]}
+                    onLayout={({ nativeEvent }) => { buttonWidthsRef.current[i] = nativeEvent.layout.width; }}
                     onPress={() => handleSelectPlan(plan)}
                     disabled={normalize(plan.title) === normalize(userData?.plan)}
                   >
+                    {/* Animated shimmer bar moving left-to-right inside the button */}
+                    {normalize(plan.title) !== normalize(userData?.plan) && (
+                      (() => {
+                        const w = buttonWidthsRef.current[i] || 240;
+                        const translateX = shimmerProg[i].interpolate({ inputRange: [0, 1], outputRange: [-0.4 * w, w] });
+                        return (
+                          <Animated.View pointerEvents="none" style={[styles.shimmerWrap, { transform: [{ translateX }] }]}>
+                            <LinearGradient
+                              colors={["#ffffff00", "#ffffff26", "#ffffff00"]}
+                              start={{ x: 0, y: 0 }}
+                              end={{ x: 1, y: 0 }}
+                              style={styles.shimmerGrad}
+                            />
+                          </Animated.View>
+                        );
+                      })()
+                    )}
                     <Text style={[styles.selectButtonText, isTablet && styles.selectButtonTextTablet]}>
                       {getButtonText(plan.title)}
                     </Text>
                   </TouchableOpacity>
                 </LinearGradient>
-              </Pressable>
+                </Pressable>
+              </Animated.View>
             ))}
           </View>
         </View>
 
-        {/* Legal / Billing Disclaimer */}
+        {/* Legal / Billing Disclaimer (dynamic when live prices available) */}
         <View style={{ paddingHorizontal: 5, paddingTop: 4, paddingBottom: 28 }}>
-          {(() => {
-            const proPlan = (rcPlans.length ? rcPlans : subscriptionPlans).find(p => p.title.toLowerCase() === 'monthly');
-            const annualPlan = subscriptionPlans.find(p => p.title.toLowerCase() === 'annual');
-            const proPrice = proPlan?.price || '$9.70';
-            const annualPrice = annualPlan?.price || '$39.99';
-            const annualMonthlyEq = calculateMonthlyEquivalent(annualPrice, 'year');
-            void proPrice;
-            void annualMonthlyEq;
-            return (
-              <>
-                <Text style={styles.disclaimerText}>
-                  The subscription gives you unlimited access to all premium training and future feature releases. Your Google Play account will be charged when you confirm the purchase. Subscriptions renew automatically unless cancelled at least 24 hours before the end of the current period.
-                </Text>
+          <Text style={styles.disclaimerText}>
+            The subscription gives you unlimited access to all premium training and future feature releases. Your Google Play account will be charged when you confirm the purchase. Subscriptions renew automatically unless cancelled at least 24 hours before the end of the current period.
+          </Text>
 
-                {(() => {
-                  const monthlyRcPlan = rcPlans.find(p => normalize(p.title) === 'monthly' || p.period?.toLowerCase() === 'month');
-                  const annualRcPlan = rcPlans.find(p => normalize(p.title) === 'annual' || p.period?.toLowerCase() === 'year');
-                  const showPrices = Boolean(monthlyRcPlan?.price && annualRcPlan?.price);
-                  const annualMonthlyEq = showPrices ? calculateMonthlyEquivalent(annualRcPlan!.price, 'year') : null;
+          {pricing.monthly?.price && pricing.annual?.price ? (
+            <Text style={styles.disclaimerText}>
+              The Pro plan is billed {pricing.monthly.price} per month. The Annual plan is billed {pricing.annual.price} per year{pricing.annualMonthly != null ? ` (equivalent to $${pricing.annualMonthly.toFixed(2)}/month)` : ''}{pricing.savingsPct != null ? ` — Save ${pricing.savingsPct}% compared to paying monthly.` : ''}
+              
+            </Text>
+          ) : null}
 
-                  if (!showPrices) return null;
-
-                  return (
-                    <Text style={styles.disclaimerText}>
-                      The Pro plan is billed {monthlyRcPlan!.price} per month. The Annual plan is billed {annualRcPlan!.price} per year{annualMonthlyEq ? ` (equivalent to ${annualMonthlyEq})` : ''}.
-                    </Text>
-                  );
-                })()}
-
-                <Text style={styles.disclaimerText}>
-                  Manage or cancel anytime in your Google Play settings. By subscribing you agree to our
-                  <Text style={styles.linkText} onPress={() => Linking.openURL('https://www.shadowmma.com/terms-of-service')}> Terms & Conditions</Text> and
-                  <Text style={styles.linkText} onPress={() => Linking.openURL('https://www.shadowmma.com/privacy-policy')}> Privacy Policy</Text>.
-                </Text>
-              </>
-            );
-          })()}
+          <Text style={styles.disclaimerText}>
+            Manage or cancel anytime in your Google Play settings. By subscribing you agree to our
+            <Text style={styles.linkText} onPress={() => Linking.openURL('https://www.shadowmma.com/terms-of-service')}> Terms & Conditions</Text> and
+            <Text style={styles.linkText} onPress={() => Linking.openURL('https://www.shadowmma.com/privacy-policy')}> Privacy Policy</Text>.
+          </Text>
         </View>
 
         {/* Testimonials Section */}
@@ -1119,6 +1203,46 @@ const styles = StyleSheet.create({
   autoRenewBadgeText: {
     color: '#ffdb99',
   },
+  discountBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#7a1f2a',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#c9213a',
+    marginBottom: 10,
+  },
+  discountBannerText: {
+    color: '#fff',
+    fontFamily: Typography.fontFamily,
+    fontSize: rf(12),
+    fontWeight: '700',
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+  },
+  discountBadge: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    backgroundColor: '#2a1719',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: '#c9213af5',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  discountBadgeText: {
+    color: '#ffd1d1',
+  },
+  // When both MOST POPULAR and SAVE % badges are present, offset the SAVE badge downward to avoid overlap
+  discountBadgeOffset: {
+    top: 52,
+  },
   planHeader: {
     marginBottom: 20,
   },
@@ -1266,6 +1390,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 14,
     alignItems: 'center',
+    overflow: 'hidden',
+    position: 'relative',
   },
   selectButtonTablet: {
     paddingVertical: 22,
@@ -1284,6 +1410,18 @@ const styles = StyleSheet.create({
   },
   selectButtonTextTablet: {
     fontSize: rf(20, { maxScale: 1.35 }),
+  },
+  shimmerWrap: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: -40,
+    width: 80,
+    opacity: 0.7,
+  },
+  shimmerGrad: {
+    flex: 1,
+    borderRadius: 14,
   },
   benefitsSection: {
     marginTop: 20,

@@ -1,12 +1,14 @@
 import { Text } from '@/components';
 import QuizIntroComponent from '@/components/QuizIntro';
 import QuizScreen, { QuizData } from '@/components/QuizScreen';
-import { subscriptionPlans, type SubscriptionPlan } from '@/config/subscriptionPlans';
+import SocialProofStrip from '@/components/SocialProofStrip';
+import { mapOfferingsToPlans, subscriptionPlans, type SubscriptionPlan } from '@/config/subscriptionPlans';
 import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Purchases from 'react-native-purchases';
 
 // Update the type Props to include a new callback for plan selection
 type Props = {
@@ -17,6 +19,9 @@ type Props = {
 export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
   const [quizStage, setQuizStage] = useState<'intro' | 'quiz' | 'plans'>('intro');
   const [quizData, setQuizData] = useState<QuizData | null>(null);
+  const [rcPlans, setRcPlans] = useState<SubscriptionPlan[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   // Modal removed; navigate to Plans screen instead
 
   const handleQuizComplete = (data: QuizData) => {
@@ -24,8 +29,52 @@ export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
     setQuizStage('plans');
   };
 
+  // Load live offerings to replace hardcoded values
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const offerings = await Purchases.getOfferings();
+        if (!mounted) return;
+        const plans = mapOfferingsToPlans(offerings);
+        setRcPlans(plans);
+      } catch {
+        setRcPlans([]);
+        setError('Unable to load live plans. Showing default pricing.');
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Compute dynamic savings/banner based on live prices
+  const pricing = useMemo(() => {
+    const pool = rcPlans.length ? rcPlans : subscriptionPlans;
+    const monthly = pool.find(p => (p.period || '').toLowerCase() === 'month');
+    const annual = pool.find(p => (p.period || '').toLowerCase() === 'year');
+    const toNumber = (price?: string | null) => {
+      if (!price) return null;
+      const n = parseFloat(String(price).replace(/[^0-9.]/g, ''));
+      return isNaN(n) ? null : n;
+    };
+    const monthlyPrice = monthly ? toNumber(monthly.price) : null;
+    const annualPrice = annual ? toNumber(annual.price) : null;
+    const annualMonthly = annualPrice != null ? +(annualPrice / 12).toFixed(2) : null;
+    const savingsPct = monthlyPrice != null && annualMonthly != null && monthlyPrice > 0
+      ? Math.max(0, Math.round((1 - (annualMonthly / monthlyPrice)) * 100))
+      : null;
+    return { monthly, annual, monthlyPrice, annualPrice, annualMonthly, savingsPct } as const;
+  }, [rcPlans]);
+
+  // Stage routing (must come AFTER all hooks to keep hooks order stable)
   if (quizStage === 'intro') {
-  return <QuizIntroComponent onStart={() => setQuizStage('quiz')} onSkip={onSkip} />;
+    return <QuizIntroComponent onStart={() => setQuizStage('quiz')} onSkip={onSkip} />;
   }
   if (quizStage === 'quiz') {
     return <QuizScreen onComplete={handleQuizComplete} />;
@@ -56,17 +105,32 @@ export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
         showsVerticalScrollIndicator={false}
         bounces
       >
+        
         <View style={styles.headerSection}>
-          <View style={styles.discountBanner}>
-            <MaterialCommunityIcons name="tag" size={16} color="#fff" style={{ marginRight: 6 }} />
-            <Text style={styles.discountBannerText}>Limited-time: 67% OFF Annual</Text>
-          </View>
+          {!loading && pricing.savingsPct != null && pricing.savingsPct >= 5 && (
+            <View style={styles.discountBanner}>
+              <MaterialCommunityIcons name="tag" size={16} color="#fff" style={{ marginRight: 6 }} />
+              <Text style={styles.discountBannerText}>Save {pricing.savingsPct}% with Annual vs Monthly</Text>
+            </View>
+          )}
           <Text style={styles.title}>Choose Your Plan</Text>
           <Text style={styles.subtitle}>
             {quizData
               ? `Tailored to your ${quizData.goal?.toLowerCase() || 'goal'} training.`
               : 'Unlock advanced training modes & personalized progression.'}
           </Text>
+          {loading && (
+            <View style={styles.bannerInfo}>
+              <ActivityIndicator size="small" color={Colors.text} />
+              <Text style={styles.bannerInfoText}>Loading live plans…</Text>
+            </View>
+          )}
+          {!!error && (
+            <View style={styles.bannerWarning}>
+              <MaterialCommunityIcons name="cloud-alert" size={18} color="#ffb84d" />
+              <Text style={styles.bannerWarningText}>{error}</Text>
+            </View>
+          )}
         </View>
 
         {/* Horizontal plans carousel */}
@@ -75,8 +139,8 @@ export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.cardsContainer}
         >
-          {subscriptionPlans.map((plan) => {
-            const isAnnual = plan.title.toLowerCase() === 'annual';
+          {(rcPlans.length ? rcPlans : subscriptionPlans).map((plan) => {
+            const isAnnual = (plan.period || '').toLowerCase() === 'year';
             return (
               <View
                 key={plan.title}
@@ -87,9 +151,9 @@ export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
                     <Text style={styles.popularText}>MOST POPULAR</Text>
                   </View>
                 )}
-                {isAnnual && (
+                {isAnnual && pricing.savingsPct != null && pricing.savingsPct >= 5 && (
                   <View style={styles.discountBadge}>
-                    <Text style={styles.discountText}>67% OFF</Text>
+                    <Text style={styles.discountText}>SAVE {pricing.savingsPct}%</Text>
                   </View>
                 )}
                 <Text style={styles.planTitle}>{plan.title}</Text>
@@ -136,6 +200,11 @@ export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
             <Text style={styles.securityText}>Secure payments • Cancel anytime</Text>
           </View>
         </View>
+        {/* Social proof avatars strip */}
+        <View style={{ marginTop: 18 }}>
+          <SocialProofStrip />
+        </View>
+
 
         {/* Testimonials Section (adapted from Plans) */}
         <View style={styles.benefitsSection}>
@@ -224,6 +293,42 @@ const styles = StyleSheet.create({
     color: Colors.lightText,
     textAlign: 'center',
     marginBottom: 30,
+  },
+  bannerInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: '#1b1b1b',
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
+    marginTop: 8,
+  },
+  bannerInfoText: {
+    color: Colors.text,
+    fontFamily: Typography.fontFamily,
+    fontSize: 12,
+    opacity: 0.9,
+  },
+  bannerWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: '#332b16',
+    borderWidth: 1,
+    borderColor: '#5c4718',
+    marginTop: 8,
+  },
+  bannerWarningText: {
+    color: '#ffdb99',
+    fontSize: 12,
+    fontFamily: Typography.fontFamily,
+    flexShrink: 1,
   },
   cardsContainer: {
     paddingHorizontal: 10,
