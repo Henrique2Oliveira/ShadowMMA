@@ -344,23 +344,34 @@ export const handleGameOver = onRequest(async (req, res) => {
       const oldXp = Math.min(oldXpRaw, MAX_XP);
       const currentLevel = Math.floor(oldXp / 100);
 
-      const baseXP = Math.max(20, 120 - (currentLevel * 4));
-      const variation = Math.floor(baseXP * 0.25);
+      // New XP scaling: very easy until ~level 8, then progressively harder
+      const baseXP = (() => {
+        if (currentLevel <= 2) return 110;       // near-instant early levels
+        if (currentLevel <= 5) return 90;        // still fast
+        if (currentLevel <= 8) return 70;        // easy up through ~8
+        if (currentLevel <= 15) return 50;       // moderate progression
+        if (currentLevel <= 30) return 38;       // slows a bit
+        if (currentLevel <= 50) return 27;       // late-game pace
+        return 19;                                // end-game floor
+      })();
+      const variation = Math.floor(baseXP * 0.20); // tighter randomness window (20%)
       const randomXP = Math.floor(Math.random() * (variation * 2 + 1)) - variation;
 
       const fightRoundsForBonus = Math.max(0, userData?.currentFightRound || 0);
       const fightTimeForBonus = Math.max(0, normalizePerFightMinutes(userData?.currentFightTime || 0)); // minutes
-      const BASELINE_ROUNDS = 1;
-      const BASELINE_TOTAL_TIME = 1;
+  const BASELINE_ROUNDS = 1;
+  const BASELINE_TOTAL_TIME = 1; // minutes (we store total minutes across all rounds)
       const roundsOverBaseline = Math.max(0, fightRoundsForBonus - BASELINE_ROUNDS);
-      const roundBonusPct = Math.min(roundsOverBaseline * 0.10, 1.0);
+  // Reward longer fights more aggressively: +25% per extra round, up to +200%
+  const roundBonusPct = Math.min(roundsOverBaseline * 0.25, 2.0);
       const timeOverBaseline = Math.max(0, fightTimeForBonus - BASELINE_TOTAL_TIME);
-      const timeBonusPct = Math.min(timeOverBaseline * 0.05, 0.75);
+  // Reward more total minutes: +8% per minute over baseline, up to +150%
+  const timeBonusPct = Math.min(timeOverBaseline * 0.08, 1.5);
       let lengthMultiplier = 1 + roundBonusPct + timeBonusPct;
-      lengthMultiplier = Math.min(lengthMultiplier, 2.5);
+  lengthMultiplier = Math.min(lengthMultiplier, 3.5); // raise overall cap
 
       const rawXP = (baseXP + randomXP) * lengthMultiplier;
-      const xpGained = Math.max(15, Math.round(rawXP));
+  const xpGained = Math.max(20, Math.round(rawXP));
       let newXp = oldXp + xpGained;
       if (newXp > MAX_XP) newXp = MAX_XP;
 
