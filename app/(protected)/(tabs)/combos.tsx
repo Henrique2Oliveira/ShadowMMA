@@ -3,7 +3,6 @@ import TopBanner from '@/components/ads/TopBanner';
 import MemoizedComboCard from '@/components/MemoizedComboCard';
 import { AlertModal } from '@/components/Modals/AlertModal';
 import { FightModeModal } from '@/components/Modals/FightModeModal';
-import PlansModal from '@/components/Modals/PlansModal';
 import { useUserData } from '@/contexts/UserDataContext';
 import { app as firebaseApp } from '@/FirebaseConfig.js';
 import { Colors, Typography } from '@/themes/theme';
@@ -87,7 +86,7 @@ export default function Combos() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
-  const [showPlansModal, setShowPlansModal] = useState(false);
+  // Removed PlansModal; navigate to Plans screen instead
   const [showProCtaModal, setShowProCtaModal] = useState(false);
 
   const clientAuth = useMemo(() => getClientAuth(firebaseApp), []);
@@ -204,8 +203,8 @@ export default function Combos() {
   const isFreePlan = (userData?.plan || 'free') === 'free';
   const handleComboPress = useCallback((item: ComboMeta, isLocked: boolean) => {
     if (item.proOnly && isFreePlan) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      setShowProCtaModal(true);
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  setShowProCtaModal(true);
       return;
     }
     if (!isLocked) {
@@ -383,7 +382,7 @@ export default function Combos() {
           onPress: () => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             setShowProCtaModal(false);
-            setShowPlansModal(true);
+            router.push('/(protected)/plans');
           },
         }}
         secondaryButton={{
@@ -478,11 +477,7 @@ export default function Combos() {
           setIsModalVisible(false);
         }}
       />
-      <PlansModal
-        visible={showPlansModal}
-        onClose={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowPlansModal(false); }}
-        onSelectPlan={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowPlansModal(false); }}
-      />
+      {/* PlansModal removed: direct navigation to Plans screen now */}
     </SafeAreaView>
   );
 }

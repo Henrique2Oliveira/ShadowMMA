@@ -2,7 +2,6 @@ import { LoadingScreen, Text, TextInput } from '@/components';
 import MemoizedComboCard from '@/components/MemoizedComboCard';
 import { AlertModal } from '@/components/Modals/AlertModal';
 import { FightModeModal } from '@/components/Modals/FightModeModal';
-import PlansModal from '@/components/Modals/PlansModal';
 import { useUserData } from '@/contexts/UserDataContext';
 import { app as firebaseApp } from '@/FirebaseConfig.js';
 import { Colors, Typography } from '@/themes/theme';
@@ -72,7 +71,7 @@ export default function CustomFight() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
-  const [showPlansModal, setShowPlansModal] = useState(false);
+  // Removed PlansModal; navigate to Plans screen instead
   const [showProCtaModal, setShowProCtaModal] = useState(false);
   const [showMaxSelectionModal, setShowMaxSelectionModal] = useState(false);
   const [showNothingToSaveModal, setShowNothingToSaveModal] = useState(false);
@@ -316,8 +315,8 @@ export default function CustomFight() {
     // If user is on free plan, show upgrade plans modal instead of opening fight options
     const plan = (userData?.plan || 'free').toLowerCase();
     if (plan === 'free') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      setShowPlansModal(true);
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  router.push('/(protected)/plans');
       return;
     }
     // Open fight modal to set durations etc; pass a sentinel so Game knows to use selected combos only
@@ -328,7 +327,7 @@ export default function CustomFight() {
   const openSaveLoad = useCallback(() => {
     if (!isPro) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      setShowPlansModal(true);
+      router.push('/(protected)/plans');
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -519,7 +518,7 @@ export default function CustomFight() {
           onPress: () => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             setShowProCtaModal(false);
-            setShowPlansModal(true);
+            router.push('/(protected)/plans');
           },
         }}
         secondaryButton={{
@@ -663,15 +662,7 @@ export default function CustomFight() {
           AsyncStorage.setItem(SELECTED_KEY, JSON.stringify(selected)).catch(() => { });
         }}
       />
-      <PlansModal
-        visible={showPlansModal}
-        onClose={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowPlansModal(false); }}
-        onSelectPlan={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          setShowPlansModal(false);
-          router.push('/(protected)/plans');
-        }}
-      />
+      {/* PlansModal removed: direct navigation to Plans screen now */}
 
       {/* Save/Load Sets Modal (PRO only) */}
       <Modal visible={saveLoadVisible} animationType="slide" transparent onRequestClose={() => setSaveLoadVisible(false)}>

@@ -2,9 +2,7 @@ import { Text } from '@/components';
 import { AlertModal } from '@/components/Modals/AlertModal';
 import type { FeedbackPayload } from '@/components/Modals/FeedbackModal';
 import FeedbackModalComponent from '@/components/Modals/FeedbackModal';
-import PlansModal from '@/components/Modals/PlansModal';
 import SocialProofStrip from '@/components/SocialProofStrip';
-import { SubscriptionPlan } from '@/config/subscriptionPlans';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
@@ -60,7 +58,7 @@ export default function Profile() {
   const { userData, refreshUserData } = useUserData();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [showPaywall, setShowPaywall] = useState(false);
+  // Removed showPaywall; upgrade now navigates to Plans screen
   // Client-side avatar seed (DiceBear open-peeps)
   const [avatarSeed, setAvatarSeed] = useState<string>('');
   const [avatarModalVisible, setAvatarModalVisible] = useState(false);
@@ -754,7 +752,7 @@ export default function Profile() {
               <Text style={[styles.buttonText, { fontSize: font(16) }]}>Settings</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.button, { padding: spacing(18), borderRadius: uiScale(14), minHeight: uiScale(60, { category: 'button' }) }]} onPress={() => setShowPaywall(true)}>
+            <TouchableOpacity style={[styles.button, { padding: spacing(18), borderRadius: uiScale(14), minHeight: uiScale(60, { category: 'button' }) }]} onPress={() => router.push('/(protected)/plans')}>
               <MaterialCommunityIcons name="marker-check" size={iconSize(24)} color={Colors.text} />
               <Text style={[styles.buttonText, { fontSize: font(16) }]}>Upgrade Plan</Text>
             </TouchableOpacity>
@@ -802,15 +800,7 @@ export default function Profile() {
           </View>
         </View>
       </ScrollView>
-      <PlansModal
-        visible={showPaywall}
-        onClose={() => setShowPaywall(false)}
-        onSelectPlan={(plan: SubscriptionPlan) => {
-          // Handle plan selection here
-          console.log('Selected plan:', plan);
-          setShowPaywall(false);
-        }}
-      />
+      {/* PlansModal removed: direct navigation to Plans screen now */}
       {/* Feedback Modal */}
       <FeedbackModalComponent
         visible={showFeedbackModal}

@@ -1,10 +1,10 @@
 import { Text } from '@/components';
-import PlansModal from '@/components/Modals/PlansModal';
 import QuizIntroComponent from '@/components/QuizIntro';
 import QuizScreen, { QuizData } from '@/components/QuizScreen';
 import { subscriptionPlans, type SubscriptionPlan } from '@/config/subscriptionPlans';
 import { Colors, Typography } from '@/themes/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
@@ -17,7 +17,7 @@ type Props = {
 export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
   const [quizStage, setQuizStage] = useState<'intro' | 'quiz' | 'plans'>('intro');
   const [quizData, setQuizData] = useState<QuizData | null>(null);
-  const [showPlansModal, setShowPlansModal] = useState(false);
+  // Modal removed; navigate to Plans screen instead
 
   const handleQuizComplete = (data: QuizData) => {
     setQuizData(data);
@@ -105,7 +105,7 @@ export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
                     </View>
                   ))}
                   {plan.features.length > 4 && (
-                    <Pressable onPress={() => setShowPlansModal(true)} hitSlop={8}>
+                    <Pressable onPress={() => router.push('/(protected)/plans')} hitSlop={8}>
                       <Text style={styles.moreFeaturesText}>View all features</Text>
                     </Pressable>
                   )}
@@ -172,14 +172,7 @@ export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
         </Pressable>
       </ScrollView>
 
-      <PlansModal
-        visible={showPlansModal}
-        onClose={() => setShowPlansModal(false)}
-        onSelectPlan={(plan) => {
-          setShowPlansModal(false);
-          handlePlanSelection(plan);
-        }}
-      />
+      {/* PlansModal removed: direct navigation to Plans screen now */}
     </ImageBackground>
   );
 }
