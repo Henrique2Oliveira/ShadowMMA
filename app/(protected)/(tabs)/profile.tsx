@@ -1227,7 +1227,7 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   buttonList: {
-    marginTop: 30,
+    marginTop: 10,
   },
   badgesContainer: {
     marginBottom: 20,

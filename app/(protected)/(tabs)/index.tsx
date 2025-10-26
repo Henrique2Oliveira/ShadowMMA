@@ -444,6 +444,21 @@ export default function Index() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
     },
+    {
+      title: 'Tournament Mode',
+      disabled: true,
+      onPress: () => {
+        setModalConfig({
+          roundDuration: '3',
+          numRounds: '3',
+          restTime: '1',
+          moveSpeed: '1',
+          movesMode: ['Punches'],
+          category: '0'
+        });
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    },
   ];
 
   return (
@@ -689,6 +704,26 @@ export default function Index() {
             onPress={buttons[9].onPress}
             shimmer
             shimmerDelayMs={700}
+          />
+
+        </View>
+
+        <View
+          style={{
+            width: '100%',
+            maxWidth: 600,
+          }}
+        >
+          <GradientButton
+            title={buttons[10].title}
+            iconName="trophy"
+            iconSize={96}
+            fontSize={24}
+            subtitle="in progress... coming soon"
+            disabled={buttons[10].disabled}
+            onPress={buttons[10].onPress}
+            shimmer
+            shimmerDelayMs={840}
           />
 
         </View>
