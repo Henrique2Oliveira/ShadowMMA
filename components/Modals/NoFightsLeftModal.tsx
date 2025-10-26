@@ -88,9 +88,10 @@ export default function NoFightsLeftModal({ visible, onClose, onUpgrade, message
             <MaterialCommunityIcons name="close" size={24} color={Colors.text} />
           </TouchableOpacity>
 
-          <View style={styles.headerRow}>
-            <MaterialCommunityIcons name="boxing-glove" size={24} color="#da3434ff" />
-            <Text style={styles.title}>No Fights Left!</Text>
+          <View style={[styles.headerRow]}>
+            <MaterialCommunityIcons name="boxing-glove" size={24} color="#e24141ff" style={{ transform: [{ scaleX: -1 }] }} />
+            <Text style={[styles.title]}>No Fights Left!</Text>
+            <MaterialCommunityIcons name="boxing-glove" size={24} color="#e24141ff" style={{ transform: [{ scaleX: 1 }] }} />
           </View>
 
           <Animated.View style={{ width: '100%', alignItems: 'center' }}>
@@ -129,7 +130,7 @@ export default function NoFightsLeftModal({ visible, onClose, onUpgrade, message
 
           <View style={styles.buttons}>
             <TouchableOpacity activeOpacity={0.95} onPress={onUpgrade} style={styles.primaryBtn}>
-              <LinearGradient colors={["#df9629ff", "#ff4b4b"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.primaryBtnGradient}>
+              <LinearGradient colors={["#1bbd1bff", "#149b07ff"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.primaryBtnGradient}>
                 <MaterialCommunityIcons name="crown" size={18} color="#fff" />
                 <Text style={styles.primaryBtnText}>Upgrade to Pro</Text>
                 {/* button shimmer */}
