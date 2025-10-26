@@ -96,7 +96,7 @@ export default function QuizScreen({ onComplete }: Props) {
           } else {
             await AsyncStorage.setItem('shadowmma_game_preferences', JSON.stringify({
               isMuted: false,
-              animationMode: 'new',
+              animationMode: 'old',
               stance: newAnswers.stance,
               showComboCarousel: true,
               speedMultiplier: 1.3,

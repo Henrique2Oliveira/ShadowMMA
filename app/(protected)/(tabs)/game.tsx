@@ -271,7 +271,7 @@ export default function Game() {
   const [speedMultiplier, setSpeedMultiplier] = React.useState(
     Math.min(MAX_SPEED, parseFloat(params.moveSpeed || '1'))
   );
-  const [animationMode, setAnimationMode] = React.useState<'none' | 'old' | 'new'>('new');
+  const [animationMode, setAnimationMode] = React.useState<'none' | 'old' | 'new'>('old');
   const [showComboCarousel, setShowComboCarousel] = React.useState(true); // Default to true
   // Random pre-start tip
   const [preGameTip, setPreGameTip] = React.useState<string | null>(null);
@@ -280,7 +280,7 @@ export default function Game() {
     loadGamePreferences().then((prefs) => {
       if (prefs) {
         setIsMuted(prefs.isMuted);
-        setAnimationMode(prefs.animationMode || 'new');
+  setAnimationMode(prefs.animationMode || 'old');
         setStance(prefs.stance);
         setShowComboCarousel(prefs.showComboCarousel !== undefined ? prefs.showComboCarousel : true);
         if (prefs.speedMultiplier !== undefined) {
@@ -296,7 +296,7 @@ export default function Game() {
         setSpeedMultiplier(1.5);
         saveGamePreferences({
           isMuted: false,
-          animationMode: 'new',
+          animationMode: 'old',
           stance: 'orthodox',
           showComboCarousel: true,
           speedMultiplier: 1.5,
@@ -475,7 +475,7 @@ export default function Game() {
             setCurrentModal({
               visible: true,
               title: 'No Fights Left',
-              message: `You’ve used all your fights for today! 🥊 Your lives will refill back to 3 after 24 hours — or upgrade to Pro for unlimited fights and keep the action going!`,
+              message: `You’ve used your free fight for today. 🥊 It resets daily — upgrade to Pro for unlimited fights and keep the action going!`,
               type: 'warning',
               primaryButton: {
                 text: 'Upgrade to Pro',

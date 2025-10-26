@@ -26,7 +26,7 @@ export const subscriptionPlans: SubscriptionPlan[] = [
     price: '$0',
     period: 'forever',
     features: [
-      '3 Fights a day',
+      '1 Free Fight per day',
       'Random Fights Generator',
       'Essential Combos',
 

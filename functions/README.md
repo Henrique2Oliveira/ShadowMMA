@@ -10,7 +10,7 @@ This document explains what each part of `functions/src/index.ts` does. At the t
 - updateLastLogin (HTTP, POST)
   - Authenticated. Updates `lastLoginAt`, maintains `loginStreak` and `maxLoginStreak` with same-day no-op optimization.
 - restoreUserLivesDaily (Scheduler)
-  - Runs daily at 00:00 UTC. Resets all users’ `fightsLeft` to 3.
+  - Runs daily at 00:00 UTC. Resets all free users’ `fightsLeft` to 1.
 - resetWeeklyMissionProgress (Scheduler)
   - Runs weekly on Monday 00:00 UTC. Resets `totalFightRounds` and `totalFightTime` to 0 for users with progress.
 - handleGameOver (HTTP, POST)
@@ -69,7 +69,7 @@ This document explains what each part of `functions/src/index.ts` does. At the t
 
 - Trigger: Cloud Scheduler (CRON `0 0 * * *`, UTC)
 - Behavior:
-  - Iterates all users and sets `fightsLeft = 3` using a batch write.
+  - Iterates all users and sets `fightsLeft = 1` using a batch write (free daily fight).
   - Notes: Future TODOs hinted in comments (e.g., conditional restore or streak tweaks).
 
 ## resetWeeklyMissionProgress (Scheduler)

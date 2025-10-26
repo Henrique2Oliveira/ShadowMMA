@@ -251,7 +251,7 @@ export const updateLastLogin = onRequest(async (req, res) => {
   }
 });
 
-// Scheduled function to restore all users' lives to 3 every day at midnight UTC
+// Scheduled function to restore all free users' fights to 1 every day at midnight UTC
 
 export const restoreUserLivesDaily = onSchedule({
   schedule: "0 0 * * *", // Every day at midnight UTC
@@ -262,11 +262,10 @@ export const restoreUserLivesDaily = onSchedule({
     const batch = db.batch();
     usersSnapshot.forEach((doc) => {
       //No futuro adicionar se o user tem mais que 3 vidas se sim n aciona
-      // adiconar if login today and yesterday add 1 to the streak
-      batch.update(doc.ref, { fightsLeft: 3 });
+      batch.update(doc.ref, { fightsLeft: 1 });
     });
     await batch.commit();
-    logger.log("All users' lives have been restored to 3.");
+    logger.log("All users' lives have been restored to 1.");
   } catch (error) {
     logger.error("Error restoring user lives:", error);
   }
