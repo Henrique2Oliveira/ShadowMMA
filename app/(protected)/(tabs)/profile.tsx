@@ -48,7 +48,7 @@ export default function Profile() {
     badgeWrapperWidth: isTablet ? uiScale(80) : 70,
     smallText: (base: number) => font(base + (isTablet ? 2 : 0)),
     tinyText: (base: number) => font(base + (isTablet ? 2 : 0)),
-    sectionMarginTop: isTablet ? spacing(18) : 25,
+    sectionMarginTop: isTablet ? spacing(22) : 18,
     fightsNumber: font(isTablet ? 34 : 28),
     statNumber: font(isTablet ? 30 : 24),
   };
@@ -68,6 +68,10 @@ export default function Profile() {
   // Generic new badge state supporting both streak and rounds categories
   const [newBadge, setNewBadge] = useState<{ id: number; type: 'streak' | 'rounds' } | null>(null);
   const [badgeQueue, setBadgeQueue] = useState<{ id: number; type: 'streak' | 'rounds' }[]>([]);
+  // Guards to prevent race conditions and duplicate queuing
+  const processingBadgesRef = useRef(false);
+  const queuedKeysRef = useRef<Set<string>>(new Set());
+  const badgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackStatus, setFeedbackStatus] = useState<{ success?: boolean; message?: string }>({});
 
@@ -107,9 +111,13 @@ export default function Profile() {
   const earnedRoundBadgesSorted = [...earnedRoundBadges].sort((a, b) => b - a);
 
   // Unified badge storage + detection (migration from legacy keys)
+  // Guarded to avoid race conditions and duplicate queue entries.
   useEffect(() => {
     const run = async () => {
-      if (!user || !userData) return;
+      if (!user) return;
+      // prevent overlapping async runs
+      if (processingBadgesRef.current) return;
+      processingBadgesRef.current = true;
       const unifiedKey = `shownBadgesV2_${user.uid}`;
       let unified: { streak: number[]; rounds: number[] } = { streak: [], rounds: [] };
       try {
@@ -138,15 +146,33 @@ export default function Profile() {
           unified.rounds = Array.from(new Set([...unified.rounds, ...newRoundUnseen]));
         }
         if (queueAdds.length > 0) {
-          setBadgeQueue(prev => [...prev, ...queueAdds]);
+          // Deduplicate entries against current queue and this-session queued set
+          setBadgeQueue(prev => {
+            const combined = [...prev];
+            const seen = new Set<string>(combined.map(it => `${it.type}-${it.id}`));
+            for (const it of queueAdds) {
+              const key = `${it.type}-${it.id}`;
+              if (!seen.has(key) && !queuedKeysRef.current.has(key)) {
+                seen.add(key);
+                queuedKeysRef.current.add(key);
+                combined.push(it);
+              }
+            }
+            return combined;
+          });
+          // Persist immediately so next passes won't treat them as unseen
           await AsyncStorage.setItem(unifiedKey, JSON.stringify(unified));
         }
       } catch (_e) {
         console.warn('Unified badge storage error', _e);
+      } finally {
+        processingBadgesRef.current = false;
       }
     };
     run();
-  }, [user, userData, earnedBadges, earnedRoundBadges]);
+    // Only depend on stable primitives to avoid unnecessary re-runs
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid, maxStreak, lifetimeRounds]);
 
   // Process badge queue to display modals sequentially
   useEffect(() => {
@@ -162,8 +188,13 @@ export default function Profile() {
     // Remove the current from queue and, after a short pause, show the next (if any)
     setBadgeQueue(prev => {
       const nextQueue = prev.slice(1);
+      // clear any pending timer to avoid overlapping setState
+      if (badgeTimerRef.current) {
+        clearTimeout(badgeTimerRef.current as unknown as number);
+        badgeTimerRef.current = null;
+      }
       if (nextQueue.length > 0) {
-        setTimeout(() => {
+        badgeTimerRef.current = setTimeout(() => {
           // Only set if nothing else is showing
           setNewBadge(curr => curr ?? nextQueue[0]);
         }, 350);
@@ -171,6 +202,16 @@ export default function Profile() {
       return nextQueue;
     });
   };
+
+  // Cleanup any pending timers on unmount
+  useEffect(() => {
+    return () => {
+      if (badgeTimerRef.current) {
+        clearTimeout(badgeTimerRef.current as unknown as number);
+        badgeTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // Loading screen animations
   useEffect(() => {
@@ -1085,7 +1126,7 @@ const styles = StyleSheet.create({
     textShadowColor: '#000',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 3,
-    marginTop: 10,
+    marginTop: 0,
   },
   loadingContainer: {
     flex: 1,
@@ -1719,7 +1760,9 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 28,
     borderWidth: 1,
-    borderColor: '#ffffff22'
+    borderColor: '#ffffff22',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   avatarRowRight: {
     flexDirection: 'row',
