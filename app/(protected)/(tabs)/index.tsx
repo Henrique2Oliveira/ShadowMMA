@@ -6,6 +6,7 @@ import { LevelBar } from '@/components/LevelBar';
 import { AlertModal } from '@/components/Modals/AlertModal';
 import CookieConsentModalComponent from '@/components/Modals/CookieConsentModal';
 import { FightModeModal } from '@/components/Modals/FightModeModal';
+import NoFightsLeftModal from '@/components/Modals/NoFightsLeftModal';
 import { StreakCongratulationsModal } from '@/components/Modals/StreakCongratulationsModal';
 import SocialProofStrip from '@/components/SocialProofStrip';
 import { WeeklyMission } from '@/components/WeeklyMission';
@@ -33,6 +34,7 @@ export default function Index() {
   const [refreshing, setRefreshing] = React.useState(false);
 
   const [isModalVisible, setIsModalVisible] = React.useState(false);
+  const [showNoFightsModal, setShowNoFightsModal] = React.useState(false);
 
   // Streak congratulations modal state
   const [showStreakModal, setShowStreakModal] = React.useState(false);
@@ -150,20 +152,28 @@ export default function Index() {
     setIsModalVisible(true);
   }, []);
 
-  // Expose the show modal function globally
+  // Expose the show modal function globally with lives guard
   React.useEffect(() => {
-    globalThis.showFightModal = () => setModalConfig({
-      roundDuration: '2',
-      numRounds: '3',
-      restTime: '1',
-      moveSpeed: '1',
-      movesMode: ['Punches'],
-      category: '0'
-    });
+    globalThis.showFightModal = () => {
+      const plan = String(userData?.plan || '').toLowerCase();
+      const lives = typeof userData?.fightsLeft === 'number' ? userData!.fightsLeft! : undefined;
+      if (plan === 'free' && typeof lives === 'number' && lives <= 0) {
+        setShowNoFightsModal(true);
+        return;
+      }
+      setModalConfig({
+        roundDuration: '2',
+        numRounds: '3',
+        restTime: '1',
+        moveSpeed: '1',
+        movesMode: ['Punches'],
+        category: '0'
+      });
+    };
     return () => {
       globalThis.showFightModal = undefined;
     };
-  }, [setModalConfig]);
+  }, [setModalConfig, userData?.plan, userData?.fightsLeft]);
 
   useEffect(() => {
     if (user) {
@@ -790,6 +800,16 @@ export default function Index() {
         onAccept={() => { setGranted(); }}
         onLimit={() => { setDenied(); }}
         onRequestClose={() => { /* force a choice to proceed */ }}
+      />
+
+      {/* No Fights Left Modal shown when user on Free plan has 0 lives */}
+      <NoFightsLeftModal
+        visible={showNoFightsModal}
+        onClose={() => setShowNoFightsModal(false)}
+        onUpgrade={() => {
+          setShowNoFightsModal(false);
+          router.push('/(protected)/plans');
+        }}
       />
     </Animated.ScrollView >
   );

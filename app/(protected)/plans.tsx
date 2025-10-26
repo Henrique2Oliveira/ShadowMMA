@@ -628,7 +628,7 @@ export default function Plans() {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={() => router.replace('/(protected)/(tabs)')}
         >
           <MaterialCommunityIcons name="arrow-left" size={24} color={Colors.text} />
         </TouchableOpacity>

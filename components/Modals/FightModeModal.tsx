@@ -102,6 +102,14 @@ export function FightModeModal({
   const handleStartFight = () => {
     // Add haptic feedback when fight button is pressed
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    // Guard: Prevent entering game if on Free plan with zero lives
+    if (isFreePlan && typeof livesLeft === 'number' && livesLeft <= 0) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      onStartFight(); // keep callbacks consistent (will just close sheet upstream)
+      // Route user to plans instead of loading game
+      router.push('/(protected)/plans');
+      return;
+    }
 
     onStartFight();
     router.push({

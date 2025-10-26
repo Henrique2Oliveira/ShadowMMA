@@ -82,6 +82,14 @@ export default function Game() {
   const scaleUp = width >= 1024 ? 1.5 : width >= 768 ? 1.25 : 1;
   const [currentModal, setCurrentModal] = React.useState<ModalConfig | null>(null);
   const { updateUserData, userData } = useUserData();
+  // Guard: if user is on Free plan with zero fights, prevent accessing game page
+  React.useEffect(() => {
+    const plan = String(userData?.plan || '').toLowerCase();
+    const lives = typeof userData?.fightsLeft === 'number' ? userData.fightsLeft : undefined;
+    if (plan === 'free' && typeof lives === 'number' && lives <= 0) {
+      router.replace('/(protected)/plans');
+    }
+  }, [userData?.plan, userData?.fightsLeft]);
 
   // Load sound effects
   const [sounds, setSounds] = React.useState<Audio.Sound[]>([]);

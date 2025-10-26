@@ -8,13 +8,13 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef } from 'react';
 import {
-    Animated,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    TouchableOpacity,
-    View,
-    useWindowDimensions
+  Animated,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  useWindowDimensions
 } from 'react-native';
 
 type AnimatedValue = Animated.Value;
