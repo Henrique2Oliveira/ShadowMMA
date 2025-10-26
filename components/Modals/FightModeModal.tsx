@@ -8,6 +8,7 @@ import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import React from 'react';
 import { Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
+import NoFightsLeftModal from './NoFightsLeftModal';
 
 interface FightModeModalProps {
   isVisible: boolean;
@@ -94,6 +95,7 @@ export function FightModeModal({
   const derivedPlan = (extraParams?.plan || userData?.plan || '').toLowerCase();
   const isFreePlan = derivedPlan === 'free';
   const livesLeft = typeof userData?.fightsLeft === 'number' ? userData.fightsLeft : undefined;
+  const [showNoFightsModal, setShowNoFightsModal] = React.useState(false);
 
   const isFullRandomFight = movesMode.includes('RANDOM_ALL');
   const isCustomSelected = movesMode.includes('CUSTOM_SELECTED');
@@ -105,9 +107,8 @@ export function FightModeModal({
     // Guard: Prevent entering game if on Free plan with zero lives
     if (isFreePlan && typeof livesLeft === 'number' && livesLeft <= 0) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      onStartFight(); // keep callbacks consistent (will just close sheet upstream)
-      // Route user to plans instead of loading game
-      router.push('/(protected)/plans');
+      // Show upgrade modal instead of navigating away; keep this sheet visible underneath
+      setShowNoFightsModal(true);
       return;
     }
 
@@ -351,6 +352,19 @@ export function FightModeModal({
             )}
           </View>
         </View>
+        {/* No fights left upgrade modal */}
+        <NoFightsLeftModal
+          visible={showNoFightsModal}
+          onClose={() => setShowNoFightsModal(false)}
+          onUpgrade={() => {
+            // Polished UX: subtle haptic tap before navigating
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            setShowNoFightsModal(false);
+            // Also close the options sheet before navigating to plans
+            onClose();
+            router.push('/(protected)/plans');
+          }}
+        />
       </TouchableOpacity>
     </Modal>
   );
