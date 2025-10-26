@@ -13,7 +13,6 @@ import GoodJobModal from '@/components/Modals/GoodJobModal';
 import NoFightsLeftModal from '@/components/Modals/NoFightsLeftModal';
 import RateAppModal from '@/components/Modals/RateAppModal';
 import UnlockedCombosModal from '@/components/Modals/UnlockedCombosModal';
-import UpgradeCta from '@/components/Modals/UpgradeCta';
 import { MoveCard } from '@/components/MoveCard';
 import { MoveStats } from '@/components/MoveStats';
 import { TimerDisplay } from '@/components/TimerDisplay';
@@ -238,8 +237,7 @@ export default function Game() {
   });
 
   const [isOptionsModalVisible, setIsOptionsModalVisible] = React.useState(false);
-  // Local visibility for the upgrade CTA so users can close it
-  const [isUpgradeCtaVisible, setIsUpgradeCtaVisible] = React.useState(true);
+  
 
   const [moves, setMoves] = React.useState<Move[]>([]);
   const [currentMove, setCurrentMove] = React.useState<Move | null>(null);
@@ -1244,14 +1242,7 @@ export default function Game() {
           <GameOverButtons />
         )}
 
-        {/* Upgrade CTA when free plan and no fights left - moved to separate component with close button */}
-        <UpgradeCta
-          visible={isUpgradeCtaVisible && gameState.isGameOver && (userData?.plan || 'free').toLowerCase() === 'free' && (userData?.fightsLeft ?? 0) <= 0}
-          onClose={() => setIsUpgradeCtaVisible(false)}
-          onUpgrade={() => router.push('/(protected)/plans')}
-          width={width}
-          scaleUp={scaleUp}
-        />
+        {/* Upgrade CTA removed in favor of NoFightsLeftModal */}
 
         <GameControls
           isPaused={gameState.isPaused}
@@ -1465,51 +1456,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: Typography.fontFamily,
     letterSpacing: 1,
-  },
-  upgradeCtaContainer: {
-    position: 'absolute',
-    alignSelf: 'center',
-    zIndex: 120,
-    elevation: 10,
-  },
-  upgradeCta: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.85)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
-  upgradeIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 210, 87, 0.12)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  upgradeTitle: {
-    color: '#ffffff',
-    fontFamily: Typography.fontFamily,
-    marginBottom: 2,
-  },
-  upgradeSubtitle: {
-    color: 'rgba(255,255,255,0.8)',
-    fontFamily: Typography.fontFamily,
-  },
-  upgradeButton: {
-    backgroundColor: Colors.bgGameDark,
-  },
-  upgradeButtonText: {
-    color: '#fff',
-    fontFamily: Typography.fontFamily,
-    fontWeight: '700',
-    letterSpacing: 0.3,
   },
   preGameTipContainer: {
     position: 'absolute',

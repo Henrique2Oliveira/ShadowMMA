@@ -72,7 +72,18 @@ const ComboCard = React.memo(({ name, type, level, categoryName, isLocked, onPre
         displayLocked && styles.lockedCard,
         isProCombo && styles.proCard,
       ]}
-      onPress={() => { onPress(); }}
+      onPress={() => {
+        if (proLocked) {
+          if (onUpgradePress) {
+            onUpgradePress();
+          } else {
+            // Fallback: let parent onPress handle pro gating (e.g., show CTA)
+            onPress();
+          }
+          return;
+        }
+        onPress();
+      }}
       disabled={isLocked}
     >
       <LinearGradient colors={gradientColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.cardGradient, { padding }]}>        

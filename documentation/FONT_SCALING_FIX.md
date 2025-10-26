@@ -59,7 +59,6 @@ Created custom `Text` and `TextInput` components that disable automatic font sca
 - ✅ `components/Modals/SelectionModal.tsx`
 - ✅ `components/Modals/StreakCongratulationsModal.tsx`
 - ✅ `components/Modals/UnlockedCombosModal.tsx`
-- ✅ `components/Modals/UpgradeCta.tsx`
 
 ## How It Works
 

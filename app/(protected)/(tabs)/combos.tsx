@@ -3,6 +3,7 @@ import TopBanner from '@/components/ads/TopBanner';
 import MemoizedComboCard from '@/components/MemoizedComboCard';
 import { AlertModal } from '@/components/Modals/AlertModal';
 import { FightModeModal } from '@/components/Modals/FightModeModal';
+// Upgrade CTA removed for pro taps; direct navigation to Plans
 import { useUserData } from '@/contexts/UserDataContext';
 import { app as firebaseApp } from '@/FirebaseConfig.js';
 import { Colors, Typography } from '@/themes/theme';
@@ -86,8 +87,7 @@ export default function Combos() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
-  // Removed PlansModal; navigate to Plans screen instead
-  const [showProCtaModal, setShowProCtaModal] = useState(false);
+  // Removed PlansModal/UpgradeCTA; direct navigation to Plans
 
   const clientAuth = useMemo(() => getClientAuth(firebaseApp), []);
 
@@ -203,8 +203,8 @@ export default function Combos() {
   const isFreePlan = (userData?.plan || 'free') === 'free';
   const handleComboPress = useCallback((item: ComboMeta, isLocked: boolean) => {
     if (item.proOnly && isFreePlan) {
-  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  setShowProCtaModal(true);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      router.push('/(protected)/plans');
       return;
     }
     if (!isLocked) {
@@ -369,31 +369,7 @@ export default function Combos() {
         />
       )}
 
-      {/* PRO CTA for free users when tapping pro-only combos */}
-      <AlertModal
-        visible={showProCtaModal}
-        title="Unlock this combo"
-        message={
-          "• Unlock all PRO combos\n• Remove ads and interruptions\n• Access advanced drills and modes\n• New combos added regularly\n\nReady to level up your training?"
-        }
-        type="info"
-        primaryButton={{
-          text: 'See PRO Plans',
-          onPress: () => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setShowProCtaModal(false);
-            router.push('/(protected)/plans');
-          },
-        }}
-        secondaryButton={{
-          text: 'Not now',
-          onPress: () => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setShowProCtaModal(false);
-          },
-        }}
-        onClose={() => setShowProCtaModal(false)}
-      />
+      {/* Pro-only taps redirect directly to Plans */}
 
       {combos && combos.length > 0 && (
         <FlatList

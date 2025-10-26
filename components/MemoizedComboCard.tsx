@@ -21,7 +21,8 @@ interface MemoizedComboCardProps {
 }
 
 const MemoizedComboCard = ({ item, userLevel, onPress, isFreePlan = false, onUpgradePress }: MemoizedComboCardProps) => {
-  const isLocked: boolean = (item.level > userLevel) || (!!item.proOnly && isFreePlan);
+  // Only lock by level. Pro-only on free plan should not disable press; we'll show upgrade CTA instead.
+  const isLocked: boolean = (item.level > userLevel);
 
   return (
     <ComboCard
@@ -34,7 +35,7 @@ const MemoizedComboCard = ({ item, userLevel, onPress, isFreePlan = false, onUpg
       isLocked={isLocked}
       proOnly={item.proOnly}
       isFreePlan={isFreePlan}
-      onUpgradePress={() => onUpgradePress && onUpgradePress(item)}
+      onUpgradePress={onUpgradePress ? () => onUpgradePress(item) : undefined}
       onPress={() => onPress(item, isLocked)}
     />
   );

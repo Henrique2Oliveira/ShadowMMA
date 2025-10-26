@@ -2,6 +2,7 @@ import { LoadingScreen, Text, TextInput } from '@/components';
 import MemoizedComboCard from '@/components/MemoizedComboCard';
 import { AlertModal } from '@/components/Modals/AlertModal';
 import { FightModeModal } from '@/components/Modals/FightModeModal';
+// Upgrade CTA removed for pro taps; direct navigation to Plans
 import { useUserData } from '@/contexts/UserDataContext';
 import { app as firebaseApp } from '@/FirebaseConfig.js';
 import { Colors, Typography } from '@/themes/theme';
@@ -71,8 +72,7 @@ export default function CustomFight() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
-  // Removed PlansModal; navigate to Plans screen instead
-  const [showProCtaModal, setShowProCtaModal] = useState(false);
+  // Removed PlansModal/UpgradeCTA; direct navigation to Plans
   const [showMaxSelectionModal, setShowMaxSelectionModal] = useState(false);
   const [showNothingToSaveModal, setShowNothingToSaveModal] = useState(false);
   const [showSaveFailedModal, setShowSaveFailedModal] = useState(false);
@@ -94,6 +94,8 @@ export default function CustomFight() {
   const [selected, setSelected] = useState<{ id: string; type: string }[]>([]);
 
   const clientAuth = useMemo(() => getClientAuth(firebaseApp), []);
+
+  // Removed Upgrade CTA sizing
 
   const loadFromCache = useCallback(async () => {
     try {
@@ -230,7 +232,7 @@ export default function CustomFight() {
     const plan = (userData?.plan || 'free').toLowerCase();
     if (item.proOnly && plan === 'free') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      setShowProCtaModal(true);
+      router.push('/(protected)/plans');
       return;
     }
     const id = item.id;
@@ -434,7 +436,7 @@ export default function CustomFight() {
         {proLocked && (
           <TouchableOpacity
             activeOpacity={0.9}
-            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowProCtaModal(true); }}
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(protected)/plans'); }}
             style={[styles.fullOverlay, { backgroundColor: 'transparent' }]}
           >
             <View style={{ flex: 1 }} />
@@ -505,31 +507,7 @@ export default function CustomFight() {
         />
       )}
 
-      {/* PRO CTA for free users when tapping pro-only combos */}
-      <AlertModal
-        visible={showProCtaModal}
-        title="Unlock this combo"
-        message={
-          "• Unlock all PRO combos\n• Remove ads and interruptions\n• Access advanced drills and modes\n• New combos added regularly\n\nReady to level up your training?"
-        }
-        type="info"
-        primaryButton={{
-          text: 'See PRO Plans',
-          onPress: () => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setShowProCtaModal(false);
-            router.push('/(protected)/plans');
-          },
-        }}
-        secondaryButton={{
-          text: 'Not now',
-          onPress: () => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setShowProCtaModal(false);
-          },
-        }}
-        onClose={() => setShowProCtaModal(false)}
-      />
+      {/* Pro-only taps redirect directly to Plans */}
 
       {combos && (
         <>
