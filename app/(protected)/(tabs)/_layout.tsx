@@ -28,7 +28,8 @@ export default function TabsLayout() {
   const tabBarHeight = uiScale(80, { category: 'button' });
   const tabBarRadius = uiScale(35, { category: 'button' });
   const tabBarPaddingHorizontal = uiScale(10, { category: 'spacing' });
-  const tabBarBottom = uiScale(8, { category: 'spacing' });
+  // Flush the tab bar to the bottom edge (no extra gap)
+  const tabBarBottom = 0;
   const iconSizeHome = uiScale(42, { category: 'icon' });
   const iconSizeGallery = uiScale(42, { category: 'icon' });
   const iconSizeCombos = uiScale(43, { category: 'icon' });
