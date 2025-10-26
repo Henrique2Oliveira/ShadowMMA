@@ -5,7 +5,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Easing, FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Animated, Easing, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 
 export type QuizData = {
   age: string;
@@ -586,6 +586,53 @@ const styles = StyleSheet.create({
     color: Colors.text,
     textAlign: 'center',
   },
+  // Compact vertical list styles
+  listContainer: {
+    marginTop: 6,
+  },
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.cardColor,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.button,
+    marginBottom: 8,
+  },
+  listItemSelected: {
+    borderColor: Colors.green,
+  },
+  listItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  listItemText: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 16,
+    color: Colors.text,
+  },
+  radioOuter: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: Colors.button,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  radioOuterSelected: {
+    borderColor: Colors.green,
+  },
+  radioInner: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.green,
+  },
   // Carousel styles for number selection
   carouselContainer: {
     paddingHorizontal: 8,
@@ -817,49 +864,51 @@ interface NumberSelectProps {
   onSelect: (value: number) => void;
 }
 const NumberSelect = ({ title, description, options, unit, selected, onSelect }: NumberSelectProps) => {
+  const { height } = useWindowDimensions();
+  // Keep the list at a comfortable size: between 240 and 380px, ~42% of screen height on larger screens
+  const maxListHeight = Math.min(380, Math.max(240, height * 0.42));
   const isRecommendedValue = (val: number) =>
     (title.toLowerCase().includes('rounds') && val === 15) ||
     (title.toLowerCase().includes('training time') && val === 60);
 
-  // Use a horizontal carousel for better usability on many options
-  const useCarousel = options.length >= 6;
-  const CARD_WIDTH = 120;
-  const SPACING = 12;
+  // Use a compact vertical list for many options
+  const useVertical = options.length >= 6;
 
   return (
     <View>
       <Text style={styles.question}>{title}</Text>
       <Text style={styles.helperText}>{description}</Text>
-      {useCarousel ? (
-        <FlatList
-          data={options}
-          keyExtractor={(item) => String(item)}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.carouselContainer}
-          renderItem={({ item }) => {
-            const isSelected = selected === item;
-            const isRecommended = isRecommendedValue(item);
+      {useVertical ? (
+        <ScrollView
+          style={[styles.listContainer, { maxHeight: maxListHeight }]}
+          contentContainerStyle={{ paddingBottom: 120 }}
+          nestedScrollEnabled
+          showsVerticalScrollIndicator
+        >
+          {options.map((opt) => {
+            const isSelected = selected === opt;
+            const isRecommended = isRecommendedValue(opt);
             return (
               <Pressable
+                key={opt}
+                onPress={() => onSelect(opt)}
                 accessibilityRole="button"
-                accessibilityLabel={`Select ${item} ${unit}`}
-                onPress={() => onSelect(item)}
-                style={[
-                  styles.carouselCard,
-                  { width: CARD_WIDTH, marginHorizontal: SPACING / 2 },
-                  isSelected && styles.carouselCardSelected,
-                ]}
+                accessibilityLabel={`Select ${opt} ${unit}`}
+                style={[styles.listItem, isSelected && styles.listItemSelected]}
               >
-                <Text style={styles.carouselValue}>{item}</Text>
-                <Text style={styles.carouselUnit}>{unit}</Text>
+                <View style={styles.listItemLeft}>
+                  <View style={[styles.radioOuter, isSelected && styles.radioOuterSelected]}>
+                    {isSelected && <View style={styles.radioInner} />}
+                  </View>
+                  <Text style={styles.listItemText}>{opt} {unit}</Text>
+                </View>
                 {isRecommended && (
                   <Text style={[styles.recommendMiniPill, isSelected && styles.recommendMiniPillActive]}>RECOMMENDED</Text>
                 )}
               </Pressable>
             );
-          }}
-        />
+          })}
+        </ScrollView>
       ) : (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
           {options.map(opt => {
@@ -869,11 +918,11 @@ const NumberSelect = ({ title, description, options, unit, selected, onSelect }:
               <Pressable
                 key={opt}
                 style={{
-                  paddingVertical: 14,
-                  paddingHorizontal: 18,
+                  paddingVertical: 12,
+                  paddingHorizontal: 16,
                   backgroundColor: isSelected ? Colors.green : Colors.cardColor,
-                  borderRadius: 12,
-                  minWidth: 100,
+                  borderRadius: 10,
+                  minWidth: 92,
                   alignItems: 'center',
                   borderWidth: 1,
                   borderColor: isSelected ? Colors.green : Colors.button,
@@ -883,7 +932,7 @@ const NumberSelect = ({ title, description, options, unit, selected, onSelect }:
               >
                 <Text style={{
                   fontFamily: Typography.fontFamily,
-                  fontSize: 16,
+                  fontSize: 15,
                   color: Colors.text,
                 }}>{opt} {unit}</Text>
                 {isRecommended && (
