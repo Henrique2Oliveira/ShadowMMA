@@ -406,7 +406,7 @@ export default function QuizScreen({ onComplete }: Props) {
         <Text style={styles.progressText}>{step + 1}/{totalSteps}</Text>
       </View>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {renderStep()}
+        <View style={styles.contentWrap}>{renderStep()}</View>
       </ScrollView>
       {step > 0 && (
         <Pressable
@@ -429,10 +429,15 @@ const styles = StyleSheet.create({
     backgroundColor: "black",
     padding: 20,
     justifyContent: 'center',
-    minWidth: 380,
   },
   scrollContent: {
     paddingBottom: 40,
+  },
+  // Constrain inner content width and keep it centered on all devices
+  contentWrap: {
+    width: '100%',
+    maxWidth: 520,
+    alignSelf: 'center',
   },
   progressContainer: {
     flexDirection: 'row',
@@ -533,6 +538,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: Colors.button,
+    // Make options fill the available width within the centered content wrapper
+    alignSelf: 'stretch',
   },
   selectedOption: {
     borderColor: Colors.text,
@@ -598,6 +605,7 @@ const styles = StyleSheet.create({
   stanceRow: {
     flexDirection: 'row',
     gap: 18,
+    justifyContent: 'center',
   },
   stanceOption: {
     flex: 1,
