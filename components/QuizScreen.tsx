@@ -5,7 +5,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Easing, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Animated, Easing, FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 export type QuizData = {
   age: string;
@@ -586,6 +586,34 @@ const styles = StyleSheet.create({
     color: Colors.text,
     textAlign: 'center',
   },
+  // Carousel styles for number selection
+  carouselContainer: {
+    paddingHorizontal: 8,
+    paddingBottom: 4,
+  },
+  carouselCard: {
+    backgroundColor: Colors.cardColor,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.button,
+  },
+  carouselCardSelected: {
+    backgroundColor: Colors.green,
+    borderColor: Colors.green,
+  },
+  carouselValue: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 20,
+    color: Colors.text,
+  },
+  carouselUnit: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 12,
+    color: Colors.text,
+    opacity: 0.85,
+  },
   stanceNote: {
     fontFamily: Typography.fontFamily,
     fontSize: 12,
@@ -789,45 +817,86 @@ interface NumberSelectProps {
   onSelect: (value: number) => void;
 }
 const NumberSelect = ({ title, description, options, unit, selected, onSelect }: NumberSelectProps) => {
+  const isRecommendedValue = (val: number) =>
+    (title.toLowerCase().includes('rounds') && val === 15) ||
+    (title.toLowerCase().includes('training time') && val === 60);
+
+  // Use a horizontal carousel for better usability on many options
+  const useCarousel = options.length >= 6;
+  const CARD_WIDTH = 120;
+  const SPACING = 12;
+
   return (
     <View>
       <Text style={styles.question}>{title}</Text>
       <Text style={styles.helperText}>{description}</Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
-        {options.map(opt => {
-          const isSelected = selected === opt;
-          const isRecommended = (title.toLowerCase().includes('rounds') && opt === 15) || (title.toLowerCase().includes('training time') && opt === 60);
-          return (
-            <Pressable
-              key={opt}
-              style={{
-                paddingVertical: 14,
-                paddingHorizontal: 18,
-                backgroundColor: isSelected ? Colors.green : Colors.cardColor,
-                borderRadius: 12,
-                minWidth: 100,
-                alignItems: 'center',
-                borderWidth: 1,
-                borderColor: isSelected ? Colors.green : Colors.button,
-                position: 'relative'
-              }}
-              onPress={() => onSelect(opt)}
-            >
-              <Text style={{
-                fontFamily: Typography.fontFamily,
-                fontSize: 16,
-                color: Colors.text,
-              }}>{opt} {unit}</Text>
-              {isRecommended && (
-                <Text style={[
-                  styles.recommendMiniPill,
-                  isSelected && styles.recommendMiniPillActive
-                ]}>RECOMMENDED</Text>
-              )}
-            </Pressable>
-          );
-        })}
-      </View>
+      {useCarousel ? (
+        <FlatList
+          data={options}
+          keyExtractor={(item) => String(item)}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.carouselContainer}
+          renderItem={({ item }) => {
+            const isSelected = selected === item;
+            const isRecommended = isRecommendedValue(item);
+            return (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Select ${item} ${unit}`}
+                onPress={() => onSelect(item)}
+                style={[
+                  styles.carouselCard,
+                  { width: CARD_WIDTH, marginHorizontal: SPACING / 2 },
+                  isSelected && styles.carouselCardSelected,
+                ]}
+              >
+                <Text style={styles.carouselValue}>{item}</Text>
+                <Text style={styles.carouselUnit}>{unit}</Text>
+                {isRecommended && (
+                  <Text style={[styles.recommendMiniPill, isSelected && styles.recommendMiniPillActive]}>RECOMMENDED</Text>
+                )}
+              </Pressable>
+            );
+          }}
+        />
+      ) : (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
+          {options.map(opt => {
+            const isSelected = selected === opt;
+            const isRecommended = isRecommendedValue(opt);
+            return (
+              <Pressable
+                key={opt}
+                style={{
+                  paddingVertical: 14,
+                  paddingHorizontal: 18,
+                  backgroundColor: isSelected ? Colors.green : Colors.cardColor,
+                  borderRadius: 12,
+                  minWidth: 100,
+                  alignItems: 'center',
+                  borderWidth: 1,
+                  borderColor: isSelected ? Colors.green : Colors.button,
+                  position: 'relative'
+                }}
+                onPress={() => onSelect(opt)}
+              >
+                <Text style={{
+                  fontFamily: Typography.fontFamily,
+                  fontSize: 16,
+                  color: Colors.text,
+                }}>{opt} {unit}</Text>
+                {isRecommended && (
+                  <Text style={[
+                    styles.recommendMiniPill,
+                    isSelected && styles.recommendMiniPillActive
+                  ]}>RECOMMENDED</Text>
+                )}
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
     </View>
   );
 };
