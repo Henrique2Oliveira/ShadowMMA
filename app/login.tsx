@@ -8,7 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFonts } from 'expo-font';
 import { Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from "react-native";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 
 export default function Index() {
   const { isAuthenticated, loading } = useAuth();
@@ -93,9 +93,7 @@ export default function Index() {
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }} keyboardShouldPersistTaps="handled">
-        <AuthScreen />
-      </ScrollView>
+      <AuthScreen />
     </View>
   );
 }

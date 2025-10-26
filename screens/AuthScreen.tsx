@@ -33,9 +33,11 @@ export default function AuthScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
   const [passwordResetMessage, setPasswordResetMessage] = useState('');
   const [passwordResetType, setPasswordResetType] = useState<'success' | 'error'>('success');
@@ -44,12 +46,24 @@ export default function AuthScreen() {
   const nameRef = useRef<TextInput>(null);
   const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
+  const confirmPasswordRef = useRef<TextInput>(null);
 
   const handleSubmit = async () => {
     setError('');
     setIsSubmitting(true);
 
     try {
+      if (!isLogin) {
+        // Basic validation for registration
+        if (password !== confirmPassword) {
+          setError('Passwords do not match');
+          return;
+        }
+        if (password.length < 6) {
+          setError('Password must be at least 6 characters');
+          return;
+        }
+      }
       const result = isLogin
         ? await login(email, password)
         : await register(email, password, name);
@@ -65,7 +79,7 @@ export default function AuthScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <SafeAreaView style={{ flex: 1, alignSelf: 'stretch' }}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
           <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
@@ -121,8 +135,14 @@ export default function AuthScreen() {
                   secureTextEntry={!showPassword}
                   textContentType="password"
                   autoCorrect={false}
-                  returnKeyType="done"
-                  onSubmitEditing={handleSubmit}
+                  returnKeyType={isLogin ? 'done' : 'next'}
+                  onSubmitEditing={() => {
+                    if (isLogin) {
+                      handleSubmit();
+                    } else {
+                      confirmPasswordRef.current?.focus();
+                    }
+                  }}
                   accessibilityLabel="Password"
                 />
                 <TouchableOpacity
@@ -139,6 +159,38 @@ export default function AuthScreen() {
                   />
                 </TouchableOpacity>
               </View>
+              {!isLogin && (
+                <View style={[styles.inputContainer, { minHeight: inputMinHeight }]}>
+                  <MaterialCommunityIcons name="lock-check-outline" size={iconSize} color={Colors.lightgray} style={styles.inputIcon} />
+                  <TextInput
+                    ref={confirmPasswordRef}
+                    style={[styles.input, { fontSize: inputFontSize, minHeight: inputMinHeight }]}
+                    placeholder="Confirm Password"
+                    placeholderTextColor={Colors.lightgray}
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    secureTextEntry={!showConfirmPassword}
+                    textContentType="password"
+                    autoCorrect={false}
+                    returnKeyType="done"
+                    onSubmitEditing={handleSubmit}
+                    accessibilityLabel="Confirm password"
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeButton}
+                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    accessibilityRole="button"
+                    accessibilityLabel={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                  >
+                    <MaterialCommunityIcons
+                      name={showConfirmPassword ? "eye-off" : "eye"}
+                      size={iconSize}
+                      color={Colors.lightgray}
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
               {error ? (
                 <Text style={styles.errorText} numberOfLines={3} adjustsFontSizeToFit minimumFontScale={0.8}>Problem {error}</Text>
               ) : null}
