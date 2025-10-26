@@ -10,6 +10,7 @@ import { AlertModal } from '@/components/Modals/AlertModal';
 import { CombosModal } from '@/components/Modals/CombosModal';
 import { GameOptionsModal } from '@/components/Modals/GameOptionsModal';
 import GoodJobModal from '@/components/Modals/GoodJobModal';
+import NoFightsLeftModal from '@/components/Modals/NoFightsLeftModal';
 import RateAppModal from '@/components/Modals/RateAppModal';
 import UnlockedCombosModal from '@/components/Modals/UnlockedCombosModal';
 import UpgradeCta from '@/components/Modals/UpgradeCta';
@@ -1078,15 +1079,30 @@ export default function Game() {
   return (
     <>
       {currentModal && (
-        <AlertModal
-          visible={currentModal.visible}
-          title={currentModal.title}
-          message={currentModal.message}
-          type={currentModal.type}
-          primaryButton={currentModal.primaryButton}
-          secondaryButton={currentModal.secondaryButton}
-          onClose={() => setCurrentModal(null)}
-        />
+        currentModal.title === 'No Fights Left' ? (
+          <NoFightsLeftModal
+            visible={currentModal.visible}
+            message={currentModal.message}
+            onUpgrade={() => {
+              // Navigate to plans when upgrading from the No Fights Left modal
+              setCurrentModal(null);
+              router.navigate('/(protected)/plans');
+            }}
+            onClose={() => {
+              currentModal.secondaryButton?.onPress?.() ?? setCurrentModal(null);
+            }}
+          />
+        ) : (
+          <AlertModal
+            visible={currentModal.visible}
+            title={currentModal.title}
+            message={currentModal.message}
+            type={currentModal.type}
+            primaryButton={currentModal.primaryButton}
+            secondaryButton={currentModal.secondaryButton}
+            onClose={() => setCurrentModal(null)}
+          />
+        )
       )}
       <CombosModal
         visible={showCombosModal}
