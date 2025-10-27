@@ -1,16 +1,16 @@
 import { Colors, Typography } from '@/themes/theme';
 import {
-  ACCESSORIES_OPTIONS,
-  AvatarOptions,
-  BG_OPTIONS,
-  CLOTHING_COLOR_OPTIONS,
-  FACE_OPTIONS,
-  FACIAL_HAIR_OPTIONS,
-  FEMALE_HEAD_OPTIONS,
-  HAIR_COLOR_OPTIONS,
-  HEAD_OPTIONS,
-  MALE_HEAD_OPTIONS,
-  SKIN_OPTIONS,
+    ACCESSORIES_OPTIONS,
+    AvatarOptions,
+    BG_OPTIONS,
+    CLOTHING_COLOR_OPTIONS,
+    FACE_OPTIONS,
+    FACIAL_HAIR_OPTIONS,
+    FEMALE_HEAD_OPTIONS,
+    HAIR_COLOR_OPTIONS,
+    HEAD_OPTIONS,
+    MALE_HEAD_OPTIONS,
+    SKIN_OPTIONS,
 } from '@/types/avatar';
 import { uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -77,7 +77,6 @@ const randomAvatar = (i: number): { uri: string } => {
 
 export default function SocialProofStrip() {
   const { width } = useWindowDimensions();
-  const isTablet = width >= 768;
   const AVATAR_COUNT = 6;
   // Responsive avatar sizing by device width (bigger and clearer)
   // Tuned for more comfortable sizing on normal phones

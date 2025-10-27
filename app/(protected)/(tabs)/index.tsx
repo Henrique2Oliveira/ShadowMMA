@@ -175,7 +175,7 @@ export default function Index() {
     return () => {
       globalThis.showFightModal = undefined;
     };
-  }, [setModalConfig, userData?.plan, userData?.fightsLeft]);
+  }, [setModalConfig, userData]);
 
   useEffect(() => {
     if (user) {
