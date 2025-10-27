@@ -9,7 +9,6 @@ import {
   Animated,
   Dimensions,
   Modal,
-  PanResponder,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -37,7 +36,6 @@ const UnlockedCombosModal: React.FC<UnlockedCombosModalProps> = ({
   const opacity = React.useRef(new Animated.Value(0)).current;
   const rotate = React.useRef(new Animated.Value(0)).current;
   const scale = React.useRef(new Animated.Value(0.96)).current;
-  const slideX = React.useRef(new Animated.Value(0)).current;
 
   const total = combos?.length ?? 0;
   const hasItems = total > 0;
@@ -47,7 +45,6 @@ const UnlockedCombosModal: React.FC<UnlockedCombosModalProps> = ({
     opacity.setValue(0);
     rotate.setValue(0);
     scale.setValue(0.96);
-    slideX.setValue(0);
     Animated.parallel([
       Animated.timing(translateY, { toValue: 0, duration: 320, useNativeDriver: true }),
       Animated.timing(opacity, { toValue: 1, duration: 280, useNativeDriver: true }),
@@ -62,7 +59,7 @@ const UnlockedCombosModal: React.FC<UnlockedCombosModalProps> = ({
         ]),
       ]),
     ]).start();
-  }, [opacity, rotate, scale, translateY, slideX]);
+  }, [opacity, rotate, scale, translateY]);
 
   const runExit = React.useCallback((cb?: () => void) => {
     Animated.parallel([
@@ -151,29 +148,7 @@ const UnlockedCombosModal: React.FC<UnlockedCombosModalProps> = ({
   }, [shineAnim, visible]);
   const translateXShine = shineAnim.interpolate({ inputRange: [0, 1], outputRange: [-80, (Math.min(700, width * 0.9)) + 80] });
 
-  // Swipe gestures for next/prev
-  const panResponder = React.useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dx) > 12,
-      onPanResponderMove: (_, gesture) => {
-        // limit sideways drag for feedback
-        const lim = Math.max(-24, Math.min(24, gesture.dx));
-        slideX.setValue(lim);
-      },
-      onPanResponderRelease: (_, gesture) => {
-        const dx = gesture.dx;
-        Animated.spring(slideX, { toValue: 0, useNativeDriver: true, bounciness: 6 }).start();
-        if (dx > 40) {
-          handlePrev();
-        } else if (dx < -40) {
-          handleNext();
-        }
-      },
-      onPanResponderTerminate: () => {
-        Animated.spring(slideX, { toValue: 0, useNativeDriver: true }).start();
-      },
-    })
-  ).current;
+  // Swipe-to-skip removed per request; tap on the card will advance instead.
 
   return (
     <Modal
@@ -189,7 +164,6 @@ const UnlockedCombosModal: React.FC<UnlockedCombosModalProps> = ({
             {
               opacity,
               transform: [
-                { translateX: slideX },
                 { translateY },
                 {
                   rotate: rotate.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '2deg'] }),
@@ -198,7 +172,6 @@ const UnlockedCombosModal: React.FC<UnlockedCombosModalProps> = ({
               ],
             },
           ]}
-          {...panResponder.panHandlers}
         >
           <TouchableOpacity style={styles.closeButton} onPress={() => runExit(onClose)}>
             <MaterialCommunityIcons name="close" size={24} color={Colors.text} />
@@ -214,7 +187,8 @@ const UnlockedCombosModal: React.FC<UnlockedCombosModalProps> = ({
               alignItems: 'center',
             }}
           >
-            <LinearGradient
+            <TouchableOpacity activeOpacity={0.9} onPress={handleNext} style={{ width: '100%', alignItems: 'center' }}>
+              <LinearGradient
               colors={['#101010', 'rgba(54, 15, 15, 1)']}
               start={{ x: 0, y: 0 }}
               end={{ x: 0, y: 1 }}
@@ -272,7 +246,8 @@ const UnlockedCombosModal: React.FC<UnlockedCombosModalProps> = ({
                   style={{ width: '100%', height: '100%' }}
                 />
               </Animated.View>
-            </LinearGradient>
+              </LinearGradient>
+            </TouchableOpacity>
           </Animated.View>
 
           {/* Pager controls */}
