@@ -2,7 +2,7 @@
   "expo": {
     "name": "Shadow MMA",
     "slug": "ShadowMMA",
-    "version": "1.4.1",
+    "version": "1.4.8",
     "orientation": "portrait",
     "icon": "./assets/images/playstore-icon-official.png",
     "scheme": "shadowmma",
@@ -32,7 +32,7 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.belsonsan.ShadowMMA",
-      "versionCode": 8,
+      "versionCode": 9,
       "permissions": [
         "com.android.vending.BILLING",
         "com.google.android.gms.permission.AD_ID"
