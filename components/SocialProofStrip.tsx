@@ -79,8 +79,16 @@ export default function SocialProofStrip() {
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
   const AVATAR_COUNT = 6;
-  const size = uiScale(isTablet ? 44 : 38);
-  const overlap = Math.round(size * 0.32);
+  // Responsive avatar sizing by device width (bigger and clearer)
+  // Tuned for more comfortable sizing on normal phones
+  const baseSize =
+    width >= 1024 ? 64 :
+    width >= 768 ? 60 :
+    width >= 480 ? 54 :
+    width >= 400 ? 44 :
+    width >= 360 ? 38 : 32;
+  const size = uiScale(baseSize);
+  const overlap = Math.round(size * 0.34);
   const pulse = useRef(new Animated.Value(0)).current;
   const skeleton = useRef(new Animated.Value(0)).current;
   const [retryKey, setRetryKey] = useState(0);
@@ -141,7 +149,8 @@ export default function SocialProofStrip() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.row}
+        style={styles.scroll}
+        contentContainerStyle={[styles.row, styles.centerContent]}
       >
         {/* Avatars or placeholders */}
         {avatars.map((a, i) => {
@@ -196,7 +205,15 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     borderColor: '#2a2a2a',
   },
+  scroll: {
+    width: '100%',
+  },
   row: {
+    alignItems: 'center',
+  },
+  centerContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   avatarWrap: {

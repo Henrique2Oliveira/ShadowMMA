@@ -2,13 +2,14 @@
 import { Text } from '@/components';
 import { Colors, Typography } from '@/themes/theme';
 import { Move } from '@/types/game';
-import { uiScale } from '@/utils/uiScale';
+import { getDeviceBucket, uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef } from 'react';
 import {
   Animated,
+  Easing,
   Modal,
   ScrollView,
   StyleSheet,
@@ -36,83 +37,37 @@ export const CombosModal: React.FC<CombosModalProps> = ({
   const isSmallHeight = height < 700;
   const modalMaxHeight = Math.min(height * 0.82, uiScale(720));
 
+  // Tablet-aware width adjustment for combo cards
+  const deviceBucket = getDeviceBucket();
+  const isTabletDevice = deviceBucket === 'tablet' || deviceBucket === 'largeTablet';
+  const comboCardWidthStyle = isTabletDevice
+    ? {
+        alignSelf: 'center' as const,
+        width: (deviceBucket === 'largeTablet' ? '68%' : '80%') as `${number}%`,
+      }
+    : {};
+
   const slideAnims = useRef<AnimatedValue[]>(
-    combos.map(() => new Animated.Value(300))
-  ).current;
-  const rotateAnims = useRef<AnimatedValue[]>(
-    combos.map(() => new Animated.Value(0))
-  ).current;
-  const scaleAnims = useRef<AnimatedValue[]>(
-    combos.map(() => new Animated.Value(1))
+    combos.map(() => new Animated.Value(40))
   ).current;
 
   // Animations use local refs and are intentionally started only when `visible` changes.
   useEffect(() => {
     if (visible) {
       // Reset animations when modal opens
-      slideAnims.forEach((anim: AnimatedValue) => anim.setValue(300));
-      rotateAnims.forEach((anim: AnimatedValue) => anim.setValue(1));
-      scaleAnims.forEach((anim: AnimatedValue) => anim.setValue(1));
+  // Reset positions when modal opens
+  slideAnims.forEach((anim: AnimatedValue) => anim.setValue(40));
 
       // Create sequential animations with bounce and rotation
-      const animations = slideAnims.map((slideAnim: AnimatedValue, index: number) => {
-        const rotateAnim = rotateAnims[index];
-        const scaleAnim = scaleAnims[index];
-        // Add haptic feedback when fight button is pressed
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-        return Animated.sequence([
-          // Initial slide in with bounce
-          Animated.timing(slideAnim, {
-            toValue: -20, // Overshoot
-            duration: 400,
-            delay: index * 400,
-            useNativeDriver: true,
-          }),
-          // Bounce back with rotation and scale
-          Animated.parallel([
-            Animated.spring(slideAnim, {
-              toValue: 0,
-              tension: 100,
-              friction: 8,
-              useNativeDriver: true,
-            }),
-            Animated.sequence([
-              // Rotate and scale up
-              Animated.parallel([
-                Animated.timing(rotateAnim, {
-                  toValue: 1,
-                  duration: 200,
-                  useNativeDriver: true,
-                }),
-                Animated.timing(scaleAnim, {
-                  toValue: 1.08,
-                  duration: 200,
-                  useNativeDriver: true,
-                }),
-                Animated.timing(rotateAnim, {
-                  toValue: -0.5,
-                  duration: 300,
-                  useNativeDriver: true,
-                }),
-              ]),
-              // Return to normal
-              Animated.parallel([
-                Animated.timing(rotateAnim, {
-                  toValue: 0,
-                  duration: 300,
-                  useNativeDriver: true,
-                }),
-                Animated.timing(scaleAnim, {
-                  toValue: 1,
-                  duration: 300,
-                  useNativeDriver: true,
-                }),
-              ]),
-            ]),
-          ]),
-        ]);
-      });
+      const animations = slideAnims.map((slideAnim: AnimatedValue, index: number) =>
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 420,
+          delay: index * 120,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        })
+      );
 
       // Start all animations
       Animated.parallel(animations).start();
@@ -161,16 +116,10 @@ export const CombosModal: React.FC<CombosModalProps> = ({
                 key={index}
                 style={[
                   styles.comboContainer,
+                  comboCardWidthStyle,
                   {
                     transform: [
                       { translateX: slideAnims[index] },
-                      {
-                        rotate: rotateAnims[index].interpolate({
-                          inputRange: [0, 1],
-                          outputRange: ['0deg', '3deg'],
-                        })
-                      },
-                      { scale: scaleAnims[index] }
                     ]
                   }
                 ]}
@@ -211,7 +160,10 @@ export const CombosModal: React.FC<CombosModalProps> = ({
           </ScrollView>
           <TouchableOpacity
             style={styles.startButton}
-            onPress={onClose}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              onClose();
+            }}
           >
             <LinearGradient
               colors={['rgba(90,21,21,0.9)', 'rgba(62,16,16,0.85)']}
