@@ -8,6 +8,7 @@ import CookieConsentModalComponent from '@/components/Modals/CookieConsentModal'
 import { FightModeModal } from '@/components/Modals/FightModeModal';
 import NoFightsLeftModal from '@/components/Modals/NoFightsLeftModal';
 import { StreakCongratulationsModal } from '@/components/Modals/StreakCongratulationsModal';
+import WelcomeBonusModal from '@/components/Modals/WelcomeBonusModal';
 import SocialProofStrip from '@/components/SocialProofStrip';
 import { WeeklyMission } from '@/components/WeeklyMission';
 import { useAuth } from '@/contexts/AuthContext';
@@ -35,6 +36,7 @@ export default function Index() {
 
   const [isModalVisible, setIsModalVisible] = React.useState(false);
   const [showNoFightsModal, setShowNoFightsModal] = React.useState(false);
+  const [showWelcomeBonus, setShowWelcomeBonus] = React.useState(false);
 
   // Streak congratulations modal state
   const [showStreakModal, setShowStreakModal] = React.useState(false);
@@ -187,6 +189,23 @@ export default function Index() {
     // notificationMessages is static and loadMissionSettings is stable; suppress exhaustive-deps here
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  // Show "Welcome Bonus" once per user/device after account creation
+  useEffect(() => {
+    const maybeShowWelcome = async () => {
+      if (!user || !userData) return;
+      try {
+        const key = `welcomeBonusShown_${user.uid}`;
+        const seen = await AsyncStorage.getItem(key);
+        // Heuristic: show if not seen before; optionally require 4 lives to better match new accounts
+        const hasPlentyLives = typeof userData.fightsLeft === 'number' ? userData.fightsLeft === 4 : true;
+        if (!seen && hasPlentyLives) {
+          setShowWelcomeBonus(true);
+        }
+      } catch {}
+    };
+    maybeShowWelcome();
+  }, [user, userData]);
 
   // Set up streak update callback
   const handleStreakUpdate = useCallback((newStreak: number, previousStreak: number) => {
@@ -809,6 +828,19 @@ export default function Index() {
         onUpgrade={() => {
           setShowNoFightsModal(false);
           router.push('/(protected)/plans');
+        }}
+      />
+
+      {/* Welcome Bonus modal - shown once per user/device */}
+      <WelcomeBonusModal
+        visible={showWelcomeBonus}
+        onClose={async () => {
+          setShowWelcomeBonus(false);
+          try {
+            if (user) {
+              await AsyncStorage.setItem(`welcomeBonusShown_${user.uid}`, 'true');
+            }
+          } catch {}
         }}
       />
     </Animated.ScrollView >
