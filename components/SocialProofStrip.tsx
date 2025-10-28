@@ -1,16 +1,16 @@
 import { Colors, Typography } from '@/themes/theme';
 import {
-    ACCESSORIES_OPTIONS,
-    AvatarOptions,
-    BG_OPTIONS,
-    CLOTHING_COLOR_OPTIONS,
-    FACE_OPTIONS,
-    FACIAL_HAIR_OPTIONS,
-    FEMALE_HEAD_OPTIONS,
-    HAIR_COLOR_OPTIONS,
-    HEAD_OPTIONS,
-    MALE_HEAD_OPTIONS,
-    SKIN_OPTIONS,
+  ACCESSORIES_OPTIONS,
+  AvatarOptions,
+  BG_OPTIONS,
+  CLOTHING_COLOR_OPTIONS,
+  FACE_OPTIONS,
+  FACIAL_HAIR_OPTIONS,
+  FEMALE_HEAD_OPTIONS,
+  HAIR_COLOR_OPTIONS,
+  HEAD_OPTIONS,
+  MALE_HEAD_OPTIONS,
+  SKIN_OPTIONS,
 } from '@/types/avatar';
 import { uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -176,18 +176,18 @@ export default function SocialProofStrip() {
               <Animated.View style={[styles.pulse, { opacity: pulseOpacity, transform: [{ scale: pulseScale }] }]} />
               <View style={styles.dot} />
             </View>
-            <Text style={styles.title}>Join the club</Text>
+            <Text allowFontScaling={false} style={styles.title}>Join the club</Text>
           </View>
-          {networkIssue ? (
+            {networkIssue ? (
             <View style={styles.statusRow}>
               <MaterialCommunityIcons name="cloud-off-outline" size={14} color="#ffdb99" />
-              <Text style={styles.statusText}>No internet? Avatars unavailable.</Text>
+              <Text allowFontScaling={false} style={styles.statusText}>No internet? Avatars unavailable.</Text>
               <TouchableOpacity onPress={onRetry} style={styles.retryBtn} accessibilityRole="button" accessibilityLabel="Retry loading avatars">
-                <Text style={styles.retryText}>Retry</Text>
+                <Text allowFontScaling={false} style={styles.retryText}>Retry</Text>
               </TouchableOpacity>
             </View>
           ) : (
-            <Text style={styles.subtitle}>People are training right now</Text>
+            <Text allowFontScaling={false} style={styles.subtitle}>People are training right now</Text>
           )}
         </View>
       </ScrollView>
