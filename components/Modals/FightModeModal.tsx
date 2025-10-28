@@ -1,13 +1,15 @@
 import { Text } from '@/components';
+import { useAdConsent } from '@/contexts/ConsentContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
 import { isTablet, rf, rs } from '@/utils/responsive';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
+import Constants from 'expo-constants';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import React from 'react';
-import { Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Modal, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import NoFightsLeftModal from './NoFightsLeftModal';
 
 interface FightModeModalProps {
@@ -92,16 +94,19 @@ export function FightModeModal({
 }: FightModeModalProps) {
   // Pull user plan + lives from context (fallback to any explicit extraParams override)
   const { userData } = useUserData();
+  const { status: adConsentStatus } = useAdConsent();
   const derivedPlan = (extraParams?.plan || userData?.plan || '').toLowerCase();
   const isFreePlan = derivedPlan === 'free';
   const livesLeft = typeof userData?.fightsLeft === 'number' ? userData.fightsLeft : undefined;
   const [showNoFightsModal, setShowNoFightsModal] = React.useState(false);
+  const [busy, setBusy] = React.useState(false);
+  const navigatedRef = React.useRef(false);
 
   const isFullRandomFight = movesMode.includes('RANDOM_ALL');
   const isCustomSelected = movesMode.includes('CUSTOM_SELECTED');
   const KICKS_REQUIRED_LEVEL = 7;
   const DEFENSE_REQUIRED_LEVEL = 3;
-  const handleStartFight = () => {
+  const handleStartFight = async () => {
     // Add haptic feedback when fight button is pressed
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     // Guard: Prevent entering game if on Free plan with zero lives
@@ -111,28 +116,87 @@ export function FightModeModal({
       setShowNoFightsModal(true);
       return;
     }
+    if (busy || navigatedRef.current) return;
 
-    onStartFight();
-    router.push({
-      pathname: '/(protected)/(tabs)/game',
-      params: {
-        roundDuration,
-        numRounds,
-        restTime,
-        moveSpeed,
-        // If comboId is provided, use its specific moveType
-        // otherwise use the selected moveTypes from the modal
-        movesMode: comboId ? moveType || 'Punches' : movesMode.join(','),
-        category,
-        comboId: comboId !== undefined && comboId !== null ? String(comboId) : undefined,
-        // Send fight configuration for tracking
-        fightRounds: numRounds,
-        fightTimePerRound: roundDuration,
-        randomFight: movesMode.includes('RANDOM_ALL') ? 'true' : 'false',
-        timestamp: Date.now().toString()
-        , ...(extraParams || {})
+    const completedFights = userData?.lifetimeFightRounds || 0;
+    // Only show interstitial for free users, Android, and not in Expo Go
+    // Skip ads for the first 6 fights to improve initial UX and user retention
+    const baseShouldShow = isFreePlan && completedFights >= 8 && Platform.OS === 'android' && Constants.appOwnership !== 'expo';
+    // Show approximately 1 out of 2 times when eligible
+    const frequencyGate = Math.random() < (1/2);
+    const shouldShowAd = baseShouldShow && frequencyGate;
+
+    const proceedToGame = () => {
+      if (navigatedRef.current) return;
+      navigatedRef.current = true;
+      onStartFight();
+      router.push({
+        pathname: '/(protected)/(tabs)/game',
+        params: {
+          roundDuration,
+          numRounds,
+          restTime,
+          moveSpeed,
+          // If comboId is provided, use its specific moveType
+          // otherwise use the selected moveTypes from the modal
+          movesMode: comboId ? moveType || 'Punches' : movesMode.join(','),
+          category,
+          comboId: comboId !== undefined && comboId !== null ? String(comboId) : undefined,
+          // Send fight configuration for tracking
+          fightRounds: numRounds,
+          fightTimePerRound: roundDuration,
+          randomFight: movesMode.includes('RANDOM_ALL') ? 'true' : 'false',
+          timestamp: Date.now().toString(),
+          ...(extraParams || {})
+        }
+      });
+    };
+
+    if (!shouldShowAd) {
+      proceedToGame();
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const ads = (await import('react-native-google-mobile-ads')) as any;
+      const { InterstitialAd, AdEventType, TestIds } = ads;
+
+      // Use test ID in dev. For production, replace with your real interstitial unit ID
+      const unitId = __DEV__ ? TestIds.INTERSTITIAL : 'ca-app-pub-6678510991963006/4151420738';
+      if (!unitId || unitId.includes('xxxxxxxx')) {
+        proceedToGame();
+        return;
       }
-    });
+
+      const interstitial = InterstitialAd.createForAdRequest(unitId, {
+        requestNonPersonalizedAdsOnly: adConsentStatus !== 'granted'
+      });
+
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
+      const onClosed = () => {
+        if (timeoutId) clearTimeout(timeoutId);
+        proceedToGame();
+      };
+      const onError = () => {
+        if (timeoutId) clearTimeout(timeoutId);
+        proceedToGame();
+      };
+      const onLoaded = () => {
+        try { interstitial.show(); } catch { onError(); }
+      };
+
+      interstitial.addAdEventListener(AdEventType.CLOSED, onClosed);
+      interstitial.addAdEventListener(AdEventType.ERROR, onError);
+      interstitial.addAdEventListener(AdEventType.LOADED, onLoaded);
+
+      timeoutId = setTimeout(onError, 4000);
+      interstitial.load();
+    } catch {
+      proceedToGame();
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -330,8 +394,15 @@ export function FightModeModal({
               </View>
             )}
 
-            <TouchableOpacity style={styles.startButton} onPress={handleStartFight} activeOpacity={0.9}>
-              <Text style={styles.startButtonText}>Start Fight</Text>
+            <TouchableOpacity style={[styles.startButton, busy && { opacity: 0.8 }]} onPress={handleStartFight} activeOpacity={0.9} disabled={busy}>
+              {busy ? (
+                <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
+                  <ActivityIndicator size={isTablet ? 'large' : 'small'} color="#fff" />
+                  <Text style={styles.startButtonText}>Starting…</Text>
+                </View>
+              ) : (
+                <Text style={styles.startButtonText}>Start Fight</Text>
+              )}
             </TouchableOpacity>
             {isFreePlan && (
               <View style={styles.livesInline}>
