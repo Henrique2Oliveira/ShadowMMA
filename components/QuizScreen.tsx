@@ -1,11 +1,12 @@
 import { Text } from '@/components';
+import { SelectionModal } from '@/components/Modals/SelectionModal';
 import { Colors, Typography } from '@/themes/theme';
 import { recordLoginAndScheduleNotifications, registerForPushNotificationsAsync, scheduleDailyNotification } from '@/utils/notificationUtils';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Easing, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Animated, Easing, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 export type QuizData = {
   age: string;
@@ -48,6 +49,9 @@ export default function QuizScreen({ onComplete }: Props) {
   // Daily reminder custom time state
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [customReminderTime, setCustomReminderTime] = useState<Date | null>(null);
+  // Selection modals for rounds/time
+  const [showRoundsModal, setShowRoundsModal] = useState(false);
+  const [showTimeModal, setShowTimeModal] = useState(false);
   // Animate whenever step or track width changes
   // animate progress bar when step changes; skip exhaustive deps to avoid re-runs on anim ref
   // Intentional: progress animation handled via ref; avoid adding ref deps
@@ -352,25 +356,85 @@ export default function QuizScreen({ onComplete }: Props) {
         );
       case 7:
         return (
-          <NumberSelect
-            title="Choose your weekly target rounds"
-            description="A balanced goal is 15 rounds. You can change this later in Settings."
-            options={roundsOptions}
-            unit="rounds"
-            selected={answers.weeklyMissionRounds}
-            onSelect={(v) => goNext({ weeklyMissionRounds: v })}
-          />
+          <View>
+            <Text style={styles.question}>Choose your weekly target rounds</Text>
+            <Text style={styles.helperText}>A balanced goal is 15 rounds. You can change this later in Settings.</Text>
+
+            <Pressable
+              accessibilityLabel="Open rounds selection"
+              onPress={() => setShowRoundsModal(true)}
+              style={[styles.optionButton, { alignSelf: 'center', maxWidth: 520 }]}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={styles.optionText}>{answers.weeklyMissionRounds} rounds</Text>
+                <MaterialCommunityIcons name="chevron-down" size={22} color={Colors.text} />
+              </View>
+            </Pressable>
+
+            <SelectionModal
+              visible={showRoundsModal}
+              title="Select weekly rounds"
+              options={roundsOptions.map((v) => ({
+                label: `${v} rounds`,
+                value: v,
+                description:
+                  v === 15
+                    ? 'Recommended for most users'
+                    : v <= 10
+                    ? 'Short and manageable'
+                    : v >= 30
+                    ? 'Challenging target'
+                    : 'Steady weekly pace',
+              }))}
+              currentValue={answers.weeklyMissionRounds}
+              onSelect={(v) => {
+                // update selection but don't advance; confirmation button will proceed
+                setAnswers((prev) => ({ ...prev, weeklyMissionRounds: v }));
+              }}
+              onClose={() => setShowRoundsModal(false)}
+            />
+          </View>
         );
       case 8:
         return (
-          <NumberSelect
-            title="Choose your weekly training time"
-            description="60 minutes (1 hour) is a solid start. Adjust anytime in Settings."
-            options={timeOptions}
-            unit="min"
-            selected={answers.weeklyMissionTime}
-            onSelect={(v) => goNext({ weeklyMissionTime: v })}
-          />
+          <View>
+            <Text style={styles.question}>Choose your weekly training time</Text>
+            <Text style={styles.helperText}>60 minutes (1 hour) is a solid start. Adjust anytime in Settings.</Text>
+
+            <Pressable
+              accessibilityLabel="Open training time selection"
+              onPress={() => setShowTimeModal(true)}
+              style={[styles.optionButton, { alignSelf: 'center', maxWidth: 520 }]}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={styles.optionText}>{answers.weeklyMissionTime} min</Text>
+                <MaterialCommunityIcons name="chevron-down" size={22} color={Colors.text} />
+              </View>
+            </Pressable>
+
+            <SelectionModal
+              visible={showTimeModal}
+              title="Select weekly training time"
+              options={timeOptions.map((v) => ({
+                label: `${v} min`,
+                value: v,
+                description:
+                  v === 60
+                    ? 'Recommended for most users'
+                    : v <= 30
+                    ? 'Quick and efficient'
+                    : v >= 120
+                    ? 'Ambitious commitment'
+                    : 'Great weekly target',
+              }))}
+              currentValue={answers.weeklyMissionTime}
+              onSelect={(v) => {
+                // update selection but don't advance; confirmation button will proceed
+                setAnswers((prev) => ({ ...prev, weeklyMissionTime: v }));
+              }}
+              onClose={() => setShowTimeModal(false)}
+            />
+          </View>
         );
       default:
         return null;
@@ -417,6 +481,17 @@ export default function QuizScreen({ onComplete }: Props) {
         >
           <MaterialCommunityIcons name="arrow-left" size={20} color={Colors.text} />
           <Text style={styles.backFloatingText}>Back</Text>
+        </Pressable>
+      )}
+      {(step === 7 || step === 8) && (
+        <Pressable
+          style={styles.confirmFloatingButton}
+          onPress={() => goNext()}
+          disabled={isRequestingPermission}
+          accessibilityLabel="Confirm selection and continue"
+        >
+          <Text style={styles.backFloatingText}>Confirm</Text>
+          <MaterialCommunityIcons name="arrow-right" size={20} color={Colors.text} />
         </Pressable>
       )}
     </View>
@@ -473,6 +548,20 @@ const styles = StyleSheet.create({
   backFloatingButton: {
     position: 'absolute',
     left: 16,
+    bottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+  },
+  confirmFloatingButton: {
+    position: 'absolute',
+    right: 16,
     bottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -855,97 +944,4 @@ const QuestionBlock = ({ title, options, selected, onSelect }: QuestionBlockProp
   );
 };
 
-interface NumberSelectProps {
-  title: string;
-  description: string;
-  options: number[];
-  unit: string;
-  selected: number;
-  onSelect: (value: number) => void;
-}
-const NumberSelect = ({ title, description, options, unit, selected, onSelect }: NumberSelectProps) => {
-  const { height } = useWindowDimensions();
-  // Keep the list at a comfortable size: between 240 and 380px, ~42% of screen height on larger screens
-  const maxListHeight = Math.min(380, Math.max(240, height * 0.42));
-  const isRecommendedValue = (val: number) =>
-    (title.toLowerCase().includes('rounds') && val === 15) ||
-    (title.toLowerCase().includes('training time') && val === 60);
-
-  // Use a compact vertical list for many options
-  const useVertical = options.length >= 6;
-
-  return (
-    <View>
-      <Text style={styles.question}>{title}</Text>
-      <Text style={styles.helperText}>{description}</Text>
-      {useVertical ? (
-        <ScrollView
-          style={[styles.listContainer, { maxHeight: maxListHeight }]}
-          contentContainerStyle={{ paddingBottom: 120 }}
-          nestedScrollEnabled
-          showsVerticalScrollIndicator
-        >
-          {options.map((opt) => {
-            const isSelected = selected === opt;
-            const isRecommended = isRecommendedValue(opt);
-            return (
-              <Pressable
-                key={opt}
-                onPress={() => onSelect(opt)}
-                accessibilityRole="button"
-                accessibilityLabel={`Select ${opt} ${unit}`}
-                style={[styles.listItem, isSelected && styles.listItemSelected]}
-              >
-                <View style={styles.listItemLeft}>
-                  <View style={[styles.radioOuter, isSelected && styles.radioOuterSelected]}>
-                    {isSelected && <View style={styles.radioInner} />}
-                  </View>
-                  <Text style={styles.listItemText}>{opt} {unit}</Text>
-                </View>
-                {isRecommended && (
-                  <Text style={[styles.recommendMiniPill, isSelected && styles.recommendMiniPillActive]}>RECOMMENDED</Text>
-                )}
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      ) : (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
-          {options.map(opt => {
-            const isSelected = selected === opt;
-            const isRecommended = isRecommendedValue(opt);
-            return (
-              <Pressable
-                key={opt}
-                style={{
-                  paddingVertical: 12,
-                  paddingHorizontal: 16,
-                  backgroundColor: isSelected ? Colors.green : Colors.cardColor,
-                  borderRadius: 10,
-                  minWidth: 92,
-                  alignItems: 'center',
-                  borderWidth: 1,
-                  borderColor: isSelected ? Colors.green : Colors.button,
-                  position: 'relative'
-                }}
-                onPress={() => onSelect(opt)}
-              >
-                <Text style={{
-                  fontFamily: Typography.fontFamily,
-                  fontSize: 15,
-                  color: Colors.text,
-                }}>{opt} {unit}</Text>
-                {isRecommended && (
-                  <Text style={[
-                    styles.recommendMiniPill,
-                    isSelected && styles.recommendMiniPillActive
-                  ]}>RECOMMENDED</Text>
-                )}
-              </Pressable>
-            );
-          })}
-        </View>
-      )}
-    </View>
-  );
-};
+// Number selection handled via SelectionModal for consistent UX
