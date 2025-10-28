@@ -32,7 +32,7 @@ export default function TabsLayout() {
   const tabBarRadius = uiScale(35, { category: 'button' });
   const tabBarPaddingHorizontal = uiScale(10, { category: 'spacing' });
   // Flush the tab bar to the bottom edge (no extra gap)
-  const tabBarBottom = 0;
+  const tabBarBottom = uiScale(6, { category: 'spacing' });
   // Tighten icons on compact screens while respecting uiScale
   const iconSizeHome = uiScale(isSmallPhone ? 34 : 40, { category: 'icon' });
   const iconSizeGallery = uiScale(isSmallPhone ? 34 : 40, { category: 'icon' });
@@ -162,7 +162,7 @@ export default function TabsLayout() {
 
           // Render icons matching the original configuration
           const renderIcon = () => {
-            const color = isFocused ? 'white' : '#e6e6e6ff';
+            const color = isFocused ? 'white' : '#ffffff9c';
             switch (route.name) {
               case 'index':
                 return (
