@@ -1,6 +1,6 @@
 import { Text } from '@/components';
 import { Colors } from '@/themes/theme';
-import { getDeviceBucket, uiScale } from '@/utils/uiScale';
+import { ensureTouchSize, getDeviceBucket, scaledHitSlop, uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useFonts } from 'expo-font';
@@ -25,30 +25,31 @@ export default function TabsLayout() {
 
   // --- Responsive scaling values ---
   const deviceBucket = getDeviceBucket();
+  const isSmallPhone = deviceBucket === 'smallPhone' || deviceBucket === 'xSmallPhone';
   const isNormalPhone = deviceBucket === 'phone';
-  const tabBarHeight = uiScale(80, { category: 'button' });
+  const tabBarHeight = ensureTouchSize(uiScale(74, { category: 'button' }));
   const tabBarRadius = uiScale(35, { category: 'button' });
   const tabBarPaddingHorizontal = uiScale(10, { category: 'spacing' });
   // Flush the tab bar to the bottom edge (no extra gap)
   const tabBarBottom = 0;
-  const iconSizeHome = uiScale(42, { category: 'icon' });
-  const iconSizeGallery = uiScale(42, { category: 'icon' });
-  const iconSizeCombos = uiScale(43, { category: 'icon' });
-  const iconSizeProfile = uiScale(38, { category: 'icon' });
-  const fightBtnHeightBase = uiScale(30, { category: 'button' });
-  const fightFontSizeBase = uiScale(20, { category: 'font' });
-  // Slightly larger on normal phones, unchanged on small/x-small; other buckets rely on uiScale
-  const fightBtnHeight = Math.round(fightBtnHeightBase * (isNormalPhone ? 1.2 : 1.5));
-  const fightFontSize = Math.round(fightFontSizeBase * (isNormalPhone ? 1.3 : 1.3));
+  // Tighten icons on compact screens while respecting uiScale
+  const iconSizeHome = uiScale(isSmallPhone ? 34 : 40, { category: 'icon' });
+  const iconSizeGallery = uiScale(isSmallPhone ? 34 : 40, { category: 'icon' });
+  const iconSizeCombos = uiScale(isSmallPhone ? 35 : 41, { category: 'icon' });
+  const iconSizeProfile = uiScale(isSmallPhone ? 32 : 36, { category: 'icon' });
+  const sideNudge = isSmallPhone ? -14 : -20;
+  // Fight button sizing
+  const fightBtnHeight = ensureTouchSize(uiScale(isSmallPhone ? 26 : 30, { category: 'button' }));
+  const fightFontSize = uiScale(isSmallPhone ? 22 : 22, { category: 'font' });
   const fightLineHeight = fightFontSize + 4;
-  // Width as a percent of the icon wrapper width so it visually overflows; bump on normal phones only
-  const fightBtnWidthPercent = `${Math.round(160 * (isNormalPhone ? 0.8 : 0.5))}%` as const;
-  const iconWrapperHeight = uiScale(50, { category: 'button' });
+  // Keep width within its tab cell to avoid wrapping/clipping on narrow devices
+  const fightBtnWidthPercent = (isSmallPhone ? '100%' : isNormalPhone ? '100%' : '100%');
+  const iconWrapperHeight = ensureTouchSize(uiScale(48, { category: 'button' }));
   // const iconWrapperWidth = uiScale(36, { category: 'button' });
 
   // Custom animated TabBar with small dot indicator under active icon
   const CustomTabBar = (props: BottomTabBarProps) => {
-  const { state, descriptors, navigation } = props;
+    const { state, descriptors, navigation } = props;
 
     // Drive animations from the navigation index
     const animIndex = useRef(new Animated.Value(state.index)).current;
@@ -63,11 +64,11 @@ export default function TabsLayout() {
 
     const inputRange = useMemo(() => state.routes.map((_, i) => i), [state.routes]);
 
-  // Now safe to derive conditional UI
-  const focusedRoute = state.routes[state.index];
-  const focusedOptions: any = descriptors[focusedRoute.key]?.options ?? {};
-  const shouldHide = (focusedOptions?.tabBarStyle as any)?.display === 'none';
-  if (shouldHide) return null;
+    // Now safe to derive conditional UI
+    const focusedRoute = state.routes[state.index];
+    const focusedOptions: any = descriptors[focusedRoute.key]?.options ?? {};
+    const shouldHide = (focusedOptions?.tabBarStyle as any)?.display === 'none';
+    if (shouldHide) return null;
 
     return (
       <View
@@ -134,7 +135,7 @@ export default function TabsLayout() {
               case 'gallery':
                 return (
                   <Animated.View style={{ transform: [{ scale: iconScale }] }}>
-                    <MaterialIcons name="school" size={iconSizeGallery} color={color} style={{ marginLeft: -20 }} />
+                    <MaterialIcons name="school" size={iconSizeGallery} color={color} style={{ marginLeft: sideNudge }} />
                   </Animated.View>
                 );
               case 'combos':
@@ -144,7 +145,7 @@ export default function TabsLayout() {
                       name="boxing-glove"
                       size={iconSizeCombos}
                       color={color}
-                      style={{ transform: [{ rotateZ: '90deg' }], marginRight: -20 }}
+                      style={{ transform: [{ rotateZ: '90deg' }], marginRight: sideNudge }}
                     />
                   </Animated.View>
                 );
@@ -155,17 +156,16 @@ export default function TabsLayout() {
                   </Animated.View>
                 );
               case 'game':
+                // Render a view styled as a button; rely on outer onPress to avoid nested touchables
                 return (
-                  <TouchableOpacity
-                    onPress={handleFightPress}
-                    activeOpacity={0.9}
+                  <View
                     style={{
                       width: fightBtnWidthPercent,
                       height: fightBtnHeight,
                       backgroundColor: isFocused ? 'white' : '#e6e6e6ff',
-                      borderRadius: uiScale(5, { category: 'button' }),
+                      borderRadius: uiScale(6, { category: 'button' }),
                       paddingVertical: uiScale(2, { category: 'spacing' }),
-                      paddingHorizontal: uiScale(5, { category: 'spacing' }),
+                      paddingHorizontal: uiScale(6, { category: 'spacing' }),
                       justifyContent: 'center',
                       alignItems: 'center',
                       shadowColor: '#000',
@@ -176,20 +176,24 @@ export default function TabsLayout() {
                     }}
                   >
                     <Text
+                      numberOfLines={1}
+                      ellipsizeMode="clip"
+                      adjustsFontSizeToFit
                       style={{
                         color: '#000000',
                         fontSize: fightFontSize,
                         lineHeight: fightLineHeight,
-                        shadowColor: '#000',
-                        textShadowOffset: { width: 0, height: 2 },
-                        textShadowRadius: 2,
+                        textShadowColor: '#000',
+                        textShadowOffset: { width: 0, height: 1 },
+                        textShadowRadius: 1,
                         fontFamily: fontsLoaded ? 'CalSans' : undefined,
                         transform: [{ rotateZ: '-5deg' }],
+                        
                       }}
                     >
                       Fight
                     </Text>
-                  </TouchableOpacity>
+                  </View>
                 );
               default:
                 return null;
@@ -204,6 +208,7 @@ export default function TabsLayout() {
               accessibilityLabel={descriptors[route.key]?.options?.tabBarAccessibilityLabel}
               onPress={onPress}
               onLongPress={onLongPress}
+              hitSlop={scaledHitSlop(6)}
               style={{
                 flex: 1,
                 alignItems: 'center',
@@ -223,49 +228,49 @@ export default function TabsLayout() {
 
   return (
     <>
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-      }}
-      tabBar={(props) => <CustomTabBar {...props} />}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarShowLabel: false,
+      <Tabs
+        screenOptions={{
+          headerShown: false,
         }}
-      />
-      <Tabs.Screen
-        name="gallery"
-        options={{
-          title: 'Gallery',
-          tabBarShowLabel: false,
-        }}
-      />
-      <Tabs.Screen
-        name="game"
-        options={{
-          title: 'Game',
-          tabBarShowLabel: false,
-          tabBarStyle: { display: 'none' },
-        }}
-      />
-      <Tabs.Screen
-        name="combos"
-        options={{
-          title: 'Combos',
-          tabBarShowLabel: false,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarShowLabel: false,
-        }}
-      />
-  </Tabs>
-  </>
+        tabBar={(props) => <CustomTabBar {...props} />}
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Home',
+            tabBarShowLabel: false,
+          }}
+        />
+        <Tabs.Screen
+          name="gallery"
+          options={{
+            title: 'Gallery',
+            tabBarShowLabel: false,
+          }}
+        />
+        <Tabs.Screen
+          name="game"
+          options={{
+            title: 'Game',
+            tabBarShowLabel: false,
+            tabBarStyle: { display: 'none' },
+          }}
+        />
+        <Tabs.Screen
+          name="combos"
+          options={{
+            title: 'Combos',
+            tabBarShowLabel: false,
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: 'Profile',
+            tabBarShowLabel: false,
+          }}
+        />
+      </Tabs>
+    </>
   )
 }

@@ -8,18 +8,18 @@ import * as Haptics from 'expo-haptics';
 import React, { useRef, useState } from 'react';
 import type { TextInput as RNTextInput } from 'react-native';
 import {
-    ActivityIndicator,
-    Image,
-    Keyboard,
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  useWindowDimensions,
+  View,
 } from 'react-native';
 
 export default function AuthScreen() {
