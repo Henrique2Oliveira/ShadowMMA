@@ -1,5 +1,6 @@
 import { Text } from '@/components';
 import { Colors, Typography } from '@/themes/theme';
+import { incrementNewCombosCount } from '@/utils/badgeBus';
 import { uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -73,8 +74,10 @@ const UnlockedCombosModal: React.FC<UnlockedCombosModalProps> = ({
       setIndex(0);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       runEntry();
+      // Increment badge count by how many combos were just unlocked
+      if (total > 0) incrementNewCombosCount(total);
     }
-  }, [visible, hasItems, runEntry]);
+  }, [visible, hasItems, runEntry, total]);
   const handleNext = React.useCallback(() => {
     if (!hasItems) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

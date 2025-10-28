@@ -7,9 +7,11 @@ import { FightModeModal } from '@/components/Modals/FightModeModal';
 import { useUserData } from '@/contexts/UserDataContext';
 import { app as firebaseApp } from '@/FirebaseConfig.js';
 import { Colors, Typography } from '@/themes/theme';
+import { setNewCombosCount } from '@/utils/badgeBus';
 import { getDeviceBucket, uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -172,6 +174,14 @@ export default function Combos() {
     fetchCombos();
     loadRecentCombos();
   }, [fetchCombos, loadRecentCombos]);
+
+  // Reset the new combos badge count whenever this page is focused/opened
+  useFocusEffect(
+    useCallback(() => {
+      setNewCombosCount(0);
+      return () => {};
+    }, [])
+  );
 
   const getUserLevel = (xp: number) => {
     // Simple level calculation with hard cap: every 100 XP is a new level up to 100

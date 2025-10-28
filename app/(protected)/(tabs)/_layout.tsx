@@ -1,11 +1,12 @@
 import { Text } from '@/components';
 import { Colors } from '@/themes/theme';
+import { getNewCombosCount, hydrateNewCombosCount, setNewCombosCount, subscribeNewCombosCount } from '@/utils/badgeBus';
 import { ensureTouchSize, getDeviceBucket, scaledHitSlop, uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useFonts } from 'expo-font';
 import { Tabs, useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, TouchableOpacity, View } from 'react-native';
 
 export default function TabsLayout() {
@@ -52,7 +53,9 @@ export default function TabsLayout() {
     const { state, descriptors, navigation } = props;
 
     // Drive animations from the navigation index
-    const animIndex = useRef(new Animated.Value(state.index)).current;
+  const animIndex = useRef(new Animated.Value(state.index)).current;
+  const [newCombosCount, setNewCombosIndicator] = useState<number>(getNewCombosCount());
+    const dotPulse = useRef(new Animated.Value(0)).current;
     useEffect(() => {
       Animated.timing(animIndex, {
         toValue: state.index,
@@ -61,6 +64,37 @@ export default function TabsLayout() {
         useNativeDriver: true,
       }).start();
     }, [state.index, animIndex]);
+
+    // hydrate persisted badge count
+    useEffect(() => {
+      hydrateNewCombosCount();
+    }, []);
+
+    // Subscribe to global badge updates
+    useEffect(() => {
+      const unsub = subscribeNewCombosCount(setNewCombosIndicator);
+      return unsub;
+    }, []);
+
+    // Gentle pulse animation for the red dot to draw attention without being annoying
+    useEffect(() => {
+      let loop: Animated.CompositeAnimation | undefined;
+      if (newCombosCount > 0) {
+        dotPulse.setValue(0);
+        loop = Animated.loop(
+          Animated.sequence([
+            Animated.timing(dotPulse, { toValue: 1, duration: 900, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+            Animated.timing(dotPulse, { toValue: 0, duration: 900, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+          ])
+        );
+        loop.start();
+      }
+      return () => {
+        if (loop) loop.stop();
+      };
+    }, [newCombosCount, dotPulse]);
+
+    const dotScale = dotPulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.15] });
 
     const inputRange = useMemo(() => state.routes.map((_, i) => i), [state.routes]);
 
@@ -96,6 +130,10 @@ export default function TabsLayout() {
             if (route.name === 'game') {
               handleFightPress();
               return;
+            }
+            if (route.name === 'combos') {
+              // Clear badge once user heads to Combos
+              setNewCombosCount(0);
             }
             const event = navigation.emit({
               type: 'tabPress',
@@ -138,17 +176,75 @@ export default function TabsLayout() {
                     <MaterialIcons name="school" size={iconSizeGallery} color={color} style={{ marginLeft: sideNudge }} />
                   </Animated.View>
                 );
-              case 'combos':
+              case 'combos': {
+                const count = newCombosCount;
+                const showBadge = count > 0;
+                const badgeMin = uiScale(14, { category: 'icon' });
+                const badgePadH = uiScale(4, { category: 'spacing' });
+                const badgeHeight = uiScale(16, { category: 'icon' });
+                // Position a bit higher and further right so it sits on the top-right corner visually
+                const badgeTop = uiScale(-5, { category: 'spacing' });
+                const badgeRight = uiScale(-42 + Math.abs(sideNudge), { category: 'spacing' });
+                const ringPadV = uiScale(3, { category: 'spacing' });
+                const ringPadH = uiScale(3, { category: 'spacing' });
+                const label = count > 99 ? '99+' : String(count);
                 return (
-                  <Animated.View style={{ transform: [{ scale: iconScale }] }}>
-                    <MaterialCommunityIcons
-                      name="boxing-glove"
-                      size={iconSizeCombos}
-                      color={color}
-                      style={{ transform: [{ rotateZ: '90deg' }], marginRight: sideNudge }}
-                    />
-                  </Animated.View>
+                  <View style={{ position: 'relative' }}>
+                    <Animated.View style={{ transform: [{ scale: iconScale }] }}>
+                      <MaterialCommunityIcons
+                        name="boxing-glove"
+                        size={iconSizeCombos}
+                        color={color}
+                        style={{ transform: [{ rotateZ: '90deg' }], marginRight: sideNudge }}
+                      />
+                    </Animated.View>
+                    {showBadge && (
+                      <Animated.View
+                        pointerEvents="none"
+                        style={{
+                          position: 'absolute',
+                          top: badgeTop,
+                          right: badgeRight,
+                          paddingHorizontal: ringPadH,
+                          paddingVertical: ringPadV,
+                          borderRadius: uiScale(12, { category: 'icon' }),
+                          backgroundColor: Colors.bgDark, // ring color matching tab bar bg
+                          transform: [{ scale: dotScale }],
+                        }}
+                      >
+                        <View
+                          style={{
+                            minWidth: badgeMin,
+                            height: badgeHeight,
+                            paddingHorizontal: badgePadH,
+                            borderRadius: uiScale(10, { category: 'icon' }),
+                            backgroundColor: '#ff3b30', // brighter red for better visibility
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            shadowColor: '#ff3b30',
+                            shadowOpacity: 0.9,
+                            shadowRadius: 6,
+                            shadowOffset: { width: 0, height: 0 },
+                            elevation: 4,
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: 'white',
+                              fontSize: uiScale(10, { category: 'font' }),
+                              lineHeight: uiScale(12, { category: 'font' }),
+                              fontFamily: fontsLoaded ? 'CalSans' : undefined,
+                            }}
+                            numberOfLines={1}
+                          >
+                            {label}
+                          </Text>
+                        </View>
+                      </Animated.View>
+                    )}
+                  </View>
                 );
+              }
               case 'profile':
                 return (
                   <Animated.View style={{ transform: [{ scale: iconScale }] }}>
