@@ -1,3 +1,4 @@
+import { Text, TextInput } from '@/components';
 import { AlertModal } from '@/components/Modals/AlertModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { Colors, Typography } from '@/themes/theme';
@@ -5,21 +6,20 @@ import { uiScale } from '@/utils/uiScale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import React, { useRef, useState } from 'react';
+import type { TextInput as RNTextInput } from 'react-native';
 import {
-  ActivityIndicator,
-  Image,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    Image,
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    useWindowDimensions,
+    View,
 } from 'react-native';
 
 export default function AuthScreen() {
@@ -43,10 +43,10 @@ export default function AuthScreen() {
   const [passwordResetType, setPasswordResetType] = useState<'success' | 'error'>('success');
   const { login, register, resetPassword } = useAuth();
 
-  const nameRef = useRef<TextInput>(null);
-  const emailRef = useRef<TextInput>(null);
-  const passwordRef = useRef<TextInput>(null);
-  const confirmPasswordRef = useRef<TextInput>(null);
+  const nameRef = useRef<RNTextInput>(null);
+  const emailRef = useRef<RNTextInput>(null);
+  const passwordRef = useRef<RNTextInput>(null);
+  const confirmPasswordRef = useRef<RNTextInput>(null);
 
   const handleSubmit = async () => {
     setError('');
@@ -71,7 +71,7 @@ export default function AuthScreen() {
       if (!result.success && result.error) {
         setError(result.error.code);
       }
-    } catch (e) {
+    } catch {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -234,7 +234,7 @@ export default function AuthScreen() {
                         setPasswordResetMessage(result.error.message || 'Failed to send reset email. Please check your email and try again.');
                         setShowPasswordResetModal(true);
                       }
-                    } catch (e) {
+                    } catch {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                       setPasswordResetType('error');
                       setPasswordResetMessage('Failed to send reset email. Please try again.');
