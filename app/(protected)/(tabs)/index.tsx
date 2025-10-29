@@ -994,7 +994,7 @@ const styles = StyleSheet.create({
     color: Colors.text,
     textAlign: 'center',
     fontFamily: Typography.fontFamily,
-    fontSize: 12,
+    fontSize: isTablet ? rf(15) : 12,
     textShadowColor: "#000",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 1,
