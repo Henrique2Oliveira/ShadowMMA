@@ -4,7 +4,6 @@ import { GradientButton } from '@/components/Buttons/GradientButton';
 import { StartFightButton } from '@/components/Buttons/StartFightButton';
 import { LevelBar } from '@/components/LevelBar';
 import { AlertModal } from '@/components/Modals/AlertModal';
-import CookieConsentModalComponent from '@/components/Modals/CookieConsentModal';
 import { FightModeModal } from '@/components/Modals/FightModeModal';
 import NoFightsLeftModal from '@/components/Modals/NoFightsLeftModal';
 import { StreakCongratulationsModal } from '@/components/Modals/StreakCongratulationsModal';
@@ -28,7 +27,7 @@ import { RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 
 export default function Index() {
-  const { status: adConsentStatus, setGranted, setDenied, loading: consentLoading } = useAdConsent();
+  const { status: adConsentStatus } = useAdConsent();
   const { user, setStreakUpdateCallback } = useAuth();
   const { userData, refreshUserData } = useUserData();
 
@@ -813,13 +812,7 @@ export default function Index() {
         }}
       />
 
-      {/* Cookie Consent - show for all users after userData (plan) is loaded to avoid flicker */}
-      <CookieConsentModalComponent
-        visible={!!userData && !consentLoading && adConsentStatus === 'unknown'}
-        onAccept={() => { setGranted(); }}
-        onLimit={() => { setDenied(); }}
-        onRequestClose={() => { /* force a choice to proceed */ }}
-      />
+      {/* UMP handles consent UI; no custom cookie consent modal needed */}
 
       {/* No Fights Left Modal shown when user on Free plan has 0 lives */}
       <NoFightsLeftModal

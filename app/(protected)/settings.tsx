@@ -1,6 +1,5 @@
 import { Text } from '@/components';
 import { AlertModal } from '@/components/Modals/AlertModal';
-import CookieConsentModal from '@/components/Modals/CookieConsentModal';
 import { DeleteAccountModal } from '@/components/Modals/DeleteAccountModal';
 import { SelectionModal } from '@/components/Modals/SelectionModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,7 +22,7 @@ import { Platform, ScrollView, StyleSheet, Switch, TouchableOpacity, View } from
 export default function Settings() {
   const { user, resetPassword } = useAuth();
   const { userData } = useUserData();
-  const { status: adConsentStatus, setGranted, setDenied } = useAdConsent();
+  const { status: adConsentStatus, showConsentForm } = useAdConsent();
   // referenced for possible future ad decisions; mark as used for linter
   void adConsentStatus;
   const [isLoading, setIsLoading] = useState(false);
@@ -42,7 +41,7 @@ export default function Settings() {
   const [password, setPassword] = useState('');
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
-  const [showPrivacyAdsModal, setShowPrivacyAdsModal] = useState(false);
+  // Removed custom cookie modal; handled by UMP
   
 
   // Enhanced notification error handling
@@ -231,7 +230,7 @@ export default function Settings() {
 
         <TouchableOpacity
           style={styles.option}
-          onPress={() => setShowPrivacyAdsModal(true)}
+          onPress={() => { showConsentForm(); }}
         >
           <MaterialCommunityIcons name="shield-check" size={isTablet ? 30 : 24} color={Colors.text} />
           <Text style={[styles.optionText, isTablet && styles.optionTextTablet]}>Privacy & Ads</Text>
@@ -505,13 +504,7 @@ export default function Settings() {
         onSelect={handleUpdateMissionTime}
         onClose={() => setShowMissionTimeModal(false)}
       />
-      {/* Privacy & Ads: revisit cookie consent */}
-      <CookieConsentModal
-        visible={showPrivacyAdsModal}
-        onAccept={() => { setGranted(); setShowPrivacyAdsModal(false); }}
-        onLimit={() => { setDenied(); setShowPrivacyAdsModal(false); }}
-        onRequestClose={() => setShowPrivacyAdsModal(false)}
-      />
+      {/* Privacy & Ads handled by UMP consent form; no custom modal */}
 
       
 

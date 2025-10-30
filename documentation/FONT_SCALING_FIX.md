@@ -49,7 +49,6 @@ Created custom `Text` and `TextInput` components that disable automatic font sca
 ### Modal Components
 - ✅ `components/Modals/AlertModal.tsx`
 - ✅ `components/Modals/CombosModal.tsx`
-- ✅ `components/Modals/CookieConsentModal.tsx`
 - ✅ `components/Modals/DeleteAccountModal.tsx`
 - ✅ `components/Modals/FeedbackModal.tsx`
 - ✅ `components/Modals/FightModeModal.tsx`
