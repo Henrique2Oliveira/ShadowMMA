@@ -28,7 +28,19 @@ export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
   const [loginPromptVisible, setLoginPromptVisible] = useState(false);
 
   // Shared plans list for indexing/animations
-  const displayPlans = useMemo<SubscriptionPlan[]>(() => (rcPlans.length ? rcPlans : subscriptionPlans), [rcPlans]);
+  // Order plans for best UX: Free first, Monthly next, Annual last
+  const displayPlans = useMemo<SubscriptionPlan[]>(() => {
+    const source = rcPlans.length ? rcPlans : subscriptionPlans;
+    const score = (p: SubscriptionPlan) => {
+      const title = (p.title || '').toLowerCase();
+      const period = (p.period || '').toLowerCase();
+      if (title === 'free' || period === 'free') return 0;
+      if (period === 'month' || /month/i.test(period)) return 1;
+      if (period === 'year' || /annual|year/i.test(period)) return 2;
+      return 3;
+    };
+    return [...source].sort((a, b) => score(a) - score(b));
+  }, [rcPlans]);
   // Entry and press animations for cards
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const entryOpacity = useMemo(() => displayPlans.map(() => new Animated.Value(0)), [displayPlans.length]);
@@ -80,18 +92,61 @@ export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
     const pool = rcPlans.length ? rcPlans : subscriptionPlans;
     const monthly = pool.find(p => (p.period || '').toLowerCase() === 'month');
     const annual = pool.find(p => (p.period || '').toLowerCase() === 'year');
+
+    // Robust number parser for localized currency strings (handles thousand/decimal separators)
     const toNumber = (price?: string | null) => {
       if (!price) return null;
-      const n = parseFloat(String(price).replace(/[^0-9.]/g, ''));
+      let cleaned = String(price).trim();
+      // keep digits, comma, dot, minus only
+      cleaned = cleaned.replace(/[^0-9,\.\-]/g, '');
+      const hasComma = cleaned.includes(',');
+      const hasDot = cleaned.includes('.');
+      if (hasComma && hasDot) {
+        const lastComma = cleaned.lastIndexOf(',');
+        const lastDot = cleaned.lastIndexOf('.');
+        const decIndex = Math.max(lastComma, lastDot);
+        const integer = cleaned.slice(0, decIndex).replace(/[.,]/g, '');
+        const fractional = cleaned.slice(decIndex + 1).replace(/[^0-9]/g, '');
+        cleaned = integer + (fractional ? '.' + fractional : '');
+      } else if (hasComma && !hasDot) {
+        const parts = cleaned.split(',');
+        if (parts.length === 2 && parts[1].length > 0 && parts[1].length <= 2) {
+          cleaned = parts[0].replace(/[^0-9]/g, '') + '.' + parts[1].replace(/[^0-9]/g, '');
+        } else {
+          cleaned = cleaned.replace(/,/g, '');
+        }
+      } else if (hasDot) {
+        const dots = (cleaned.match(/\./g) || []).length;
+        if (dots > 1) {
+          const last = cleaned.lastIndexOf('.');
+          const integer = cleaned.slice(0, last).replace(/\./g, '');
+          const fractional = cleaned.slice(last + 1).replace(/[^0-9]/g, '');
+          cleaned = integer + (fractional ? '.' + fractional : '');
+        }
+      }
+      const n = parseFloat(cleaned);
       return isNaN(n) ? null : n;
     };
+
+    // Extract currency symbol and whether it's a prefix or suffix from price string
+    const extractCurrency = (v?: string | null): { symbol: string; position: 'prefix' | 'suffix' } => {
+      if (!v) return { symbol: '$', position: 'prefix' };
+      const s = String(v);
+      const lead = s.match(/^\s*([^0-9\s.,]+)/); // leading non-digits
+      const trail = s.match(/[^0-9\s.,]+\s*$/); // trailing non-digits
+      if (lead && lead[1]?.trim()) return { symbol: lead[1].trim(), position: 'prefix' };
+      if (trail && trail[0]?.trim()) return { symbol: trail[0].trim(), position: 'suffix' };
+      return { symbol: '$', position: 'prefix' };
+    };
+
     const monthlyPrice = monthly ? toNumber(monthly.price) : null;
     const annualPrice = annual ? toNumber(annual.price) : null;
     const annualMonthly = annualPrice != null ? +(annualPrice / 12).toFixed(2) : null;
     const savingsPct = monthlyPrice != null && annualMonthly != null && monthlyPrice > 0
       ? Math.max(0, Math.round((1 - (annualMonthly / monthlyPrice)) * 100))
       : null;
-    return { monthly, annual, monthlyPrice, annualPrice, annualMonthly, savingsPct } as const;
+    const annualCurrency = extractCurrency(annual?.price);
+    return { monthly, annual, monthlyPrice, annualPrice, annualMonthly, savingsPct, annualCurrency } as const;
   }, [rcPlans]);
 
   // Stagger in plan cards softly
@@ -243,7 +298,9 @@ export default function PaywallScreen({ onSkip, onSelectPlan }: Props) {
                   <Text style={styles.monthlyEquivalent}>
                     {'\u2248 '}
                     <Text style={styles.monthlyEquivalentValue}>
-                      {(plan.price || '').match(/^[^0-9]+/)?.[0] || ''}{pricing.annualMonthly.toFixed(2)}
+                      {pricing.annualCurrency.position === 'prefix'
+                        ? `${pricing.annualCurrency.symbol}${pricing.annualMonthly.toFixed(2)}`
+                        : `${pricing.annualMonthly.toFixed(2)}${pricing.annualCurrency.symbol}`}
                     </Text>
                     <Text style={styles.monthlyEquivalentSuffix}>/mo equivalent</Text>
                   </Text>
