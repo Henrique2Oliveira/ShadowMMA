@@ -1101,7 +1101,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   currentPlanSection: {
-    marginBottom: 30,
+    marginBottom: 8,
   },
   sectionTitle: {
     color: Colors.text,
