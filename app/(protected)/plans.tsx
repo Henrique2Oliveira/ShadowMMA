@@ -607,7 +607,19 @@ export default function Plans() {
   }, [rcPlans]);
 
   // Pretty entry + press animations for plan cards (inspired by ComboCarousel fade/slide)
-  const displayPlans = useMemo(() => (rcPlans.length ? rcPlans : subscriptionPlans), [rcPlans]);
+  // Order for best UX: Free first, then Monthly, then Annual last
+  const displayPlans = useMemo(() => {
+    const source = rcPlans.length ? rcPlans : subscriptionPlans;
+    const rank = (p: SubscriptionPlan) => {
+      const t = (p.title || '').toLowerCase();
+      const per = (p.period || '').toLowerCase();
+      if (t === 'free' || per === 'free') return 0;
+      if (per === 'month' || /month/.test(per)) return 1;
+      if (per === 'year' || /annual|year/.test(per)) return 2;
+      return 3;
+    };
+    return [...source].sort((a, b) => rank(a) - rank(b));
+  }, [rcPlans]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const entryOpacity = useMemo(() => displayPlans.map(() => new Animated.Value(0)), [displayPlans.length]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -796,7 +808,7 @@ export default function Plans() {
         <View style={styles.allPlansSection}>
           <Text style={styles.sectionTitle}>All Available Plans</Text>
           <Text style={styles.sectionSubtitle}>Choose the plan that fits your training goals</Text>
-          <View style={[
+          <View style={[ 
             styles.cardsWrapper,
             {
               width: layout.containerWidth,
@@ -805,7 +817,9 @@ export default function Plans() {
             isTablet && {
               flexDirection: 'row',
               flexWrap: 'wrap',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              // Prevent extra cross-axis spacing between rows on some devices
+              alignContent: 'flex-start',
             }
           ]}>
             {displayPlans.map((plan, i) => (
