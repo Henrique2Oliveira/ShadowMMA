@@ -108,6 +108,27 @@ expo run:android
 ```
 Then re-run `npx expo start --dev-client` and open on the device.
 
+### Test AdMob/UMP Consent on Android Emulator
+
+This app is configured to show the official Google UMP consent form during development on the Android emulator by forcing EEA geography and marking the emulator as a test device (see `contexts/ConsentContext.tsx`). To test:
+
+1. Build and install the Dev Client (native build required for ads/UMP):
+   ```powershell
+   npm run android
+   ```
+2. Start Metro in dev‑client mode:
+   ```powershell
+   npx expo start --dev-client
+   ```
+3. In the emulator, open the installed Dev Client app and select this project.
+4. To simulate first run and force the consent prompt again, clear app data or reinstall:
+   ```powershell
+   adb shell pm clear com.belsonsan.ShadowMMA
+   ```
+Notes:
+- In development, UMP debug options are enabled to emulate an EEA user and treat the emulator as a test device.
+- Banner ads wait for consent initialization before rendering, so ads won't appear before the consent flow has a chance to run.
+
 ## 6. Environment & Secrets
 - Firebase web config is in `FirebaseConfig.js` (public-safe keys).
 - Proprietary combo/content data lives in `secrets/` (e.g., `data.js`, `combos.json`). Avoid committing sensitive future data beyond what’s intentionally public.

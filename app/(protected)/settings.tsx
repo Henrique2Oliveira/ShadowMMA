@@ -22,7 +22,7 @@ import { Platform, ScrollView, StyleSheet, Switch, TouchableOpacity, View } from
 export default function Settings() {
   const { user, resetPassword } = useAuth();
   const { userData } = useUserData();
-  const { status: adConsentStatus, showConsentForm } = useAdConsent();
+  const { status: adConsentStatus, showConsentForm, setGranted, setDenied } = useAdConsent();
   // referenced for possible future ad decisions; mark as used for linter
   void adConsentStatus;
   const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +41,8 @@ export default function Settings() {
   const [password, setPassword] = useState('');
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
-  // Removed custom cookie modal; handled by UMP
+  // Consent modal fallback when UMP is unavailable (e.g., Expo Go)
+  const [showConsentChoice, setShowConsentChoice] = useState(false);
   
 
   // Enhanced notification error handling
@@ -230,7 +231,10 @@ export default function Settings() {
 
         <TouchableOpacity
           style={styles.option}
-          onPress={() => { showConsentForm(); }}
+          onPress={async () => {
+            const shown = await showConsentForm();
+            if (!shown) setShowConsentChoice(true);
+          }}
         >
           <MaterialCommunityIcons name="shield-check" size={isTablet ? 30 : 24} color={Colors.text} />
           <Text style={[styles.optionText, isTablet && styles.optionTextTablet]}>Privacy & Ads</Text>
@@ -505,6 +509,21 @@ export default function Settings() {
         onClose={() => setShowMissionTimeModal(false)}
       />
       {/* Privacy & Ads handled by UMP consent form; no custom modal */}
+      {/* Fallback consent choice when UMP not available (e.g., Expo Go or unsupported) */}
+      <SelectionModal
+        visible={showConsentChoice}
+        title="Ads Preferences"
+        options={[
+          { label: 'Personalized ads', value: 2, description: 'Use activity to show more relevant ads' },
+          { label: 'Non‑personalized ads', value: 1, description: 'Show general ads without using personal data' },
+        ]}
+        currentValue={adConsentStatus === 'granted' ? 2 : adConsentStatus === 'denied' ? 1 : undefined}
+        onSelect={async (val) => {
+          if (val === 2) await setGranted();
+          else if (val === 1) await setDenied();
+        }}
+        onClose={() => setShowConsentChoice(false)}
+      />
 
       
 

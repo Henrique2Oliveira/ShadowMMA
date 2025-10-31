@@ -10,7 +10,7 @@ type Props = {
 };
 
 export default function TopBanner({ bottomOffset = 96, inline = false }: Props) {
-	const { status } = useAdConsent();
+	const { status, loading } = useAdConsent();
 	const { userData } = useUserData();
 	const [AdsComponents, setAdsComponents] = useState<null | {
 		BannerAd: any;
@@ -38,7 +38,8 @@ export default function TopBanner({ bottomOffset = 96, inline = false }: Props) 
 	const completedFights = userData?.lifetimeFightRounds || 0;
 	if (completedFights < 6) return null;
 
-	if (!AdsComponents) return null;
+	// Ensure we wait for consent initialization before showing any ads
+	if (loading || !AdsComponents) return null;
 	const { BannerAd, BannerAdSize, TestIds } = AdsComponents;
 
 	// Use Google test banner in dev; replace with your production banner unit ID when ready
