@@ -12,14 +12,48 @@ export type SubscriptionPlan = {
 
 // Helper function to calculate monthly equivalent price
 export const calculateMonthlyEquivalent = (price: string, period: string): string | null => {
-  if (period.toLowerCase() === 'year') {
-    const yearlyPrice = parseFloat(price.replace('$', ''));
-    const monthlyPrice = yearlyPrice / 12;
-    return `$${monthlyPrice.toFixed(2)}/month`;
-  }
-  return null;
+  if (period.toLowerCase() !== 'year') return null;
+  // Robust localized currency parser: supports "," or "." decimals and thousands separators
+  const toNumber = (v: string): number | null => {
+    let s = v.replace(/[^0-9.,]/g, '');
+    if (!s) return null;
+    const hasDot = s.includes('.');
+    const hasComma = s.includes(',');
+    if (hasDot && hasComma) {
+      const lastDot = s.lastIndexOf('.');
+      const lastComma = s.lastIndexOf(',');
+      const decimalSep = lastDot > lastComma ? '.' : ',';
+      const thousandSep = decimalSep === '.' ? ',' : '.';
+      s = s.split(thousandSep).join('');
+      if (decimalSep === ',') s = s.replace(/,/g, '.');
+    } else if (hasComma && !hasDot) {
+      s = s.replace(/,/g, '.');
+    }
+    const n = parseFloat(s);
+    return isNaN(n) ? null : n;
+  };
+  const extractCurrency = (v: string): { symbol: string; position: 'prefix' | 'suffix' } => {
+    const str = v ?? '';
+    // find first and last digit index
+    const firstDigit = str.search(/[0-9]/);
+    const lastDigit = str.lastIndexOf(str.match(/[0-9](?!.*[0-9])/g)?.[0] ?? '');
+    if (firstDigit === -1) return { symbol: '$', position: 'prefix' };
+    const rawPrefix = str.slice(0, firstDigit).replace(/[0-9.,\s]/g, '');
+    const rawSuffix = lastDigit >= 0 ? str.slice(lastDigit + 1).replace(/[0-9.,\s]/g, '') : '';
+    if (rawPrefix) return { symbol: rawPrefix, position: 'prefix' };
+    if (rawSuffix) return { symbol: rawSuffix, position: 'suffix' };
+    return { symbol: '$', position: 'prefix' };
+  };
+  const yearlyPrice = toNumber(price);
+  if (yearlyPrice == null) return null;
+  const monthlyPrice = yearlyPrice / 12;
+  const { symbol, position } = extractCurrency(price);
+  const amount = monthlyPrice.toFixed(2);
+  return position === 'suffix' ? `${amount}${symbol}/month` : `${symbol}${amount}/month`;
 };
 
+
+//for when is offline or revenuecat fails the subscription plans can be seen
 export const subscriptionPlans: SubscriptionPlan[] = [
   {
     title: 'Free',
@@ -115,7 +149,7 @@ export const mapOfferingsToPlans = (offerings: any): SubscriptionPlan[] => {
     // Always include Free plan at the end for discoverability
     const finalPlans = freeConfig ? [...ordered, freeConfig] : ordered;
     return finalPlans;
-  } catch (e) {
+  } catch {
     // Fallback to config on any mapping error
     return subscriptionPlans;
   }

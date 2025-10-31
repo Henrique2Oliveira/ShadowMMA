@@ -556,9 +556,31 @@ export default function Plans() {
     const pool = rcPlans.length ? rcPlans : subscriptionPlans;
     const monthly = pool.find(p => (p.period || '').toLowerCase() === 'month');
     const annual = pool.find(p => (p.period || '').toLowerCase() === 'year');
+    // Robust number parser for localized currency strings (handles thousand/decimal separators)
     const toNumber = (price?: string | null) => {
       if (!price) return null;
-      const n = parseFloat(price.replace(/[^0-9.]/g, ''));
+      // Keep only digits, comma and dot
+      let s = price.replace(/[^0-9.,]/g, '');
+      if (!s) return null;
+      const hasDot = s.includes('.');
+      const hasComma = s.includes(',');
+      if (hasDot && hasComma) {
+        // Assume the rightmost separator is the decimal separator
+        const lastDot = s.lastIndexOf('.');
+        const lastComma = s.lastIndexOf(',');
+        const decimalSep = lastDot > lastComma ? '.' : ',';
+        const thousandSep = decimalSep === '.' ? ',' : '.';
+        // remove thousands
+        s = s.split(thousandSep).join('');
+        // normalize decimal to dot
+        if (decimalSep === ',') s = s.replace(/,/g, '.');
+      } else if (hasComma && !hasDot) {
+        // Treat comma as decimal separator and remove any thousand-style dots (already none)
+        s = s.replace(/,/g, '.');
+      } else {
+        // Only dot present or only digits: do nothing (dot is decimal or integer)
+      }
+      const n = parseFloat(s);
       return isNaN(n) ? null : n;
     };
     const monthlyPrice = monthly ? toNumber(monthly.price) : null;
@@ -567,7 +589,21 @@ export default function Plans() {
     const savingsPct = monthlyPrice != null && annualMonthly != null && monthlyPrice > 0
       ? Math.max(0, Math.round((1 - (annualMonthly / monthlyPrice)) * 100))
       : null;
-    return { monthly, annual, monthlyPrice, annualPrice, annualMonthly, savingsPct } as const;
+    // Extract currency symbol and whether it's a prefix or suffix from the annual price string
+    const extractCurrency = (v?: string | null): { symbol: string; position: 'prefix' | 'suffix' } => {
+      const str = v ?? '';
+      const firstDigit = str.search(/[0-9]/);
+      const lastDigitMatch = str.match(/[0-9](?!.*[0-9])/g);
+      const lastDigit = lastDigitMatch ? str.lastIndexOf(lastDigitMatch[0]) : -1;
+      if (firstDigit === -1) return { symbol: '$', position: 'prefix' };
+      const rawPrefix = str.slice(0, firstDigit).replace(/[0-9.,\s]/g, '');
+      const rawSuffix = lastDigit >= 0 ? str.slice(lastDigit + 1).replace(/[0-9.,\s]/g, '') : '';
+      if (rawPrefix) return { symbol: rawPrefix, position: 'prefix' };
+      if (rawSuffix) return { symbol: rawSuffix, position: 'suffix' };
+      return { symbol: '$', position: 'prefix' };
+    };
+    const annualCurrency = extractCurrency(annual?.price);
+    return { monthly, annual, monthlyPrice, annualPrice, annualMonthly, savingsPct, annualCurrency } as const;
   }, [rcPlans]);
 
   // Pretty entry + press animations for plan cards (inspired by ComboCarousel fade/slide)
@@ -886,7 +922,13 @@ export default function Plans() {
 
           {pricing.monthly?.price && pricing.annual?.price ? (
             <Text style={styles.disclaimerText}>
-              The Pro plan is billed {pricing.monthly.price} per month. The Annual plan is billed {pricing.annual.price} per year{pricing.annualMonthly != null ? ` (equivalent to $${pricing.annualMonthly.toFixed(2)}/month)` : ''}{pricing.savingsPct != null ? ` — Save ${pricing.savingsPct}% compared to paying monthly.` : ''}
+              The Pro plan is billed {pricing.monthly.price} per month. The Annual plan is billed {pricing.annual.price} per year
+              {pricing.annualMonthly != null ? (
+                pricing.annualCurrency.position === 'suffix'
+                  ? ` (equivalent to ${pricing.annualMonthly.toFixed(2)}${pricing.annualCurrency.symbol}/month)`
+                  : ` (equivalent to ${pricing.annualCurrency.symbol}${pricing.annualMonthly.toFixed(2)}/month)`
+              ) : ''}
+              {pricing.savingsPct != null ? ` — Save ${pricing.savingsPct}% compared to paying monthly.` : ''}
               
             </Text>
           ) : null}
