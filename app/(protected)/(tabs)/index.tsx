@@ -11,7 +11,6 @@ import WelcomeBonusModal from '@/components/Modals/WelcomeBonusModal';
 import SocialProofStrip from '@/components/SocialProofStrip';
 import { WeeklyMission } from '@/components/WeeklyMission';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAdConsent } from '@/contexts/ConsentContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
 import { checkMissedLoginAndScheduleComeback, recordLoginAndScheduleNotifications, registerForPushNotificationsAsync } from '@/utils/notificationUtils';
@@ -27,7 +26,6 @@ import { RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 
 export default function Index() {
-  const { status: adConsentStatus } = useAdConsent();
   const { user, setStreakUpdateCallback } = useAuth();
   const { userData, refreshUserData } = useUserData();
 
@@ -115,7 +113,7 @@ export default function Index() {
   const userLevel = Math.floor((userData?.xp || 0) / 100);
   const KICKS_REQUIRED_LEVEL = 7;
   const DEFENSE_REQUIRED_LEVEL = 3;
-  const isFree = (userData?.plan || 'free').toLowerCase() === 'free';
+  // plan check handled by centralized ads logic; keep local if needed for UI toggles
 
   // Helper to filter requested moves to those unlocked
   const getAllowedMoves = useCallback((requested: string[]) => {
@@ -671,12 +669,10 @@ export default function Index() {
           />
         </View>
 
-        {/* Inline banner ad for free users (only after consent decision) */}
-        {isFree && adConsentStatus !== 'unknown' && (
-          <View style={{ width: '100%', maxWidth: 600, alignSelf: 'center' }}>
-            <TopBanner inline />
-          </View>
-        )}
+        {/* Inline banner ad (rules enforced inside TopBanner via useAds) */}
+        <View style={{ width: '100%', maxWidth: 600, alignSelf: 'center' }}>
+          <TopBanner inline />
+        </View>
 
         {/* Place Random Fight where Upgrade Plan used to be */}
         <View

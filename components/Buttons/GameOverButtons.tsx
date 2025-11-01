@@ -1,5 +1,5 @@
-import { useAdConsent } from '@/contexts/ConsentContext';
 import { useUserData } from '@/contexts/UserDataContext';
+import { useAds } from '@/hooks/useAds';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
@@ -9,7 +9,7 @@ import { LevelBar } from '../LevelBar';
 
 export const GameOverButtons: React.FC = () => {
   const { userData } = useUserData();
-  const { status: adConsentStatus } = useAdConsent();
+  const { shouldShowAds, interstitialUnitId, requestOptions, sdkAvailable } = useAds();
   const [displayXp, setDisplayXp] = useState(userData?.xp || 0);
   const [busy, setBusy] = useState(false);
   const navigatedRef = useRef(false);
@@ -53,12 +53,8 @@ export const GameOverButtons: React.FC = () => {
 
   const handleReturnPress = useCallback(async () => {
     if (busy || navigatedRef.current) return;
-    const plan = (userData?.plan || 'free').toLowerCase();
-    const completedFights = userData?.lifetimeFightRounds || 0;
-
-    // Only show interstitial for free users, Android, and not in Expo Go
-    // Skip ads for the first 6 fights to improve initial UX and user retention
-    const shouldShowAd = plan === 'free' && completedFights >= 6 && Platform.OS === 'android' && Constants.appOwnership !== 'expo';
+  // Only show interstitial for Android and when centralized gating allows
+  const shouldShowAd = shouldShowAds && Platform.OS === 'android' && sdkAvailable && Constants.appOwnership !== 'expo';
 
     const navigateHome = () => {
       if (navigatedRef.current) return;
@@ -75,20 +71,17 @@ export const GameOverButtons: React.FC = () => {
     setBusy(true);
     try {
       const ads = (await import('react-native-google-mobile-ads')) as any;
-      const { InterstitialAd, AdEventType, TestIds } = ads;
+      const { InterstitialAd, AdEventType } = ads;
 
-      // Use test ID in dev. For production, replace with your real interstitial unit ID
-      const unitId = __DEV__ ? TestIds.INTERSTITIAL : 'ca-app-pub-6678510991963006/4151420738';
+      const unitId = interstitialUnitId;
       if (!unitId || unitId.includes('xxxxxxxx')) {
         // No valid production ID configured -> skip showing ad
         navigateHome();
         return;
       }
 
-      // Request non-personalized ads if consent is unknown or denied (GDPR compliance)
-      const interstitial = InterstitialAd.createForAdRequest(unitId, { 
-        requestNonPersonalizedAdsOnly: adConsentStatus !== 'granted' 
-      });
+      // Request options centralized (GDPR compliance)
+      const interstitial = InterstitialAd.createForAdRequest(unitId, requestOptions);
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
       const onClosed = () => {
@@ -117,7 +110,7 @@ export const GameOverButtons: React.FC = () => {
     } finally {
       setBusy(false);
     }
-  }, [busy, userData?.plan, userData?.lifetimeFightRounds, adConsentStatus]);
+  }, [busy, shouldShowAds, interstitialUnitId, requestOptions, sdkAvailable]);
 
   return (
     <>

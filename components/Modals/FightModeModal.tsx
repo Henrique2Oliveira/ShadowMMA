@@ -1,15 +1,13 @@
 import { Text } from '@/components';
-import { useAdConsent } from '@/contexts/ConsentContext';
 import { useUserData } from '@/contexts/UserDataContext';
 import { Colors, Typography } from '@/themes/theme';
 import { isTablet, rf, rs } from '@/utils/responsive';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
-import Constants from 'expo-constants';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import React from 'react';
-import { ActivityIndicator, Modal, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
 import NoFightsLeftModal from './NoFightsLeftModal';
 
 interface FightModeModalProps {
@@ -94,12 +92,11 @@ export function FightModeModal({
 }: FightModeModalProps) {
   // Pull user plan + lives from context (fallback to any explicit extraParams override)
   const { userData } = useUserData();
-  const { status: adConsentStatus } = useAdConsent();
   const derivedPlan = (extraParams?.plan || userData?.plan || '').toLowerCase();
   const isFreePlan = derivedPlan === 'free';
   const livesLeft = typeof userData?.fightsLeft === 'number' ? userData.fightsLeft : undefined;
   const [showNoFightsModal, setShowNoFightsModal] = React.useState(false);
-  const [busy, setBusy] = React.useState(false);
+  const [busy] = React.useState(false);
   const navigatedRef = React.useRef(false);
 
   const isFullRandomFight = movesMode.includes('RANDOM_ALL');
@@ -117,14 +114,6 @@ export function FightModeModal({
       return;
     }
     if (busy || navigatedRef.current) return;
-
-    const completedFights = userData?.lifetimeFightRounds || 0;
-    // Only show interstitial for free users, Android, and not in Expo Go
-    // Skip ads for the first 6 fights to improve initial UX and user retention
-    const baseShouldShow = isFreePlan && completedFights >= 8 && Platform.OS === 'android' && Constants.appOwnership !== 'expo';
-    // Show approximately 1 out of 2 times when eligible
-    const frequencyGate = Math.random() < (1/2);
-    const shouldShowAd = baseShouldShow && frequencyGate;
 
     const proceedToGame = () => {
       if (navigatedRef.current) return;
@@ -152,51 +141,8 @@ export function FightModeModal({
       });
     };
 
-    if (!shouldShowAd) {
-      proceedToGame();
-      return;
-    }
-
-    setBusy(true);
-    try {
-      const ads = (await import('react-native-google-mobile-ads')) as any;
-      const { InterstitialAd, AdEventType, TestIds } = ads;
-
-      // Use test ID in dev. For production, replace with your real interstitial unit ID
-      const unitId = __DEV__ ? TestIds.INTERSTITIAL : 'ca-app-pub-6678510991963006/4151420738';
-      if (!unitId || unitId.includes('xxxxxxxx')) {
-        proceedToGame();
-        return;
-      }
-
-      const interstitial = InterstitialAd.createForAdRequest(unitId, {
-        requestNonPersonalizedAdsOnly: adConsentStatus !== 'granted'
-      });
-
-      let timeoutId: ReturnType<typeof setTimeout> | null = null;
-      const onClosed = () => {
-        if (timeoutId) clearTimeout(timeoutId);
-        proceedToGame();
-      };
-      const onError = () => {
-        if (timeoutId) clearTimeout(timeoutId);
-        proceedToGame();
-      };
-      const onLoaded = () => {
-        try { interstitial.show(); } catch { onError(); }
-      };
-
-      interstitial.addAdEventListener(AdEventType.CLOSED, onClosed);
-      interstitial.addAdEventListener(AdEventType.ERROR, onError);
-      interstitial.addAdEventListener(AdEventType.LOADED, onLoaded);
-
-      timeoutId = setTimeout(onError, 4000);
-      interstitial.load();
-    } catch {
-      proceedToGame();
-    } finally {
-      setBusy(false);
-    }
+    // Ads removed from this flow; go straight to game
+    proceedToGame();
   };
 
   return (

@@ -1,5 +1,4 @@
-import { useAdConsent } from '@/contexts/ConsentContext';
-import { useUserData } from '@/contexts/UserDataContext';
+import { useAds } from '@/hooks/useAds';
 import Constants from 'expo-constants';
 import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
@@ -10,44 +9,30 @@ type Props = {
 };
 
 export default function TopBanner({ bottomOffset = 96, inline = false }: Props) {
-	const { status, loading } = useAdConsent();
-	const { userData } = useUserData();
+	const { shouldShowAds, requestOptions, bannerUnitId, sdkAvailable } = useAds();
 	const [AdsComponents, setAdsComponents] = useState<null | {
 		BannerAd: any;
 		BannerAdSize: any;
-		TestIds: any;
 	}>(null);
 
 	useEffect(() => {
 		// Avoid importing the native module in Expo Go
-		if (Constants.appOwnership === 'expo') return;
-		// Note: We no longer wait for consent decision before loading ads
-		// We'll show non-personalized ads if consent is unknown or denied
+		if (!sdkAvailable || Constants.appOwnership === 'expo') return;
 		let mounted = true;
 		(async () => {
 			try {
 				const mod = (await import('react-native-google-mobile-ads')) as any;
-				if (mounted) setAdsComponents({ BannerAd: mod.BannerAd, BannerAdSize: mod.BannerAdSize, TestIds: mod.TestIds });
+				if (mounted) setAdsComponents({ BannerAd: mod.BannerAd, BannerAdSize: mod.BannerAdSize });
 			} catch {}
 		})();
 		return () => { mounted = false; };
-	}, []);
+	}, [sdkAvailable]);
 
-	// Skip banner ads for users who have completed fewer than 6 fights
-	// This improves initial UX and user retention
-	const completedFights = userData?.lifetimeFightRounds || 0;
-	if (completedFights < 6) return null;
-
-	// Ensure we wait for consent initialization before showing any ads
-	if (loading || !AdsComponents) return null;
-	const { BannerAd, BannerAdSize, TestIds } = AdsComponents;
-
-	// Use Google test banner in dev; replace with your production banner unit ID when ready
-	const unitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-6678510991963006/6604579282';
-	if (!unitId || unitId.includes('xxxxxxxx')) {
-		// No valid production unit configured yet
-		if (!__DEV__) return null;
-	}
+	// Apply centralized gating
+	if (!shouldShowAds || !AdsComponents) return null;
+	const { BannerAd, BannerAdSize } = AdsComponents;
+	const unitId = bannerUnitId;
+	if (!unitId || unitId.includes('xxxxxxxx')) return null;
 
 	return (
 		<View
@@ -59,7 +44,7 @@ export default function TopBanner({ bottomOffset = 96, inline = false }: Props) 
 			<BannerAd
 				unitId={unitId}
 				size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-				requestOptions={{ requestNonPersonalizedAdsOnly: status !== 'granted' }}
+				requestOptions={requestOptions}
 			/>
 		</View>
 	);

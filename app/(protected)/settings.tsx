@@ -22,7 +22,7 @@ import { Platform, ScrollView, StyleSheet, Switch, TouchableOpacity, View } from
 export default function Settings() {
   const { user, resetPassword } = useAuth();
   const { userData } = useUserData();
-  const { status: adConsentStatus, showConsentForm, setGranted, setDenied } = useAdConsent();
+  const { status: adConsentStatus, requestConsentUpdate, showConsentForm, setGranted, setDenied } = useAdConsent();
   // referenced for possible future ad decisions; mark as used for linter
   void adConsentStatus;
   const [isLoading, setIsLoading] = useState(false);
@@ -189,6 +189,21 @@ export default function Settings() {
     }
   };
 
+  // Privacy & Ads (UMP) handler: refresh consent info then attempt to show form, with safe fallback
+  const handlePrivacyAndAdsPress = async () => {
+    try {
+      // Ensure consent info is up to date before attempting to present the form
+      await requestConsentUpdate();
+      const shown = await showConsentForm();
+      // If no native UMP form was displayed (e.g., Expo Go or not required), open the in‑app fallback chooser
+      if (!shown) setShowConsentChoice(true);
+    } catch (error) {
+      console.error('[Privacy & Ads] Failed to display consent form:', error);
+      // Always provide a graceful fallback to keep the user unblocked
+      setShowConsentChoice(true);
+    }
+  };
+
   return (
     <ScrollView
       style={styles.container}
@@ -231,10 +246,7 @@ export default function Settings() {
 
         <TouchableOpacity
           style={styles.option}
-          onPress={async () => {
-            const shown = await showConsentForm();
-            if (!shown) setShowConsentChoice(true);
-          }}
+          onPress={handlePrivacyAndAdsPress}
         >
           <MaterialCommunityIcons name="shield-check" size={isTablet ? 30 : 24} color={Colors.text} />
           <Text style={[styles.optionText, isTablet && styles.optionTextTablet]}>Privacy & Ads</Text>
