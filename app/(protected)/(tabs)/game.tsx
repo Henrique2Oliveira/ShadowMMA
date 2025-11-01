@@ -266,7 +266,7 @@ export default function Game() {
   const [rateReadyPending, setRateReadyPending] = React.useState(false);
   const [showRateModal, setShowRateModal] = React.useState(false);
 
-  // Speed multiplier: default param OR 1.0, but we will bump first-time users to 1.5x below
+  // Speed multiplier: default param OR 1.0, but we will bump first-time users to 1.8x below
   // Clamp any incoming param to MAX_SPEED
   const [speedMultiplier, setSpeedMultiplier] = React.useState(
     Math.min(MAX_SPEED, parseFloat(params.moveSpeed || '1'))
@@ -292,14 +292,14 @@ export default function Game() {
           previousVolumeRef.current = (prefs as any).volume || 1;
         }
       } else {
-        // First time: set a friendlier slightly faster pace (1.5x) and persist in storage for speed 
-        setSpeedMultiplier(1.5);
+        // First time: set a friendlier slightly faster pace (1.8x) and persist in storage for speed 
+        setSpeedMultiplier(1.8);
         saveGamePreferences({
           isMuted: false,
           animationMode: 'old',
           stance: 'orthodox',
           showComboCarousel: true,
-          speedMultiplier: 1.5,
+          speedMultiplier: 1.8,
           volume: 1,
         });
       }
